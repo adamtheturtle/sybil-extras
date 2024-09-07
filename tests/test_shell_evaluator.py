@@ -143,7 +143,6 @@ def test_global_env(
 def test_file_is_passed(
     rst_file: Path,
     tmp_path: Path,
-    capsys: pytest.CaptureFixture[str],
 ) -> None:
     """A file with the code block content is passed to the command."""
     bash_function = """
@@ -167,15 +166,47 @@ def test_file_is_passed(
     document = sybil.parse(path=rst_file)
     (example,) = list(document)
     example.evaluate()
-    assert (
-        file_path.read_text(encoding="utf-8") == "x = 2 + 2\nassert x == 4\n"
+    expected_content = "x = 2 + 2\nassert x == 4\n"
+    assert file_path.read_text(encoding="utf-8") == expected_content
+
+
+def test_file_path(
+    rst_file: Path,
+    tmp_path: Path,
+) -> None:
+    """The given file path is random and absolute, and starts with a name resembling the documentation file name."""
+    bash_function = """
+    write_to_file() {
+        local file="$1"
+        local content=$2
+        echo "$content" > "$file"
+    }
+    write_to_file "$1" "$2"
+    """
+
+    file_path = tmp_path / "file.txt"
+    evaluator = ShellCommandEvaluator(
+        args=["bash", "-c", bash_function, "_", file_path],
+        pad_file=False,
+        write_to_file=False,
     )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = list(document)
+    example.evaluate()
+    given_file_path = Path(file_path.read_text(encoding="utf-8").strip())
+    assert given_file_path.parent == rst_file.parent
+    assert given_file_path.is_absolute()
+    assert not given_file_path.exists()
+    assert given_file_path.name.startswith("test_document_rst_")
+    example.evaluate()
+    new_given_file_path = Path(file_path.read_text(encoding="utf-8").strip())
+    assert new_given_file_path != given_file_path
 
 
 # TODO:
-# * Test file path and name
-# * Test file deleted
-# * Test file path is random
 # * Test given suffix
 # * Test pad
 # * Test write to file
