@@ -138,3 +138,23 @@ def test_global_env(
     del os.environ[env_key]
     new_file_content = new_file.read_text(encoding="utf-8")
     assert new_file_content == "Hello, ENV_VALUE!\n"
+
+
+def test_file_is_passed(
+    rst_file: Path,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A file with the code block content is passed to the command."""
+    evaluator = ShellCommandEvaluator(
+        args=["echo"],
+        pad_file=False,
+        write_to_file=False,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = list(document)
+    example.evaluate()
+    breakpoint()
