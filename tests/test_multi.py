@@ -7,27 +7,15 @@ from sybil.parsers.rest import CodeBlockParser
 from sybil_extras.evaluators.multi import MultiEvaluator
 
 
-# 1. Evaluator that adds a 'step_1' flag to the namespace
-def evaluator_1(example: Example) -> None:
-    """
-    Evaluator 1 modifies the example's namespace by setting 'step_1' to True.
-    """
+def _evaluator_1(example: Example) -> None:
     example.namespace["step_1"] = True
 
 
-# 2. Evaluator that adds a 'step_2' flag to the namespace
-def evaluator_2(example: Example) -> None:
-    """
-    Evaluator 2 modifies the example's namespace by setting 'step_2' to True.
-    """
+def _evaluator_2(example: Example) -> None:
     example.namespace["step_2"] = True
 
 
-# 3. Evaluator that adds a 'step_3' flag to the namespace
-def evaluator_3(example: Example) -> None:
-    """
-    Evaluator 3 modifies the example's namespace by setting 'step_3' to True.
-    """
+def _evaluator_3(example: Example) -> None:
     example.namespace["step_3"] = True
 
 
@@ -57,7 +45,8 @@ def test_multi_evaluator_runs_all(rst_file: Path) -> None:
     Test that MultiEvaluator runs all evaluators and modifies the namespace as expected.
     """
     # Create a MultiEvaluator with three evaluators
-    multi_evaluator = MultiEvaluator(evaluators=[evaluator_1, evaluator_2, evaluator_3])
+    evaluators = [_evaluator_1, _evaluator_2, _evaluator_3]
+    multi_evaluator = MultiEvaluator(evaluators=evaluators)
     parser = CodeBlockParser(language="python", evaluator=multi_evaluator)
 
     # Setup Sybil with the CodeBlockParser, passing the MultiEvaluator
@@ -84,7 +73,7 @@ def test_multi_evaluator_raises_on_failure(rst_file: Path) -> None:
         raise AssertionError("Failure in failing_evaluator")
 
     # Create MultiEvaluator with one failing evaluator and two successful ones
-    multi_evaluator = MultiEvaluator(evaluators=[evaluator_1, failing_evaluator, evaluator_3])
+    multi_evaluator = MultiEvaluator(evaluators=[_evaluator_1, failing_evaluator, _evaluator_3])
 
     # Setup Sybil with the CodeBlockParser
     suite = Sybil(
