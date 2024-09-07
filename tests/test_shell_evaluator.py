@@ -15,14 +15,16 @@ def rst_file_fixture(tmp_path: Path) -> Path:
     """
     Fixture to create a temporary RST file with code blocks.
     """
-    content = """
-    Not in code block
+    content = textwrap.dedent(
+        text="""\
+        Not in code block
 
-    .. code-block:: python
+        .. code-block:: python
 
-        x = 2 + 2
-        assert x == 4
-    """
+           x = 2 + 2
+           assert x == 4
+        """
+    )
     test_document = tmp_path / "test_document.rst"
     test_document.write_text(data=content, encoding="utf-8")
     return test_document
@@ -267,7 +269,6 @@ def test_pad(rst_file: Path, tmp_path: Path) -> None:
 
 
 
-
         x = 2 + 2
         assert x == 4
         """,
@@ -275,5 +276,39 @@ def test_pad(rst_file: Path, tmp_path: Path) -> None:
     assert given_file_content == expected_content
 
 
-# TODO:
-# * Test write to file
+@pytest.mark.parametrize(argnames="write_to_file", argvalues=[True, False])
+def test_write_to_file(rst_file: Path, write_to_file: bool) -> None:
+    """Changes are written to the original file iff `write_to_file` is True."""
+    original_content = rst_file.read_text(encoding="utf-8")
+    bash_function = """
+    replace_with_foobar() {
+        local file="$1"
+        echo -n "foobar" > "$file"
+    }
+    replace_with_foobar "$1"
+    """
+    evaluator = ShellCommandEvaluator(
+        args=["bash", "-c", bash_function, "_"],
+        pad_file=False,
+        write_to_file=write_to_file,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = list(document)
+    example.evaluate()
+    rst_file_content = rst_file.read_text(encoding="utf-8")
+    modified_content = textwrap.dedent(
+        """\
+        Not in code block
+
+        .. code-block:: python
+
+           foobar
+        """,
+    )
+    if write_to_file:
+        assert rst_file_content == modified_content
+    else:
+        assert rst_file_content == original_content
