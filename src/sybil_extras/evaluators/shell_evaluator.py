@@ -104,7 +104,7 @@ class ShellCommandEvaluator:
             delete=True,
             suffix=".example" + self._tempfile_suffix,
         ) as f:
-            f.write(source)
+            f.write(source.rstrip() + "\n")
             f.flush()
             temp_file_path = Path(f.name)
 
@@ -134,10 +134,13 @@ class ShellCommandEvaluator:
                     prefix=indent_prefix,
                 )
 
-                modified_content = existing_file_content.replace(
-                    indented_existing_region_content,
-                    indented_temp_file_content,
-                    1,
+                modified_content = (
+                    existing_file_content.replace(
+                        indented_existing_region_content,
+                        indented_temp_file_content,
+                        1,
+                    ).rstrip("\n")
+                    + "\n"
                 )
                 existing_file_path.write_text(
                     modified_content,

@@ -41,7 +41,6 @@ repos:
     -   id: check-vcs-permalinks
     -   id: check-yaml
     -   id: end-of-file-fixer
-    -   id: file-contents-sorter
         files: spelling_private_dict\.txt$
     -   id: trailing-whitespace
 -   repo: local
