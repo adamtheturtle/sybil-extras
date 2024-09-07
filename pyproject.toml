@@ -66,8 +66,7 @@ optional-dependencies.dev = [
     "sybil==6.1.1",
     "vulture==2.11",
 ]
-urls.Documentation = "https://vws-python.readthedocs.io/en/latest/"
-urls.Source = "https://github.com/VWS-Python/vws-python"
+urls.Source = "https://github.com/adamtheturtle/sybil-extras"
 
 [tool.setuptools]
 zip-safe = false
