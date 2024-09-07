@@ -7,11 +7,13 @@ from doctest import ELLIPSIS
 import pytest
 from beartype import beartype
 from sybil import Sybil
+from sybil.evaluators.python import PythonEvaluator
 from sybil.parsers.rest import (
     ClearNamespaceParser,
     CodeBlockParser,
     DocTestParser,
 )
+from sybil.sybil import SybilCollection
 
 from sybil_extras.evaluators.multi import MultiEvaluator
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
@@ -27,7 +29,7 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
             item.obj = beartype(obj=item.obj)
 
 
-pytest_collect_file = Sybil(
+sybil = Sybil(
     parsers=[
         ClearNamespaceParser(),
         DocTestParser(optionflags=ELLIPSIS),
@@ -35,11 +37,7 @@ pytest_collect_file = Sybil(
             language="python",
             evaluator=MultiEvaluator(
                 evaluators=[
-                    ShellCommandEvaluator(
-                        args=[sys.executable, "-m", "mypy"],
-                        pad_file=True,
-                        write_to_file=False,
-                    ),
+                    PythonEvaluator(),
                     ShellCommandEvaluator(
                         args=[
                             sys.executable,
@@ -84,4 +82,7 @@ pytest_collect_file = Sybil(
         ),
     ],
     patterns=["*.rst", "*.py"],
-).pytest()
+)
+
+sybils = SybilCollection([sybil])
+pytest_collect_file = sybils.pytest()
