@@ -7,10 +7,12 @@ import textwrap
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
+from beartype import beartype
 from sybil import Example
 from sybil.evaluators.python import pad
 
 
+@beartype
 def _get_indentation(example: Example) -> str:
     """Get the indentation of the parsed code in the example."""
     first_line = str(example.parsed).split("\n", 1)[0]
@@ -37,6 +39,7 @@ def _get_indentation(example: Example) -> str:
     return indentation
 
 
+@beartype
 class ShellCommandEvaluator:
     """Run a shell command on the example file."""
 

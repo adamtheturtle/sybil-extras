@@ -2,10 +2,12 @@
 
 from collections.abc import Sequence
 
+from beartype import beartype
 from sybil import Example
 from sybil.typing import Evaluator
 
 
+@beartype
 class MultiEvaluator:
     """Run multiple evaluators."""
 

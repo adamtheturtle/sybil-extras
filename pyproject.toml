@@ -36,6 +36,7 @@ dynamic = [
     "version",
 ]
 dependencies = [
+    "beartype",
     "sybil",
 ]
 optional-dependencies.dev = [

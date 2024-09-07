@@ -4,7 +4,8 @@ sybil-extras
 TODO:
 
 - Add Github CODECOV token, RELEASE_PAT
-- Create documentation, fix urls.Documentation = "TODO"
+- Create RTD documentation, fix urls.Documentation = "TODO"
+- Use meta - this in this project (conftest.py)
 - Test with markdown file
 - Set up pre-commit for this repo
 - Set up CI
