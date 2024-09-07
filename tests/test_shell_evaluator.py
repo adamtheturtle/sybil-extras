@@ -1,3 +1,5 @@
+"""Tests for the ShellCommandEvaluator"""
+
 import os
 import textwrap
 import uuid
@@ -54,7 +56,7 @@ def test_output_shown_on_error(rst_file: Path) -> None:
         Output: Hello, Sybil!
 
         Error: Hello Stderr!
-        """,
+        """,  # noqa: E501
     )
 
     with pytest.raises(expected_exception=ValueError, match=expected_output):
@@ -277,7 +279,7 @@ def test_pad(rst_file: Path, tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize(argnames="write_to_file", argvalues=[True, False])
-def test_write_to_file(rst_file: Path, write_to_file: bool) -> None:
+def test_write_to_file(rst_file: Path, *, write_to_file: bool) -> None:
     """Changes are written to the original file iff `write_to_file` is True."""
     original_content = rst_file.read_text(encoding="utf-8")
     bash_function = """
