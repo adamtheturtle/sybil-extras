@@ -116,36 +116,37 @@ class ShellCommandEvaluator:
                 env=self._env,
             )
 
-            if self._write_to_file:
-                temp_file_content = temp_file_path.read_text(encoding="utf-8")
-                existing_file_path = Path(example.path)
-                existing_file_content = existing_file_path.read_text(
-                    encoding="utf-8"
-                )
-                existing_region_content = example.region.parsed
-                indent_prefix = _get_indentation(example=example)
-                indented_existing_region_content = textwrap.indent(
-                    text=existing_region_content,
-                    prefix=indent_prefix,
-                )
+            temp_file_content = temp_file_path.read_text(encoding="utf-8")
 
-                indented_temp_file_content = textwrap.indent(
-                    text=temp_file_content,
-                    prefix=indent_prefix,
-                )
+        if self._write_to_file:
+            existing_file_path = Path(example.path)
+            existing_file_content = existing_file_path.read_text(
+                encoding="utf-8"
+            )
+            existing_region_content = example.region.parsed
+            indent_prefix = _get_indentation(example=example)
+            indented_existing_region_content = textwrap.indent(
+                text=existing_region_content,
+                prefix=indent_prefix,
+            )
 
-                modified_content = (
-                    existing_file_content.replace(
-                        indented_existing_region_content,
-                        indented_temp_file_content,
-                        1,
-                    ).rstrip("\n")
-                    + "\n"
-                )
-                existing_file_path.write_text(
-                    modified_content,
-                    encoding="utf-8",
-                )
+            indented_temp_file_content = textwrap.indent(
+                text=temp_file_content,
+                prefix=indent_prefix,
+            )
+
+            modified_content = (
+                existing_file_content.replace(
+                    indented_existing_region_content,
+                    indented_temp_file_content,
+                    1,
+                ).rstrip("\n")
+                + "\n"
+            )
+            existing_file_path.write_text(
+                data=modified_content,
+                encoding="utf-8",
+            )
 
         if result.returncode != 0:
             joined_command = shlex.join(
