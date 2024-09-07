@@ -238,7 +238,7 @@ spelling-store-unknown-words = 'no'
 ignore = [
     "*.enc",
     ".pre-commit-config.yaml",
-    ".vscode/",
+    ".vscode/**",
     "readthedocs.yaml",
     "CHANGELOG.rst",
     "CODE_OF_CONDUCT.rst",
