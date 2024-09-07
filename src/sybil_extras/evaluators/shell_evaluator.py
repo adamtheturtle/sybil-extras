@@ -1,5 +1,6 @@
 """Setup for Sybil."""
 
+import shlex
 import subprocess
 import tempfile
 import textwrap
@@ -8,7 +9,6 @@ from pathlib import Path
 
 from sybil import Example
 from sybil.evaluators.python import pad
-
 
 
 def _get_indentation(example: Example) -> str:
@@ -140,11 +140,14 @@ class ShellCommandEvaluator:
                 )
 
         if result.returncode != 0:
+            joined_command = shlex.join(
+                split_command=[str(item) for item in self._args],
+            )
             msg = (
                 f"Shell command failed:\n"
-                f"Command: {self._args}\n"
+                f"Command: {joined_command}\n"
                 f"Output: {result.stdout}\n"
                 f"Error: {result.stderr}"
             )
 
-            raise AssertionError(msg)
+            raise ValueError(msg)

@@ -1,3 +1,4 @@
+import textwrap
 from pathlib import Path
 
 import pytest
@@ -26,7 +27,11 @@ def rst_file_fixture(tmp_path: Path) -> Path:
 def test_shell_command_evaluator_runs(rst_file: Path) -> None:
     """Test that ShellCommandEvaluator successfully runs a shell command."""
     evaluator = ShellCommandEvaluator(
-        args=["bash", "-c", "echo 'Hello, Sybil!'"],
+        args=[
+            "bash",
+            "-c",
+            "echo 'Hello, Sybil!'; echo >&2 'Hello Stderr!'; exit 1",
+        ],
         pad_file=False,
         write_to_file=False,
     )
@@ -36,8 +41,20 @@ def test_shell_command_evaluator_runs(rst_file: Path) -> None:
     document = sybil.parse(path=rst_file)
     (example,) = list(document)
 
-    # Evaluate the shell command
-    example.evaluate()
+    with pytest.raises(ValueError) as exc:
+        example.evaluate()
+
+    expected_output = textwrap.dedent(
+        text="""\
+        Shell command failed:
+        Command: bash -c 'echo '"'"'Hello, Sybil!'"'"'; echo >&2 '"'"'Hello Stderr!'"'"'; exit 1'
+        Output: Hello, Sybil!
+
+        Error: Hello Stderr!
+        """,
+    )
+
+    assert str(exc.value) == expected_output
 
 
 def test_shell_command_evaluator_with_failure(rst_file: Path) -> None:
