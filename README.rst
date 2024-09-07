@@ -3,8 +3,6 @@ sybil-extras
 
 TODO:
 
-* Add evaluators
-- multi - add tests
 - custom subprocess - add tests
 - Create documentation, fix urls.Documentation = "TODO"
 - Test with markdown file

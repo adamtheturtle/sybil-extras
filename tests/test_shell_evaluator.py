@@ -16,6 +16,8 @@ def rst_file_fixture(tmp_path: Path) -> Path:
     Fixture to create a temporary RST file with code blocks.
     """
     content = """
+    Not in code block
+
     .. code-block:: python
 
         x = 2 + 2
@@ -207,6 +209,7 @@ def test_file_path(rst_file: Path, tmp_path: Path) -> None:
 
 
 def test_file_suffix(rst_file: Path, tmp_path: Path) -> None:
+    """The given file suffix is used."""
     bash_function = """
     write_to_file() {
         local file="$1"
@@ -234,6 +237,43 @@ def test_file_suffix(rst_file: Path, tmp_path: Path) -> None:
     assert given_file_path.suffix == ".foobar"
 
 
+def test_pad(rst_file: Path, tmp_path: Path) -> None:
+    """If pad is True, the file content is padded."""
+    bash_function = """
+    write_to_file() {
+        local file="$1"
+        local content=`cat $2`
+        echo "$content" > "$file"
+    }
+    write_to_file "$1" "$2"
+    """
+
+    file_path = tmp_path / "file.txt"
+    evaluator = ShellCommandEvaluator(
+        args=["bash", "-c", bash_function, "_", file_path],
+        pad_file=True,
+        write_to_file=False,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = list(document)
+    example.evaluate()
+    given_file_content = file_path.read_text(encoding="utf-8")
+    expected_content = textwrap.dedent(
+        text="""\
+
+
+
+
+
+        x = 2 + 2
+        assert x == 4
+        """,
+    )
+    assert given_file_content == expected_content
+
+
 # TODO:
-# * Test pad
 # * Test write to file
