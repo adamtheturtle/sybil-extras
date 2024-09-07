@@ -170,3 +170,12 @@ def test_file_is_passed(
     assert (
         file_path.read_text(encoding="utf-8") == "x = 2 + 2\nassert x == 4\n"
     )
+
+
+# TODO:
+# * Test file path and name
+# * Test file deleted
+# * Test file path is random
+# * Test given suffix
+# * Test pad
+# * Test write to file
