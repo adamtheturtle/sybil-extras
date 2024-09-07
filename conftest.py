@@ -72,7 +72,12 @@ sybil = Sybil(
                             "run",
                             "--files",
                         ],
-                        env={**os.environ, "SKIP": "ruff-format-check"},
+                        env={
+                            **os.environ,
+                            # These hooks are run separately as they do not
+                            # work with file padding.
+                            "SKIP": "ruff-format-check,ruff-check",
+                        },
                         tempfile_suffix=".py",
                         pad_file=True,
                         write_to_file=False,

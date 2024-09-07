@@ -21,22 +21,19 @@ MultiEvaluator
     """Use MultiEvaluator to run multiple evaluators on the same parser."""
 
     from sybil import Example, Sybil
+    from sybil.evaluators.python import PythonEvaluator
     from sybil.parsers.codeblock import CodeBlockParser
 
     from sybil_extras.evaluators.multi import MultiEvaluator
 
 
     def _evaluator_1(example: Example) -> None:
-        assert example.given == "1 + 1"
-        assert example.expected == "2"
+        """Check that the example is long enough."""
+        minimum_length = 50
+        assert len(example.parsed) >= minimum_length
 
 
-    def _evaluator_2(example: Example) -> None:
-        assert example.given == "2 + 2"
-        assert example.expected == "4"
-
-
-    evaluators = [_evaluator_1, _evaluator_2]
+    evaluators = [_evaluator_1, PythonEvaluator()]
     multi_evaluator = MultiEvaluator(evaluators=evaluators)
     parser = CodeBlockParser(language="python", evaluator=multi_evaluator)
     sybil = Sybil(parsers=[parser])
