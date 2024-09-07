@@ -1,4 +1,6 @@
+import os
 import textwrap
+import uuid
 from pathlib import Path
 
 import pytest
@@ -84,22 +86,55 @@ def test_no_output_on_success(
     assert outerr.err == ""
 
 
-# def test_shell_command_evaluator_with_environment(rst_file: Path) -> None:
-#     """Test that ShellCommandEvaluator respects environment variables."""
-#     evaluator = ShellCommandEvaluator(
-#         args=["bash", "-c", "echo $TEST_ENV"],
-#         env={"TEST_ENV": "SybilTestEnv"},
-#         pad_file=False,
-#         write_to_file=False,
-#     )
-#     parser = CodeBlockParser(language="shell", evaluator=evaluator)
-#     sybil = Sybil(parsers=[parser])
+def test_pass_env(
+    rst_file: Path,
+    tmp_path: Path,
+) -> None:
+    """It is possible to pass environment variables to the command."""
+    new_file = tmp_path / "new_file.txt"
+    evaluator = ShellCommandEvaluator(
+        args=[
+            "bash",
+            "-c",
+            f"echo Hello, $ENV_KEY! > {new_file}; exit 0",
+        ],
+        env={"ENV_KEY": "ENV_VALUE"},
+        pad_file=False,
+        write_to_file=False,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
 
-#     document = sybil.parse(path=rst_file)
-#     (example,) = list(document)
+    document = sybil.parse(path=rst_file)
+    (example,) = list(document)
+    example.evaluate()
+    new_file_content = new_file.read_text(encoding="utf-8")
+    assert new_file_content == "Hello, ENV_VALUE!\n"
 
-#     # Evaluate the shell command
-#     example.evaluate()
 
-#     # Check if the environment variable was echoed in the output
-#     assert example.namespace["output"] == "SybilTestEnv\n"
+def test_global_env(
+    rst_file: Path,
+    tmp_path: Path,
+) -> None:
+    """Global environment variables are sent to the command by default."""
+    env_key = "ENV_" + uuid.uuid4().hex
+    os.environ[env_key] = "ENV_VALUE"
+    new_file = tmp_path / "new_file.txt"
+    evaluator = ShellCommandEvaluator(
+        args=[
+            "bash",
+            "-c",
+            f"echo Hello, ${env_key}! > {new_file}; exit 0",
+        ],
+        pad_file=False,
+        write_to_file=False,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = list(document)
+    example.evaluate()
+    del os.environ[env_key]
+    new_file_content = new_file.read_text(encoding="utf-8")
+    assert new_file_content == "Hello, ENV_VALUE!\n"
