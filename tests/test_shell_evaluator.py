@@ -170,11 +170,11 @@ def test_file_is_passed(
     assert file_path.read_text(encoding="utf-8") == expected_content
 
 
-def test_file_path(
-    rst_file: Path,
-    tmp_path: Path,
-) -> None:
-    """The given file path is random and absolute, and starts with a name resembling the documentation file name."""
+def test_file_path(rst_file: Path, tmp_path: Path) -> None:
+    """
+    The given file path is random and absolute, and starts with a name
+    resembling the documentation file name.
+    """
     bash_function = """
     write_to_file() {
         local file="$1"
@@ -206,7 +206,34 @@ def test_file_path(
     assert new_given_file_path != given_file_path
 
 
+def test_file_suffix(rst_file: Path, tmp_path: Path) -> None:
+    bash_function = """
+    write_to_file() {
+        local file="$1"
+        local content=$2
+        echo "$content" > "$file"
+    }
+    write_to_file "$1" "$2"
+    """
+
+    file_path = tmp_path / "file.txt"
+    evaluator = ShellCommandEvaluator(
+        args=["bash", "-c", bash_function, "_", file_path],
+        pad_file=False,
+        write_to_file=False,
+        tempfile_suffix=".foobar",
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = list(document)
+    example.evaluate()
+    given_file_path = Path(file_path.read_text(encoding="utf-8").strip())
+    assert given_file_path.name.startswith("test_document_rst_")
+    assert given_file_path.suffix == ".foobar"
+
+
 # TODO:
-# * Test given suffix
 # * Test pad
 # * Test write to file
