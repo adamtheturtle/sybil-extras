@@ -146,8 +146,18 @@ def test_file_is_passed(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """A file with the code block content is passed to the command."""
+    bash_function = """
+    write_to_file() {
+        local file="$1"
+        local content=`cat $2`
+        echo "$content" > "$file"
+    }
+    write_to_file "$1" "$2"
+    """
+
+    file_path = tmp_path / "file.txt"
     evaluator = ShellCommandEvaluator(
-        args=["echo"],
+        args=["bash", "-c", bash_function, "_", file_path],
         pad_file=False,
         write_to_file=False,
     )
@@ -157,4 +167,6 @@ def test_file_is_passed(
     document = sybil.parse(path=rst_file)
     (example,) = list(document)
     example.evaluate()
-    breakpoint()
+    assert (
+        file_path.read_text(encoding="utf-8") == "x = 2 + 2\nassert x == 4\n"
+    )
