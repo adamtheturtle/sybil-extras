@@ -41,6 +41,10 @@ repos:
     -   id: check-vcs-permalinks
     -   id: check-yaml
     -   id: end-of-file-fixer
+        name: end-of-file-fixer
+        # `example.py` files are code blocks within documentation.
+        # Code blocks should not have trailing whitespace.
+        # exclude: \.example\.py$
     -   id: file-contents-sorter
         files: spelling_private_dict\.txt$
     -   id: trailing-whitespace
