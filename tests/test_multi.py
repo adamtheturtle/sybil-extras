@@ -1,3 +1,5 @@
+"""Tests for MultiEvaluator."""
+
 from pathlib import Path
 
 import pytest
@@ -19,8 +21,14 @@ def _evaluator_3(example: Example) -> None:
     example.namespace["step_3"] = True
 
 
-@pytest.fixture
-def rst_file(tmp_path: Path) -> Path:
+def _failing_evaluator(example: Example) -> None:
+    """
+    Evaluator that intentionally fails by raising an AssertionError.
+    """
+    raise AssertionError("Failure in failing_evaluator: " + str(example))
+
+@pytest.fixture(name="rst_file")
+def rst_file_fixture(tmp_path: Path) -> Path:
     """
     Fixture to create a temporary RST file with Python code blocks.
     """
@@ -29,62 +37,44 @@ def rst_file(tmp_path: Path) -> Path:
 
         x = 2 + 2
         assert x == 4
-
-    .. code-block:: python
-
-        y = sum([i for i in range(5)])
-        assert y == 10
     """
-    rst_file = tmp_path / "test_document.rst"
-    rst_file.write_text(content)
-    return rst_file
+    test_document = tmp_path / "test_document.rst"
+    test_document.write_text(data=content, encoding="utf-8")
+    return test_document
 
 
 def test_multi_evaluator_runs_all(rst_file: Path) -> None:
     """
-    Test that MultiEvaluator runs all evaluators and modifies the namespace as expected.
+    MultiEvaluator runs all given evaluators.
     """
-    # Create a MultiEvaluator with three evaluators
     evaluators = [_evaluator_1, _evaluator_2, _evaluator_3]
     multi_evaluator = MultiEvaluator(evaluators=evaluators)
     parser = CodeBlockParser(language="python", evaluator=multi_evaluator)
 
-    # Setup Sybil with the CodeBlockParser, passing the MultiEvaluator
     sybil = Sybil(parsers=[parser])
 
-    # Run the Sybil test suite
     document = sybil.parse(path=rst_file)
-    for example in document:
-        example.evaluate()
+    (example, ) = list(document)
+    example.evaluate()
 
-    assert document.namespace == {"step_1": True, "step_2": True, "step_3": True}
+    expected_namespace = {"step_1": True, "step_2": True, "step_3": True}
+    assert document.namespace == expected_namespace
 
 
 def test_multi_evaluator_raises_on_failure(rst_file: Path) -> None:
     """
     Test that MultiEvaluator raises an error if an evaluator fails.
     """
+    evaluators = [_evaluator_1, _failing_evaluator, _evaluator_3]
+    multi_evaluator = MultiEvaluator(evaluators=evaluators)
+    parser = CodeBlockParser(language="python", evaluator=multi_evaluator)
 
-    # Create a failing evaluator that raises an AssertionError
-    def failing_evaluator(example: Example) -> None:
-        """
-        Evaluator that intentionally fails by raising an AssertionError.
-        """
-        raise AssertionError("Failure in failing_evaluator")
+    sybil = Sybil(parsers=[parser])
 
-    # Create MultiEvaluator with one failing evaluator and two successful ones
-    multi_evaluator = MultiEvaluator(evaluators=[_evaluator_1, failing_evaluator, _evaluator_3])
-
-    # Setup Sybil with the CodeBlockParser
-    suite = Sybil(
-        parsers=[CodeBlockParser(language="python", evaluator=multi_evaluator)],
-
-    )
-
-    # Ensure that MultiEvaluator raises an AssertionError
+    document = sybil.parse(path=rst_file)
+    (example, ) = list(document)
     with pytest.raises(AssertionError, match="Failure in failing_evaluator"):
-        result = suite.parse(path=rst_file)
-        assert not result.wasSuccessful(), "Sybil test suite should have failed"
+        example.evaluate()
 
 
 def test_multi_evaluator_no_evaluators(rst_file: Path) -> None:
