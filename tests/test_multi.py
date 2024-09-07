@@ -12,7 +12,6 @@ def evaluator_1(example: Example) -> None:
     """
     Evaluator 1 modifies the example's namespace by setting 'step_1' to True.
     """
-    breakpoint()
     example.namespace["step_1"] = True
 
 
@@ -59,25 +58,17 @@ def test_multi_evaluator_runs_all(rst_file: Path) -> None:
     """
     # Create a MultiEvaluator with three evaluators
     multi_evaluator = MultiEvaluator(evaluators=[evaluator_1, evaluator_2, evaluator_3])
+    parser = CodeBlockParser(language="python", evaluator=multi_evaluator)
 
     # Setup Sybil with the CodeBlockParser, passing the MultiEvaluator
-    suite = Sybil(
-        parsers=[CodeBlockParser(language="python", evaluator=multi_evaluator)],
-
-    )
+    sybil = Sybil(parsers=[parser])
 
     # Run the Sybil test suite
-    result = suite.parse(path=rst_file)
-    breakpoint()
+    document = sybil.parse(path=rst_file)
+    for example in document:
+        example.evaluate()
 
-    # # Check that the evaluators modified the namespace correctly
-    # example = Example(location=None, document=None, source="x = 2 + 2", namespace={}, expected=None)
-    # multi_evaluator(example=example)
-
-    # assert result.wasSuccessful(), "Sybil test suite did not pass"
-    # assert example.namespace["step_1"], "'step_1' not set by evaluator_1"
-    # assert example.namespace["step_2"], "'step_2' not set by evaluator_2"
-    # assert example.namespace["step_3"], "'step_3' not set by evaluator_3"
+    assert document.namespace == {"step_1": True, "step_2": True, "step_3": True}
 
 
 def test_multi_evaluator_raises_on_failure(rst_file: Path) -> None:
