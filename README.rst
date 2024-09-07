@@ -25,13 +25,16 @@ MultiEvaluator
 
     from sybil_extras.evaluators.multi import MultiEvaluator
 
+
     def _evaluator_1(example: Example) -> None:
         assert example.given == "1 + 1"
         assert example.expected == "2"
 
+
     def _evaluator_2(example: Example) -> None:
         assert example.given == "2 + 2"
         assert example.expected == "4"
+
 
     evaluators = [_evaluator_1, _evaluator_2]
     multi_evaluator = MultiEvaluator(evaluators=evaluators)
