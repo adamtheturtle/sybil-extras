@@ -34,6 +34,21 @@ sybil = Sybil(
         ClearNamespaceParser(),
         DocTestParser(optionflags=ELLIPSIS),
         CodeBlockParser(
+            language="shell",
+            evaluator=ShellCommandEvaluator(
+                args=[
+                    sys.executable,
+                    "-m",
+                    "pre_commit",
+                    "run",
+                    "--files",
+                ],
+                tempfile_suffix=".sh",
+                pad_file=False,
+                write_to_file=False,
+            ),
+        ),
+        CodeBlockParser(
             language="python",
             evaluator=MultiEvaluator(
                 evaluators=[
@@ -76,7 +91,7 @@ sybil = Sybil(
                             **os.environ,
                             # These hooks are run separately as they do not
                             # work with file padding.
-                            "SKIP": "ruff-format-check,ruff-check",
+                            "SKIP": "ruff-format-diff,ruff-check",
                         },
                         tempfile_suffix=".py",
                         pad_file=True,

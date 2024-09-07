@@ -6,9 +6,9 @@ Add ons for `Sybil <http://sybil.readthedocs.io>`_.
 Installation
 ------------
 
-.. code-block:: bash
+.. code-block:: shell
 
-    pip install sybil-extras
+    $ pip install sybil-extras
 
 Usage
 -----
