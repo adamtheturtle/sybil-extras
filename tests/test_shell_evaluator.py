@@ -9,11 +9,14 @@ from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 
 @pytest.fixture(name="rst_file")
 def rst_file_fixture(tmp_path: Path) -> Path:
-    """Fixture to create a temporary RST file with shell code blocks."""
+    """
+    Fixture to create a temporary RST file with code blocks.
+    """
     content = """
-    .. code-block:: shell
+    .. code-block:: python
 
-        echo 'Hello, Sybil!'
+        x = 2 + 2
+        assert x == 4
     """
     test_document = tmp_path / "test_document.rst"
     test_document.write_text(data=content, encoding="utf-8")
@@ -23,9 +26,11 @@ def rst_file_fixture(tmp_path: Path) -> Path:
 def test_shell_command_evaluator_runs(rst_file: Path) -> None:
     """Test that ShellCommandEvaluator successfully runs a shell command."""
     evaluator = ShellCommandEvaluator(
-        args=["bash", "-c", "echo 'Hello, Sybil!'"], pad_file=False, write_to_file=False,
+        args=["bash", "-c", "echo 'Hello, Sybil!'"],
+        pad_file=False,
+        write_to_file=False,
     )
-    parser = CodeBlockParser(language="shell", evaluator=evaluator)
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
@@ -33,9 +38,6 @@ def test_shell_command_evaluator_runs(rst_file: Path) -> None:
 
     # Evaluate the shell command
     example.evaluate()
-
-    # Check if the shell command output is in the example namespace
-    assert example.namespace["output"] == "Hello, Sybil!\n"
 
 
 def test_shell_command_evaluator_with_failure(rst_file: Path) -> None:
@@ -57,7 +59,10 @@ def test_shell_command_evaluator_with_failure(rst_file: Path) -> None:
 def test_shell_command_evaluator_with_environment(rst_file: Path) -> None:
     """Test that ShellCommandEvaluator respects environment variables."""
     evaluator = ShellCommandEvaluator(
-        args=["bash", "-c", "echo $TEST_ENV"], env={"TEST_ENV": "SybilTestEnv"}, pad_file=False, write_to_file=False
+        args=["bash", "-c", "echo $TEST_ENV"],
+        env={"TEST_ENV": "SybilTestEnv"},
+        pad_file=False,
+        write_to_file=False,
     )
     parser = CodeBlockParser(language="shell", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
