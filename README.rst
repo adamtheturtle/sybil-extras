@@ -68,8 +68,3 @@ ShellCommandEvaluator
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
-
-- Add Github RELEASE_PAT
-- Test with markdown file
-- Submit to PyPI
-- Use in projects
