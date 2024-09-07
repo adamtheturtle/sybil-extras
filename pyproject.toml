@@ -237,9 +237,9 @@ spelling-store-unknown-words = 'no'
 
 ignore = [
     "*.enc",
+    ".git_archival.txt",
     ".pre-commit-config.yaml",
     ".vscode/**",
-    "readthedocs.yaml",
     "CHANGELOG.rst",
     "CODE_OF_CONDUCT.rst",
     "CONTRIBUTING.rst",
@@ -248,16 +248,16 @@ ignore = [
     "ci",
     "ci/**",
     "codecov.yaml",
+    "conftest.py",
     "doc8.ini",
     "docs",
     "docs/**",
-    ".git_archival.txt",
+    "lint.mk",
+    "readthedocs.yaml",
     "spelling_private_dict.txt",
     "tests",
     "tests-pylintrc",
     "tests/**",
-    "vuforia_secrets.env.example",
-    "lint.mk",
 ]
 
 [tool.deptry]
