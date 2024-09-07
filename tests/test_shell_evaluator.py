@@ -150,7 +150,11 @@ def test_file_is_passed(
     rst_file: Path,
     tmp_path: Path,
 ) -> None:
-    """A file with the code block content is passed to the command."""
+    """
+    A file with the code block content is passed to the command.
+
+    The file is created with a trailing newline.
+    """
     bash_function = """
     cp "$2" "$1"
     """
@@ -268,7 +272,10 @@ def test_write_to_file(
     """Changes are written to the original file iff `write_to_file` is True."""
     original_content = rst_file.read_text(encoding="utf-8")
     file_with_new_content = tmp_path / "new_file.txt"
-    file_with_new_content.write_text(data="foobar", encoding="utf-8")
+    # Add multiple newlines to show that they are not included in the file.
+    # No code block ends with multiple newlines.
+    new_content = "foobar\n\n"
+    file_with_new_content.write_text(data=new_content, encoding="utf-8")
     bash_function = """
     cp "$1" "$2"
     """
