@@ -12,19 +12,6 @@ from sybil import Example
 from sybil.evaluators.python import pad
 
 
-def _count_trailing_newlines(s: str) -> int:
-    """
-    Count the trailing newlines in the given string.
-
-    Args:
-        s (str): The input string.
-
-    Returns:
-        int: The number of trailing newline characters.
-    """
-    return len(s) - len(s.rstrip("\n"))
-
-
 @beartype
 def _get_indentation(example: Example) -> str:
     """Get the indentation of the parsed code in the example."""
@@ -61,7 +48,6 @@ class ShellCommandEvaluator:
         args: Sequence[str | Path],
         env: Mapping[str, str] | None = None,
         tempfile_suffix: str = "",
-        max_additional_trailing_newlines_written: int = 1,
         *,
         # For some commands, padding is good: e.g. we want to see the error
         # reported on the correct line for `mypy`. For others, padding is bad:
@@ -77,12 +63,6 @@ class ShellCommandEvaluator:
             args: The shell command to run.
             env: The environment variables to use when running the shell
                 command.
-            max_additional_trailing_newlines_written: Some formatters add
-                newlines to each code block. If the code block is at the end of
-                the file, this will mean that the written file (if
-                `write_to_file` is True) will have two or more newlines at the
-                end. This parameter controls the maximum number of additional
-                newlines that are added to the end of a file.
             tempfile_suffix: The suffix to use for the temporary file.
                 This is useful for commands that expect a specific file suffix.
                 For example `pre-commit` hooks which expect `.py` files.
@@ -99,9 +79,6 @@ class ShellCommandEvaluator:
         self._tempfile_suffix = tempfile_suffix
         self._pad_file = pad_file
         self._write_to_file = write_to_file
-        self._max_additional_trailing_newlines_written = (
-            max_additional_trailing_newlines_written
-        )
 
     def __call__(self, example: Example) -> None:
         """Run the shell command on the example file."""
@@ -164,26 +141,16 @@ class ShellCommandEvaluator:
             )
 
             modified_content = existing_file_content.replace(
-                indented_existing_region_content,
-                indented_temp_file_content,
+                # Some regions are given to us with a trailing newline, and
+                # some are not.  We need to remove the trailing newline from
+                # the existing region content to avoid a double newline.
+                #
+                # There is no such thing as a code block with two trailing
+                # newlines, so we need not worry about tools which add this.
+                indented_existing_region_content.rstrip("\n"),
+                indented_temp_file_content.rstrip("\n"),
                 1,
             )
-
-            original_trailing_newlines = _count_trailing_newlines(s=source)
-            modified_content_trailing_newlines = _count_trailing_newlines(
-                s=modified_content
-            )
-            if (
-                modified_content_trailing_newlines
-                - self._max_additional_trailing_newlines_written
-                > original_trailing_newlines
-            ):
-                modified_content = modified_content.rstrip("\n")
-                num_newlines = (
-                    original_trailing_newlines
-                    + self._max_additional_trailing_newlines_written
-                )
-                modified_content += "\n" * num_newlines
 
             existing_file_path.write_text(
                 data=modified_content,
