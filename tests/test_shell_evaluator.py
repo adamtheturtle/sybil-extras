@@ -41,9 +41,6 @@ def test_shell_command_evaluator_runs(rst_file: Path) -> None:
     document = sybil.parse(path=rst_file)
     (example,) = list(document)
 
-    with pytest.raises(ValueError) as exc:
-        example.evaluate()
-
     expected_output = textwrap.dedent(
         text="""\
         Shell command failed:
@@ -54,7 +51,8 @@ def test_shell_command_evaluator_runs(rst_file: Path) -> None:
         """,
     )
 
-    assert str(exc.value) == expected_output
+    with pytest.raises(expected_exception=ValueError, match=expected_output):
+        example.evaluate()
 
 
 def test_shell_command_evaluator_with_failure(rst_file: Path) -> None:
