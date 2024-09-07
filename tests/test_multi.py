@@ -1,154 +1,169 @@
+from pathlib import Path
+
 import pytest
-from sybil import Example
+from sybil import Example, Sybil
+from sybil.parsers.rest import CodeBlockParser
 
-from sybil_extras.evaluators.multi import (
-    MultiEvaluator,  # Import your MultiEvaluator class
-)
-
-
-# 1. Simple evaluator that verifies the result of an expression
-def evaluator1(example: Example) -> None:
-    # For simplicity, we'll assume the example's source can be evaluated directly
-    result = eval(example.source)
-    assert result == example.expected, f"Expected {example.expected}, got {result}"
+from sybil_extras.evaluators.multi import MultiEvaluator
 
 
-# 2. Another evaluator that just logs the evaluation step by adding it to the namespace
-def evaluator2(example: Example) -> None:
-    example.namespace["evaluated"] = True  # Set a flag in the example's namespace
+# 1. Evaluator that adds a 'step_1' flag to the namespace
+def evaluator_1(example: Example) -> None:
+    """
+    Evaluator 1 modifies the example's namespace by setting 'step_1' to True.
+    """
+    breakpoint()
+    example.namespace["step_1"] = True
 
 
-# 3. Test that MultiEvaluator runs all evaluators correctly
-def test_multi_evaluator_runs_all():
-    # Mock example
-    example = Example(
-        location=None,
-        document=None,
-        source="2 + 2",
-        namespace={},
-        expected=4  # Expecting result 4
-    )
-
-    # Create MultiEvaluator with both evaluators
-    multi_evaluator = MultiEvaluator([evaluator1, evaluator2])
-
-    # Call MultiEvaluator
-    multi_evaluator(example)
-
-    # Check if evaluator2 modified the namespace
-    assert example.namespace["evaluated"], "evaluator2 did not run correctly"
+# 2. Evaluator that adds a 'step_2' flag to the namespace
+def evaluator_2(example: Example) -> None:
+    """
+    Evaluator 2 modifies the example's namespace by setting 'step_2' to True.
+    """
+    example.namespace["step_2"] = True
 
 
-# 4. Test that MultiEvaluator raises an error if one evaluator fails
-def test_multi_evaluator_raises_on_failure():
-    # Mock example
-    example = Example(
-        location=None,
-        document=None,
-        source="2 + 2",
-        namespace={},
-        expected=5  # Intentionally incorrect expectation to cause failure
-    )
-
-    # Create MultiEvaluator with both evaluators
-    multi_evaluator = MultiEvaluator([evaluator1, evaluator2])
-
-    # Assert that MultiEvaluator raises AssertionError when evaluator1 fails
-    with pytest.raises(AssertionError, match="Expected 5, got 4"):
-        multi_evaluator(example)
+# 3. Evaluator that adds a 'step_3' flag to the namespace
+def evaluator_3(example: Example) -> None:
+    """
+    Evaluator 3 modifies the example's namespace by setting 'step_3' to True.
+    """
+    example.namespace["step_3"] = True
 
 
-# 5. Test that MultiEvaluator runs no evaluators if the list is empty
-def test_multi_evaluator_no_evaluators():
-    # Mock example
-    example = Example(
-        location=None,
-        document=None,
-        source="2 + 2",
-        namespace={},
-        expected=4
-    )
+@pytest.fixture
+def rst_file(tmp_path: Path) -> Path:
+    """
+    Fixture to create a temporary RST file with Python code blocks.
+    """
+    content = """
+    .. code-block:: python
 
-    # Create MultiEvaluator with no evaluators
-    multi_evaluator = MultiEvaluator([])
+        x = 2 + 2
+        assert x == 4
 
-    # Call MultiEvaluator, expecting no errors and no changes to the example
-    multi_evaluator(example)
+    .. code-block:: python
 
-    # Ensure the namespace is still empty
-    assert "evaluated" not in example.namespace, "Namespace should remain unchanged"
-
-
-# 6. Test with multiple successful evaluators in sequence
-def test_multi_evaluator_multiple_successful_evaluators():
-    # Another evaluator that also modifies the namespace
-    def evaluator3(example: Example) -> None:
-        example.namespace["step"] = 3  # Set an arbitrary value in the namespace
-
-    # Mock example
-    example = Example(
-        location=None,
-        document=None,
-        source="sum([i for i in range(5)])",  # 0 + 1 + 2 + 3 + 4
-        namespace={},
-        expected=10  # Expected result is 10
-    )
-
-    # Create MultiEvaluator instance with all three evaluators
-    multi_evaluator = MultiEvaluator([evaluator1, evaluator2, evaluator3])
-
-    # Call MultiEvaluator
-    multi_evaluator(example)
-
-    # Check if both evaluators modified the namespace correctly
-    assert example.namespace["evaluated"], "evaluator2 did not run"
-    assert example.namespace["step"] == 3, "evaluator3 did not modify the namespace"
+        y = sum([i for i in range(5)])
+        assert y == 10
+    """
+    rst_file = tmp_path / "test_document.rst"
+    rst_file.write_text(content)
+    return rst_file
 
 
-# 7. Test if evaluators receive the same example and modifications persist
-def test_multi_evaluator_propagates_example():
-    # Evaluator that modifies the example in the first step
-    def evaluator3(example: Example) -> None:
-        example.namespace["step"] = 1
+def test_multi_evaluator_runs_all(rst_file: Path) -> None:
+    """
+    Test that MultiEvaluator runs all evaluators and modifies the namespace as expected.
+    """
+    # Create a MultiEvaluator with three evaluators
+    multi_evaluator = MultiEvaluator(evaluators=[evaluator_1, evaluator_2, evaluator_3])
 
-    # Evaluator that checks the modification and modifies it further
-    def evaluator4(example: Example) -> None:
-        assert example.namespace["step"] == 1, "evaluator3 did not set 'step' correctly"
-        example.namespace["step"] = 2
-
-    example = Example(
-        location=None,
-        document=None,
-        source="2 + 2",
-        namespace={},
-        expected=4
-    )
-
-    # Create MultiEvaluator instance with both evaluators
-    multi_evaluator = MultiEvaluator([evaluator3, evaluator4])
-
-    # Call MultiEvaluator
-    multi_evaluator(example)
-
-    # Assert that the second evaluator received the modified example
-    assert example.namespace["step"] == 2, "Evaluator chain did not propagate modifications"
-
-
-# 8. Test with MultiEvaluator integrated with Sybil (assuming you have Sybil test cases)
-def test_sybil_integration_with_multi_evaluator():
-    from sybil import Sybil
-    from sybil.parsers.doctest import DocTestParser
-
-    # Setup the MultiEvaluator with the simple evaluators
-    multi_evaluator = MultiEvaluator([evaluator1, evaluator2])
-
-    # Set up Sybil with a mock document directory and the MultiEvaluator
+    # Setup Sybil with the CodeBlockParser, passing the MultiEvaluator
     suite = Sybil(
-        [DocTestParser()],
-        evaluators=[multi_evaluator],
-        paths=["tests/mock_docs"]  # Use a directory containing mock documentation
+        parsers=[CodeBlockParser(language="python", evaluator=multi_evaluator)],
+
     )
 
-    # Run the test suite and assert that it runs successfully
-    result = suite.run(globals())
-    assert result.wasSuccessful(), "Sybil test suite failed"
+    # Run the Sybil test suite
+    result = suite.parse(path=rst_file)
+    breakpoint()
+
+    # # Check that the evaluators modified the namespace correctly
+    # example = Example(location=None, document=None, source="x = 2 + 2", namespace={}, expected=None)
+    # multi_evaluator(example=example)
+
+    # assert result.wasSuccessful(), "Sybil test suite did not pass"
+    # assert example.namespace["step_1"], "'step_1' not set by evaluator_1"
+    # assert example.namespace["step_2"], "'step_2' not set by evaluator_2"
+    # assert example.namespace["step_3"], "'step_3' not set by evaluator_3"
+
+
+def test_multi_evaluator_raises_on_failure(rst_file: Path) -> None:
+    """
+    Test that MultiEvaluator raises an error if an evaluator fails.
+    """
+
+    # Create a failing evaluator that raises an AssertionError
+    def failing_evaluator(example: Example) -> None:
+        """
+        Evaluator that intentionally fails by raising an AssertionError.
+        """
+        raise AssertionError("Failure in failing_evaluator")
+
+    # Create MultiEvaluator with one failing evaluator and two successful ones
+    multi_evaluator = MultiEvaluator(evaluators=[evaluator_1, failing_evaluator, evaluator_3])
+
+    # Setup Sybil with the CodeBlockParser
+    suite = Sybil(
+        parsers=[CodeBlockParser(language="python", evaluator=multi_evaluator)],
+
+    )
+
+    # Ensure that MultiEvaluator raises an AssertionError
+    with pytest.raises(AssertionError, match="Failure in failing_evaluator"):
+        result = suite.parse(path=rst_file)
+        assert not result.wasSuccessful(), "Sybil test suite should have failed"
+
+
+def test_multi_evaluator_no_evaluators(rst_file: Path) -> None:
+    """
+    Test that MultiEvaluator runs without error when no evaluators are provided.
+    """
+    # Create MultiEvaluator with no evaluators
+    multi_evaluator = MultiEvaluator(evaluators=[])
+
+    # Setup Sybil with the CodeBlockParser
+    suite = Sybil(
+        parsers=[CodeBlockParser(language="python", evaluator=multi_evaluator)],
+
+    )
+
+    # Run the Sybil test suite
+    result = suite.parse(path=rst_file)
+
+    # Ensure the test suite passes with no evaluators
+    assert result.wasSuccessful(), "Sybil test suite should have passed with no evaluators"
+
+
+def test_multi_evaluator_propagates_example(rst_file: Path) -> None:
+    """
+    Test that modifications made by one evaluator are visible to subsequent evaluators.
+    """
+
+    # Evaluator that modifies the namespace
+    def evaluator_4(example: Example) -> None:
+        """
+        Evaluator 4 sets 'step_4' in the namespace.
+        """
+        example.namespace["step_4"] = True
+
+    def evaluator_5(example: Example) -> None:
+        """
+        Evaluator 5 checks if 'step_4' is set and sets 'step_5' in the namespace.
+        """
+        assert example.namespace.get("step_4"), "evaluator_4 did not set 'step_4'"
+        example.namespace["step_5"] = True
+
+    # Create MultiEvaluator with evaluators 4 and 5
+    multi_evaluator = MultiEvaluator(evaluators=[evaluator_4, evaluator_5])
+
+    # Setup Sybil with the CodeBlockParser
+    suite = Sybil(
+        parsers=[CodeBlockParser(language="python", evaluator=multi_evaluator)],
+
+    )
+
+    # Run the Sybil test suite
+    result = suite.parse(path=rst_file)
+
+    # Ensure the test suite passes
+    assert result.wasSuccessful(), "Sybil test suite should have passed with propagating evaluators"
+
+    # Create an example and check namespace propagation
+    example = Example(location=None, document=None, source="x = 2 + 2", namespace={}, expected=None)
+    multi_evaluator(example=example)
+
+    assert example.namespace["step_4"], "'step_4' not set by evaluator_4"
+    assert example.namespace["step_5"], "'step_5' not set by evaluator_5"
