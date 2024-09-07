@@ -7,7 +7,6 @@ TODO:
 - Create RTD documentation, fix urls.Documentation = "TODO"
 - Use meta - this in this project (conftest.py)
 - Test with markdown file
-- Set up pre-commit for this repo
 - Set up CI
 - Submit to PyPI
 - Use in projects
