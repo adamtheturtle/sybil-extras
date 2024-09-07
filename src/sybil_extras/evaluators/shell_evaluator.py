@@ -1,0 +1,150 @@
+"""Setup for Sybil."""
+
+import subprocess
+import tempfile
+import textwrap
+from collections.abc import Mapping, Sequence
+from pathlib import Path
+
+from sybil import Example
+from sybil.evaluators.python import pad
+
+
+
+def _get_indentation(example: Example) -> str:
+    """Get the indentation of the parsed code in the example."""
+    first_line = str(example.parsed).split("\n", 1)[0]
+    region_text = example.document.text[
+        example.region.start : example.region.end
+    ]
+    indentation = ""
+    region_lines = region_text.splitlines()
+    for region_line in region_lines:
+        if region_line.lstrip() == first_line.lstrip():
+            left_padding_region_line = len(region_line) - len(
+                region_line.lstrip()
+            )
+            left_padding_parsed_line = len(first_line) - len(
+                first_line.lstrip()
+            )
+            indentation_length = (
+                left_padding_region_line - left_padding_parsed_line
+            )
+            indentation_character = region_line[0]
+            indentation = indentation_character * indentation_length
+            break
+
+    return indentation
+
+
+class ShellCommandEvaluator:
+    """Run a shell command on the example file."""
+
+    def __init__(
+        self,
+        args: Sequence[str | Path],
+        env: Mapping[str, str] | None = None,
+        tempfile_suffix: str = "",
+        *,
+        # For some commands, padding is good: e.g. we want to see the error
+        # reported on the correct line for `mypy`. For others, padding is bad:
+        # e.g. `ruff format` expects the file to be formatted without a bunch
+        # of newlines at the start.
+        pad_file: bool,
+        write_to_file: bool,
+    ) -> None:
+        """
+        Initialize the evaluator.
+
+        Args:
+            args: The shell command to run.
+            env: The environment variables to use when running the shell
+                command.
+            tempfile_suffix: The suffix to use for the temporary file.
+                This is useful for commands that expect a specific file suffix.
+                For example `pre-commit` hooks which expect `.py` files.
+            pad_file: Whether to pad the file with newlines at the start.
+                This is useful for error messages that report the line number.
+                However, this is detrimental to commands that expect the file
+                to not have a bunch of newlines at the start, such as
+                formatters.
+            write_to_file: Whether to write changes to the file. This is useful
+                for formatters.
+        """
+        self._args = args
+        self._env = env
+        self._tempfile_suffix = tempfile_suffix
+        self._pad_file = pad_file
+        self._write_to_file = write_to_file
+
+    def __call__(self, example: Example) -> None:
+        """Run the shell command on the example file."""
+        if self._pad_file:
+            source = pad(
+                source=example.parsed,
+                line=example.line + example.parsed.line_offset,
+            )
+        else:
+            source = example.parsed
+
+        prefix = Path(example.path).name.replace(".", "_") + "_"
+        with tempfile.NamedTemporaryFile(
+            # Create a sibling file in the same directory as the example file.
+            # The name also looks like the example file name.
+            # This is so that output reflects the actual file path.
+            # This is useful for error messages, and for ignores.
+            prefix=prefix,
+            dir=Path(example.path).parent,
+            mode="w+",
+            delete=True,
+            suffix=self._tempfile_suffix,
+        ) as f:
+            f.write(source)
+            f.flush()
+            temp_file_path = Path(f.name)
+
+            result = subprocess.run(
+                args=[*self._args, temp_file_path],
+                capture_output=True,
+                check=False,
+                text=True,
+                env=self._env,
+            )
+
+            if self._write_to_file:
+                temp_file_content = temp_file_path.read_text(encoding="utf-8")
+                existing_file_path = Path(example.path)
+                existing_file_content = existing_file_path.read_text(
+                    encoding="utf-8"
+                )
+                existing_region_content = example.region.parsed
+                indent_prefix = _get_indentation(example=example)
+                indented_existing_region_content = textwrap.indent(
+                    text=existing_region_content,
+                    prefix=indent_prefix,
+                )
+
+                indented_temp_file_content = textwrap.indent(
+                    text=temp_file_content,
+                    prefix=indent_prefix,
+                )
+
+                modified_content = existing_file_content.replace(
+                    indented_existing_region_content,
+                    indented_temp_file_content,
+                    1,
+                )
+                existing_file_path.write_text(
+                    modified_content,
+                    encoding="utf-8",
+                )
+
+        if result.returncode != 0:
+            msg = (
+                f"Shell command failed:\n"
+                f"Command: {self._args}\n"
+                f"Output: {result.stdout}\n"
+                f"Error: {result.stderr}"
+            )
+
+            raise AssertionError(msg)
