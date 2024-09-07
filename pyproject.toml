@@ -12,10 +12,10 @@ name = "sybil-extras"
 description = "Additions to Sybil, the documentation testing tool."
 readme = { file = "README.rst", content-type = "text/x-rst" }
 keywords = [
-    "sybil",
+    "markdown",
     "rst",
     "sphinx",
-    "markdown",
+    "sybil",
     "testing",
 ]
 license = { file = "LICENSE" }
@@ -29,8 +29,8 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 dynamic = [
     "version",
