@@ -27,6 +27,7 @@ def _failing_evaluator(example: Example) -> None:
     """
     raise AssertionError("Failure in failing_evaluator: " + str(example))
 
+
 @pytest.fixture(name="rst_file")
 def rst_file_fixture(tmp_path: Path) -> Path:
     """
@@ -54,7 +55,7 @@ def test_multi_evaluator_runs_all(rst_file: Path) -> None:
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
-    (example, ) = list(document)
+    (example,) = list(document)
     example.evaluate()
 
     expected_namespace = {"step_1": True, "step_2": True, "step_3": True}
@@ -72,6 +73,6 @@ def test_multi_evaluator_raises_on_failure(rst_file: Path) -> None:
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
-    (example, ) = list(document)
+    (example,) = list(document)
     with pytest.raises(AssertionError, match="Failure in failing_evaluator"):
         example.evaluate()
