@@ -152,12 +152,7 @@ def test_file_is_passed(
 ) -> None:
     """A file with the code block content is passed to the command."""
     bash_function = """
-    write_to_file() {
-        local file="$1"
-        local content=`cat $2`
-        echo "$content" > "$file"
-    }
-    write_to_file "$1" "$2"
+    cp "$2" "$1"
     """
 
     file_path = tmp_path / "file.txt"
@@ -182,12 +177,7 @@ def test_file_path(rst_file: Path, tmp_path: Path) -> None:
     resembling the documentation file name.
     """
     bash_function = """
-    write_to_file() {
-        local file="$1"
-        local content=$2
-        echo "$content" > "$file"
-    }
-    write_to_file "$1" "$2"
+    echo "$2" > "$1"
     """
 
     file_path = tmp_path / "file.txt"
@@ -215,12 +205,7 @@ def test_file_path(rst_file: Path, tmp_path: Path) -> None:
 def test_file_suffix(rst_file: Path, tmp_path: Path) -> None:
     """The given file suffix is used."""
     bash_function = """
-    write_to_file() {
-        local file="$1"
-        local content=$2
-        echo "$content" > "$file"
-    }
-    write_to_file "$1" "$2"
+    echo "$2" > "$1"
     """
 
     file_path = tmp_path / "file.txt"
@@ -244,12 +229,7 @@ def test_file_suffix(rst_file: Path, tmp_path: Path) -> None:
 def test_pad(rst_file: Path, tmp_path: Path) -> None:
     """If pad is True, the file content is padded."""
     bash_function = """
-    write_to_file() {
-        local file="$1"
-        local content=`cat $2`
-        echo "$content" > "$file"
-    }
-    write_to_file "$1" "$2"
+    cp "$2" "$1"
     """
 
     file_path = tmp_path / "file.txt"
