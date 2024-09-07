@@ -259,18 +259,21 @@ def test_pad(rst_file: Path, tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize(argnames="write_to_file", argvalues=[True, False])
-def test_write_to_file(rst_file: Path, *, write_to_file: bool) -> None:
+def test_write_to_file(
+    tmp_path: Path,
+    rst_file: Path,
+    *,
+    write_to_file: bool,
+) -> None:
     """Changes are written to the original file iff `write_to_file` is True."""
     original_content = rst_file.read_text(encoding="utf-8")
+    file_with_new_content = tmp_path / "new_file.txt"
+    file_with_new_content.write_text(data="foobar", encoding="utf-8")
     bash_function = """
-    replace_with_foobar() {
-        local file="$1"
-        echo -n "foobar" > "$file"
-    }
-    replace_with_foobar "$1"
+    cp "$1" "$2"
     """
     evaluator = ShellCommandEvaluator(
-        args=["bash", "-c", bash_function, "_"],
+        args=["bash", "-c", bash_function, "_", file_with_new_content],
         pad_file=False,
         write_to_file=write_to_file,
     )
