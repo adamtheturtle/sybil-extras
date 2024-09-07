@@ -152,12 +152,7 @@ def test_file_is_passed(
 ) -> None:
     """A file with the code block content is passed to the command."""
     bash_function = """
-    write_to_file() {
-        local file="$1"
-        local content=`cat $2`
-        echo "$content" > "$file"
-    }
-    write_to_file "$1" "$2"
+    cp "$2" "$1"
     """
 
     file_path = tmp_path / "file.txt"
@@ -182,12 +177,7 @@ def test_file_path(rst_file: Path, tmp_path: Path) -> None:
     resembling the documentation file name.
     """
     bash_function = """
-    write_to_file() {
-        local file="$1"
-        local content=$2
-        echo "$content" > "$file"
-    }
-    write_to_file "$1" "$2"
+    echo "$2" > "$1"
     """
 
     file_path = tmp_path / "file.txt"
@@ -215,12 +205,7 @@ def test_file_path(rst_file: Path, tmp_path: Path) -> None:
 def test_file_suffix(rst_file: Path, tmp_path: Path) -> None:
     """The given file suffix is used."""
     bash_function = """
-    write_to_file() {
-        local file="$1"
-        local content=$2
-        echo "$content" > "$file"
-    }
-    write_to_file "$1" "$2"
+    echo "$2" > "$1"
     """
 
     file_path = tmp_path / "file.txt"
@@ -244,12 +229,7 @@ def test_file_suffix(rst_file: Path, tmp_path: Path) -> None:
 def test_pad(rst_file: Path, tmp_path: Path) -> None:
     """If pad is True, the file content is padded."""
     bash_function = """
-    write_to_file() {
-        local file="$1"
-        local content=`cat $2`
-        echo "$content" > "$file"
-    }
-    write_to_file "$1" "$2"
+    cp "$2" "$1"
     """
 
     file_path = tmp_path / "file.txt"
@@ -279,18 +259,21 @@ def test_pad(rst_file: Path, tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize(argnames="write_to_file", argvalues=[True, False])
-def test_write_to_file(rst_file: Path, *, write_to_file: bool) -> None:
+def test_write_to_file(
+    tmp_path: Path,
+    rst_file: Path,
+    *,
+    write_to_file: bool,
+) -> None:
     """Changes are written to the original file iff `write_to_file` is True."""
     original_content = rst_file.read_text(encoding="utf-8")
+    file_with_new_content = tmp_path / "new_file.txt"
+    file_with_new_content.write_text(data="foobar", encoding="utf-8")
     bash_function = """
-    replace_with_foobar() {
-        local file="$1"
-        echo -n "foobar" > "$file"
-    }
-    replace_with_foobar "$1"
+    cp "$1" "$2"
     """
     evaluator = ShellCommandEvaluator(
-        args=["bash", "-c", bash_function, "_"],
+        args=["bash", "-c", bash_function, "_", file_with_new_content],
         pad_file=False,
         write_to_file=write_to_file,
     )
