@@ -90,7 +90,9 @@ class ShellCommandEvaluator:
         else:
             source = example.parsed
 
-        prefix = Path(example.path).name.replace(".", "_") + "_"
+        prefix = (
+            Path(example.path).name.replace(".", "_") + f"_l{example.line}_"
+        )
         with tempfile.NamedTemporaryFile(
             # Create a sibling file in the same directory as the example file.
             # The name also looks like the example file name.
@@ -100,7 +102,7 @@ class ShellCommandEvaluator:
             dir=Path(example.path).parent,
             mode="w+",
             delete=True,
-            suffix=self._tempfile_suffix,
+            suffix=".example" + self._tempfile_suffix,
         ) as f:
             f.write(source)
             f.flush()

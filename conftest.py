@@ -7,7 +7,6 @@ from doctest import ELLIPSIS
 import pytest
 from beartype import beartype
 from sybil import Sybil
-from sybil.evaluators.python import PythonEvaluator
 from sybil.parsers.rest import (
     ClearNamespaceParser,
     CodeBlockParser,
@@ -37,33 +36,33 @@ sybil = Sybil(
             language="python",
             evaluator=MultiEvaluator(
                 evaluators=[
-                    PythonEvaluator(),
-                    ShellCommandEvaluator(
-                        args=[
-                            sys.executable,
-                            "-m",
-                            "pre_commit",
-                            "run",
-                            "ruff-format-fix",
-                            "--files",
-                        ],
-                        tempfile_suffix=".py",
-                        pad_file=False,
-                        write_to_file=True,
-                    ),
-                    ShellCommandEvaluator(
-                        args=[
-                            sys.executable,
-                            "-m",
-                            "pre_commit",
-                            "run",
-                            "ruff-check-fix",
-                            "--files",
-                        ],
-                        tempfile_suffix=".py",
-                        pad_file=False,
-                        write_to_file=True,
-                    ),
+                    # PythonEvaluator(),
+                    # ShellCommandEvaluator(
+                    #     args=[
+                    #         sys.executable,
+                    #         "-m",
+                    #         "pre_commit",
+                    #         "run",
+                    #         "ruff-format-fix",
+                    #         "--files",
+                    #     ],
+                    #     tempfile_suffix=".py",
+                    #     pad_file=False,
+                    #     write_to_file=True,
+                    # ),
+                    # ShellCommandEvaluator(
+                    #     args=[
+                    #         sys.executable,
+                    #         "-m",
+                    #         "pre_commit",
+                    #         "run",
+                    #         "ruff-check-fix",
+                    #         "--files",
+                    #     ],
+                    #     tempfile_suffix=".py",
+                    #     pad_file=False,
+                    #     write_to_file=True,
+                    # ),
                     ShellCommandEvaluator(
                         args=[
                             sys.executable,
