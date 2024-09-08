@@ -66,6 +66,13 @@ repos:
         types_or: [python, toml]
         pass_filenames: false
 
+    -   id: mypy-docs
+        name: mypy-docs
+        stages: [push]
+        entry: python -m format_fix_docs --language=python --command="mypy"
+        language: system
+        types_or: [markdown, rst]
+
     -   id: check-manifest
         name: check-manifest
         stages: [push]
@@ -80,6 +87,13 @@ repos:
         language: system
         types_or: [python, toml]
         pass_filenames: false
+
+    -   id: pyright-docs
+        name: pyright-docs
+        stages: [push]
+        entry: python -m format_fix_docs --language=python --command="pyright"
+        language: system
+        types_or: [markdown, rst]
 
     -   id: vulture
         name: vulture
@@ -107,11 +121,24 @@ repos:
         stages: [manual]
         pass_filenames: false
 
+    -   id: pylint-docs
+        name: pylint-docs
+        entry: python -m format_fix_docs --language=python --command="pylint"
+        language: system
+        stages: [manual]
+        types_or: [markdown, rst]
+
     -   id: ruff-check
         name: Ruff check
         entry: ruff check
         language: system
         types_or: [python]
+
+    -   id: ruff-check-docs
+        name: Ruff check docs
+        entry: python -m format_fix_docs --language=python --command="ruff check"
+        language: system
+        types_or: [markdown, rst]
 
     -   id: ruff-format-diff
         name: Ruff format diff
@@ -156,10 +183,3 @@ repos:
         language: system
         types_or: [toml]
         files: pyproject.toml
-
-    -   id: run-main-script
-        name: Run Main Script
-        entry: python format_fix_docs.py
-        language: system
-        types_or: [markdown, rst]
-        pass_filenames: true
