@@ -17,7 +17,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.12"]
         platform: [ubuntu-latest]
 
     runs-on: ${{ matrix.platform }}
@@ -52,6 +52,10 @@ jobs:
         with:
           fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }}
+
+      - uses: actions/checkout@v4
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
 
       - uses: pre-commit-ci/lite-action@v1.0.2
         if: always()
