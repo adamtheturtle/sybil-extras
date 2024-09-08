@@ -91,7 +91,7 @@ sybil = Sybil(
                             **os.environ,
                             # These hooks are run separately as they do not
                             # work with file padding.
-                            "SKIP": "ruff-format-diff,ruff-check",
+                            "SKIP": "ruff-format-diff",
                         },
                         tempfile_suffix=".py",
                         pad_file=True,

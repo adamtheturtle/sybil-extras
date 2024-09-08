@@ -12,6 +12,45 @@ from sybil import Example
 from sybil.evaluators.python import pad
 
 
+def _count_leading_newlines(s: str) -> int:
+    """
+    Count the number of leading newlines in a string.
+
+    Args:
+        s: The input string.
+
+    Returns:
+        The number of leading newlines.
+    """
+    count = 0
+    non_newline_found = False
+    for char in s:
+        if char == "\n" and not non_newline_found:
+            count += 1
+        else:
+            non_newline_found = True
+    return count
+
+
+@beartype
+def _lstrip_newlines(input_string: str, number_of_newlines: int) -> str:
+    """
+    Removes a specified number of newlines from the start of the string.
+
+    Args:
+        input_string: The input string to process.
+        number_of_newlines: The number of newlines to remove from the
+            start.
+
+    Returns:
+        The string with the specified number of leading newlines removed.
+        If fewer newlines exist, removes all of them.
+    """
+    num_leading_newlines = _count_leading_newlines(s=input_string)
+    lines_to_remove = min(num_leading_newlines, number_of_newlines)
+    return input_string[lines_to_remove:]
+
+
 @beartype
 def _get_indentation(example: Example) -> str:
     """Get the indentation of the parsed code in the example."""
@@ -144,15 +183,29 @@ class ShellCommandEvaluator:
                 prefix=indent_prefix,
             )
 
+            # Some regions are given to us with a trailing newline, and
+            # some are not.  We need to remove the trailing newline from
+            # the existing region content to avoid a double newline.
+            #
+            # There is no such thing as a code block with two trailing
+            # newlines, so we need not worry about tools which add this.
+            content_to_replace = indented_existing_region_content.rstrip("\n")
+            replacement = indented_temp_file_content.rstrip("\n")
+
+            # Examples are given with no leading newline.
+            # While it is possible that a formatter added leading newlines,
+            # we assume that this is not the case, and we remove any leading
+            # newlines from the replacement which were added by the padding.
+            if self._pad_file:
+                replacement = _lstrip_newlines(
+                    input_string=replacement,
+                    number_of_newlines=example.line
+                    + example.parsed.line_offset,
+                )
+
             modified_content = existing_file_content.replace(
-                # Some regions are given to us with a trailing newline, and
-                # some are not.  We need to remove the trailing newline from
-                # the existing region content to avoid a double newline.
-                #
-                # There is no such thing as a code block with two trailing
-                # newlines, so we need not worry about tools which add this.
-                indented_existing_region_content.rstrip("\n"),
-                indented_temp_file_content.rstrip("\n"),
+                content_to_replace,
+                replacement,
                 1,
             )
 
