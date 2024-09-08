@@ -1,12 +1,12 @@
 """Setup for Sybil."""
 
 import shlex
-import subprocess
 import tempfile
 import textwrap
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
+import subprocess_tee
 from beartype import beartype
 from sybil import Example
 from sybil.evaluators.python import pad
@@ -113,10 +113,14 @@ class ShellCommandEvaluator:
             f.flush()
             temp_file_path = Path(f.name)
 
-            result = subprocess.run(
-                args=[*self._args, temp_file_path],
-                capture_output=True,
+            args = [*self._args, temp_file_path]
+            args_strings = [str(item) for item in args]
+            # Use `subprocess_tee` to capture the output of the command but
+            # also show it live.
+            result = subprocess_tee.run(
+                args=args_strings,
                 check=False,
+                capture_output=True,
                 text=True,
                 env=self._env,
             )
