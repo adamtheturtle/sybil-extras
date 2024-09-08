@@ -52,7 +52,6 @@ ShellCommandEvaluator
 
     from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 
-
     evaluator = ShellCommandEvaluator(
         args=[sys.executable, "-m", "mypy"],
         # The code block is written to a temporary file

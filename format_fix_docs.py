@@ -1,6 +1,7 @@
 """CLI to run commands on the given files."""
 
 import shlex
+import sys
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 
@@ -64,6 +65,7 @@ def _run_args_against_docs(
             example.evaluate()
         except ValueError as exc:
             click.echo(message=str(exc), err=True)
+            sys.exit(1)
 
 
 @beartype
