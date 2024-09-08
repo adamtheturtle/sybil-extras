@@ -158,11 +158,23 @@ repos:
         language: system
         types_or: [python]
 
+    -   id: ruff-check-fix-docs
+        name: Ruff check fix docs
+        entry: python -m format_fix_docs --language=python --command="ruff check --fix"
+        language: system
+        types_or: [markdown, rst]
+
     -   id: ruff-format-fix
         name: Ruff format
         entry: ruff format
         language: system
         types_or: [python]
+
+    -   id: ruff-format-fix-docs
+        name: Ruff format docs
+        entry: python -m format_fix_docs --language=python --no-pad-file --command="ruff format"
+        language: system
+        types_or: [markdown, rst]
 
     -   id: doc8
         name: doc8
@@ -175,6 +187,12 @@ repos:
         entry: interrogate
         language: system
         types_or: [python]
+
+    -   id: interrogate-docs
+        name: interrogate docs
+        entry: python -m format_fix_docs --language=python --command="interrogate"
+        language: system
+        types_or: [markdown, rst]
 
     -   id: pyproject-fmt-check
         name: pyproject-fmt check
