@@ -156,3 +156,10 @@ repos:
         language: system
         types_or: [toml]
         files: pyproject.toml
+
+    -   id: run-main-script
+        name: Run Main Script
+        entry: python format_fix_docs.py
+        language: system
+        types: [markdown, rst]
+        pass_filenames: true

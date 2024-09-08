@@ -254,6 +254,7 @@ ignore = [
     "tests",
     "tests-pylintrc",
     "tests/**",
+    "format_fix_docs.py",
 ]
 
 [tool.deptry]
