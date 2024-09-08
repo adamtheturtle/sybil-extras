@@ -168,6 +168,7 @@ class ShellCommandEvaluator:
 
         if self._write_to_file:
             existing_file_path = Path(example.path)
+            original_mode = existing_file_path.stat().st_mode
             existing_file_content = existing_file_path.read_text(
                 encoding="utf-8"
             )
@@ -213,6 +214,8 @@ class ShellCommandEvaluator:
                 data=modified_content,
                 encoding="utf-8",
             )
+            new_mode = existing_file_path.stat().st_mode
+            assert original_mode == new_mode
 
         if result.returncode != 0:
             joined_command = shlex.join(
