@@ -1,7 +1,7 @@
 """Script to run ruff format on the given file."""
 
 import sys
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from pathlib import Path
 
 from sybil import Sybil
@@ -11,15 +11,13 @@ from sybil.parsers.rest import CodeBlockParser as RestCodeBlockParser
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 
 
-def _run_ruff_format(file_path: Path) -> None:
+def _run_args_against_docs(
+    file_path: Path,
+    args: Sequence[str | Path],
+) -> None:
     """Run ruff format on the given file."""
     evaluator = ShellCommandEvaluator(
-        args=[
-            sys.executable,
-            "-m",
-            "ruff",
-            "format",
-        ],
+        args=args,
         tempfile_suffix=".py",
         pad_file=True,
         write_to_file=True,
@@ -38,8 +36,14 @@ def _run_ruff_format(file_path: Path) -> None:
 
 def main(file_paths: Iterable[Path]) -> None:
     """Run ruff format on the given files."""
+    args = [
+        sys.executable,
+        "-m",
+        "ruff",
+        "format",
+    ]
     for file_path in file_paths:
-        _run_ruff_format(file_path=file_path)
+        _run_args_against_docs(args=args, file_path=file_path)
 
 
 if __name__ == "__main__":
