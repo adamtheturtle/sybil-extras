@@ -17,6 +17,12 @@ def rst_file_fixture(tmp_path: Path) -> Path:
     """
     Fixture to create a temporary RST file with code blocks.
     """
+    # Relied upon features:
+    #
+    # * Includes exactly one code block
+    # * Contents of the code block match those in tests
+    # * The code block is the last element in the file
+    # * There is text outside the codeblock
     content = textwrap.dedent(
         text="""\
         Not in code block
@@ -231,7 +237,11 @@ def test_file_suffix(rst_file: Path, tmp_path: Path) -> None:
 
 
 def test_pad(rst_file: Path, tmp_path: Path) -> None:
-    """If pad is True, the file content is padded."""
+    """If pad is True, the file content is padded.
+
+    This test relies heavily on the exact formatting of the
+    `rst_file` example.
+    """
     bash_function = """
     cp "$2" "$1"
     """
@@ -251,6 +261,7 @@ def test_pad(rst_file: Path, tmp_path: Path) -> None:
     given_file_content = file_path.read_text(encoding="utf-8")
     expected_content = textwrap.dedent(
         text="""\
+
 
 
 
@@ -297,6 +308,7 @@ def test_write_to_file(
 
         .. code-block:: python
 
+
            foobar
         """,
     )
@@ -304,3 +316,22 @@ def test_write_to_file(
         assert rst_file_content == modified_content
     else:
         assert rst_file_content == original_content
+
+
+def test_pad_and_write(rst_file: Path) -> None:
+    """Changes are written to the original file without the added padding."""
+    original_content = rst_file.read_text(encoding="utf-8")
+    rst_file.write_text(data=original_content, encoding="utf-8")
+    evaluator = ShellCommandEvaluator(
+        args=["echo"],
+        pad_file=True,
+        write_to_file=True,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = list(document)
+    example.evaluate()
+    rst_file_content = rst_file.read_text(encoding="utf-8")
+    assert rst_file_content == original_content
