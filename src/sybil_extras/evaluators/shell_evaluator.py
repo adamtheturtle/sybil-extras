@@ -211,6 +211,10 @@ class ShellCommandEvaluator:
             )
 
             if existing_file_content != modified_content:
+                # We avoid writing to the file if the content is the same.
+                # This is because writing to the file will update the file's
+                # modification time, which can cause unnecessary rebuilds, and
+                # we have seen that confuse the Git index.
                 existing_file_path.write_text(
                     data=modified_content,
                     encoding="utf-8",
