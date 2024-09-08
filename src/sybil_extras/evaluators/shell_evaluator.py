@@ -132,6 +132,7 @@ class ShellCommandEvaluator:
         prefix = (
             Path(example.path).name.replace(".", "_") + f"_l{example.line}_"
         )
+
         with tempfile.NamedTemporaryFile(
             # Create a sibling file in the same directory as the example file.
             # The name also looks like the example file name.
@@ -168,7 +169,6 @@ class ShellCommandEvaluator:
 
         if self._write_to_file:
             existing_file_path = Path(example.path)
-            original_mode = existing_file_path.stat().st_mode
             existing_file_content = existing_file_path.read_text(
                 encoding="utf-8"
             )
@@ -210,12 +210,11 @@ class ShellCommandEvaluator:
                 1,
             )
 
-            existing_file_path.write_text(
-                data=modified_content,
-                encoding="utf-8",
-            )
-            new_mode = existing_file_path.stat().st_mode
-            assert original_mode == new_mode
+            if existing_file_content != modified_content:
+                existing_file_path.write_text(
+                    data=modified_content,
+                    encoding="utf-8",
+                )
 
         if result.returncode != 0:
             joined_command = shlex.join(
