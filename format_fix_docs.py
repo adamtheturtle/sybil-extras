@@ -17,7 +17,7 @@ def _run_ruff_format(file_path: Path) -> None:
             sys.executable,
             "-m",
             "ruff",
-            "check",
+            "format",
         ],
         tempfile_suffix=".py",
         pad_file=True,
