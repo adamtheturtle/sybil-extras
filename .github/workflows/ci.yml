@@ -53,8 +53,5 @@ jobs:
           fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }}
 
-      - name: "Git status"
-        run: git status
-
       - uses: pre-commit-ci/lite-action@v1.0.2
         if: always()
