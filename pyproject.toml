@@ -106,10 +106,15 @@ lint.ignore = [
     # Ignore "too-many-*" errors as they seem to get in the way more than
     # helping.
     "PLR0913",
+    "PTH103",
+    "PTH118",
+    "PTH120",
     # Allow 'assert' as we use it for tests.
     "S101",
+    "S310",
     # Ignore this rule which might go away and is too strict.
     "S603",
+    "TCH003",
 ]
 
 # Do not automatically remove commented out code.
@@ -254,6 +259,7 @@ ignore = [
     "tests",
     "tests-pylintrc",
     "tests/**",
+    "example.py",
 ]
 
 [tool.deptry]
