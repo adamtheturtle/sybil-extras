@@ -1,4 +1,4 @@
-"""Script to run ruff format on the given file."""
+"""CLI to run commands on the given files."""
 
 import shlex
 from collections.abc import Iterable, Sequence
@@ -71,7 +71,7 @@ def _run_args_against_docs(
     nargs=-1,
 )
 def main(language: str, command: str, file_paths: Iterable[Path]) -> None:
-    """Run ruff format on the given files."""
+    """Run commands on the given files."""
     args = shlex.split(s=command)
     for file_path in file_paths:
         _run_args_against_docs(
