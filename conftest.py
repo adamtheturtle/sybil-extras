@@ -72,19 +72,6 @@ sybil = Sybil(
                             "-m",
                             "pre_commit",
                             "run",
-                            "ruff-check-fix",
-                            "--files",
-                        ],
-                        tempfile_suffix=".py",
-                        pad_file=False,
-                        write_to_file=True,
-                    ),
-                    ShellCommandEvaluator(
-                        args=[
-                            sys.executable,
-                            "-m",
-                            "pre_commit",
-                            "run",
                             "--files",
                         ],
                         env={
