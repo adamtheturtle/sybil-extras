@@ -321,7 +321,7 @@ def test_pad_and_write(rst_file: Path) -> None:
     original_content = rst_file.read_text(encoding="utf-8")
     rst_file.write_text(data=original_content, encoding="utf-8")
     evaluator = ShellCommandEvaluator(
-        args=["echo"],
+        args=["true"],
         pad_file=True,
         write_to_file=True,
     )
@@ -333,3 +333,23 @@ def test_pad_and_write(rst_file: Path) -> None:
     example.evaluate()
     rst_file_content = rst_file.read_text(encoding="utf-8")
     assert rst_file_content == original_content
+
+
+def test_no_changes_mtime(rst_file: Path) -> None:
+    """
+    The modification time of the file is not changed if no changes are made.
+    """
+    original_mtime = rst_file.stat().st_mtime
+    evaluator = ShellCommandEvaluator(
+        args=["true"],
+        pad_file=True,
+        write_to_file=True,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = list(document)
+    example.evaluate()
+    new_mtime = rst_file.stat().st_mtime
+    assert new_mtime == original_mtime
