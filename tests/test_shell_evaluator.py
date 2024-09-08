@@ -39,7 +39,9 @@ def rst_file_fixture(tmp_path: Path) -> Path:
 
 
 def test_output_shown_on_error(rst_file: Path) -> None:
-    """Stdout and Stderr are shown when a command fails."""
+    """
+    stdout and stderr are shown when a command fails, if stderr is not empty.
+    """
     evaluator = ShellCommandEvaluator(
         args=[
             "bash",
@@ -65,7 +67,44 @@ def test_output_shown_on_error(rst_file: Path) -> None:
         """,  # noqa: E501
     )
 
-    with pytest.raises(expected_exception=ValueError, match=expected_output):
+    with pytest.raises(
+        expected_exception=ValueError,
+        match=expected_output + "$",
+    ):
+        example.evaluate()
+
+
+def test_empty_stderr_not_shown(rst_file: Path) -> None:
+    """
+    stdout is shown when a command fails, if stderr is empty.
+    """
+    evaluator = ShellCommandEvaluator(
+        args=[
+            "bash",
+            "-c",
+            "echo 'Hello, Sybil!'; exit 1",
+        ],
+        pad_file=False,
+        write_to_file=False,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = list(document)
+
+    expected_output = textwrap.dedent(
+        text="""\
+        Shell command failed:
+        Command: bash -c 'echo '"'"'Hello, Sybil!'"'"'; exit 1'
+        Output: Hello, Sybil!
+        """,
+    )
+
+    with pytest.raises(
+        expected_exception=ValueError,
+        match=expected_output + "$",
+    ):
         example.evaluate()
 
 

@@ -227,8 +227,10 @@ class ShellCommandEvaluator:
             msg = (
                 f"Shell command failed:\n"
                 f"Command: {joined_command}\n"
-                f"Output: {result.stdout}\n"
-                f"Error: {result.stderr}"
+                f"Output: {result.stdout}"
             )
+
+            if result.stderr:
+                msg += f"\nError: {result.stderr}"
 
             raise ValueError(msg)

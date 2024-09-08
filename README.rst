@@ -1,3 +1,5 @@
+|Build Status| |codecov| |PyPI|
+
 sybil-extras
 ============
 
@@ -69,3 +71,10 @@ ShellCommandEvaluator
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
+
+.. |Build Status| image:: https://github.com/adamtheturtle/sybil-extras/actions/workflows/ci.yml/badge.svg?branch=main
+   :target: https://github.com/adamtheturtle/sybil-extras/actions
+.. |codecov| image:: https://codecov.io/gh/adamtheturtle/sybil-extras/branch/main/graph/badge.svg
+   :target: https://codecov.io/gh/adamtheturtle/sybil-extras
+.. |PyPI| image:: https://badge.fury.io/py/sybil-extras.svg
+   :target: https://badge.fury.io/py/sybil-extras
