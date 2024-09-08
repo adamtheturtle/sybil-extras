@@ -1,4 +1,4 @@
-"""Setup for Sybil."""
+"""Example for Sybil."""
 
 import os
 import sys
