@@ -213,6 +213,8 @@ disable = [
     'wrong-import-order',
     # mypy does not want untyped parameters.
     'useless-type-doc',
+    "consider-using-with",
+    "unspecified-encoding",
 ]
 
 [tool.pylint.'FORMAT']

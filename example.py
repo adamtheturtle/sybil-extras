@@ -73,7 +73,7 @@ def _make_commit(*, src_repo: str, head: str, clone: str) -> str:
     """Example."""
     os.makedirs(clone, exist_ok=True)
 
-    # ~essentially make a worktree and commit what's currently modified
+    # ~essentially make a work tree and commit what's currently modified
     git_dir = os.path.join(clone, ".git")
     shutil.copytree(os.path.join(src_repo, ".git"), git_dir)
 
