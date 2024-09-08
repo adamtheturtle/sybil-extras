@@ -82,7 +82,7 @@ sybil = Sybil(
                         },
                         tempfile_suffix=".py",
                         pad_file=True,
-                        write_to_file=True,
+                        write_to_file=False,
                     ),
                 ]
             ),

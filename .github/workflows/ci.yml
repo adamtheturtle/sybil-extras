@@ -53,14 +53,5 @@ jobs:
           fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }}
 
-      # - uses: actions/checkout@v4
-      # - name: Setup tmate session
-      #   uses: mxschmitt/action-tmate@v3
-
-      - name: Sleep for 30 seconds
-        uses: jakejarvis/wait-action@master
-        with:
-          time: '30s'
-
       - uses: pre-commit-ci/lite-action@v1.0.2
         if: always()
