@@ -6,11 +6,32 @@ from pathlib import Path
 
 import click
 from beartype import beartype
+from pygments.lexers import get_all_lexers
 from sybil import Sybil
 from sybil.parsers.markdown import CodeBlockParser as MarkdownCodeBlockParser
 from sybil.parsers.rest import CodeBlockParser as RestCodeBlockParser
 
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
+
+
+def _map_languages_to_suffix() -> dict[str, str]:
+    """
+    Map programming languages to their corresponding file extension.
+    """
+    language_extension_map: dict[str, str] = {}
+
+    for lexer in get_all_lexers():
+        language_name = lexer[0]
+        file_extensions = lexer[2]
+        if file_extensions:
+            canonical_file_extension = file_extensions[0]
+            if canonical_file_extension.startswith("*."):
+                canonical_file_suffix = canonical_file_extension[1:]
+                language_extension_map[language_name.lower()] = (
+                    canonical_file_suffix
+                )
+
+    return language_extension_map
 
 
 @beartype
@@ -19,10 +40,12 @@ def _run_args_against_docs(
     args: Sequence[str | Path],
     language: str,
 ) -> None:
-    """Run ruff format on the given file."""
+    """Run commands on the given file."""
+    language_to_suffix = _map_languages_to_suffix()
+    suffix = language_to_suffix.get(language.lower(), ".txt")
     evaluator = ShellCommandEvaluator(
         args=args,
-        tempfile_suffix=".py",
+        tempfile_suffix=suffix,
         pad_file=True,
         write_to_file=True,
     )
