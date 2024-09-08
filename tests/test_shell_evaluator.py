@@ -265,7 +265,6 @@ def test_pad(rst_file: Path, tmp_path: Path) -> None:
 
 
 
-
         x = 2 + 2
         assert x == 4
         """,
@@ -307,7 +306,6 @@ def test_write_to_file(
         Not in code block
 
         .. code-block:: python
-
 
            foobar
         """,
