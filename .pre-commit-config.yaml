@@ -146,6 +146,12 @@ repos:
         language: system
         types_or: [python]
 
+    -   id: ruff-format-diff-docs
+        name: Ruff format diff docs
+        entry: python -m format_fix_docs --language=python --command="ruff format --diff"
+        language: system
+        types_or: [markdown, rst]
+
     -   id: ruff-check-fix
         name: Ruff check fix
         entry: ruff check --fix
