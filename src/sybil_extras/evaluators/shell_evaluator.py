@@ -12,6 +12,26 @@ from sybil import Example
 from sybil.evaluators.python import pad
 
 
+def _count_leading_newlines(s: str) -> int:
+    """
+    Count the number of leading newlines in a string.
+
+    Args:
+        s: The input string.
+
+    Returns:
+        The number of leading newlines.
+    """
+    count = 0
+    non_newline_found = False
+    for char in s:
+        if char == "\n" and not non_newline_found:
+            count += 1
+        else:
+            non_newline_found = True
+    return count
+
+
 @beartype
 def _lstrip_newlines(input_string: str, number_of_newlines: int) -> str:
     """
@@ -26,15 +46,9 @@ def _lstrip_newlines(input_string: str, number_of_newlines: int) -> str:
         The string with the specified number of leading newlines removed.
         If fewer newlines exist, removes all of them.
     """
-    newline_count = 0
-    for character_index, character in enumerate(input_string):
-        if character == "\n":
-            newline_count += 1
-            if newline_count == number_of_newlines:
-                return input_string[character_index + 1 :]
-        else:
-            break
-    return input_string
+    num_leading_newlines = _count_leading_newlines(s=input_string)
+    lines_to_remove = min(num_leading_newlines, number_of_newlines)
+    return input_string[lines_to_remove:]
 
 
 @beartype

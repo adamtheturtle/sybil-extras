@@ -22,7 +22,7 @@ def rst_file_fixture(tmp_path: Path) -> Path:
     # * Includes exactly one code block
     # * Contents of the code block match those in tests
     # * The code block is the last element in the file
-    # * There is text outside the codeblock
+    # * There is text outside the code block
     content = textwrap.dedent(
         text="""\
         Not in code block
