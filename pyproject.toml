@@ -43,6 +43,7 @@ dependencies = [
 optional-dependencies.dev = [
     "actionlint-py==1.7.1.15",
     "check-manifest==0.49",
+    "click",
     "deptry==0.20.0",
     "doc8==1.1.2",
     "furo==2024.8.6",
@@ -51,6 +52,7 @@ optional-dependencies.dev = [
     "pre-commit==3.8.0",
     "pydocstyle==6.3",
     "pyenchant==3.2.2",
+    "pygments",
     "pygments==2.18.0",
     "pylint==3.2.7",
     "pyproject-fmt==2.2.1",
@@ -61,6 +63,7 @@ optional-dependencies.dev = [
     "pyyaml==6.0.2",
     "ruff==0.6.4",
     "sybil==6.1.1",
+    "types-pygments",
     "vulture==2.11",
 ]
 urls.Source = "https://github.com/adamtheturtle/sybil-extras"
