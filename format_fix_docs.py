@@ -5,7 +5,8 @@ from collections.abc import Iterable
 from pathlib import Path
 
 from sybil import Sybil
-from sybil.parsers.codeblock import CodeBlockParser
+from sybil.parsers.markdown import CodeBlockParser as MarkdownCodeBlockParser
+from sybil.parsers.rest import CodeBlockParser as RestCodeBlockParser
 
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 
@@ -24,8 +25,12 @@ def _run_ruff_format(file_path: Path) -> None:
         write_to_file=True,
     )
 
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
-    sybil = Sybil(parsers=[parser])
+    rest_parser = RestCodeBlockParser(language="python", evaluator=evaluator)
+    markdown_parser = MarkdownCodeBlockParser(
+        language="python",
+        evaluator=evaluator,
+    )
+    sybil = Sybil(parsers=[rest_parser, markdown_parser])
     document = sybil.parse(path=file_path)
     for example in document:
         example.evaluate()
