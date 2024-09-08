@@ -321,7 +321,7 @@ def test_pad_and_write(rst_file: Path) -> None:
     original_content = rst_file.read_text(encoding="utf-8")
     rst_file.write_text(data=original_content, encoding="utf-8")
     evaluator = ShellCommandEvaluator(
-        args=["echo"],
+        args=["true"],
         pad_file=True,
         write_to_file=True,
     )
