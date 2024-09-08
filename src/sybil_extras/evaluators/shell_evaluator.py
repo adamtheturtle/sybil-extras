@@ -132,6 +132,7 @@ class ShellCommandEvaluator:
         prefix = (
             Path(example.path).name.replace(".", "_") + f"_l{example.line}_"
         )
+
         with tempfile.NamedTemporaryFile(
             # Create a sibling file in the same directory as the example file.
             # The name also looks like the example file name.
@@ -209,10 +210,15 @@ class ShellCommandEvaluator:
                 1,
             )
 
-            existing_file_path.write_text(
-                data=modified_content,
-                encoding="utf-8",
-            )
+            if existing_file_content != modified_content:
+                # We avoid writing to the file if the content is the same.
+                # This is because writing to the file will update the file's
+                # modification time, which can cause unnecessary rebuilds, and
+                # we have seen that confuse the Git index.
+                existing_file_path.write_text(
+                    data=modified_content,
+                    encoding="utf-8",
+                )
 
         if result.returncode != 0:
             joined_command = shlex.join(
