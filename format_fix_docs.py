@@ -39,6 +39,8 @@ def _run_args_against_docs(
     file_path: Path,
     args: Sequence[str | Path],
     language: str,
+    *,
+    pad_file: bool,
 ) -> None:
     """Run commands on the given file."""
     language_to_suffix = _map_languages_to_suffix()
@@ -46,7 +48,7 @@ def _run_args_against_docs(
     evaluator = ShellCommandEvaluator(
         args=args,
         tempfile_suffix=suffix,
-        pad_file=True,
+        pad_file=pad_file,
         write_to_file=True,
     )
 
@@ -58,26 +60,59 @@ def _run_args_against_docs(
     sybil = Sybil(parsers=[rest_parser, markdown_parser])
     document = sybil.parse(path=file_path)
     for example in document:
-        example.evaluate()
+        try:
+            example.evaluate()
+        except ValueError as exc:
+            click.echo(message=str(exc), err=True)
 
 
 @beartype
 @click.command()
-@click.option("language", "--language", type=str, required=True)
+@click.option(
+    "language",
+    "--language",
+    type=str,
+    required=True,
+    help="Run `command` against code blocks for this language.",
+)
 @click.option("command", "--command", type=str, required=True)
+@click.option(
+    "--pad-file/--no-pad-file",
+    is_flag=True,
+    default=True,
+    show_default=True,
+    help=(
+        "Run the command against a temporary file padded with newlines. "
+        "This is useful for matching line numbers from the output to "
+        "the relevant location in the document. "
+        "Use --no-pad-file for formatters - "
+        "they generally need to look at the file without padding."
+    ),
+)
 @click.argument(
     "file_paths",
     type=click.Path(exists=True, path_type=Path),
     nargs=-1,
 )
-def main(language: str, command: str, file_paths: Iterable[Path]) -> None:
-    """Run commands on the given files."""
+def main(
+    language: str,
+    command: str,
+    file_paths: Iterable[Path],
+    *,
+    pad_file: bool,
+) -> None:
+    """
+    Run commands against code blocks in the given documentation files.
+
+    This works with Markdown and reStructuredText files.
+    """
     args = shlex.split(s=command)
     for file_path in file_paths:
         _run_args_against_docs(
             args=args,
             file_path=file_path,
             language=language,
+            pad_file=pad_file,
         )
 
 
