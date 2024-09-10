@@ -74,18 +74,16 @@ def test_output_shown_on_error(rst_file: Path) -> None:
     ]
 
 
-def test_no_output_on_success(
+def test_output_shown(
     rst_file: Path,
-    tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """No output is shown when a command succeeds."""
-    new_file = tmp_path / "new_file.txt"
+    """Output is shown."""
     evaluator = ShellCommandEvaluator(
         args=[
             "bash",
             "-c",
-            f"echo 'Hello, Sybil!' > {new_file}",
+            "echo 'Hello, Sybil!' && echo >&2 'Hello Stderr!'",
         ],
         pad_file=False,
         write_to_file=False,
@@ -96,11 +94,9 @@ def test_no_output_on_success(
     document = sybil.parse(path=rst_file)
     (example,) = list(document)
     example.evaluate()
-    new_file_content = new_file.read_text(encoding="utf-8")
-    assert new_file_content == "Hello, Sybil!\n"
     outerr = capsys.readouterr()
-    assert outerr.out == ""
-    assert outerr.err == ""
+    assert outerr.out == "Hello, Sybil!\n"
+    assert outerr.err == "Hello Stderr!\n"
 
 
 def test_pass_env(
