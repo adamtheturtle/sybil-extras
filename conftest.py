@@ -1,4 +1,4 @@
-"""Setup for Pytest."""
+"""Setup for pytest."""
 
 import os
 import sys
