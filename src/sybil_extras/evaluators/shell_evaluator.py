@@ -1,4 +1,4 @@
-"""Setup for Sybil."""
+"""An evaluator for running shell commands on example files."""
 
 import subprocess
 import tempfile

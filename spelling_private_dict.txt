@@ -5,6 +5,7 @@ formatters
 iff
 namespace
 ons
+pytest
 rst
 stderr
 stdout
