@@ -1,6 +1,7 @@
 """Tests for the ShellCommandEvaluator"""
 
 import os
+import subprocess
 import textwrap
 import uuid
 from pathlib import Path
@@ -57,55 +58,20 @@ def test_output_shown_on_error(rst_file: Path) -> None:
     document = sybil.parse(path=rst_file)
     (example,) = list(document)
 
-    expected_output = textwrap.dedent(
-        text="""\
-        Shell command failed:
-        Command: bash -c 'echo '"'"'Hello, Sybil!'"'"'; echo >&2 '"'"'Hello Stderr!'"'"'; exit 1'
-        Output: Hello, Sybil!
-
-        Error: Hello Stderr!
-        """,  # noqa: E501
-    )
-
     with pytest.raises(
-        expected_exception=ValueError,
-        match=expected_output + "$",
-    ):
+        expected_exception=subprocess.CalledProcessError
+    ) as exc:
         example.evaluate()
 
-
-def test_empty_stderr_not_shown(rst_file: Path) -> None:
-    """
-    stdout is shown when a command fails, if stderr is empty.
-    """
-    evaluator = ShellCommandEvaluator(
-        args=[
-            "bash",
-            "-c",
-            "echo 'Hello, Sybil!'; exit 1",
-        ],
-        pad_file=False,
-        write_to_file=False,
-    )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
-    sybil = Sybil(parsers=[parser])
-
-    document = sybil.parse(path=rst_file)
-    (example,) = list(document)
-
-    expected_output = textwrap.dedent(
-        text="""\
-        Shell command failed:
-        Command: bash -c 'echo '"'"'Hello, Sybil!'"'"'; exit 1'
-        Output: Hello, Sybil!
-        """,
-    )
-
-    with pytest.raises(
-        expected_exception=ValueError,
-        match=expected_output + "$",
-    ):
-        example.evaluate()
+    assert exc.value.returncode == 1
+    assert exc.value.output == "Hello, Sybil!\n"
+    assert exc.value.stderr == "Hello Stderr!\n"
+    # The last element is the path to the temporary file.
+    assert exc.value.cmd[:-1] == [
+        "bash",
+        "-c",
+        "echo 'Hello, Sybil!'; echo >&2 'Hello Stderr!'; exit 1",
+    ]
 
 
 def test_no_output_on_success(

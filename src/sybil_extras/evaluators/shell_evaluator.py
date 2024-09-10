@@ -1,6 +1,6 @@
 """Setup for Sybil."""
 
-import shlex
+import subprocess
 import tempfile
 import textwrap
 from collections.abc import Mapping, Sequence
@@ -221,16 +221,9 @@ class ShellCommandEvaluator:
                 )
 
         if result.returncode != 0:
-            joined_command = shlex.join(
-                split_command=[str(item) for item in self._args],
+            raise subprocess.CalledProcessError(
+                cmd=args_strings,
+                returncode=result.returncode,
+                output=result.stdout,
+                stderr=result.stderr,
             )
-            msg = (
-                f"Shell command failed:\n"
-                f"Command: {joined_command}\n"
-                f"Output: {result.stdout}"
-            )
-
-            if result.stderr:
-                msg += f"\nError: {result.stderr}"
-
-            raise ValueError(msg)
