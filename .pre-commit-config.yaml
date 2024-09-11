@@ -21,10 +21,6 @@ ci:
         - interrogate
         - pyproject-fmt-check
         - pyproject-fmt-fix
-        - linkcheck
-        - spelling
-        - docs
-        - pyright-verifytypes
 
 default_install_hook_types: [pre-commit, pre-push, commit-msg]
 repos:
