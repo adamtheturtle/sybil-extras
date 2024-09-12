@@ -25,6 +25,7 @@ MultiEvaluator
     from sybil import Example, Sybil
     from sybil.evaluators.python import PythonEvaluator
     from sybil.parsers.codeblock import CodeBlockParser
+    from sybil.typing import Evaluator
 
     from sybil_extras.evaluators.multi import MultiEvaluator
 
@@ -35,7 +36,7 @@ MultiEvaluator
         assert len(example.parsed) >= minimum_length
 
 
-    evaluators = [_evaluator_1, PythonEvaluator()]
+    evaluators: list[Evaluator] = [_evaluator_1, PythonEvaluator()]
     multi_evaluator = MultiEvaluator(evaluators=evaluators)
     parser = CodeBlockParser(language="python", evaluator=multi_evaluator)
     sybil = Sybil(parsers=[parser])
