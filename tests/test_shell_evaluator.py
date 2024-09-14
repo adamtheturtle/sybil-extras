@@ -220,11 +220,12 @@ def test_file_suffix(rst_file: Path, tmp_path: Path) -> None:
     """
 
     file_path = tmp_path / "file.txt"
+    suffixes = [".example", ".foobar"]
     evaluator = ShellCommandEvaluator(
         args=["bash", "-c", bash_function, "_", file_path],
         pad_file=False,
         write_to_file=False,
-        tempfile_suffixes=[".example", ".foobar"],
+        tempfile_suffixes=suffixes,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -234,7 +235,7 @@ def test_file_suffix(rst_file: Path, tmp_path: Path) -> None:
     example.evaluate()
     given_file_path = Path(file_path.read_text(encoding="utf-8").strip())
     assert given_file_path.name.startswith("test_document_rst_")
-    assert given_file_path.suffixes == [".example", ".py"]
+    assert given_file_path.suffixes == suffixes
 
 
 def test_pad(rst_file: Path, tmp_path: Path) -> None:
