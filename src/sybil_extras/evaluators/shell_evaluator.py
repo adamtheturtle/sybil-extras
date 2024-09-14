@@ -86,7 +86,7 @@ class ShellCommandEvaluator:
         self,
         args: Sequence[str | Path],
         env: Mapping[str, str] | None = None,
-        tempfile_suffix: str = "",
+        tempfile_suffixes: Sequence[str] = (),
         *,
         # For some commands, padding is good: e.g. we want to see the error
         # reported on the correct line for `mypy`. For others, padding is bad:
@@ -102,7 +102,7 @@ class ShellCommandEvaluator:
             args: The shell command to run.
             env: The environment variables to use when running the shell
                 command.
-            tempfile_suffix: The suffix to use for the temporary file.
+            tempfile_suffixes: The suffixes to use for the temporary file.
                 This is useful for commands that expect a specific file suffix.
                 For example `pre-commit` hooks which expect `.py` files.
             pad_file: Whether to pad the file with newlines at the start.
@@ -115,7 +115,7 @@ class ShellCommandEvaluator:
         """
         self._args = args
         self._env = env
-        self._tempfile_suffix = tempfile_suffix
+        self._tempfile_suffixes = tempfile_suffixes
         self._pad_file = pad_file
         self._write_to_file = write_to_file
 
@@ -133,6 +133,8 @@ class ShellCommandEvaluator:
             Path(example.path).name.replace(".", "_") + f"_l{example.line}_"
         )
 
+        suffix = "".join(self._tempfile_suffixes)
+
         with tempfile.NamedTemporaryFile(
             # Create a sibling file in the same directory as the example file.
             # The name also looks like the example file name.
@@ -142,7 +144,7 @@ class ShellCommandEvaluator:
             dir=Path(example.path).parent,
             mode="w+",
             delete=True,
-            suffix=".example" + self._tempfile_suffix,
+            suffix=suffix,
         ) as f:
             # The parsed code block at the end of a file is given without a
             # trailing newline.  Some tools expect that a file has a trailing

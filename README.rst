@@ -58,8 +58,8 @@ ShellCommandEvaluator
     evaluator = ShellCommandEvaluator(
         args=[sys.executable, "-m", "mypy"],
         # The code block is written to a temporary file
-        # with this suffix.
-        tempfile_suffix=".py",
+        # with these suffixes.
+        tempfile_suffixes=[".example", ".py"],
         # Pad the temporary file with newlines so that the
         # line numbers in the error messages match the
         # line numbers in the source document.

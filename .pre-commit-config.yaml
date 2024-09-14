@@ -73,7 +73,7 @@ repos:
     -   id: mypy-docs
         name: mypy-docs
         stages: [push]
-        entry: doccmd --language=python --command="mypy"
+        entry: uvx doccmd --language=python --command="mypy"
         language: system
         types_or: [markdown, rst, python, toml]
 
@@ -95,7 +95,7 @@ repos:
     -   id: pyright-docs
         name: pyright-docs
         stages: [push]
-        entry: doccmd --language=python --command="pyright"
+        entry: uvx doccmd --language=python --command="pyright"
         language: system
         types_or: [markdown, rst, python, toml]
 
@@ -127,7 +127,7 @@ repos:
 
     -   id: pylint-docs
         name: pylint-docs
-        entry: doccmd --language=python --command="pylint"
+        entry: uvx doccmd --language=python --command="pylint"
         language: system
         stages: [manual]
         types_or: [markdown, rst, python, toml]
@@ -140,7 +140,7 @@ repos:
 
     -   id: ruff-check-docs
         name: Ruff check docs
-        entry: doccmd --language=python --command="ruff check"
+        entry: uvx doccmd --language=python --command="ruff check"
         language: system
         types_or: [markdown, rst]
 
@@ -152,7 +152,7 @@ repos:
 
     -   id: ruff-format-diff-docs
         name: Ruff format diff docs
-        entry: doccmd --language=python --no-pad-file --command="ruff format --diff"
+        entry: uvx doccmd --language=python --no-pad-file --command="ruff format --diff"
         language: system
         types_or: [markdown, rst]
 
@@ -164,7 +164,7 @@ repos:
 
     -   id: ruff-check-fix-docs
         name: Ruff check fix docs
-        entry: doccmd --language=python --command="ruff check --fix"
+        entry: uvx doccmd --language=python --command="ruff check --fix"
         language: system
         types_or: [markdown, rst]
 
@@ -176,7 +176,7 @@ repos:
 
     -   id: ruff-format-fix-docs
         name: Ruff format docs
-        entry: doccmd --language=python --no-pad-file --command="ruff format"
+        entry: uvx doccmd --language=python --no-pad-file --command="ruff format"
         language: system
         types_or: [markdown, rst]
 
@@ -194,7 +194,7 @@ repos:
 
     -   id: interrogate-docs
         name: interrogate docs
-        entry: doccmd --language=python --command="interrogate"
+        entry: uvx doccmd --language=python --command="interrogate"
         language: system
         types_or: [markdown, rst]
 

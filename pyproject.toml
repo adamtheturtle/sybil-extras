@@ -59,6 +59,7 @@ optional-dependencies.dev = [
     "pytest-cov==5.0.0",
     "ruff==0.6.4",
     "sybil==7.0.0",
+    "uv==0.4.10",
     "vulture==2.11",
 ]
 urls.Source = "https://github.com/adamtheturtle/sybil-extras"
