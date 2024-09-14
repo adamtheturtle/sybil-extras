@@ -30,6 +30,7 @@ jobs:
           # See
           # https://github.com/stefanzweifel/git-auto-commit-action?tab=readme-ov-file#push-to-protected-branches
           token: ${{ secrets.RELEASE_PAT }}
+          fetch-depth: 0
 
       - name: "Set up Python"
         uses: actions/setup-python@v5
