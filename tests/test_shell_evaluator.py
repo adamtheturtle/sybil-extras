@@ -214,7 +214,7 @@ def test_file_path(rst_file: Path, tmp_path: Path) -> None:
 
 
 def test_file_suffix(rst_file: Path, tmp_path: Path) -> None:
-    """The given file suffix is used."""
+    """The given file suffixes are used."""
     bash_function = """
     echo "$2" > "$1"
     """
@@ -224,7 +224,7 @@ def test_file_suffix(rst_file: Path, tmp_path: Path) -> None:
         args=["bash", "-c", bash_function, "_", file_path],
         pad_file=False,
         write_to_file=False,
-        tempfile_suffix=".foobar",
+        tempfile_suffixes=[".example", ".foobar"],
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -234,7 +234,7 @@ def test_file_suffix(rst_file: Path, tmp_path: Path) -> None:
     example.evaluate()
     given_file_path = Path(file_path.read_text(encoding="utf-8").strip())
     assert given_file_path.name.startswith("test_document_rst_")
-    assert given_file_path.suffix == ".foobar"
+    assert given_file_path.suffixes == [".example", ".py"]
 
 
 def test_pad(rst_file: Path, tmp_path: Path) -> None:
