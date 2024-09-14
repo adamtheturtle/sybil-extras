@@ -87,6 +87,7 @@ class ShellCommandEvaluator:
         args: Sequence[str | Path],
         env: Mapping[str, str] | None = None,
         tempfile_suffixes: Sequence[str] = (),
+        tempfile_name_prefix: str = "",
         *,
         # For some commands, padding is good: e.g. we want to see the error
         # reported on the correct line for `mypy`. For others, padding is bad:
@@ -105,6 +106,10 @@ class ShellCommandEvaluator:
             tempfile_suffixes: The suffixes to use for the temporary file.
                 This is useful for commands that expect a specific file suffix.
                 For example `pre-commit` hooks which expect `.py` files.
+            tempfile_name_prefix: The prefix to use for the temporary file.
+                This is useful for distinguishing files created by a user of
+                this evaluator from other files, e.g. for ignoring in linter
+                configurations.
             pad_file: Whether to pad the file with newlines at the start.
                 This is useful for error messages that report the line number.
                 However, this is detrimental to commands that expect the file
@@ -115,8 +120,9 @@ class ShellCommandEvaluator:
         """
         self._args = args
         self._env = env
-        self._tempfile_suffixes = tempfile_suffixes
         self._pad_file = pad_file
+        self._tempfile_name_prefix = tempfile_name_prefix
+        self._tempfile_suffixes = tempfile_suffixes
         self._write_to_file = write_to_file
 
     def __call__(self, example: Example) -> None:
@@ -132,6 +138,9 @@ class ShellCommandEvaluator:
         prefix = (
             Path(example.path).name.replace(".", "_") + f"_l{example.line}_"
         )
+
+        if self._tempfile_name_prefix:
+            prefix = f"{self._tempfile_name_prefix}_{prefix}"
 
         suffix = "".join(self._tempfile_suffixes)
 
