@@ -165,7 +165,8 @@ class ShellCommandEvaluator:
             new_source = source + "\n" if not source.endswith("\n") else source
             temp_file_path = Path(f.name)
             temp_file_path.touch()
-            temp_file_path.write_text(data=new_source, encoding="utf-8")
+            with temp_file_path.open(mode="w", encoding="utf-8") as file:
+                file.write(new_source)
 
             args = [*self._args, temp_file_path]
             args_strings = [str(item) for item in args]
