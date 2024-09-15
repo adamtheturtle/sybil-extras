@@ -164,6 +164,7 @@ class ShellCommandEvaluator:
             # newline to the end of the file if it is missing.
             new_source = source + "\n" if not source.endswith("\n") else source
             temp_file_path = Path(f.name)
+            temp_file_path.touch()
             temp_file_path.write_text(data=new_source, encoding="utf-8")
 
             args = [*self._args, temp_file_path]
