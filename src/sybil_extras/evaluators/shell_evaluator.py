@@ -168,8 +168,8 @@ class ShellCommandEvaluator:
             temp_file_path.touch()
             assert os.access(temp_file_path, os.W_OK)
             assert temp_file_path.exists()
-            with temp_file_path.open(mode="w", encoding="utf-8") as file:
-                file.write(new_source)
+            breakpoint()
+            temp_file_path.write_text(new_source, encoding="utf-8")
 
             args = [*self._args, temp_file_path]
             args_strings = [str(item) for item in args]
