@@ -136,7 +136,11 @@ class ShellCommandEvaluator:
             source = example.parsed
 
         path_name = Path(example.path).name
-        prefix = path_name.replace(".", "_") + f"_l{example.line}_"
+        # Replace characters that are not allowed in file names for Python
+        # modules.
+        sanitized_path_name = path_name.replace(".", "_").replace("-", "_")
+        line_number_specifier = f"l{example.line}"
+        prefix = f"{sanitized_path_name}_{line_number_specifier}_"
 
         if self._tempfile_name_prefix:
             prefix = f"{self._tempfile_name_prefix}_{prefix}"
