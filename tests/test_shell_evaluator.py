@@ -34,7 +34,7 @@ def rst_file_fixture(tmp_path: Path) -> Path:
            assert x == 4
         """
     )
-    test_document = tmp_path / "test_document.rst"
+    test_document = tmp_path / "test_document.example.rst"
     test_document.write_text(data=content, encoding="utf-8")
     return test_document
 
@@ -185,7 +185,8 @@ def test_file_is_passed(
 def test_file_path(rst_file: Path, tmp_path: Path) -> None:
     """
     The given file path is random and absolute, and starts with a name
-    resembling the documentation file name.
+    resembling the documentation file name, but without any hyphens
+    or periods, except for the period for the final suffix.
     """
     bash_function = """
     echo "$2" > "$1"
@@ -207,7 +208,7 @@ def test_file_path(rst_file: Path, tmp_path: Path) -> None:
     assert given_file_path.parent == rst_file.parent
     assert given_file_path.is_absolute()
     assert not given_file_path.exists()
-    assert given_file_path.name.startswith("test_document_rst_")
+    assert given_file_path.name.startswith("test_document_example_rst_")
     example.evaluate()
     new_given_file_path = Path(file_path.read_text(encoding="utf-8").strip())
     assert new_given_file_path != given_file_path
@@ -234,7 +235,7 @@ def test_file_suffix(rst_file: Path, tmp_path: Path) -> None:
     (example,) = list(document)
     example.evaluate()
     given_file_path = Path(file_path.read_text(encoding="utf-8").strip())
-    assert given_file_path.name.startswith("test_document_rst_")
+    assert given_file_path.name.startswith("test_document_example_rst_")
     assert given_file_path.suffixes == suffixes
 
 
