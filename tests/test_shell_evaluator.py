@@ -64,8 +64,8 @@ def test_output_shown_on_error(rst_file: Path) -> None:
         example.evaluate()
 
     assert exc.value.returncode == 1
-    assert exc.value.output == "Hello, Sybil!\n"
-    assert exc.value.stderr == "Hello Stderr!\n"
+    assert exc.value.output.strip() == "Hello, Sybil!"
+    assert exc.value.stderr.strip() == "Hello Stderr!"
     # The last element is the path to the temporary file.
     assert exc.value.cmd[:-1] == [
         "sh",
@@ -109,7 +109,7 @@ def test_pass_env(
         args=[
             "sh",
             "-c",
-            f"echo Hello, $ENV_KEY! > {new_file}; exit 0",
+            f"echo Hello, $ENV_KEY! > {new_file.as_posix()}; exit 0",
         ],
         env={"ENV_KEY": "ENV_VALUE"},
         pad_file=False,
@@ -137,7 +137,7 @@ def test_global_env(
         args=[
             "sh",
             "-c",
-            f"echo Hello, ${env_key}! > {new_file}; exit 0",
+            f"echo Hello, ${env_key}! > {new_file.as_posix()}; exit 0",
         ],
         pad_file=False,
         write_to_file=False,
