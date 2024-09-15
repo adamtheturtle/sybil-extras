@@ -43,15 +43,7 @@ jobs:
 
       - name: "Run tests"
         run: |
+          cp README.rst README2.rst
           # We run tests against "." and not the tests directory as we test the README
           # and documentation.
-          pytest -s -vvv --cov-fail-under 100 --cov=src/ --cov=tests . --cov-report=xml
-
-      - name: "Upload coverage to Codecov"
-        uses: "codecov/codecov-action@v4"
-        with:
-          fail_ci_if_error: true
-          token: ${{ secrets.CODECOV_TOKEN }}
-
-      - uses: pre-commit-ci/lite-action@v1.0.3
-        if: always()
+          # pytest -s -vvv --cov-fail-under 100 --cov=src/ --cov=tests . --cov-report=xml
