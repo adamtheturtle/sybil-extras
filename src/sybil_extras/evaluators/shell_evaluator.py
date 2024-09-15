@@ -165,6 +165,7 @@ class ShellCommandEvaluator:
             new_source = source + "\n" if not source.endswith("\n") else source
             temp_file_path = Path(f.name)
             temp_file_path.touch()
+            assert temp_file_path.exists()
             with temp_file_path.open(mode="w", encoding="utf-8") as file:
                 file.write(new_source)
 

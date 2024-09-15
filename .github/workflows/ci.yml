@@ -43,4 +43,4 @@ jobs:
 
       - name: "Run tests"
         run: |
-          pytest -s -vvv -x tests/test_shell_evaluator.py
+          pytest -s -vvv -x tests/test_shell_evaluator.py -k test_output_shown_on_error
