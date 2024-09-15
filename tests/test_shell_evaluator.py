@@ -45,7 +45,7 @@ def test_output_shown_on_error(rst_file: Path) -> None:
     """
     evaluator = ShellCommandEvaluator(
         args=[
-            "bash",
+            "sh",
             "-c",
             "echo 'Hello, Sybil!'; echo >&2 'Hello Stderr!'; exit 1",
         ],
@@ -68,7 +68,7 @@ def test_output_shown_on_error(rst_file: Path) -> None:
     assert exc.value.stderr == "Hello Stderr!\n"
     # The last element is the path to the temporary file.
     assert exc.value.cmd[:-1] == [
-        "bash",
+        "sh",
         "-c",
         "echo 'Hello, Sybil!'; echo >&2 'Hello Stderr!'; exit 1",
     ]
@@ -81,7 +81,7 @@ def test_output_shown(
     """Output is shown."""
     evaluator = ShellCommandEvaluator(
         args=[
-            "bash",
+            "sh",
             "-c",
             "echo 'Hello, Sybil!' && echo >&2 'Hello Stderr!'",
         ],
@@ -107,7 +107,7 @@ def test_pass_env(
     new_file = tmp_path / "new_file.txt"
     evaluator = ShellCommandEvaluator(
         args=[
-            "bash",
+            "sh",
             "-c",
             f"echo Hello, $ENV_KEY! > {new_file}; exit 0",
         ],
@@ -135,7 +135,7 @@ def test_global_env(
     new_file = tmp_path / "new_file.txt"
     evaluator = ShellCommandEvaluator(
         args=[
-            "bash",
+            "sh",
             "-c",
             f"echo Hello, ${env_key}! > {new_file}; exit 0",
         ],
@@ -162,13 +162,13 @@ def test_file_is_passed(
 
     The file is created with a trailing newline.
     """
-    bash_function = """
+    sh_function = """
     cp "$2" "$1"
     """
 
     file_path = tmp_path / "file.txt"
     evaluator = ShellCommandEvaluator(
-        args=["bash", "-c", bash_function, "_", file_path],
+        args=["sh", "-c", sh_function, "_", file_path],
         pad_file=False,
         write_to_file=False,
     )
@@ -264,13 +264,13 @@ def test_pad(rst_file: Path, tmp_path: Path) -> None:
     This test relies heavily on the exact formatting of the
     `rst_file` example.
     """
-    bash_function = """
+    sh_function = """
     cp "$2" "$1"
     """
 
     file_path = tmp_path / "file.txt"
     evaluator = ShellCommandEvaluator(
-        args=["bash", "-c", bash_function, "_", file_path],
+        args=["sh", "-c", sh_function, "_", file_path],
         pad_file=True,
         write_to_file=False,
     )
@@ -308,11 +308,8 @@ def test_write_to_file(
     # No code block ends with multiple newlines.
     new_content = "foobar\n\n"
     file_with_new_content.write_text(data=new_content, encoding="utf-8")
-    bash_function = """
-    cp "$1" "$2"
-    """
     evaluator = ShellCommandEvaluator(
-        args=["echo", "foobar", ">"],
+        args=["cp", file_with_new_content],
         pad_file=False,
         write_to_file=write_to_file,
     )
