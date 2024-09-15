@@ -3,7 +3,6 @@
 import os
 import subprocess
 import textwrap
-import uuid
 from pathlib import Path
 
 import pytest
@@ -130,7 +129,7 @@ def test_global_env(
     tmp_path: Path,
 ) -> None:
     """Global environment variables are sent to the command by default."""
-    env_key = "ENV_" + uuid.uuid4().hex
+    env_key = "ENV_KEY"
     os.environ[env_key] = "ENV_VALUE"
     new_file = tmp_path / "new_file.txt"
     evaluator = ShellCommandEvaluator(
