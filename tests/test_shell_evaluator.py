@@ -200,27 +200,25 @@ def test_file_path(rst_file: Path, capsys: pytest.CaptureFixture[str]) -> None:
     (example,) = list(document)
     example.evaluate()
     output = capsys.readouterr().out
-    given_file_path = Path(output)
+    given_file_path = Path(output.strip())
     assert given_file_path.parent == rst_file.parent
     assert given_file_path.is_absolute()
     assert not given_file_path.exists()
     assert given_file_path.name.startswith("test_document_example_rst_")
     example.evaluate()
     output = capsys.readouterr().out
-    new_given_file_path = Path(output)
+    new_given_file_path = Path(output.strip())
     assert new_given_file_path != given_file_path
 
 
-def test_file_suffix(rst_file: Path, tmp_path: Path) -> None:
+def test_file_suffix(
+    rst_file: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     """The given file suffixes are used."""
-    bash_function = """
-    echo "$2" > "$1"
-    """
-
-    file_path = tmp_path / "file.txt"
     suffixes = [".example", ".foobar"]
     evaluator = ShellCommandEvaluator(
-        args=["bash", "-c", bash_function, "_", file_path],
+        args=["echo"],
         pad_file=False,
         write_to_file=False,
         tempfile_suffixes=suffixes,
@@ -231,21 +229,20 @@ def test_file_suffix(rst_file: Path, tmp_path: Path) -> None:
     document = sybil.parse(path=rst_file)
     (example,) = list(document)
     example.evaluate()
-    given_file_path = Path(file_path.read_text(encoding="utf-8").strip())
+    output = capsys.readouterr().out
+    given_file_path = Path(output.strip())
     assert given_file_path.name.startswith("test_document_example_rst_")
     assert given_file_path.suffixes == suffixes
 
 
-def test_file_prefix(rst_file: Path, tmp_path: Path) -> None:
+def test_file_prefix(
+    rst_file: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     """The given file prefixes are used."""
-    bash_function = """
-    echo "$2" > "$1"
-    """
-
-    file_path = tmp_path / "file.txt"
     prefix = "custom_prefix"
     evaluator = ShellCommandEvaluator(
-        args=["bash", "-c", bash_function, "_", file_path],
+        args=["echo"],
         pad_file=False,
         write_to_file=False,
         tempfile_name_prefix=prefix,
@@ -256,7 +253,8 @@ def test_file_prefix(rst_file: Path, tmp_path: Path) -> None:
     document = sybil.parse(path=rst_file)
     (example,) = list(document)
     example.evaluate()
-    given_file_path = Path(file_path.read_text(encoding="utf-8").strip())
+    output = capsys.readouterr().out
+    given_file_path = Path(output.strip())
     assert given_file_path.name.startswith("custom_prefix_")
 
 
@@ -314,7 +312,7 @@ def test_write_to_file(
     cp "$1" "$2"
     """
     evaluator = ShellCommandEvaluator(
-        args=["bash", "-c", bash_function, "_", file_with_new_content],
+        args=["echo", "foobar", ">"],
         pad_file=False,
         write_to_file=write_to_file,
     )
