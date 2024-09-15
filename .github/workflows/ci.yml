@@ -44,6 +44,7 @@ jobs:
       - name: "Run tests"
         run: |
           cp README.rst README2.rst
+          echo "This is a test" >> README2.rst
           # We run tests against "." and not the tests directory as we test the README
           # and documentation.
           # pytest -s -vvv --cov-fail-under 100 --cov=src/ --cov=tests . --cov-report=xml
