@@ -182,19 +182,14 @@ def test_file_is_passed(
     assert file_path.read_text(encoding="utf-8") == expected_content
 
 
-def test_file_path(rst_file: Path, tmp_path: Path) -> None:
+def test_file_path(rst_file: Path, capsys: pytest.CaptureFixture[str]) -> None:
     """
     The given file path is random and absolute, and starts with a name
     resembling the documentation file name, but without any hyphens
     or periods, except for the period for the final suffix.
     """
-    bash_function = """
-    echo "$2" > "$1"
-    """
-
-    file_path = tmp_path / "file.txt"
     evaluator = ShellCommandEvaluator(
-        args=["bash", "-c", bash_function, "_", file_path],
+        args=["echo"],
         pad_file=False,
         write_to_file=False,
     )
@@ -204,13 +199,15 @@ def test_file_path(rst_file: Path, tmp_path: Path) -> None:
     document = sybil.parse(path=rst_file)
     (example,) = list(document)
     example.evaluate()
-    given_file_path = Path(file_path.read_text(encoding="utf-8").strip())
+    output = capsys.readouterr().out
+    given_file_path = Path(output)
     assert given_file_path.parent == rst_file.parent
     assert given_file_path.is_absolute()
     assert not given_file_path.exists()
     assert given_file_path.name.startswith("test_document_example_rst_")
     example.evaluate()
-    new_given_file_path = Path(file_path.read_text(encoding="utf-8").strip())
+    output = capsys.readouterr().out
+    new_given_file_path = Path(output)
     assert new_given_file_path != given_file_path
 
 

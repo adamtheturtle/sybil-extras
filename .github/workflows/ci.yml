@@ -35,7 +35,6 @@ jobs:
           curl -LsSf https://astral.sh/uv/install.sh | sh
           uv pip install --system --upgrade --editable .[dev]
 
-      - uses: Vampire/setup-wsl@v3
       # - name: "Lint"
       #   run: |
       #     pre-commit run --all-files --hook-stage commit --verbose
