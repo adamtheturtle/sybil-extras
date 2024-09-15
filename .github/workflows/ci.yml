@@ -41,6 +41,10 @@ jobs:
       #     pre-commit run --all-files --hook-stage push --verbose
       #     pre-commit run --all-files --hook-stage manual --verbose
 
+      - uses: actions/checkout@v4
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+
       - name: "Run tests"
         run: |
           pytest -s -vvv -x tests/test_shell_evaluator.py -k test_output_shown_on_error
