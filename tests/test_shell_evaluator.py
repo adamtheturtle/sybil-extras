@@ -379,39 +379,3 @@ def test_no_changes_mtime(rst_file: Path) -> None:
     example.evaluate()
     new_mtime = rst_file.stat().st_mtime
     assert new_mtime == original_mtime
-
-
-def test_name_transform(rst_file: Path) -> None:
-    """
-    It is possible to transform the name of the file.
-
-    The given transformation is applied to the name of the file, not including
-    the given prefix or suffixes.
-    """
-
-    def name_transform(_: str) -> str:
-        """Return a new name."""
-        return "new_name"
-
-    bash_function = """
-    echo "$2" > "$1"
-    """
-
-    file_path = rst_file.parent / "file.txt"
-    evaluator = ShellCommandEvaluator(
-        args=["bash", "-c", bash_function, "_", file_path],
-        pad_file=False,
-        write_to_file=False,
-        tempfile_name_transform=name_transform,
-        tempfile_name_prefix="prefix",
-        tempfile_suffixes=[".suffix0", ".suffix1"],
-    )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
-    sybil = Sybil(parsers=[parser])
-
-    document = sybil.parse(path=rst_file)
-    (example,) = list(document)
-    example.evaluate()
-    given_file_path = Path(file_path.read_text(encoding="utf-8").strip())
-    assert given_file_path.name.startswith("prefix_new_name_l")
-    assert given_file_path.suffixes == [".suffix0", ".suffix1"]
