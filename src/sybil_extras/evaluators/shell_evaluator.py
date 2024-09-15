@@ -163,10 +163,10 @@ class ShellCommandEvaluator:
             # newline.  This is especially true for formatters.  We add a
             # newline to the end of the file if it is missing.
             new_source = source + "\n" if not source.endswith("\n") else source
-            temp_file_path = Path(f.name)
-            temp_file_path.write_text(data=new_source, encoding="utf-8")
+            f.write(new_source)
+            f.flush()
 
-            args = [*self._args, temp_file_path]
+            args = [*self._args, f.name]
             args_strings = [str(item) for item in args]
             # Use `subprocess_tee` to capture the output of the command but
             # also show it live.
@@ -178,7 +178,8 @@ class ShellCommandEvaluator:
                 env=self._env,
             )
 
-            temp_file_content = temp_file_path.read_text(encoding="utf-8")
+            f.seek(0)
+            temp_file_content = f.read()
 
         if self._write_to_file:
             existing_file_path = Path(example.path)

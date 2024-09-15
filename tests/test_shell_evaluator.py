@@ -3,7 +3,6 @@
 import os
 import subprocess
 import textwrap
-import uuid
 from pathlib import Path
 
 import pytest
@@ -45,7 +44,7 @@ def test_output_shown_on_error(rst_file: Path) -> None:
     """
     evaluator = ShellCommandEvaluator(
         args=[
-            "bash",
+            "sh",
             "-c",
             "echo 'Hello, Sybil!'; echo >&2 'Hello Stderr!'; exit 1",
         ],
@@ -64,11 +63,11 @@ def test_output_shown_on_error(rst_file: Path) -> None:
         example.evaluate()
 
     assert exc.value.returncode == 1
-    assert exc.value.output == "Hello, Sybil!\n"
-    assert exc.value.stderr == "Hello Stderr!\n"
+    assert exc.value.output.strip() == "Hello, Sybil!"
+    assert exc.value.stderr.strip() == "Hello Stderr!"
     # The last element is the path to the temporary file.
     assert exc.value.cmd[:-1] == [
-        "bash",
+        "sh",
         "-c",
         "echo 'Hello, Sybil!'; echo >&2 'Hello Stderr!'; exit 1",
     ]
@@ -81,7 +80,7 @@ def test_output_shown(
     """Output is shown."""
     evaluator = ShellCommandEvaluator(
         args=[
-            "bash",
+            "sh",
             "-c",
             "echo 'Hello, Sybil!' && echo >&2 'Hello Stderr!'",
         ],
@@ -107,9 +106,9 @@ def test_pass_env(
     new_file = tmp_path / "new_file.txt"
     evaluator = ShellCommandEvaluator(
         args=[
-            "bash",
+            "sh",
             "-c",
-            f"echo Hello, $ENV_KEY! > {new_file}; exit 0",
+            f"echo Hello, $ENV_KEY! > {new_file.as_posix()}; exit 0",
         ],
         env={"ENV_KEY": "ENV_VALUE"},
         pad_file=False,
@@ -130,14 +129,14 @@ def test_global_env(
     tmp_path: Path,
 ) -> None:
     """Global environment variables are sent to the command by default."""
-    env_key = "ENV_" + uuid.uuid4().hex
+    env_key = "ENV_KEY"
     os.environ[env_key] = "ENV_VALUE"
     new_file = tmp_path / "new_file.txt"
     evaluator = ShellCommandEvaluator(
         args=[
-            "bash",
+            "sh",
             "-c",
-            f"echo Hello, ${env_key}! > {new_file}; exit 0",
+            f"echo Hello, ${env_key}! > {new_file.as_posix()}; exit 0",
         ],
         pad_file=False,
         write_to_file=False,
@@ -162,13 +161,13 @@ def test_file_is_passed(
 
     The file is created with a trailing newline.
     """
-    bash_function = """
+    sh_function = """
     cp "$2" "$1"
     """
 
     file_path = tmp_path / "file.txt"
     evaluator = ShellCommandEvaluator(
-        args=["bash", "-c", bash_function, "_", file_path],
+        args=["sh", "-c", sh_function, "_", file_path],
         pad_file=False,
         write_to_file=False,
     )
@@ -182,19 +181,14 @@ def test_file_is_passed(
     assert file_path.read_text(encoding="utf-8") == expected_content
 
 
-def test_file_path(rst_file: Path, tmp_path: Path) -> None:
+def test_file_path(rst_file: Path, capsys: pytest.CaptureFixture[str]) -> None:
     """
     The given file path is random and absolute, and starts with a name
     resembling the documentation file name, but without any hyphens
     or periods, except for the period for the final suffix.
     """
-    bash_function = """
-    echo "$2" > "$1"
-    """
-
-    file_path = tmp_path / "file.txt"
     evaluator = ShellCommandEvaluator(
-        args=["bash", "-c", bash_function, "_", file_path],
+        args=["echo"],
         pad_file=False,
         write_to_file=False,
     )
@@ -204,26 +198,26 @@ def test_file_path(rst_file: Path, tmp_path: Path) -> None:
     document = sybil.parse(path=rst_file)
     (example,) = list(document)
     example.evaluate()
-    given_file_path = Path(file_path.read_text(encoding="utf-8").strip())
+    output = capsys.readouterr().out
+    given_file_path = Path(output.strip())
     assert given_file_path.parent == rst_file.parent
     assert given_file_path.is_absolute()
     assert not given_file_path.exists()
     assert given_file_path.name.startswith("test_document_example_rst_")
     example.evaluate()
-    new_given_file_path = Path(file_path.read_text(encoding="utf-8").strip())
+    output = capsys.readouterr().out
+    new_given_file_path = Path(output.strip())
     assert new_given_file_path != given_file_path
 
 
-def test_file_suffix(rst_file: Path, tmp_path: Path) -> None:
+def test_file_suffix(
+    rst_file: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     """The given file suffixes are used."""
-    bash_function = """
-    echo "$2" > "$1"
-    """
-
-    file_path = tmp_path / "file.txt"
     suffixes = [".example", ".foobar"]
     evaluator = ShellCommandEvaluator(
-        args=["bash", "-c", bash_function, "_", file_path],
+        args=["echo"],
         pad_file=False,
         write_to_file=False,
         tempfile_suffixes=suffixes,
@@ -234,21 +228,20 @@ def test_file_suffix(rst_file: Path, tmp_path: Path) -> None:
     document = sybil.parse(path=rst_file)
     (example,) = list(document)
     example.evaluate()
-    given_file_path = Path(file_path.read_text(encoding="utf-8").strip())
+    output = capsys.readouterr().out
+    given_file_path = Path(output.strip())
     assert given_file_path.name.startswith("test_document_example_rst_")
     assert given_file_path.suffixes == suffixes
 
 
-def test_file_prefix(rst_file: Path, tmp_path: Path) -> None:
+def test_file_prefix(
+    rst_file: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     """The given file prefixes are used."""
-    bash_function = """
-    echo "$2" > "$1"
-    """
-
-    file_path = tmp_path / "file.txt"
     prefix = "custom_prefix"
     evaluator = ShellCommandEvaluator(
-        args=["bash", "-c", bash_function, "_", file_path],
+        args=["echo"],
         pad_file=False,
         write_to_file=False,
         tempfile_name_prefix=prefix,
@@ -259,7 +252,8 @@ def test_file_prefix(rst_file: Path, tmp_path: Path) -> None:
     document = sybil.parse(path=rst_file)
     (example,) = list(document)
     example.evaluate()
-    given_file_path = Path(file_path.read_text(encoding="utf-8").strip())
+    output = capsys.readouterr().out
+    given_file_path = Path(output.strip())
     assert given_file_path.name.startswith("custom_prefix_")
 
 
@@ -269,13 +263,13 @@ def test_pad(rst_file: Path, tmp_path: Path) -> None:
     This test relies heavily on the exact formatting of the
     `rst_file` example.
     """
-    bash_function = """
+    sh_function = """
     cp "$2" "$1"
     """
 
     file_path = tmp_path / "file.txt"
     evaluator = ShellCommandEvaluator(
-        args=["bash", "-c", bash_function, "_", file_path],
+        args=["sh", "-c", sh_function, "_", file_path],
         pad_file=True,
         write_to_file=False,
     )
@@ -313,11 +307,8 @@ def test_write_to_file(
     # No code block ends with multiple newlines.
     new_content = "foobar\n\n"
     file_with_new_content.write_text(data=new_content, encoding="utf-8")
-    bash_function = """
-    cp "$1" "$2"
-    """
     evaluator = ShellCommandEvaluator(
-        args=["bash", "-c", bash_function, "_", file_with_new_content],
+        args=["cp", file_with_new_content],
         pad_file=False,
         write_to_file=write_to_file,
     )
