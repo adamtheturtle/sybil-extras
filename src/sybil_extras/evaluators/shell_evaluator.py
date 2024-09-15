@@ -3,7 +3,7 @@
 import subprocess
 import tempfile
 import textwrap
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 
 import subprocess_tee
@@ -88,6 +88,7 @@ class ShellCommandEvaluator:
         env: Mapping[str, str] | None = None,
         tempfile_suffixes: Sequence[str] = (),
         tempfile_name_prefix: str = "",
+        tempfile_name_transform: Callable[[str], str] | None = None,
         *,
         # For some commands, padding is good: e.g. we want to see the error
         # reported on the correct line for `mypy`. For others, padding is bad:
@@ -110,6 +111,13 @@ class ShellCommandEvaluator:
                 This is useful for distinguishing files created by a user of
                 this evaluator from other files, e.g. for ignoring in linter
                 configurations.
+            tempfile_name_transform: A function to transform the temporary file
+                name. This is useful for commands that expect a specific file
+                name format. For example, `pylint` expects the file to have a
+                lowercase name. This function does not apply to any prefix or
+                suffix, or the random addition to the original file's name. It
+                only applies to the part of the name that is meant to resemble
+                the original file's name.
             pad_file: Whether to pad the file with newlines at the start.
                 This is useful for error messages that report the line number.
                 However, this is detrimental to commands that expect the file
@@ -124,6 +132,7 @@ class ShellCommandEvaluator:
         self._tempfile_name_prefix = tempfile_name_prefix
         self._tempfile_suffixes = tempfile_suffixes
         self._write_to_file = write_to_file
+        self._tempfile_name_transform = tempfile_name_transform
 
     def __call__(self, example: Example) -> None:
         """Run the shell command on the example file."""
@@ -135,9 +144,11 @@ class ShellCommandEvaluator:
         else:
             source = example.parsed
 
-        prefix = (
-            Path(example.path).name.replace(".", "_") + f"_l{example.line}_"
-        )
+        path_name = Path(example.path).name
+        if self._tempfile_name_transform:
+            path_name = self._tempfile_name_transform(path_name)
+
+        prefix = path_name.replace(".", "_") + f"_l{example.line}_"
 
         if self._tempfile_name_prefix:
             prefix = f"{self._tempfile_name_prefix}_{prefix}"
