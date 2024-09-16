@@ -1,8 +1,8 @@
 """An evaluator for running shell commands on example files."""
 
 import subprocess
-import tempfile
 import textwrap
+import uuid
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
@@ -147,39 +147,33 @@ class ShellCommandEvaluator:
 
         suffix = "".join(self._tempfile_suffixes)
 
-        with tempfile.NamedTemporaryFile(
-            # Create a sibling file in the same directory as the example file.
-            # The name also looks like the example file name.
-            # This is so that output reflects the actual file path.
-            # This is useful for error messages, and for ignores.
-            prefix=prefix,
-            dir=Path(example.path).parent,
-            mode="w+",
-            delete=True,
-            suffix=suffix,
-        ) as f:
-            # The parsed code block at the end of a file is given without a
-            # trailing newline.  Some tools expect that a file has a trailing
-            # newline.  This is especially true for formatters.  We add a
-            # newline to the end of the file if it is missing.
-            new_source = source + "\n" if not source.endswith("\n") else source
-            f.write(new_source)
-            f.flush()
+        # Create a sibling file in the same directory as the example file.
+        # The name also looks like the example file name.
+        # This is so that output reflects the actual file path.
+        # This is useful for error messages, and for ignores.
+        parent = Path(example.path).parent
+        temp_file = parent / f"{prefix}_{uuid.uuid4().hex[:4]}_{suffix}"
+        # The parsed code block at the end of a file is given without a
+        # trailing newline.  Some tools expect that a file has a trailing
+        # newline.  This is especially true for formatters.  We add a
+        # newline to the end of the file if it is missing.
+        new_source = source + "\n" if not source.endswith("\n") else source
+        temp_file.write_text(new_source, encoding="utf-8")
 
-            args = [*self._args, f.name]
-            args_strings = [str(item) for item in args]
-            # Use `subprocess_tee` to capture the output of the command but
-            # also show it live.
-            result = subprocess_tee.run(
-                args=args_strings,
-                check=False,
-                capture_output=True,
-                text=True,
-                env=self._env,
-            )
+        args = [*self._args, temp_file]
+        args_strings = [str(item) for item in args]
+        # Use `subprocess_tee` to capture the output of the command but
+        # also show it live.
+        result = subprocess_tee.run(
+            args=args_strings,
+            check=False,
+            capture_output=True,
+            text=True,
+            env=self._env,
+        )
 
-            f.seek(0)
-            temp_file_content = f.read()
+        temp_file_content = temp_file.read_text(encoding="utf-8")
+        temp_file.unlink()
 
         if self._write_to_file:
             existing_file_path = Path(example.path)
