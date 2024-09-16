@@ -58,7 +58,7 @@ optional-dependencies.dev = [
     "pyroma==4.2",
     "pytest==8.3.3",
     "pytest-cov==5.0.0",
-    "ruff==0.6.4",
+    "ruff==0.6.5",
     "sybil==7.1.0",
     "uv==0.4.10",
     "vulture==2.11",
