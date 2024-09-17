@@ -32,7 +32,7 @@ def _failing_evaluator(example: Example) -> None:
 
 
 @pytest.fixture(name="rst_file")
-def rst_file_fixture(tmp_path: Path) -> Path:
+def fixture_rst_file(tmp_path: Path) -> Path:
     """
     Fixture to create a temporary RST file with Python code blocks.
     """

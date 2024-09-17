@@ -13,7 +13,7 @@ from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 
 
 @pytest.fixture(name="rst_file")
-def rst_file_fixture(tmp_path: Path) -> Path:
+def fixture_rst_file(tmp_path: Path) -> Path:
     """
     Fixture to create a temporary RST file with code blocks.
     """
