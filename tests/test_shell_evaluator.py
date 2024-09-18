@@ -43,12 +43,9 @@ def test_error(rst_file: Path) -> None:
     """
     A ``subprocess.CalledProcessError`` is raised if the command fails.
     """
+    args = ["sh", "-c", "exit 1"]
     evaluator = ShellCommandEvaluator(
-        args=[
-            "sh",
-            "-c",
-            "echo 'Hello, Sybil!'; echo >&2 'Hello Stderr!'; exit 1",
-        ],
+        args=args,
         pad_file=False,
         write_to_file=False,
     )
@@ -65,11 +62,7 @@ def test_error(rst_file: Path) -> None:
 
     assert exc.value.returncode == 1
     # The last element is the path to the temporary file.
-    assert exc.value.cmd[:-1] == [
-        "sh",
-        "-c",
-        "echo 'Hello, Sybil!'; echo >&2 'Hello Stderr!'; exit 1",
-    ]
+    assert exc.value.cmd[:-1] == args
 
 
 def test_output_shown(
