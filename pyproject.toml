@@ -64,7 +64,7 @@ optional-dependencies.dev = [
     # use it to lint shell commands in GitHub workflow files.
     "shellcheck-py==0.10.0.1",
     "sybil==7.1.1",
-    "uv==0.4.10",
+    "uv==0.4.11",
     "vulture==2.11",
 ]
 urls.Source = "https://github.com/adamtheturtle/sybil-extras"
