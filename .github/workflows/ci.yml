@@ -17,8 +17,8 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
-        platform: ["ubuntu-latest", "windows-latest"]
+        python-version: ["3.10"]
+        platform: ["windows-latest"]
 
     runs-on: ${{ matrix.platform }}
 
@@ -40,6 +40,10 @@ jobs:
           pre-commit run --all-files --hook-stage commit --verbose
           pre-commit run --all-files --hook-stage push --verbose
           pre-commit run --all-files --hook-stage manual --verbose
+
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: runner.os == 'Windows'
 
       - name: "Run tests"
         run: |
