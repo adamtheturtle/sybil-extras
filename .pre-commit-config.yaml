@@ -26,6 +26,7 @@ ci:
         - ruff-format-fix
         - ruff-format-fix-docs
         - vulture
+        - vulture-docs
 
 default_install_hook_types: [pre-commit, pre-push, commit-msg]
 repos:
@@ -102,6 +103,12 @@ repos:
       language: system
       types_or: [python]
       pass_filenames: false
+
+    - id: vulture-docs
+      name: vulture docs
+      entry: uvx doccmd --language=python --command="vulture"
+      language: system
+      types_or: [markdown, rst]
 
     - id: pyroma
       name: pyroma
