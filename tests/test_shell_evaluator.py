@@ -1,6 +1,7 @@
 """Tests for the ShellCommandEvaluator"""
 
 import os
+import stat
 import subprocess
 import textwrap
 from pathlib import Path
@@ -38,16 +39,13 @@ def fixture_rst_file(tmp_path: Path) -> Path:
     return test_document
 
 
-def test_output_shown_on_error(rst_file: Path) -> None:
+def test_error(rst_file: Path) -> None:
     """
-    stdout and stderr are shown when a command fails, if stderr is not empty.
+    A ``subprocess.CalledProcessError`` is raised if the command fails.
     """
+    args = ["sh", "-c", "exit 1"]
     evaluator = ShellCommandEvaluator(
-        args=[
-            "sh",
-            "-c",
-            "echo 'Hello, Sybil!'; echo >&2 'Hello Stderr!'; exit 1",
-        ],
+        args=args,
         pad_file=False,
         write_to_file=False,
     )
@@ -63,19 +61,13 @@ def test_output_shown_on_error(rst_file: Path) -> None:
         example.evaluate()
 
     assert exc.value.returncode == 1
-    assert exc.value.output.strip() == "Hello, Sybil!"
-    assert exc.value.stderr.strip() == "Hello Stderr!"
     # The last element is the path to the temporary file.
-    assert exc.value.cmd[:-1] == [
-        "sh",
-        "-c",
-        "echo 'Hello, Sybil!'; echo >&2 'Hello Stderr!'; exit 1",
-    ]
+    assert exc.value.cmd[:-1] == args
 
 
 def test_output_shown(
     rst_file: Path,
-    capsys: pytest.CaptureFixture[str],
+    capfd: pytest.CaptureFixture[str],
 ) -> None:
     """Output is shown."""
     evaluator = ShellCommandEvaluator(
@@ -93,7 +85,7 @@ def test_output_shown(
     document = sybil.parse(path=rst_file)
     (example,) = list(document)
     example.evaluate()
-    outerr = capsys.readouterr()
+    outerr = capfd.readouterr()
     assert outerr.out == "Hello, Sybil!\n"
     assert outerr.err == "Hello Stderr!\n"
 
@@ -181,7 +173,7 @@ def test_file_is_passed(
     assert file_path.read_text(encoding="utf-8") == expected_content
 
 
-def test_file_path(rst_file: Path, capsys: pytest.CaptureFixture[str]) -> None:
+def test_file_path(rst_file: Path, capfd: pytest.CaptureFixture[str]) -> None:
     """
     The given file path is random and absolute, and starts with a name
     resembling the documentation file name, but without any hyphens
@@ -198,21 +190,21 @@ def test_file_path(rst_file: Path, capsys: pytest.CaptureFixture[str]) -> None:
     document = sybil.parse(path=rst_file)
     (example,) = list(document)
     example.evaluate()
-    output = capsys.readouterr().out
+    output = capfd.readouterr().out
     given_file_path = Path(output.strip())
     assert given_file_path.parent == rst_file.parent
     assert given_file_path.is_absolute()
     assert not given_file_path.exists()
     assert given_file_path.name.startswith("test_document_example_rst_")
     example.evaluate()
-    output = capsys.readouterr().out
+    output = capfd.readouterr().out
     new_given_file_path = Path(output.strip())
     assert new_given_file_path != given_file_path
 
 
 def test_file_suffix(
     rst_file: Path,
-    capsys: pytest.CaptureFixture[str],
+    capfd: pytest.CaptureFixture[str],
 ) -> None:
     """The given file suffixes are used."""
     suffixes = [".example", ".foobar"]
@@ -228,7 +220,7 @@ def test_file_suffix(
     document = sybil.parse(path=rst_file)
     (example,) = list(document)
     example.evaluate()
-    output = capsys.readouterr().out
+    output = capfd.readouterr().out
     given_file_path = Path(output.strip())
     assert given_file_path.name.startswith("test_document_example_rst_")
     assert given_file_path.suffixes == suffixes
@@ -236,7 +228,7 @@ def test_file_suffix(
 
 def test_file_prefix(
     rst_file: Path,
-    capsys: pytest.CaptureFixture[str],
+    capfd: pytest.CaptureFixture[str],
 ) -> None:
     """The given file prefixes are used."""
     prefix = "custom_prefix"
@@ -252,7 +244,7 @@ def test_file_prefix(
     document = sybil.parse(path=rst_file)
     (example,) = list(document)
     example.evaluate()
-    output = capsys.readouterr().out
+    output = capfd.readouterr().out
     given_file_path = Path(output.strip())
     assert given_file_path.name.startswith("custom_prefix_")
 
@@ -371,3 +363,30 @@ def test_no_changes_mtime(rst_file: Path) -> None:
     example.evaluate()
     new_mtime = rst_file.stat().st_mtime
     assert new_mtime == original_mtime
+
+
+def test_non_utf8_output(
+    rst_file: Path,
+    capfdbinary: pytest.CaptureFixture[bytes],
+    tmp_path: Path,
+) -> None:
+    """Non-UTF-8 output is handled."""
+    sh_function = b"""
+    echo "\xc0\x80"
+    """
+    script = tmp_path / "my_script.sh"
+    script.write_bytes(data=sh_function)
+    script.chmod(mode=stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+    evaluator = ShellCommandEvaluator(
+        args=["sh", str(script)],
+        pad_file=False,
+        write_to_file=False,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = list(document)
+    example.evaluate()
+    output = capfdbinary.readouterr().out
+    assert output == b"\xc0\x80\n"

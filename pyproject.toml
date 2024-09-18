@@ -38,7 +38,6 @@ dynamic = [
 ]
 dependencies = [
     "beartype",
-    "subprocess-tee",
     "sybil",
 ]
 optional-dependencies.dev = [
