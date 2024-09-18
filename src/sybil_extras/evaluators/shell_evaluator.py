@@ -223,7 +223,6 @@ class ShellCommandEvaluator:
                     encoding="utf-8",
                 )
 
-        assert isinstance(result, subprocess.CompletedProcess)
         if result.returncode != 0:
             raise subprocess.CalledProcessError(
                 cmd=result.args,
