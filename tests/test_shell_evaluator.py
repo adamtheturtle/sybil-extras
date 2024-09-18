@@ -2,6 +2,7 @@
 
 import os
 import stat
+import subprocess
 import textwrap
 from pathlib import Path
 
@@ -36,6 +37,39 @@ def fixture_rst_file(tmp_path: Path) -> Path:
     test_document = tmp_path / "test_document.example.rst"
     test_document.write_text(data=content, encoding="utf-8")
     return test_document
+
+
+def test_error(rst_file: Path) -> None:
+    """
+    A ``subprocess.CalledProcessError`` is raised if the command fails.
+    """
+    evaluator = ShellCommandEvaluator(
+        args=[
+            "sh",
+            "-c",
+            "echo 'Hello, Sybil!'; echo >&2 'Hello Stderr!'; exit 1",
+        ],
+        pad_file=False,
+        write_to_file=False,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = list(document)
+
+    with pytest.raises(
+        expected_exception=subprocess.CalledProcessError
+    ) as exc:
+        example.evaluate()
+
+    assert exc.value.returncode == 1
+    # The last element is the path to the temporary file.
+    assert exc.value.cmd[:-1] == [
+        "sh",
+        "-c",
+        "echo 'Hello, Sybil!'; echo >&2 'Hello Stderr!'; exit 1",
+    ]
 
 
 def test_output_shown(
