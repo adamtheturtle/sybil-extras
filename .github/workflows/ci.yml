@@ -41,11 +41,6 @@ jobs:
           pre-commit run --all-files --hook-stage push --verbose
           pre-commit run --all-files --hook-stage manual --verbose
 
-      # - uses: actions/checkout@v4
-      # - name: Setup tmate session
-      #   uses: mxschmitt/action-tmate@v3
-      #   if: runner.os == 'Windows'
-
       - name: "Run tests"
         run: |
           # We run tests against "." and not the tests directory as we test the README

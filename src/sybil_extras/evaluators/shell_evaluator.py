@@ -6,7 +6,6 @@ import uuid
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-import tee_subprocess
 from beartype import beartype
 from sybil import Example
 from sybil.evaluators.python import pad
@@ -160,15 +159,10 @@ class ShellCommandEvaluator:
         new_source = source + "\n" if not source.endswith("\n") else source
         temp_file.write_text(new_source, encoding="utf-8")
 
-        args = [*self._args, temp_file]
-        args_strings = [str(item) for item in args]
-        # Use `tee_subprocess` to capture the output of the command but
-        # also show it live.
-
-        result = tee_subprocess.run(
-            args=args_strings,
+        result = subprocess.run(
+            args=[*self._args, temp_file],
             check=False,
-            capture_output=True,
+            capture_output=False,
             text=False,
             env=self._env,
         )
@@ -232,7 +226,7 @@ class ShellCommandEvaluator:
         assert isinstance(result, subprocess.CompletedProcess)
         if result.returncode != 0:
             raise subprocess.CalledProcessError(
-                cmd=args_strings,
+                cmd=result.args,
                 returncode=result.returncode,
                 output=result.stdout,
                 stderr=result.stderr,
