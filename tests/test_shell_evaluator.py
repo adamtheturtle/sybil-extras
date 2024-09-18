@@ -387,7 +387,7 @@ def test_non_utf8_output(
     script.write_bytes(data=sh_function)
     script.chmod(mode=stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
     evaluator = ShellCommandEvaluator(
-        args=["sh", "-c", str(script)],
+        args=["sh", str(script)],
         pad_file=False,
         write_to_file=False,
     )
