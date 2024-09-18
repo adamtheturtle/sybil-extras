@@ -6,6 +6,7 @@ import uuid
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
+import tee_subprocess
 from beartype import beartype
 from sybil import Example
 from sybil.evaluators.python import pad
@@ -159,8 +160,10 @@ class ShellCommandEvaluator:
         new_source = source + "\n" if not source.endswith("\n") else source
         temp_file.write_text(new_source, encoding="utf-8")
 
-        result = subprocess.run(
-            args=[*self._args, temp_file],
+        args = [*self._args, temp_file]
+        args_strings = [str(arg) for arg in args]
+        result = tee_subprocess.run(
+            args=args_strings,
             check=False,
             capture_output=False,
             text=False,
@@ -223,6 +226,7 @@ class ShellCommandEvaluator:
                     encoding="utf-8",
                 )
 
+        assert isinstance(result, subprocess.CompletedProcess)
         if result.returncode != 0:
             raise subprocess.CalledProcessError(
                 cmd=result.args,
