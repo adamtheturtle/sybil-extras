@@ -380,11 +380,11 @@ def test_non_utf8_output(
     tmp_path: Path,
 ) -> None:
     """Non-UTF-8 output is handled."""
-    script = """
+    script = b"""
     echo -e "\xc0\x80"
     """
     my_script = tmp_path / "my_script.sh"
-    my_script.write_text(data=script, encoding="latin1")
+    my_script.write_bytes(data=script)
     my_script.chmod(mode=stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
     evaluator = ShellCommandEvaluator(
         args=["sh", "-c", str(my_script)],
