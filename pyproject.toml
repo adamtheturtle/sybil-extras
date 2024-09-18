@@ -65,7 +65,7 @@ optional-dependencies.dev = [
     "shellcheck-py==0.10.0.1",
     "sybil==7.1.1",
     "uv==0.4.11",
-    "vulture==2.11",
+    "vulture==2.12",
 ]
 urls.Source = "https://github.com/adamtheturtle/sybil-extras"
 
