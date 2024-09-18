@@ -1,6 +1,7 @@
 """Tests for the ShellCommandEvaluator"""
 
 import os
+import stat
 import subprocess
 import textwrap
 from pathlib import Path
@@ -63,8 +64,8 @@ def test_output_shown_on_error(rst_file: Path) -> None:
         example.evaluate()
 
     assert exc.value.returncode == 1
-    assert exc.value.output.strip() == "Hello, Sybil!"
-    assert exc.value.stderr.strip() == "Hello Stderr!"
+    assert exc.value.output.strip() == b"Hello, Sybil!"
+    assert exc.value.stderr.strip() == b"Hello Stderr!"
     # The last element is the path to the temporary file.
     assert exc.value.cmd[:-1] == [
         "sh",
@@ -371,3 +372,30 @@ def test_no_changes_mtime(rst_file: Path) -> None:
     example.evaluate()
     new_mtime = rst_file.stat().st_mtime
     assert new_mtime == original_mtime
+
+
+def test_non_utf8_output(
+    rst_file: Path,
+    capsysbinary: pytest.CaptureFixture[bytes],
+    tmp_path: Path,
+) -> None:
+    """Non-UTF-8 output is handled."""
+    script = """
+    echo -e "\xc0\x80"
+    """
+    my_script = tmp_path / "my_script.sh"
+    my_script.write_text(data=script, encoding="latin1")
+    my_script.chmod(mode=stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+    evaluator = ShellCommandEvaluator(
+        args=["sh", "-c", str(my_script)],
+        pad_file=False,
+        write_to_file=False,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = list(document)
+    example.evaluate()
+    output = capsysbinary.readouterr().out
+    assert output == b"-e \xc0\x80\n"
