@@ -447,14 +447,13 @@ def test_no_file_left_behind_on_interruption(
         encoding="utf-8",
     )
 
-    evaluator_process = subprocess.Popen(
-        args=[sys.executable, evaluator_script.as_posix()],
-    )
+    with subprocess.Popen(
+        args=[sys.executable, evaluator_script],
+    ) as evaluator_process:
+        time.sleep(0.1)
+        os.kill(evaluator_process.pid, signal.SIGINT)
+        evaluator_process.wait()
 
-    time.sleep(0.1)
-
-    os.kill(evaluator_process.pid, signal.SIGINT)
-    evaluator_process.wait()
     assert list(rst_file.parent.glob("**/*")) == [
         rst_file,
         evaluator_script,
