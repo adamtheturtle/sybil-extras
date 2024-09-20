@@ -454,8 +454,8 @@ def test_no_file_left_behind_on_interruption(
         os.kill(evaluator_process.pid, signal.SIGINT)
         evaluator_process.wait()
 
-    assert list(rst_file.parent.glob("**/*")) == [
+    assert set(rst_file.parent.glob("**/*")) == {
         rst_file,
         evaluator_script,
         sleep_python_script,
-    ]
+    }
