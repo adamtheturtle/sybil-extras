@@ -12,6 +12,7 @@ from sybil import Example
 from sybil.evaluators.python import pad
 
 
+@beartype
 def _count_leading_newlines(s: str) -> int:
     """
     Count the number of leading newlines in a string.

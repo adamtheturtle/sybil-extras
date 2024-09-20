@@ -1,9 +1,12 @@
 """Tests for the ShellCommandEvaluator"""
 
 import os
+import signal
 import stat
 import subprocess
+import sys
 import textwrap
+import time
 from pathlib import Path
 
 import pytest
@@ -390,3 +393,70 @@ def test_non_utf8_output(
     example.evaluate()
     output = capsysbinary.readouterr().out
     assert output == b"\xc0\x80\n"
+
+
+def test_no_file_left_behind_on_interruption(
+    rst_file: Path,
+    tmp_path: Path,
+) -> None:
+    """No file is left behind if the process is interrupted."""
+    sleep_python_script_content = textwrap.dedent(
+        text="""\
+        import time
+
+        time.sleep(10)
+        """,
+    )
+
+    sleep_python_script = tmp_path / "sleep_comand.py"
+    sleep_python_script.write_text(
+        data=sleep_python_script_content,
+        encoding="utf-8",
+    )
+
+    run_shell_command_evaluator_script_content = textwrap.dedent(
+        text=f"""\
+        import sys
+        from pathlib import Path
+
+        from sybil import Sybil
+        from sybil.parsers.codeblock import CodeBlockParser
+
+        from sybil_extras.evaluators.shell_evaluator import (
+            ShellCommandEvaluator,
+        )
+
+        evaluator = ShellCommandEvaluator(
+            args=[sys.executable, Path("{sleep_python_script}")],
+            pad_file=False,
+            write_to_file=True,
+        )
+
+        parser = CodeBlockParser(language="python", evaluator=evaluator)
+        sybil = Sybil(parsers=[parser])
+
+        document = sybil.parse(path=Path("{rst_file}"))
+        (example,) = list(document)
+        example.evaluate()
+        """,
+    )
+
+    evaluator_script = tmp_path / "evaluator_script.py"
+    evaluator_script.write_text(
+        data=run_shell_command_evaluator_script_content,
+        encoding="utf-8",
+    )
+
+    evaluator_process = subprocess.Popen(
+        args=[sys.executable, evaluator_script.as_posix()],
+    )
+
+    time.sleep(0.1)
+
+    os.kill(evaluator_process.pid, signal.SIGINT)
+    evaluator_process.wait()
+    assert list(rst_file.parent.glob("**/*")) == [
+        rst_file,
+        evaluator_script,
+        sleep_python_script,
+    ]
