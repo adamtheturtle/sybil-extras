@@ -161,16 +161,18 @@ class ShellCommandEvaluator:
         new_source = source + "\n" if not source.endswith("\n") else source
         temp_file.write_text(new_source, encoding="utf-8")
 
-        result = tee_subprocess.run(
-            args=[*self._args, temp_file],
-            check=False,
-            capture_output=False,
-            text=False,
-            env=self._env,
-        )
+        try:
+            result = tee_subprocess.run(
+                args=[*self._args, temp_file],
+                check=False,
+                capture_output=False,
+                text=False,
+                env=self._env,
+            )
 
-        temp_file_content = temp_file.read_text(encoding="utf-8")
-        temp_file.unlink()
+            temp_file_content = temp_file.read_text(encoding="utf-8")
+        finally:
+            temp_file.unlink()
 
         if self._write_to_file:
             existing_file_path = Path(example.path)
