@@ -65,7 +65,7 @@ repos:
 
     - id: shellcheck-docs
       name: shellcheck-docs
-      entry: doccmd --language=shell --language=console --command="shellcheck --shell=bash --exclude=SC1017"
+      entry: uvx doccmd --language=shell --language=console --command="shellcheck --shell=bash --exclude=SC1017"
       language: system
       types_or: [markdown, rst]
 
