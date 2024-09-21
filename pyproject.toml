@@ -251,6 +251,7 @@ ignore = [
     "*.enc",
     ".git_archival.txt",
     ".pre-commit-config.yaml",
+    ".shellcheckrc",
     ".vscode/**",
     "CHANGELOG.rst",
     "CODE_OF_CONDUCT.rst",
