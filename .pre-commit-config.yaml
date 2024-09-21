@@ -25,6 +25,8 @@ ci:
         - ruff-check-fix-docs
         - ruff-format-fix
         - ruff-format-fix-docs
+        - shellcheck
+        - shellcheck-docs
         - vulture
         - vulture-docs
 
@@ -46,11 +48,6 @@ repos:
     - id: file-contents-sorter
       files: spelling_private_dict\.txt$
     - id: trailing-whitespace
-- repo: https://github.com/shellcheck-py/shellcheck-py
-  rev: v0.10.0.1
-  hooks:
-    - id: shellcheck
-      args: ["--shell", "bash"]
 - repo: local
   hooks:
     - id: actionlint
@@ -59,6 +56,18 @@ repos:
       language: system
       pass_filenames: false
       types_or: [yaml]
+
+    - id: shellcheck
+      name: shellcheck
+      entry: shellcheck --shell bash --exclude=SC1017
+      language: system
+      types_or: [shell]
+
+    - id: shellcheck-docs
+      name: shellcheck-docs
+      entry: uvx doccmd --language=shell --language=console --command="shellcheck --shell=bash --exclude=SC1017"
+      language: system
+      types_or: [markdown, rst]
 
     - id: mypy
       name: mypy
