@@ -84,7 +84,7 @@ CustomDirectiveSkipParser
     """Use CustomDirectiveSkipParser to skip code blocks with a custom marker."""
 
     from sybil import Sybil
-    from sybil.evaluators.python import PythonEvaluator
+    from sybil.parsers.codeblock import PythonCodeBlockParser
 
     # Similar parsers are available at sybil.parsers.rest.custom_directive_skip
     # and sybil.parsers.myst.custom_directive_skip.
@@ -93,7 +93,7 @@ CustomDirectiveSkipParser
     )
 
     skip_parser = CustomDirectiveSkipParser(directive="custom-marker-skip")
-    code_block_parser = PythonEvaluator()
+    code_block_parser = PythonCodeBlockParser()
 
     sybil = Sybil(parsers=[skip_parser, code_block_parser])
 
