@@ -12,4 +12,6 @@ class CustomDirectiveSkipParser(AbstractSkipParser):
         Args:
             directive: The name of the directive to skip.
         """
-        super().__init__([DirectiveInCommentLexer(directive=directive)])
+        # This matches the ``sybil.parsers.rest.SkipParser``, other than
+        # it does not hardcode the directive "skip".
+        super().__init__(lexers=[DirectiveInCommentLexer(directive=directive)])
