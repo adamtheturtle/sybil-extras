@@ -99,7 +99,11 @@ CustomDirectiveSkipParser
 
     pytest_collect_file = sybil.pytest()
 
-This allows you to skip code blocks in the same way as described in https://sybil.readthedocs.io/en/latest/markdown.html#skipping-examples,
+This allows you to skip code blocks in the same way as described in
+the Sybil documentation for skipping examples in
+`reStructuredText <https://sybil.readthedocs.io/en/latest/rest.html#skipping-examples>`_,
+`Markdown <https://sybil.readthedocs.io/en/latest/rest.html#skipping-examples>`_ ,
+and `MyST <https://sybil.readthedocs.io/en/latest/myst.html#skipping-examples>`_ files,
 but with custom text, e.g. ``custom-marker-skip`` replacing the word ``skip``.
 
 .. |Build Status| image:: https://github.com/adamtheturtle/sybil-extras/actions/workflows/ci.yml/badge.svg?branch=main

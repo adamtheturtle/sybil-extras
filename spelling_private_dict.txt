@@ -3,10 +3,12 @@ beartype
 env
 formatter
 formatters
+hardcode
 iff
 linter
 namespace
 ons
+parsers
 pytest
 rst
 stderr
