@@ -24,7 +24,7 @@ MultiEvaluator
 
     from sybil import Example, Sybil
     from sybil.evaluators.python import PythonEvaluator
-    from sybil.parsers.codeblock import CodeBlockParser
+    from sybil.parsers.rest.codeblock import CodeBlockParser
     from sybil.typing import Evaluator
 
     from sybil_extras.evaluators.multi import MultiEvaluator
@@ -53,7 +53,7 @@ ShellCommandEvaluator
     import sys
 
     from sybil import Sybil
-    from sybil.parsers.codeblock import CodeBlockParser
+    from sybil.parsers.rest.codeblock import CodeBlockParser
 
     from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 
