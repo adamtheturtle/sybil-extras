@@ -28,6 +28,12 @@ def test_skip(tmp_path: Path) -> None:
     ```python
     x.append(3)
     ```
+
+    % custom-skip: next
+
+    ```python
+    x.append(4)
+    ```
     """
 
     test_document = tmp_path / "test.md"
