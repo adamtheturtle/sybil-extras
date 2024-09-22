@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from sybil import Sybil
-from sybil.parsers.codeblock import PythonCodeBlockParser
+from sybil.parsers.rest.codeblock import PythonCodeBlockParser
 
 from sybil_extras.parsers.rest.custom_directive_skip import (
     CustomDirectiveSkipParser,

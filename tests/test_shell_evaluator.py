@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 from sybil import Sybil
-from sybil.parsers.codeblock import CodeBlockParser
+from sybil.parsers.rest.codeblock import CodeBlockParser
 
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 
@@ -420,7 +420,7 @@ def test_no_file_left_behind_on_interruption(
         from pathlib import Path
 
         from sybil import Sybil
-        from sybil.parsers.codeblock import CodeBlockParser
+        from sybil.parsers.rest.codeblock import CodeBlockParser
 
         from sybil_extras.evaluators.shell_evaluator import (
             ShellCommandEvaluator,
