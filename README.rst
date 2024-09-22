@@ -76,6 +76,36 @@ ShellCommandEvaluator
 
     pytest_collect_file = sybil.pytest()
 
+CustomDirectiveSkipParser
+-------------------------
+
+.. code-block:: python
+
+    """Use CustomDirectiveSkipParser to skip code blocks with a custom marker."""
+
+    from sybil import Sybil
+    from sybil.parsers.rest.codeblock import PythonCodeBlockParser
+
+    # Similar parsers are available at sybil.parsers.markdown.custom_directive_skip
+    # and sybil.parsers.myst.custom_directive_skip.
+    from sybil_extras.parsers.rest.custom_directive_skip import (
+        CustomDirectiveSkipParser,
+    )
+
+    skip_parser = CustomDirectiveSkipParser(directive="custom-marker-skip")
+    code_block_parser = PythonCodeBlockParser()
+
+    sybil = Sybil(parsers=[skip_parser, code_block_parser])
+
+    pytest_collect_file = sybil.pytest()
+
+This allows you to skip code blocks in the same way as described in
+the Sybil documentation for skipping examples in
+`reStructuredText <https://sybil.readthedocs.io/en/latest/rest.html#skipping-examples>`_,
+`Markdown <https://sybil.readthedocs.io/en/latest/rest.html#skipping-examples>`_ ,
+and `MyST <https://sybil.readthedocs.io/en/latest/myst.html#skipping-examples>`_ files,
+but with custom text, e.g. ``custom-marker-skip`` replacing the word ``skip``.
+
 .. |Build Status| image:: https://github.com/adamtheturtle/sybil-extras/actions/workflows/ci.yml/badge.svg?branch=main
    :target: https://github.com/adamtheturtle/sybil-extras/actions
 .. |codecov| image:: https://codecov.io/gh/adamtheturtle/sybil-extras/branch/main/graph/badge.svg
