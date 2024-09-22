@@ -31,9 +31,9 @@ def test_skip(tmp_path: Path) -> None:
     test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
-    parser = CustomDirectiveSkipParser(directive="custom-skip")
+    skip_parser = CustomDirectiveSkipParser(directive="custom-skip")
 
-    sybil = Sybil(parsers=[parser])
+    sybil = Sybil(parsers=[skip_parser])
     document = sybil.parse(path=test_document)
     examples = list(document)
     breakpoint()
