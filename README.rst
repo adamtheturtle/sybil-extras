@@ -77,7 +77,7 @@ ShellCommandEvaluator
     pytest_collect_file = sybil.pytest()
 
 CustomDirectiveSkipParser
--------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
