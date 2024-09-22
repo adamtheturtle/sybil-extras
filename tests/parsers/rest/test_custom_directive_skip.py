@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from sybil import Sybil
+from sybil.parsers.codeblock import PythonCodeBlockParser
 
 from sybil_extras.parsers.rest.custom_directive_skip import (
     CustomDirectiveSkipParser,
@@ -15,25 +16,28 @@ def test_skip(tmp_path: Path) -> None:
 
     .. code-block:: python
 
-       x = 1
+        x = []
 
-    .. skip: next
-
-    .. code-block:: python
-
-       x = 2
+    .. custom-skip: next
 
     .. code-block:: python
 
-       x = 3
+        x.append(2)
+
+    .. code-block:: python
+
+        x.append(3)
     """
 
     test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
     skip_parser = CustomDirectiveSkipParser(directive="custom-skip")
+    code_parser = PythonCodeBlockParser()
 
-    sybil = Sybil(parsers=[skip_parser])
+    sybil = Sybil(parsers=[code_parser, skip_parser])
     document = sybil.parse(path=test_document)
-    examples = list(document)
-    breakpoint()
+    for example in document.examples():
+        example.evaluate()
+
+    assert document.namespace["x"] == [3]
