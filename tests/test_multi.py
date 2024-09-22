@@ -58,7 +58,7 @@ def test_multi_evaluator_runs_all(rst_file: Path) -> None:
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
-    (example,) = list(document)
+    (example,) = document.examples()
     example.evaluate()
 
     expected_namespace = {"step_1": True, "step_2": True, "step_3": True}
@@ -76,6 +76,6 @@ def test_multi_evaluator_raises_on_failure(rst_file: Path) -> None:
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
-    (example,) = list(document)
+    (example,) = document.examples()
     with pytest.raises(AssertionError, match="Failure in failing_evaluator"):
         example.evaluate()

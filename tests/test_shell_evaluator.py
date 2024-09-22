@@ -56,7 +56,7 @@ def test_error(rst_file: Path) -> None:
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
-    (example,) = list(document)
+    (example,) = document.examples()
 
     with pytest.raises(
         expected_exception=subprocess.CalledProcessError
@@ -86,7 +86,7 @@ def test_output_shown(
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
-    (example,) = list(document)
+    (example,) = document.examples()
     example.evaluate()
     outerr = capsys.readouterr()
     assert outerr.out == "Hello, Sybil!\n"
@@ -113,7 +113,7 @@ def test_pass_env(
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
-    (example,) = list(document)
+    (example,) = document.examples()
     example.evaluate()
     new_file_content = new_file.read_text(encoding="utf-8")
     assert new_file_content == "Hello, ENV_VALUE!\n"
@@ -140,7 +140,7 @@ def test_global_env(
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
-    (example,) = list(document)
+    (example,) = document.examples()
     example.evaluate()
     del os.environ[env_key]
     new_file_content = new_file.read_text(encoding="utf-8")
@@ -170,7 +170,7 @@ def test_file_is_passed(
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
-    (example,) = list(document)
+    (example,) = document.examples()
     example.evaluate()
     expected_content = "x = 2 + 2\nassert x == 4\n"
     assert file_path.read_text(encoding="utf-8") == expected_content
@@ -191,7 +191,7 @@ def test_file_path(rst_file: Path, capsys: pytest.CaptureFixture[str]) -> None:
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
-    (example,) = list(document)
+    (example,) = document.examples()
     example.evaluate()
     output = capsys.readouterr().out
     given_file_path = Path(output.strip())
@@ -221,7 +221,7 @@ def test_file_suffix(
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
-    (example,) = list(document)
+    (example,) = document.examples()
     example.evaluate()
     output = capsys.readouterr().out
     given_file_path = Path(output.strip())
@@ -245,7 +245,7 @@ def test_file_prefix(
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
-    (example,) = list(document)
+    (example,) = document.examples()
     example.evaluate()
     output = capsys.readouterr().out
     given_file_path = Path(output.strip())
@@ -272,7 +272,7 @@ def test_pad(rst_file: Path, tmp_path: Path) -> None:
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
-    (example,) = list(document)
+    (example,) = document.examples()
     example.evaluate()
     given_file_content = file_path.read_text(encoding="utf-8")
     expected_content = textwrap.dedent(
@@ -311,7 +311,7 @@ def test_write_to_file(
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
-    (example,) = list(document)
+    (example,) = document.examples()
     example.evaluate()
     rst_file_content = rst_file.read_text(encoding="utf-8")
     modified_content = textwrap.dedent(
@@ -342,7 +342,7 @@ def test_pad_and_write(rst_file: Path) -> None:
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
-    (example,) = list(document)
+    (example,) = document.examples()
     example.evaluate()
     rst_file_content = rst_file.read_text(encoding="utf-8")
     assert rst_file_content == original_content
@@ -362,7 +362,7 @@ def test_no_changes_mtime(rst_file: Path) -> None:
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
-    (example,) = list(document)
+    (example,) = document.examples()
     example.evaluate()
     new_mtime = rst_file.stat().st_mtime
     assert new_mtime == original_mtime
@@ -389,7 +389,7 @@ def test_non_utf8_output(
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
-    (example,) = list(document)
+    (example,) = document.examples()
     example.evaluate()
     output = capsysbinary.readouterr().out
     assert output == b"\xc0\x80\n"
@@ -436,7 +436,7 @@ def test_no_file_left_behind_on_interruption(
         sybil = Sybil(parsers=[parser])
 
         document = sybil.parse(path=Path("{rst_file}"))
-        (example,) = list(document)
+        (example,) = document.examples()
         example.evaluate()
         """,
     )
