@@ -86,7 +86,7 @@ CustomDirectiveSkipParser
     from sybil import Sybil
     from sybil.parsers.codeblock import PythonCodeBlockParser
 
-    # Similar parsers are available at sybil.parsers.rest.custom_directive_skip
+    # Similar parsers are available at sybil.parsers.markdown.custom_directive_skip
     # and sybil.parsers.myst.custom_directive_skip.
     from sybil_extras.parsers.rest.custom_directive_skip import (
         CustomDirectiveSkipParser,
