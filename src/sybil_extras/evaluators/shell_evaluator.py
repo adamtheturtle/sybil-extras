@@ -59,24 +59,17 @@ def _get_indentation(example: Example) -> str:
     region_text = example.document.text[
         example.region.start : example.region.end
     ]
-    indentations: list[str] = []
     region_lines = region_text.splitlines()
-    for region_line in region_lines:
-        if region_line.lstrip() == first_line.lstrip():
-            left_padding_region_line = len(region_line) - len(
-                region_line.lstrip()
-            )
-            left_padding_parsed_line = len(first_line) - len(
-                first_line.lstrip()
-            )
-            indentation_length = (
-                left_padding_region_line - left_padding_parsed_line
-            )
-            indentation_character = region_line[0]
-            indentation = indentation_character * indentation_length
-            indentations.append(indentation)
-
-    return indentations[0]
+    first_region_line_matching_first_line = next(
+        line for line in region_lines if line.lstrip() == first_line.lstrip()
+    )
+    left_padding_region_line = len(
+        first_region_line_matching_first_line
+    ) - len(first_region_line_matching_first_line.lstrip())
+    left_padding_parsed_line = len(first_line) - len(first_line.lstrip())
+    indentation_length = left_padding_region_line - left_padding_parsed_line
+    indentation_character = first_region_line_matching_first_line[0]
+    return indentation_character * indentation_length
 
 
 @beartype
