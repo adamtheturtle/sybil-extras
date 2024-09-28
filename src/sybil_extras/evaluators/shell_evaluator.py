@@ -60,9 +60,10 @@ def _get_indentation(example: Example) -> str:
         example.region.start : example.region.end
     ]
     region_lines = region_text.splitlines()
-    first_region_line_matching_first_line = next(
+    region_lines_matching_first_line = [
         line for line in region_lines if line.lstrip() == first_line.lstrip()
-    )
+    ]
+    first_region_line_matching_first_line = region_lines_matching_first_line[0]
     left_padding_region_line = len(
         first_region_line_matching_first_line
     ) - len(first_region_line_matching_first_line.lstrip())
