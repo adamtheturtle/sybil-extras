@@ -22,17 +22,17 @@ def test_skip(tmp_path: Path) -> None:
     <!--- custom-skip: next -->
 
     ```python
-    x.append(2)
+    x = [*x, 2]
     ```
 
     ```python
-    x.append(3)
+    x = [*x, 3]
     ```
 
     % custom-skip: next
 
     ```python
-    x.append(4)
+    x = [*x, 4]
     ```
     """
 
