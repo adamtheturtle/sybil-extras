@@ -22,11 +22,11 @@ def test_skip(tmp_path: Path) -> None:
 
     .. code-block:: python
 
-        x.append(2)
+        x = [*x, 2]
 
     .. code-block:: python
 
-        x.append(3)
+        x = [*x, 3]
     """
 
     test_document = tmp_path / "test.rst"
