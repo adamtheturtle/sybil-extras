@@ -65,13 +65,13 @@ repos:
 
     - id: shellcheck
       name: shellcheck
-      entry: shellcheck --shell=bash --exclude=SC1017
+      entry: shellcheck --shell=bash --exclude=SC1017 --exclude=SC1017
       language: system
       types_or: [shell]
 
     - id: shellcheck-docs
       name: shellcheck-docs
-      entry: uvx doccmd --language=shell --language=console --command="shellcheck --shell=bash --exclude=SC1017"
+      entry: uvx doccmd --language=shell --language=console --command="shellcheck --shell=bash --exclude=SC1017 --exclude=SC1017"
       language: system
       types_or: [markdown, rst]
 
