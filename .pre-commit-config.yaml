@@ -38,7 +38,7 @@ repos:
   hooks:
     - id: check-useless-excludes
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.6.0
+  rev: v5.0.0
   hooks:
     - id: check-added-large-files
     - id: check-case-conflict
@@ -65,7 +65,7 @@ repos:
 
     - id: shellcheck
       name: shellcheck
-      entry: shellcheck --shell bash --exclude=SC1017
+      entry: shellcheck --shell=bash --exclude=SC1017
       language: system
       types_or: [shell]
 
