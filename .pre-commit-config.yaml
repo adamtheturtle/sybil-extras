@@ -68,7 +68,6 @@ repos:
       name: shellcheck
       entry: uv run --extra=dev shellcheck --shell=bash --exclude=SC1017
       language: python
-      pass_filenames: false
       types_or: [shell]
       additional_dependencies: ["uv"]
 
