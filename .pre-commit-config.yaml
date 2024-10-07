@@ -71,7 +71,7 @@ repos:
 
     - id: shellcheck-docs
       name: shellcheck-docs
-      entry: uv run --all-extras doccmd --language=shell --language=console --command="shellcheck --shell=bash --exclude=SC1017 --exclude=SC1017"
+      entry: uvx doccmd --language=shell --language=console --command="shellcheck --shell=bash --exclude=SC1017 --exclude=SC1017"
       language: python
       types_or: [markdown, rst]
       additional_dependencies: ["uv"]
