@@ -66,7 +66,7 @@ repos:
 
     - id: shellcheck
       name: shellcheck
-      entry: shellcheck --shell=bash --exclude=SC1017 --exclude=SC1017
+      entry: uv run --extra=dev shellcheck --shell=bash --exclude=SC1017 --exclude=SC1017
       language: python
       types_or: [shell]
 
@@ -93,7 +93,7 @@ repos:
     - id: mypy
       name: mypy
       stages: [pre-push]
-      entry: python -m mypy .
+      entry: uv run --extra=dev -m mypy .
       language: python
       types_or: [python, toml]
       pass_filenames: false
@@ -108,14 +108,14 @@ repos:
     - id: check-manifest
       name: check-manifest
       stages: [pre-push]
-      entry: python -m check_manifest .
+      entry: uv run --extra=dev -m check_manifest .
       language: python
       pass_filenames: false
 
     - id: pyright
       name: pyright
       stages: [pre-push]
-      entry: python -m pyright .
+      entry: uv run --extra=dev -m pyright .
       language: python
       types_or: [python, toml]
       pass_filenames: false
@@ -129,7 +129,7 @@ repos:
 
     - id: vulture
       name: vulture
-      entry: python -m vulture .
+      entry: uv run --extra=dev -m vulture .
       language: python
       types_or: [python]
       pass_filenames: false
@@ -142,20 +142,20 @@ repos:
 
     - id: pyroma
       name: pyroma
-      entry: python -m pyroma --min 10 .
+      entry: uv run --extra=dev -m pyroma --min 10 .
       language: python
       pass_filenames: false
       types_or: [toml]
 
     - id: deptry
       name: deptry
-      entry: python -m deptry src/
+      entry: uv run --extra=dev -m deptry src/
       language: python
       pass_filenames: false
 
     - id: pylint
       name: pylint
-      entry: python -m pylint *.py src/ tests/
+      entry: uv run --extra=dev -m pylint *.py src/ tests/
       language: python
       stages: [manual]
       pass_filenames: false
@@ -169,7 +169,7 @@ repos:
 
     - id: ruff-check-fix
       name: Ruff check fix
-      entry: python -m ruff check --fix
+      entry: uv run --extra=dev -m ruff check --fix
       language: python
       types_or: [python]
 
@@ -181,7 +181,7 @@ repos:
 
     - id: ruff-format-fix
       name: Ruff format
-      entry: python -m ruff format
+      entry: uv run --extra=dev -m ruff format
       language: python
       types_or: [python]
 
@@ -200,7 +200,7 @@ repos:
 
     - id: interrogate
       name: interrogate
-      entry: python -m interrogate
+      entry: uv run --extra=dev -m interrogate
       language: python
       types_or: [python]
 
