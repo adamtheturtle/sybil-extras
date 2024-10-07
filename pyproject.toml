@@ -48,7 +48,7 @@ optional-dependencies.dev = [
     "doc8==1.1.2",
     "interrogate==1.7.0",
     "mypy==1.11.2",
-    "pre-commit==3.8.0",
+    "pre-commit==4.0.0",
     "pydocstyle==6.3",
     "pyenchant==3.3.0rc1",
     "pylint==3.3.1",
