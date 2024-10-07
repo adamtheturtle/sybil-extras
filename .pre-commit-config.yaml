@@ -58,10 +58,11 @@ repos:
   hooks:
     - id: actionlint
       name: actionlint
-      entry: actionlint
+      entry: uv run --extra=dev actionlint
       language: python
       pass_filenames: false
       types_or: [yaml]
+      additional_dependencies: ["uv"]
 
     - id: shellcheck
       name: shellcheck
@@ -78,9 +79,10 @@ repos:
 
     - id: shfmt
       name: shfmt
-      entry: shfmt --write --space-redirects --indent=4
+      entry: uv run --extra=dev shfmt --write --space-redirects --indent=4
       language: python
       types_or: [shell]
+      additional_dependencies: ["uv"]
 
     - id: shfmt-docs
       name: shfmt-docs
@@ -191,9 +193,10 @@ repos:
 
     - id: doc8
       name: doc8
-      entry: python -m doc8
+      entry: uv run --extra=dev -m doc8
       language: python
       types_or: [rst]
+      additional_dependencies: ["uv"]
 
     - id: interrogate
       name: interrogate
@@ -209,7 +212,8 @@ repos:
 
     - id: pyproject-fmt-fix
       name: pyproject-fmt
-      entry: pyproject-fmt
+      entry: uv run --extra=dev pyproject-fmt
       language: python
       types_or: [toml]
       files: pyproject.toml
+      additional_dependencies: ["uv"]
