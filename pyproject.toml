@@ -67,6 +67,7 @@ optional-dependencies.dev = [
     "sybil==8.0.0",
     "uv==0.4.19",
     "vulture==2.13",
+    "docformatter==1.7.5",
 ]
 optional-dependencies.release = [ "check-wheel-contents==0.6.0" ]
 urls.Source = "https://github.com/adamtheturtle/sybil-extras"
