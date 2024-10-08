@@ -1,1 +1,3 @@
-"""Add-ons for Sybil"""
+"""
+Add-ons for Sybil.
+"""

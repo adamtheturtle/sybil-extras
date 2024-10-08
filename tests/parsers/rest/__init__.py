@@ -1,1 +1,3 @@
-"""Tests for custom reST parsers."""
+"""
+Tests for custom reST parsers.
+"""
