@@ -46,6 +46,7 @@ optional-dependencies.dev = [
     "check-manifest==0.49",
     "deptry==0.20.0",
     "doc8==1.1.2",
+    "docformatter==1.7.5",
     "interrogate==1.7.0",
     "mypy==1.11.2",
     "pre-commit==4.0.0",
@@ -67,7 +68,6 @@ optional-dependencies.dev = [
     "sybil==8.0.0",
     "uv==0.4.19",
     "vulture==2.13",
-    "docformatter==1.7.5",
 ]
 optional-dependencies.release = [ "check-wheel-contents==0.6.0" ]
 urls.Source = "https://github.com/adamtheturtle/sybil-extras"
