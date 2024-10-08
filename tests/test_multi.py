@@ -1,4 +1,6 @@
-"""Tests for MultiEvaluator."""
+"""
+Tests for MultiEvaluator.
+"""
 
 from pathlib import Path
 
@@ -10,17 +12,23 @@ from sybil_extras.evaluators.multi import MultiEvaluator
 
 
 def _evaluator_1(example: Example) -> None:
-    """Add `step_1` to namespace."""
+    """
+    Add `step_1` to namespace.
+    """
     example.namespace["step_1"] = True
 
 
 def _evaluator_2(example: Example) -> None:
-    """Add `step_2` to namespace."""
+    """
+    Add `step_2` to namespace.
+    """
     example.namespace["step_2"] = True
 
 
 def _evaluator_3(example: Example) -> None:
-    """Add `step_3` to namespace."""
+    """
+    Add `step_3` to namespace.
+    """
     example.namespace["step_3"] = True
 
 

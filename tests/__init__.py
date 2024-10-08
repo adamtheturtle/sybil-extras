@@ -1,1 +1,3 @@
-"""Tests for Sybil add-ons."""
+"""
+Tests for Sybil add-ons.
+"""

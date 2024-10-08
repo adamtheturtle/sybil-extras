@@ -1,4 +1,6 @@
-"""An evaluator for running shell commands on example files."""
+"""
+An evaluator for running shell commands on example files.
+"""
 
 import subprocess
 import textwrap
@@ -14,8 +16,7 @@ from sybil.evaluators.python import pad
 
 @beartype
 def _count_leading_newlines(s: str) -> int:
-    """
-    Count the number of leading newlines in a string.
+    """Count the number of leading newlines in a string.
 
     Args:
         s: The input string.
@@ -35,8 +36,7 @@ def _count_leading_newlines(s: str) -> int:
 
 @beartype
 def _lstrip_newlines(input_string: str, number_of_newlines: int) -> str:
-    """
-    Removes a specified number of newlines from the start of the string.
+    """Removes a specified number of newlines from the start of the string.
 
     Args:
         input_string: The input string to process.
@@ -54,7 +54,9 @@ def _lstrip_newlines(input_string: str, number_of_newlines: int) -> str:
 
 @beartype
 def _get_indentation(example: Example) -> str:
-    """Get the indentation of the parsed code in the example."""
+    """
+    Get the indentation of the parsed code in the example.
+    """
     first_line = str(example.parsed).split("\n", 1)[0]
     region_text = example.document.text[
         example.region.start : example.region.end
@@ -75,7 +77,9 @@ def _get_indentation(example: Example) -> str:
 
 @beartype
 class ShellCommandEvaluator:
-    """Run a shell command on the example file."""
+    """
+    Run a shell command on the example file.
+    """
 
     def __init__(
         self,
@@ -91,8 +95,7 @@ class ShellCommandEvaluator:
         pad_file: bool,
         write_to_file: bool,
     ) -> None:
-        """
-        Initialize the evaluator.
+        """Initialize the evaluator.
 
         Args:
             args: The shell command to run.
@@ -121,7 +124,9 @@ class ShellCommandEvaluator:
         self._write_to_file = write_to_file
 
     def __call__(self, example: Example) -> None:
-        """Run the shell command on the example file."""
+        """
+        Run the shell command on the example file.
+        """
         if self._pad_file:
             source = pad(
                 source=example.parsed,

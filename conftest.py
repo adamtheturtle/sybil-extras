@@ -1,4 +1,6 @@
-"""Setup for pytest."""
+"""
+Setup for pytest.
+"""
 
 from doctest import ELLIPSIS
 

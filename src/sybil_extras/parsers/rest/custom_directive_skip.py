@@ -1,11 +1,15 @@
-"""A custom directive skip parser for reST."""
+"""
+A custom directive skip parser for reST.
+"""
 
 from sybil.parsers.abstract import AbstractSkipParser
 from sybil.parsers.rest.lexers import DirectiveInCommentLexer
 
 
 class CustomDirectiveSkipParser(AbstractSkipParser):
-    """A custom directive skip parser for reST."""
+    """
+    A custom directive skip parser for reST.
+    """
 
     def __init__(self, directive: str) -> None:
         """
