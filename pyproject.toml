@@ -68,7 +68,7 @@ optional-dependencies.dev = [
     "uv==0.4.18",
     "vulture==2.13",
 ]
-optional-dependencies.release = [ "build==1.2.2.post1", "check-wheel-contents==0.6.0" ]
+optional-dependencies.release = [ "check-wheel-contents==0.6.0" ]
 urls.Source = "https://github.com/adamtheturtle/sybil-extras"
 
 [tool.setuptools]
