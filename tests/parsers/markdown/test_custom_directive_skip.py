@@ -1,4 +1,6 @@
-"""Tests for the custom directive skip parser for Markdown."""
+"""
+Tests for the custom directive skip parser for Markdown.
+"""
 
 from pathlib import Path
 
@@ -11,7 +13,9 @@ from sybil_extras.parsers.markdown.custom_directive_skip import (
 
 
 def test_skip(tmp_path: Path) -> None:
-    """Test that the custom directive skip parser skips the directive."""
+    """
+    Test that the custom directive skip parser skips the directive.
+    """
     content = """\
     Example
 

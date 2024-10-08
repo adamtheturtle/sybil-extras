@@ -1,4 +1,6 @@
-"""Use multiple evaluators."""
+"""
+Use multiple evaluators.
+"""
 
 from collections.abc import Sequence
 
@@ -9,13 +11,19 @@ from sybil.typing import Evaluator
 
 @beartype
 class MultiEvaluator:
-    """Run multiple evaluators."""
+    """
+    Run multiple evaluators.
+    """
 
     def __init__(self, evaluators: Sequence[Evaluator]) -> None:
-        """Run multiple evaluators."""
+        """
+        Run multiple evaluators.
+        """
         self._evaluators = evaluators
 
     def __call__(self, example: Example) -> None:
-        """Run all evaluators."""
+        """
+        Run all evaluators.
+        """
         for evaluator in self._evaluators:
             evaluator(example)
