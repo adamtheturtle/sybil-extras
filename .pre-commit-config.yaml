@@ -33,6 +33,7 @@ ci:
     - shfmt-docs
     - vulture
     - vulture-docs
+    - yamlfix
 
 default_install_hook_types: [pre-commit, pre-push, commit-msg]
 
