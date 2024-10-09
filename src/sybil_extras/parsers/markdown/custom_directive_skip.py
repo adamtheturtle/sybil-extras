@@ -1,11 +1,15 @@
-"""A custom directive skip parser for Markdown."""
+"""
+A custom directive skip parser for Markdown.
+"""
 
 from sybil.parsers.abstract import AbstractSkipParser
 from sybil.parsers.markdown.lexers import DirectiveInHTMLCommentLexer
 
 
 class CustomDirectiveSkipParser(AbstractSkipParser):
-    """A custom directive skip parser for Markdown."""
+    """
+    A custom directive skip parser for Markdown.
+    """
 
     def __init__(self, directive: str) -> None:
         """

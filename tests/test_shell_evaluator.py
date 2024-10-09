@@ -1,4 +1,6 @@
-"""Tests for the ShellCommandEvaluator"""
+"""
+Tests for the ShellCommandEvaluator.
+"""
 
 import os
 import signal
@@ -72,7 +74,9 @@ def test_output_shown(
     rst_file: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """Output is shown."""
+    """
+    Output is shown.
+    """
     evaluator = ShellCommandEvaluator(
         args=[
             "sh",
@@ -97,7 +101,9 @@ def test_pass_env(
     rst_file: Path,
     tmp_path: Path,
 ) -> None:
-    """It is possible to pass environment variables to the command."""
+    """
+    It is possible to pass environment variables to the command.
+    """
     new_file = tmp_path / "new_file.txt"
     evaluator = ShellCommandEvaluator(
         args=[
@@ -123,7 +129,9 @@ def test_global_env(
     rst_file: Path,
     tmp_path: Path,
 ) -> None:
-    """Global environment variables are sent to the command by default."""
+    """
+    Global environment variables are sent to the command by default.
+    """
     env_key = "ENV_KEY"
     os.environ[env_key] = "ENV_VALUE"
     new_file = tmp_path / "new_file.txt"
@@ -151,8 +159,7 @@ def test_file_is_passed(
     rst_file: Path,
     tmp_path: Path,
 ) -> None:
-    """
-    A file with the code block content is passed to the command.
+    """A file with the code block content is passed to the command.
 
     The file is created with a trailing newline.
     """
@@ -179,8 +186,8 @@ def test_file_is_passed(
 def test_file_path(rst_file: Path, capsys: pytest.CaptureFixture[str]) -> None:
     """
     The given file path is random and absolute, and starts with a name
-    resembling the documentation file name, but without any hyphens
-    or periods, except for the period for the final suffix.
+    resembling the documentation file name, but without any hyphens or periods,
+    except for the period for the final suffix.
     """
     evaluator = ShellCommandEvaluator(
         args=["echo"],
@@ -209,7 +216,9 @@ def test_file_suffix(
     rst_file: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """The given file suffixes are used."""
+    """
+    The given file suffixes are used.
+    """
     suffixes = [".example", ".foobar"]
     evaluator = ShellCommandEvaluator(
         args=["echo"],
@@ -233,7 +242,9 @@ def test_file_prefix(
     rst_file: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """The given file prefixes are used."""
+    """
+    The given file prefixes are used.
+    """
     prefix = "custom_prefix"
     evaluator = ShellCommandEvaluator(
         args=["echo"],
@@ -295,7 +306,9 @@ def test_write_to_file(
     *,
     write_to_file: bool,
 ) -> None:
-    """Changes are written to the original file iff `write_to_file` is True."""
+    """
+    Changes are written to the original file iff `write_to_file` is True.
+    """
     original_content = rst_file.read_text(encoding="utf-8")
     file_with_new_content = tmp_path / "new_file.txt"
     # Add multiple newlines to show that they are not included in the file.
@@ -330,7 +343,9 @@ def test_write_to_file(
 
 
 def test_pad_and_write(rst_file: Path) -> None:
-    """Changes are written to the original file without the added padding."""
+    """
+    Changes are written to the original file without the added padding.
+    """
     original_content = rst_file.read_text(encoding="utf-8")
     rst_file.write_text(data=original_content, encoding="utf-8")
     evaluator = ShellCommandEvaluator(
@@ -373,7 +388,9 @@ def test_non_utf8_output(
     capsysbinary: pytest.CaptureFixture[bytes],
     tmp_path: Path,
 ) -> None:
-    """Non-UTF-8 output is handled."""
+    """
+    Non-UTF-8 output is handled.
+    """
     sh_function = b"""
     echo "\xc0\x80"
     """
@@ -399,7 +416,9 @@ def test_no_file_left_behind_on_interruption(
     rst_file: Path,
     tmp_path: Path,
 ) -> None:
-    """No file is left behind if the process is interrupted."""
+    """
+    No file is left behind if the process is interrupted.
+    """
     sleep_python_script_content = textwrap.dedent(
         text="""\
         import time
