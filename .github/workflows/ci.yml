@@ -27,6 +27,10 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v3
 
+      - name: Configure Git
+        run: |
+          git config --global core.autocrlf false
+
       - name: "Lint"
         run: |
           uv run --extra=dev pre-commit run --all-files --hook-stage pre-commit --verbose
