@@ -23,14 +23,14 @@ jobs:
     runs-on: ${{ matrix.platform }}
 
     steps:
-      - uses: actions/checkout@v4
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
-
       - name: Configure Git
         run: |
           git config --global core.eol lf
           git config --global core.autocrlf false
+
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
 
       - name: "Lint"
         run: |
