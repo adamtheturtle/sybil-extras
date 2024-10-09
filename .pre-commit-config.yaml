@@ -93,7 +93,7 @@ repos:
 
       - id: shellcheck-docs
         name: shellcheck-docs
-        entry: uvx --python=3.12 doccmd --language=shell --language=console --command="shellcheck --shell=bash --exclude=SC1017 --exclude=SC1017"
+        entry: uvx --python=3.13 doccmd --language=shell --language=console --command="shellcheck --shell=bash --exclude=SC1017 --exclude=SC1017"
         language: python
         types_or: [markdown, rst]
         additional_dependencies: ["uv"]
@@ -107,7 +107,7 @@ repos:
 
       - id: shfmt-docs
         name: shfmt-docs
-        entry: uvx --python=3.12 doccmd --language=shell --language=console --skip-marker=shfmt --no-pad-file --command="shfmt --write --space-redirects --indent=4"
+        entry: uvx --python=3.13 doccmd --language=shell --language=console --skip-marker=shfmt --no-pad-file --command="shfmt --write --space-redirects --indent=4"
         language: python
         types_or: [markdown, rst]
 
@@ -123,7 +123,7 @@ repos:
       - id: mypy-docs
         name: mypy-docs
         stages: [pre-push]
-        entry: uvx --python=3.12 doccmd --language=python --command="mypy"
+        entry: uvx --python=3.13 doccmd --language=python --command="mypy"
         language: python
         types_or: [markdown, rst, python, toml]
 
@@ -146,7 +146,7 @@ repos:
       - id: pyright-docs
         name: pyright-docs
         stages: [pre-push]
-        entry: uvx --python=3.12 doccmd --language=python --command="pyright"
+        entry: uvx --python=3.13 doccmd --language=python --command="pyright"
         language: python
         types_or: [markdown, rst, python, toml]
 
@@ -160,7 +160,7 @@ repos:
 
       - id: vulture-docs
         name: vulture docs
-        entry: uvx --python=3.12 doccmd --language=python --command="vulture"
+        entry: uvx --python=3.13 doccmd --language=python --command="vulture"
         language: python
         types_or: [markdown, rst]
 
@@ -189,7 +189,7 @@ repos:
 
       - id: pylint-docs
         name: pylint-docs
-        entry: uvx --python=3.12 doccmd --language=python --command="pylint"
+        entry: uvx --python=3.13 doccmd --language=python --command="pylint"
         language: python
         stages: [manual]
         types_or: [markdown, rst, python, toml]
@@ -203,7 +203,7 @@ repos:
 
       - id: ruff-check-fix-docs
         name: Ruff check fix docs
-        entry: uvx --python=3.12 doccmd --language=python --command="ruff check --fix"
+        entry: uvx --python=3.13 doccmd --language=python --command="ruff check --fix"
         language: python
         types_or: [markdown, rst]
 
@@ -216,7 +216,7 @@ repos:
 
       - id: ruff-format-fix-docs
         name: Ruff format docs
-        entry: uvx --python=3.12 doccmd --language=python --no-pad-file --command="ruff format"
+        entry: uvx --python=3.13 doccmd --language=python --no-pad-file --command="ruff format"
         language: python
         types_or: [markdown, rst]
 
@@ -235,7 +235,7 @@ repos:
 
       - id: interrogate-docs
         name: interrogate docs
-        entry: uvx --python=3.12 doccmd --language=python --command="interrogate"
+        entry: uvx --python=3.13 doccmd --language=python --command="interrogate"
         language: python
         types_or: [markdown, rst]
 
