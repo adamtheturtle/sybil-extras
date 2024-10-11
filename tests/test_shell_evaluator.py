@@ -480,12 +480,17 @@ def test_no_file_left_behind_on_interruption(
     }
 
 
-def test_line_endings(rst_file: Path, tmp_path: Path) -> None:
+@pytest.mark.parametrize(argnames="source_newline", argvalues=["\n", r"\r\n"])
+def test_line_endings(
+    rst_file: Path,
+    tmp_path: Path,
+    source_newline: str,
+) -> None:
     """
-    If the source file has a particular line ending style, that is used.
+    The system line endings are used.
     """
     rst_file_contents = rst_file.read_text(encoding="utf-8")
-    rst_file.write_text(data=rst_file_contents, newline="\n")
+    rst_file.write_text(data=rst_file_contents, newline=source_newline)
     sh_function = """
     cp "$2" "$1"
     """
@@ -503,4 +508,6 @@ def test_line_endings(rst_file: Path, tmp_path: Path) -> None:
     (example,) = document.examples()
     example.evaluate()
     content_bytes = file_path.read_bytes()
-    assert b"\r\n" not in content_bytes
+    includes_crlf = b"\r\n" in content_bytes
+    default_is_crlf = os.linesep == "\r\n"
+    assert includes_crlf == default_is_crlf
