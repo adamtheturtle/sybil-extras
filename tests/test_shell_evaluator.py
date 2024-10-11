@@ -481,13 +481,13 @@ def test_no_file_left_behind_on_interruption(
 
 
 @pytest.mark.parametrize(argnames="source_newline", argvalues=["\n", "\r\n"])
-def test_line_endings(
+def test_newline_system(
     rst_file: Path,
     tmp_path: Path,
     source_newline: str,
 ) -> None:
     """
-    The system line endings are used.
+    The system line endings are used by default.
     """
     rst_file_contents = rst_file.read_text(encoding="utf-8")
     rst_file.write_text(data=rst_file_contents, newline=source_newline)
@@ -511,3 +511,48 @@ def test_line_endings(
     includes_crlf = b"\r\n" in content_bytes
     default_is_crlf = os.linesep == "\r\n"
     assert includes_crlf == default_is_crlf
+
+
+@pytest.mark.parametrize(argnames="source_newline", argvalues=["\n", "\r\n"])
+@pytest.mark.parametrize(
+    argnames=("given_newline", "expect_crlf"),
+    argvalues=(
+        ["\n", False],
+        ["\r\n", True],
+    ),
+)
+def test_newline_given(
+    *,
+    rst_file: Path,
+    tmp_path: Path,
+    source_newline: str,
+    given_newline: str,
+    expect_crlf: bool,
+) -> None:
+    """
+    The given line ending option is used.
+    """
+    rst_file_contents = rst_file.read_text(encoding="utf-8")
+    rst_file.write_text(data=rst_file_contents, newline=source_newline)
+    sh_function = """
+    cp "$2" "$1"
+    """
+
+    file_path = tmp_path / "file.txt"
+    evaluator = ShellCommandEvaluator(
+        args=["sh", "-c", sh_function, "_", file_path],
+        pad_file=False,
+        write_to_file=False,
+        newline=given_newline,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    example.evaluate()
+    content_bytes = file_path.read_bytes()
+    includes_crlf = b"\r\n" in content_bytes
+    includes_lf = b"\n" in content_bytes
+    assert includes_crlf == expect_crlf
+    assert includes_lf
