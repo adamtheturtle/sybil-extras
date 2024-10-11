@@ -83,11 +83,12 @@ class ShellCommandEvaluator:
 
     def __init__(
         self,
+        *,
         args: Sequence[str | Path],
         env: Mapping[str, str] | None = None,
         tempfile_suffixes: Sequence[str] = (),
         tempfile_name_prefix: str = "",
-        *,
+        newline: str | None = None,
         # For some commands, padding is good: e.g. we want to see the error
         # reported on the correct line for `mypy`. For others, padding is bad:
         # e.g. `ruff format` expects the file to be formatted without a bunch
@@ -108,6 +109,8 @@ class ShellCommandEvaluator:
                 This is useful for distinguishing files created by a user of
                 this evaluator from other files, e.g. for ignoring in linter
                 configurations.
+            newline: The newline string to use for the temporary file.
+                If ``None``, use the system default.
             pad_file: Whether to pad the file with newlines at the start.
                 This is useful for error messages that report the line number.
                 However, this is detrimental to commands that expect the file
@@ -122,6 +125,7 @@ class ShellCommandEvaluator:
         self._tempfile_name_prefix = tempfile_name_prefix
         self._tempfile_suffixes = tempfile_suffixes
         self._write_to_file = write_to_file
+        self._newline = newline
 
     def __call__(self, example: Example) -> None:
         """
@@ -158,7 +162,11 @@ class ShellCommandEvaluator:
         # newline.  This is especially true for formatters.  We add a
         # newline to the end of the file if it is missing.
         new_source = source + "\n" if not source.endswith("\n") else source
-        temp_file.write_text(new_source, encoding="utf-8")
+        temp_file.write_text(
+            new_source,
+            encoding="utf-8",
+            newline=self._newline,
+        )
 
         try:
             result = tee_subprocess.run(
