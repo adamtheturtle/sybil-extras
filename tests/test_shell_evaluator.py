@@ -502,5 +502,5 @@ def test_line_endings(rst_file: Path, tmp_path: Path) -> None:
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
-    content = file_path.read_text(encoding="utf-8")
-    assert r"\r\n" not in content
+    content_bytes = file_path.read_bytes()
+    assert b"\r\n" not in content_bytes
