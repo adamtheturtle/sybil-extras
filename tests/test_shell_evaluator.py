@@ -480,7 +480,7 @@ def test_no_file_left_behind_on_interruption(
     }
 
 
-@pytest.mark.parametrize(argnames="source_newline", argvalues=["\n", r"\r\n"])
+@pytest.mark.parametrize(argnames="source_newline", argvalues=["\n", "\r\n"])
 def test_line_endings(
     rst_file: Path,
     tmp_path: Path,
