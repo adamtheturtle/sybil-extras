@@ -110,7 +110,7 @@ class ShellCommandEvaluator:
                 this evaluator from other files, e.g. for ignoring in linter
                 configurations.
             newline: The newline string to use for the temporary file.
-                If ``None``, use the system default (``os.linesep``).
+                If ``None``, use the system default.
             pad_file: Whether to pad the file with newlines at the start.
                 This is useful for error messages that report the line number.
                 However, this is detrimental to commands that expect the file
