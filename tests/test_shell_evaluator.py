@@ -503,4 +503,4 @@ def test_line_endings(rst_file: Path, tmp_path: Path) -> None:
     (example,) = document.examples()
     example.evaluate()
     content = file_path.read_text(encoding="utf-8")
-    assert "\r\n" not in content
+    assert r"\r\n" not in content
