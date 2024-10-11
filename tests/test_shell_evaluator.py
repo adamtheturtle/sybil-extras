@@ -478,3 +478,29 @@ def test_no_file_left_behind_on_interruption(
         evaluator_script,
         sleep_python_script,
     }
+
+
+def test_line_endings(rst_file: Path, tmp_path: Path) -> None:
+    """
+    If the source file has a particular line ending style, that is used.
+    """
+    rst_file_contents = rst_file.read_text(encoding="utf-8")
+    rst_file.write_text(data=rst_file_contents, newline="\n")
+    sh_function = """
+    cp "$2" "$1"
+    """
+
+    file_path = tmp_path / "file.txt"
+    evaluator = ShellCommandEvaluator(
+        args=["sh", "-c", sh_function, "_", file_path],
+        pad_file=False,
+        write_to_file=False,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    example.evaluate()
+    content = file_path.read_text(encoding="utf-8")
+    assert "\r\n" not in content
