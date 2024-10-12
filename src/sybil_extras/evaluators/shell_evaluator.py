@@ -28,6 +28,8 @@ def run_with_color_and_capture_separate(
     Returns:
         subprocess.CompletedProcess[str]: The completed process result, including stdout, stderr, and return code.
     """
+    import termios
+
     # Convert Path objects in the command to strings
     command_str = [str(c) for c in command]
 
@@ -35,6 +37,14 @@ def run_with_color_and_capture_separate(
     stdout_master_fd, stdout_slave_fd = os.openpty()
     stderr_master_fd, stderr_slave_fd = os.openpty()
 
+    new_attrs = termios.tcgetattr(stdout_master_fd)
+    new_attrs[3] &= ~(
+        termios.ICANON | termios.ECHO
+    )  # Disable canonical mode and echo
+
+    termios.tcsetattr(stdout_master_fd, termios.TCSANOW, new_attrs)
+
+    # Set the terminal mode to raw
     # Run the command with the pseudo-terminals as its stdout and stderr
     process = subprocess.Popen(
         command_str,
@@ -55,8 +65,17 @@ def run_with_color_and_capture_separate(
 
     # Read the output from both stdout and stderr live
     while True:
-        stdout_chunk = os.read(stdout_master_fd, 1024).decode()
-        stderr_chunk = os.read(stderr_master_fd, 1024).decode()
+        stdout_chunk_bytes = os.read(stdout_master_fd, 1024)
+        stderr_chunk_bytes = os.read(stderr_master_fd, 1024)
+        try:
+            stdout_chunk = stdout_chunk_bytes.decode("utf-8")
+        except UnicodeDecodeError:
+            stdout_chunk = stdout_chunk_bytes.decode("latin-1")
+
+        try:
+            stderr_chunk = stderr_chunk_bytes.decode("utf-8")
+        except UnicodeDecodeError:
+            stderr_chunk = stderr_chunk_bytes.decode("latin-1")
 
         if stdout_chunk:
             print(stdout_chunk, end="", flush=True)  # Live print stdout
@@ -250,14 +269,6 @@ class ShellCommandEvaluator:
         )
 
         try:
-            # result = tee_subprocess.run(
-            #     args=[*self._args, temp_file],
-            #     check=False,
-            #     capture_output=False,
-            #     text=False,
-            #     env=self._env,
-            # )
-
             result = run_with_color_and_capture_separate(
                 command=[str(item) for item in [*self._args, temp_file]],
                 env=self._env,
@@ -319,7 +330,6 @@ class ShellCommandEvaluator:
                     encoding="utf-8",
                 )
 
-        # assert isinstance(result, subprocess.CompletedProcess)
         if result.returncode != 0:
             raise subprocess.CalledProcessError(
                 cmd=result.args,

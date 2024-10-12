@@ -41,7 +41,6 @@ dynamic = [
 dependencies = [
     "beartype",
     "sybil",
-    "tee-subprocess>=1.1.0",
 ]
 optional-dependencies.dev = [
     "actionlint-py==1.7.3.17",
