@@ -196,6 +196,7 @@ enable = [
 
 disable = [
     'too-few-public-methods',
+    'too-complex',
     'too-many-locals',
     'too-many-arguments',
     'too-many-branches',
