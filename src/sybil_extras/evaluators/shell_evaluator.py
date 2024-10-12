@@ -48,8 +48,12 @@ def run_with_color_and_capture_separate(
 
     # Read the output from both stdout and stderr live
     while True:
-        stdout_chunk_bytes = os.read(stdout_master_fd, 1024)
-        stderr_chunk_bytes = os.read(stderr_master_fd, 1024)
+        stdout_chunk_bytes = os.read(stdout_master_fd, 1024).replace(
+            b"\r\n", b"\n"
+        )
+        stderr_chunk_bytes = os.read(stderr_master_fd, 1024).replace(
+            b"\r\n", b"\n"
+        )
 
         if stdout_chunk_bytes:
             sys.stdout.buffer.write(stdout_chunk_bytes)
