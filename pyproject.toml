@@ -112,7 +112,6 @@ lint.ignore = [
     "ISC001",
     # Ignore "too-many-*" errors as they seem to get in the way more than
     # helping.
-    "PLR0912",
     "PLR0913",
     # Allow 'assert' as we use it for tests.
     "S101",
@@ -199,7 +198,6 @@ disable = [
     'too-complex',
     'too-many-locals',
     'too-many-arguments',
-    'too-many-branches',
     'too-many-instance-attributes',
     'too-many-return-statements',
     'too-many-lines',
