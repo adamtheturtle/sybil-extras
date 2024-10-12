@@ -3,6 +3,7 @@ An evaluator for running shell commands on example files.
 """
 
 import os
+import pty
 import subprocess
 import sys
 import textwrap
@@ -23,8 +24,8 @@ def run_with_color_and_capture_separate(
     Run a command in a pseudo-terminal to preserve color, capture both stdout
     and stderr separately, and provide live output.
     """
-    stdout_master_fd, stdout_slave_fd = os.openpty()
-    stderr_master_fd, stderr_slave_fd = os.openpty()
+    stdout_master_fd, stdout_slave_fd = pty.openpty()
+    stderr_master_fd, stderr_slave_fd = pty.openpty()
 
     with subprocess.Popen(
         args=command,
