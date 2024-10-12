@@ -26,44 +26,44 @@ def run_with_color_and_capture_separate(
     stdout_master_fd, stdout_slave_fd = os.openpty()
     stderr_master_fd, stderr_slave_fd = os.openpty()
 
-    process = subprocess.Popen(
+    with subprocess.Popen(
         args=command,
         stdout=stdout_slave_fd,
         stderr=stderr_slave_fd,
         stdin=subprocess.PIPE,
         env=env,
         close_fds=True,
-    )
+    ) as process:
+        os.close(fd=stdout_slave_fd)
+        os.close(fd=stderr_slave_fd)
 
-    os.close(fd=stdout_slave_fd)
-    os.close(fd=stderr_slave_fd)
+        stdout_output_chunks: list[bytes] = []
+        stderr_output_chunks: list[bytes] = []
 
-    stdout_output_chunks: list[bytes] = []
-    stderr_output_chunks: list[bytes] = []
+        while True:
+            chunk_size = 1024
+            stdout_chunk_bytes = os.read(stdout_master_fd, chunk_size).replace(
+                b"\r\n",
+                b"\n",
+            )
+            stderr_chunk_bytes = os.read(stderr_master_fd, chunk_size).replace(
+                b"\r\n",
+                b"\n",
+            )
 
-    while True:
-        stdout_chunk_bytes = os.read(stdout_master_fd, 1024).replace(
-            b"\r\n",
-            b"\n",
-        )
-        stderr_chunk_bytes = os.read(stderr_master_fd, 1024).replace(
-            b"\r\n",
-            b"\n",
-        )
+            if stdout_chunk_bytes:
+                sys.stdout.buffer.write(stdout_chunk_bytes)
+                stdout_output_chunks.append(stdout_chunk_bytes)
+            if stderr_chunk_bytes:
+                sys.stderr.buffer.write(stderr_chunk_bytes)
+                stderr_output_chunks.append(stderr_chunk_bytes)
 
-        if stdout_chunk_bytes:
-            sys.stdout.buffer.write(stdout_chunk_bytes)
-            stdout_output_chunks.append(stdout_chunk_bytes)
-        if stderr_chunk_bytes:
-            sys.stderr.buffer.write(stderr_chunk_bytes)
-            stderr_output_chunks.append(stderr_chunk_bytes)
-
-        if (
-            process.poll() is not None
-            and not stdout_chunk_bytes
-            and not stderr_chunk_bytes
-        ):
-            break
+            if (
+                process.poll() is not None
+                and not stdout_chunk_bytes
+                and not stderr_chunk_bytes
+            ):
+                break
 
     os.close(fd=stdout_master_fd)
     os.close(fd=stderr_master_fd)
