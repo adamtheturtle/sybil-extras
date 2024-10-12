@@ -23,12 +23,9 @@ def run_with_color_and_capture_separate(
     Run a command in a pseudo-terminal to preserve color, capture both stdout
     and stderr separately, and provide live output.
     """
-    # Create pseudo-terminals for both stdout and stderr
     stdout_master_fd, stdout_slave_fd = os.openpty()
     stderr_master_fd, stderr_slave_fd = os.openpty()
 
-    # Set the terminal mode to raw
-    # Run the command with the pseudo-terminals as its stdout and stderr
     process = subprocess.Popen(
         args=command,
         stdout=stdout_slave_fd,
@@ -38,21 +35,20 @@ def run_with_color_and_capture_separate(
         close_fds=True,
     )
 
-    # Close the slave ends in the parent process (we don't need them here)
-    os.close(stdout_slave_fd)
-    os.close(stderr_slave_fd)
+    os.close(fd=stdout_slave_fd)
+    os.close(fd=stderr_slave_fd)
 
-    # Explicitly typed empty lists for stdout and stderr output chunks
     stdout_output_chunks: list[bytes] = []
     stderr_output_chunks: list[bytes] = []
 
-    # Read the output from both stdout and stderr live
     while True:
         stdout_chunk_bytes = os.read(stdout_master_fd, 1024).replace(
-            b"\r\n", b"\n"
+            b"\r\n",
+            b"\n",
         )
         stderr_chunk_bytes = os.read(stderr_master_fd, 1024).replace(
-            b"\r\n", b"\n"
+            b"\r\n",
+            b"\n",
         )
 
         if stdout_chunk_bytes:
@@ -62,7 +58,6 @@ def run_with_color_and_capture_separate(
             sys.stderr.buffer.write(stderr_chunk_bytes)
             stderr_output_chunks.append(stderr_chunk_bytes)
 
-        # If the process has finished and there is no more data, break the loop
         if (
             process.poll() is not None
             and not stdout_chunk_bytes
@@ -70,18 +65,14 @@ def run_with_color_and_capture_separate(
         ):
             break
 
-    # Close the master file descriptors
-    os.close(stdout_master_fd)
-    os.close(stderr_master_fd)
+    os.close(fd=stdout_master_fd)
+    os.close(fd=stderr_master_fd)
 
-    # Wait for the process to finish and capture the return code
     return_code = process.wait()
 
-    # Join the captured output for stdout and stderr
     stdout_output = b"".join(stdout_output_chunks)
     stderr_output = b"".join(stderr_output_chunks)
 
-    # Return a subprocess.CompletedProcess object
     return subprocess.CompletedProcess[bytes](
         args=command,
         returncode=return_code,
