@@ -2,16 +2,97 @@
 An evaluator for running shell commands on example files.
 """
 
+import os
 import subprocess
 import textwrap
 import uuid
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-import tee_subprocess
 from beartype import beartype
 from sybil import Example
 from sybil.evaluators.python import pad
+
+
+def run_with_color_and_capture_separate(
+    command: list[str | Path],
+    env: Mapping[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    """Run a command in a pseudo-terminal to preserve color, capture both
+    stdout and stderr separately, and provide live output.
+
+    Args:
+        command (list[str | Path]): Command to run as a list of strings or Path objects.
+        env (dict | None): A dictionary representing the environment variables to pass to the subprocess.
+
+    Returns:
+        subprocess.CompletedProcess[str]: The completed process result, including stdout, stderr, and return code.
+    """
+    # Convert Path objects in the command to strings
+    command_str = [str(c) for c in command]
+
+    # Create pseudo-terminals for both stdout and stderr
+    stdout_master_fd, stdout_slave_fd = os.openpty()
+    stderr_master_fd, stderr_slave_fd = os.openpty()
+
+    # Run the command with the pseudo-terminals as its stdout and stderr
+    process = subprocess.Popen(
+        command_str,
+        stdout=stdout_slave_fd,
+        stderr=stderr_slave_fd,
+        stdin=subprocess.PIPE,
+        env=env,
+        close_fds=True,
+    )
+
+    # Close the slave ends in the parent process (we don't need them here)
+    os.close(stdout_slave_fd)
+    os.close(stderr_slave_fd)
+
+    # Explicitly typed empty lists for stdout and stderr output chunks
+    stdout_output_chunks: list[str] = []
+    stderr_output_chunks: list[str] = []
+
+    # Read the output from both stdout and stderr live
+    while True:
+        stdout_chunk = os.read(stdout_master_fd, 1024).decode()
+        stderr_chunk = os.read(stderr_master_fd, 1024).decode()
+
+        if stdout_chunk:
+            print(stdout_chunk, end="", flush=True)  # Live print stdout
+            stdout_output_chunks.append(stdout_chunk)  # Capture stdout chunks
+        if stderr_chunk:
+            print(
+                stderr_chunk, end="", flush=True, file=os.sys.stderr
+            )  # Live print stderr to stderr
+            stderr_output_chunks.append(stderr_chunk)  # Capture stderr chunks
+
+        # If the process has finished and there is no more data, break the loop
+        if (
+            process.poll() is not None
+            and not stdout_chunk
+            and not stderr_chunk
+        ):
+            break
+
+    # Close the master file descriptors
+    os.close(stdout_master_fd)
+    os.close(stderr_master_fd)
+
+    # Wait for the process to finish and capture the return code
+    return_code = process.wait()
+
+    # Join the captured output for stdout and stderr
+    stdout_output: str = "".join(stdout_output_chunks)
+    stderr_output: str = "".join(stderr_output_chunks)
+
+    # Return a subprocess.CompletedProcess object
+    return subprocess.CompletedProcess[str](
+        args=command_str,
+        returncode=return_code,
+        stdout=stdout_output,
+        stderr=stderr_output,
+    )
 
 
 @beartype
@@ -169,14 +250,18 @@ class ShellCommandEvaluator:
         )
 
         try:
-            result = tee_subprocess.run(
-                args=[*self._args, temp_file],
-                check=False,
-                capture_output=False,
-                text=False,
+            # result = tee_subprocess.run(
+            #     args=[*self._args, temp_file],
+            #     check=False,
+            #     capture_output=False,
+            #     text=False,
+            #     env=self._env,
+            # )
+
+            result = run_with_color_and_capture_separate(
+                command=[str(item) for item in [*self._args, temp_file]],
                 env=self._env,
             )
-
             temp_file_content = temp_file.read_text(encoding="utf-8")
         finally:
             temp_file.unlink()
@@ -234,7 +319,7 @@ class ShellCommandEvaluator:
                     encoding="utf-8",
                 )
 
-        assert isinstance(result, subprocess.CompletedProcess)
+        # assert isinstance(result, subprocess.CompletedProcess)
         if result.returncode != 0:
             raise subprocess.CalledProcessError(
                 cmd=result.args,
