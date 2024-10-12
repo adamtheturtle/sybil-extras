@@ -310,6 +310,7 @@ exclude_also = [
 
 [tool.mypy]
 
+exclude = [ "build" ]
 strict = true
 
 [tool.pyright]
