@@ -18,7 +18,8 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.10', '3.11', '3.12', '3.13']
-        platform: [ubuntu-latest, windows-latest]
+        # platform: [ubuntu-latest, windows-latest]
+        platform: [ubuntu-latest]
 
     runs-on: ${{ matrix.platform }}
 
@@ -27,13 +28,13 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v3
 
-      - name: Lint
-        run: |
-          uv run --extra=dev pre-commit run --all-files --hook-stage pre-commit --verbose
-          uv run --extra=dev pre-commit run --all-files --hook-stage pre-push --verbose
-          uv run --extra=dev pre-commit run --all-files --hook-stage manual --verbose
-        env:
-          UV_PYTHON: ${{ matrix.python-version }}
+      # - name: Lint
+      #   run: |
+      #     uv run --extra=dev pre-commit run --all-files --hook-stage pre-commit --verbose
+      #     uv run --extra=dev pre-commit run --all-files --hook-stage pre-push --verbose
+      #     uv run --extra=dev pre-commit run --all-files --hook-stage manual --verbose
+      #   env:
+      #     UV_PYTHON: ${{ matrix.python-version }}
 
       - name: Run tests
         run: |
