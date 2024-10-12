@@ -23,8 +23,6 @@ def run_with_color_and_capture_separate(
     Run a command in a pseudo-terminal to preserve color, capture both stdout
     and stderr separately, and provide live output.
     """
-    command_str = [str(c) for c in command]
-
     # Create pseudo-terminals for both stdout and stderr
     stdout_master_fd, stdout_slave_fd = os.openpty()
     stderr_master_fd, stderr_slave_fd = os.openpty()
@@ -32,7 +30,7 @@ def run_with_color_and_capture_separate(
     # Set the terminal mode to raw
     # Run the command with the pseudo-terminals as its stdout and stderr
     process = subprocess.Popen(
-        command_str,
+        args=command,
         stdout=stdout_slave_fd,
         stderr=stderr_slave_fd,
         stdin=subprocess.PIPE,
@@ -81,7 +79,7 @@ def run_with_color_and_capture_separate(
 
     # Return a subprocess.CompletedProcess object
     return subprocess.CompletedProcess[bytes](
-        args=command_str,
+        args=command,
         returncode=return_code,
         stdout=stdout_output,
         stderr=stderr_output,
