@@ -4,6 +4,7 @@ An evaluator for running shell commands on example files.
 
 import os
 import subprocess
+import sys
 import textwrap
 import uuid
 from collections.abc import Mapping, Sequence
@@ -17,32 +18,16 @@ from sybil.evaluators.python import pad
 def run_with_color_and_capture_separate(
     command: list[str | Path],
     env: Mapping[str, str] | None = None,
-) -> subprocess.CompletedProcess[str]:
-    """Run a command in a pseudo-terminal to preserve color, capture both
-    stdout and stderr separately, and provide live output.
-
-    Args:
-        command (list[str | Path]): Command to run as a list of strings or Path objects.
-        env (dict | None): A dictionary representing the environment variables to pass to the subprocess.
-
-    Returns:
-        subprocess.CompletedProcess[str]: The completed process result, including stdout, stderr, and return code.
+) -> subprocess.CompletedProcess[bytes]:
     """
-    import termios
-
-    # Convert Path objects in the command to strings
+    Run a command in a pseudo-terminal to preserve color, capture both stdout
+    and stderr separately, and provide live output.
+    """
     command_str = [str(c) for c in command]
 
     # Create pseudo-terminals for both stdout and stderr
     stdout_master_fd, stdout_slave_fd = os.openpty()
     stderr_master_fd, stderr_slave_fd = os.openpty()
-
-    new_attrs = termios.tcgetattr(stdout_master_fd)
-    new_attrs[3] &= ~(
-        termios.ICANON | termios.ECHO
-    )  # Disable canonical mode and echo
-
-    termios.tcsetattr(stdout_master_fd, termios.TCSANOW, new_attrs)
 
     # Set the terminal mode to raw
     # Run the command with the pseudo-terminals as its stdout and stderr
@@ -60,37 +45,26 @@ def run_with_color_and_capture_separate(
     os.close(stderr_slave_fd)
 
     # Explicitly typed empty lists for stdout and stderr output chunks
-    stdout_output_chunks: list[str] = []
-    stderr_output_chunks: list[str] = []
+    stdout_output_chunks: list[bytes] = []
+    stderr_output_chunks: list[bytes] = []
 
     # Read the output from both stdout and stderr live
     while True:
         stdout_chunk_bytes = os.read(stdout_master_fd, 1024)
         stderr_chunk_bytes = os.read(stderr_master_fd, 1024)
-        try:
-            stdout_chunk = stdout_chunk_bytes.decode("utf-8")
-        except UnicodeDecodeError:
-            stdout_chunk = stdout_chunk_bytes.decode("latin-1")
 
-        try:
-            stderr_chunk = stderr_chunk_bytes.decode("utf-8")
-        except UnicodeDecodeError:
-            stderr_chunk = stderr_chunk_bytes.decode("latin-1")
-
-        if stdout_chunk:
-            print(stdout_chunk, end="", flush=True)  # Live print stdout
-            stdout_output_chunks.append(stdout_chunk)  # Capture stdout chunks
-        if stderr_chunk:
-            print(
-                stderr_chunk, end="", flush=True, file=os.sys.stderr
-            )  # Live print stderr to stderr
-            stderr_output_chunks.append(stderr_chunk)  # Capture stderr chunks
+        if stdout_chunk_bytes:
+            sys.stdout.buffer.write(stdout_chunk_bytes)
+            stdout_output_chunks.append(stdout_chunk_bytes)
+        if stderr_chunk_bytes:
+            sys.stderr.buffer.write(stderr_chunk_bytes)
+            stderr_output_chunks.append(stderr_chunk_bytes)
 
         # If the process has finished and there is no more data, break the loop
         if (
             process.poll() is not None
-            and not stdout_chunk
-            and not stderr_chunk
+            and not stdout_chunk_bytes
+            and not stderr_chunk_bytes
         ):
             break
 
@@ -102,11 +76,11 @@ def run_with_color_and_capture_separate(
     return_code = process.wait()
 
     # Join the captured output for stdout and stderr
-    stdout_output: str = "".join(stdout_output_chunks)
-    stderr_output: str = "".join(stderr_output_chunks)
+    stdout_output = b"".join(stdout_output_chunks)
+    stderr_output = b"".join(stderr_output_chunks)
 
     # Return a subprocess.CompletedProcess object
-    return subprocess.CompletedProcess[str](
+    return subprocess.CompletedProcess[bytes](
         args=command_str,
         returncode=return_code,
         stdout=stdout_output,
