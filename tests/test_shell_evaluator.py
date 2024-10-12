@@ -97,6 +97,29 @@ def test_output_shown(
     assert outerr.err == "Hello Stderr!\n"
 
 
+def test_rm(
+    rst_file: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """
+    Output is shown.
+    """
+    evaluator = ShellCommandEvaluator(
+        args=["rm"],
+        pad_file=False,
+        write_to_file=False,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    example.evaluate()
+    outerr = capsys.readouterr()
+    assert outerr.out == ""
+    assert outerr.err == ""
+
+
 def test_pass_env(
     rst_file: Path,
     tmp_path: Path,
