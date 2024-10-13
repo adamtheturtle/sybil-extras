@@ -170,14 +170,41 @@ class ShellCommandEvaluator:
         )
 
         temp_file_content = ""
+        import os
+        import pty
+        import sys
+
+        use_pty = True
+        stdout_master_fd, stdout_slave_fd = (
+            pty.openpty() if use_pty else (1, 1)
+        )
+        stderr_master_fd, stderr_slave_fd = (
+            pty.openpty() if use_pty else (1, 1)
+        )
+        stdout = stdout_master_fd if use_pty else subprocess.PIPE
+        stderr = stdout_slave_fd if use_pty else subprocess.PIPE
+        print("HERE")
         try:
             result = tee_subprocess.run(
                 args=[*self._args, temp_file],
                 check=False,
                 capture_output=False,
+                stdout=stdout,
+                stderr=stderr,
                 text=False,
                 env=self._env,
+                wait=False,
             )
+            while True:
+                stdout_chunk_bytes = os.read(stdout, 1024)
+                stderr_chunk_bytes = os.read(stderr, 1024)
+                if stdout_chunk_bytes:
+                    sys.stdout.buffer.write(stdout_chunk_bytes)
+                if stderr_chunk_bytes:
+                    sys.stderr.buffer.write(stderr_chunk_bytes)
+
+                if not stdout_chunk_bytes and not stderr_chunk_bytes:
+                    break
 
             with contextlib.suppress(FileNotFoundError):
                 temp_file_content = temp_file.read_text(encoding="utf-8")
