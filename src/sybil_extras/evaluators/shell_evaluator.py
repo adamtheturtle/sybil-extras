@@ -34,7 +34,7 @@ def run_with_color_and_capture_separate(
         stderr=stderr_slave_fd,
         stdin=subprocess.PIPE,
         env=env,
-        close_fds=True,
+        close_fds=False,
     ) as process:
         os.close(fd=stdout_slave_fd)
         os.close(fd=stderr_slave_fd)
