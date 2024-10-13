@@ -18,15 +18,18 @@ from sybil.evaluators.python import pad
 
 
 def _run_with_color_and_capture_separate(
+    *,
     command: list[str | Path],
     env: Mapping[str, str] | None = None,
+    use_pty: bool,
 ) -> subprocess.CompletedProcess[bytes]:
     """
     Run a command in a pseudo-terminal to preserve color, capture both stdout
     and stderr separately, and provide live output.
     """
-    stdout_master_fd, stdout_slave_fd = pty.openpty()
-    stderr_master_fd, stderr_slave_fd = pty.openpty()
+    if use_pty:
+        stdout_master_fd, stdout_slave_fd = pty.openpty()
+        stderr_master_fd, stderr_slave_fd = pty.openpty()
 
     with subprocess.Popen(
         args=command,
@@ -239,6 +242,7 @@ class ShellCommandEvaluator:
             result = _run_with_color_and_capture_separate(
                 command=[str(item) for item in [*self._args, temp_file]],
                 env=self._env,
+                use_pty=True,
             )
 
             with contextlib.suppress(FileNotFoundError):
