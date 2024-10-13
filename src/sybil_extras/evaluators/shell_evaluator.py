@@ -4,7 +4,7 @@ An evaluator for running shell commands on example files.
 
 import contextlib
 import os
-import pty
+import platform
 import subprocess
 import sys
 import textwrap
@@ -27,8 +27,8 @@ def _run_with_color_and_capture_separate(
     Run a command in a pseudo-terminal to preserve color, capture both stdout
     and stderr separately, and provide live output.
     """
-    stdout_master_fd, stdout_slave_fd = pty.openpty() if use_pty else (1, 1)
-    stderr_master_fd, stderr_slave_fd = pty.openpty() if use_pty else (1, 1)
+    stdout_master_fd, stdout_slave_fd = os.openpty() if use_pty else (1, 1)
+    stderr_master_fd, stderr_slave_fd = os.openpty() if use_pty else (1, 1)
     stdout = stdout_slave_fd if use_pty else subprocess.PIPE
     stderr = stderr_slave_fd if use_pty else subprocess.PIPE
 
@@ -200,7 +200,7 @@ class ShellCommandEvaluator:
                 for formatters.
             use_pty: Whether to use a pseudo-terminal for running commands.
                 This can be useful e.g. to get color output, but can also break
-                in some environments.
+                in some environments. Not supported on Windows.
         """
         self._args = args
         self._env = env
@@ -209,6 +209,9 @@ class ShellCommandEvaluator:
         self._tempfile_suffixes = tempfile_suffixes
         self._write_to_file = write_to_file
         self._newline = newline
+        assert not (
+            use_pty and platform.system() == "Windows"
+        ), "Cannot use pty with Windows"
         self._use_pty = use_pty
 
     def __call__(self, example: Example) -> None:
