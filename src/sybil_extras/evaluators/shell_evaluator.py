@@ -30,25 +30,41 @@ def _run_with_color_and_capture_separate(
     if use_pty:
         stdout_master_fd, stdout_slave_fd = pty.openpty()
         stderr_master_fd, stderr_slave_fd = pty.openpty()
+        stdout = stdout_slave_fd
+        stderr = stderr_slave_fd
+    else:
+        stdout_slave_fd = None
+        stderr_slave_fd = None
+        stdout_master_fd = None
+        stderr_master_fd = None
+        stdout = subprocess.PIPE
+        stderr = subprocess.PIPE
 
     with subprocess.Popen(
         args=command,
-        stdout=stdout_slave_fd,
-        stderr=stderr_slave_fd,
+        stdout=stdout,
+        stderr=stderr,
         stdin=subprocess.PIPE,
         env=env,
         close_fds=True,
     ) as process:
-        os.close(fd=stdout_slave_fd)
-        os.close(fd=stderr_slave_fd)
+        if stdout_slave_fd is not None and stderr_slave_fd is not None:
+            os.close(fd=stdout_slave_fd)
+            os.close(fd=stderr_slave_fd)
 
         stdout_output_chunks: list[bytes] = []
         stderr_output_chunks: list[bytes] = []
 
         while True:
             chunk_size = 1024
-            stdout_chunk_bytes = os.read(stdout_master_fd, chunk_size)
-            stderr_chunk_bytes = os.read(stderr_master_fd, chunk_size)
+            if stdout_master_fd is not None and stderr_master_fd is not None:
+                stdout_chunk_bytes = os.read(stdout_master_fd, chunk_size)
+                stderr_chunk_bytes = os.read(stderr_master_fd, chunk_size)
+            else:
+                assert process.stdout is not None
+                assert process.stderr is not None
+                stdout_chunk_bytes = process.stdout.read(chunk_size)
+                stderr_chunk_bytes = process.stderr.read(chunk_size)
 
             stdout_chunk_bytes = stdout_chunk_bytes.replace(b"\r\n", b"\n")
             stderr_chunk_bytes = stderr_chunk_bytes.replace(b"\r\n", b"\n")
@@ -67,8 +83,9 @@ def _run_with_color_and_capture_separate(
             ):
                 break
 
-    os.close(fd=stdout_master_fd)
-    os.close(fd=stderr_master_fd)
+    if stdout_master_fd is not None and stderr_master_fd is not None:
+        os.close(fd=stdout_master_fd)
+        os.close(fd=stderr_master_fd)
 
     return_code = process.wait()
 
@@ -242,7 +259,7 @@ class ShellCommandEvaluator:
             result = _run_with_color_and_capture_separate(
                 command=[str(item) for item in [*self._args, temp_file]],
                 env=self._env,
-                use_pty=True,
+                use_pty=False,
             )
 
             with contextlib.suppress(FileNotFoundError):
