@@ -41,7 +41,6 @@ dynamic = [
 dependencies = [
     "beartype>=0.19.0",
     "sybil>=8.0.0",
-    "tee-subprocess>=1.1.0",
 ]
 optional-dependencies.dev = [
     "actionlint-py==1.7.3.17",
@@ -317,6 +316,7 @@ exclude = [ "build" ]
 
 reportUnnecessaryTypeIgnoreComment = true
 typeCheckingMode = "strict"
+exclude = [ "build", ".venv" ]
 
 [tool.interrogate]
 fail-under = 100

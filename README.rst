@@ -70,6 +70,10 @@ ShellCommandEvaluator
         # This option is useful when running a linter or formatter
         # which modifies the code.
         write_to_file=False,
+        # Use a pseudo-terminal for running commands.
+        # This can be useful e.g. to get color output, but can also break
+        # in some environments.
+        use_pty=True,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])

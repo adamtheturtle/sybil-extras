@@ -3,16 +3,110 @@ An evaluator for running shell commands on example files.
 """
 
 import contextlib
+import os
+import platform
 import subprocess
+import sys
 import textwrap
 import uuid
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-import tee_subprocess
 from beartype import beartype
 from sybil import Example
 from sybil.evaluators.python import pad
+
+
+def _run_with_color_and_capture_separate(
+    *,
+    command: list[str | Path],
+    env: Mapping[str, str] | None = None,
+    use_pty: bool,
+) -> subprocess.CompletedProcess[bytes]:
+    """
+    Run a command in a pseudo-terminal to preserve color, capture both stdout
+    and stderr separately, and provide live output.
+    """
+    stdout_master_fd = -1
+    stderr_master_fd = -1
+    stdout_slave_fd = -1
+    stderr_slave_fd = -1
+
+    with contextlib.suppress(AttributeError):
+        stdout_master_fd, stdout_slave_fd = (
+            os.openpty() if use_pty else (-1, -1)
+        )
+    with contextlib.suppress(AttributeError):
+        stderr_master_fd, stderr_slave_fd = (
+            os.openpty() if use_pty else (-1, -1)
+        )
+
+    stdout = subprocess.PIPE if stdout_slave_fd == -1 else stdout_slave_fd
+    stderr = subprocess.PIPE if stderr_slave_fd == -1 else stderr_slave_fd
+
+    with subprocess.Popen(
+        args=command,
+        stdout=stdout,
+        stderr=stderr,
+        stdin=subprocess.PIPE,
+        env=env,
+        close_fds=True,
+    ) as process:
+        if use_pty:  # pragma: no cover
+            os.close(fd=stdout_slave_fd)
+            os.close(fd=stderr_slave_fd)
+
+        stdout_output_chunks: list[bytes] = []
+        stderr_output_chunks: list[bytes] = []
+
+        stdout_master_fd = (
+            stdout_master_fd
+            if process.stdout is None
+            else process.stdout.fileno()
+        )
+        stderr_master_fd = (
+            stderr_master_fd
+            if process.stderr is None
+            else process.stderr.fileno()
+        )
+
+        while True:
+            chunk_size = 1024
+            stdout_chunk_bytes = os.read(stdout_master_fd, chunk_size)
+            stderr_chunk_bytes = os.read(stderr_master_fd, chunk_size)
+
+            stdout_chunk_bytes = stdout_chunk_bytes.replace(b"\r\n", b"\n")
+            stderr_chunk_bytes = stderr_chunk_bytes.replace(b"\r\n", b"\n")
+
+            if stdout_chunk_bytes:
+                sys.stdout.buffer.write(stdout_chunk_bytes)
+                stdout_output_chunks.append(stdout_chunk_bytes)
+            if stderr_chunk_bytes:
+                sys.stderr.buffer.write(stderr_chunk_bytes)
+                stderr_output_chunks.append(stderr_chunk_bytes)
+
+            if (
+                process.poll() is not None
+                and not stdout_chunk_bytes
+                and not stderr_chunk_bytes
+            ):
+                break
+
+    if use_pty:  # pragma: no cover
+        os.close(fd=stdout_master_fd)
+        os.close(fd=stderr_master_fd)
+
+    return_code = process.wait()
+
+    stdout_output = b"".join(stdout_output_chunks)
+    stderr_output = b"".join(stderr_output_chunks)
+
+    return subprocess.CompletedProcess[bytes](
+        args=command,
+        returncode=return_code,
+        stdout=stdout_output,
+        stderr=stderr_output,
+    )
 
 
 @beartype
@@ -96,6 +190,7 @@ class ShellCommandEvaluator:
         # of newlines at the start.
         pad_file: bool,
         write_to_file: bool,
+        use_pty: bool,
     ) -> None:
         """Initialize the evaluator.
 
@@ -119,6 +214,9 @@ class ShellCommandEvaluator:
                 formatters.
             write_to_file: Whether to write changes to the file. This is useful
                 for formatters.
+            use_pty: Whether to use a pseudo-terminal for running commands.
+                This can be useful e.g. to get color output, but can also break
+                in some environments. Not supported on Windows.
         """
         self._args = args
         self._env = env
@@ -127,11 +225,16 @@ class ShellCommandEvaluator:
         self._tempfile_suffixes = tempfile_suffixes
         self._write_to_file = write_to_file
         self._newline = newline
+        self._use_pty = use_pty
 
     def __call__(self, example: Example) -> None:
         """
         Run the shell command on the example file.
         """
+        assert not (
+            self._use_pty and platform.system() == "Windows"
+        ), "pty is not available"
+
         if self._pad_file:
             source = pad(
                 source=example.parsed,
@@ -171,12 +274,10 @@ class ShellCommandEvaluator:
 
         temp_file_content = ""
         try:
-            result = tee_subprocess.run(
-                args=[*self._args, temp_file],
-                check=False,
-                capture_output=False,
-                text=False,
+            result = _run_with_color_and_capture_separate(
+                command=[str(item) for item in [*self._args, temp_file]],
                 env=self._env,
+                use_pty=self._use_pty,
             )
 
             with contextlib.suppress(FileNotFoundError):
@@ -238,7 +339,6 @@ class ShellCommandEvaluator:
                     encoding="utf-8",
                 )
 
-        assert isinstance(result, subprocess.CompletedProcess)
         if result.returncode != 0:
             raise subprocess.CalledProcessError(
                 cmd=result.args,
