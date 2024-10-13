@@ -92,6 +92,10 @@ def _run_with_color_and_capture_separate(
             ):
                 break
 
+    if use_pty:  # pragma: no cover
+        os.close(fd=stdout_master_fd)
+        os.close(fd=stderr_master_fd)
+
     return_code = process.wait()
 
     stdout_output = b"".join(stdout_output_chunks)
