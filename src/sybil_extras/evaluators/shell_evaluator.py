@@ -27,18 +27,10 @@ def _run_with_color_and_capture_separate(
     Run a command in a pseudo-terminal to preserve color, capture both stdout
     and stderr separately, and provide live output.
     """
-    if use_pty:
-        stdout_master_fd, stdout_slave_fd = pty.openpty()
-        stderr_master_fd, stderr_slave_fd = pty.openpty()
-        stdout = stdout_slave_fd
-        stderr = stderr_slave_fd
-    else:
-        stdout_slave_fd = -1
-        stderr_slave_fd = -1
-        stdout_master_fd = -1
-        stderr_master_fd = -1
-        stdout = subprocess.PIPE
-        stderr = subprocess.PIPE
+    stdout_master_fd, stdout_slave_fd = pty.openpty() if use_pty else (1, 1)
+    stderr_master_fd, stderr_slave_fd = pty.openpty() if use_pty else (1, 1)
+    stdout = stdout_slave_fd if use_pty else subprocess.PIPE
+    stderr = stderr_slave_fd if use_pty else subprocess.PIPE
 
     with subprocess.Popen(
         args=command,
@@ -48,17 +40,23 @@ def _run_with_color_and_capture_separate(
         env=env,
         close_fds=True,
     ) as process:
-        if use_pty:
+        if use_pty:  # pragma: no cover
             os.close(fd=stdout_slave_fd)
             os.close(fd=stderr_slave_fd)
 
         stdout_output_chunks: list[bytes] = []
         stderr_output_chunks: list[bytes] = []
 
-        if process.stdout is not None:
-            stdout_master_fd = process.stdout.fileno()
-        if process.stderr is not None:
-            stderr_master_fd = process.stderr.fileno()
+        stdout_master_fd = (
+            stdout_master_fd
+            if process.stdout is None
+            else process.stdout.fileno()
+        )
+        stderr_master_fd = (
+            stderr_master_fd
+            if process.stderr is None
+            else process.stderr.fileno()
+        )
 
         while True:
             chunk_size = 1024
@@ -176,6 +174,7 @@ class ShellCommandEvaluator:
         # of newlines at the start.
         pad_file: bool,
         write_to_file: bool,
+        use_pty: bool,
     ) -> None:
         """Initialize the evaluator.
 
@@ -199,6 +198,9 @@ class ShellCommandEvaluator:
                 formatters.
             write_to_file: Whether to write changes to the file. This is useful
                 for formatters.
+            use_pty: Whether to use a pseudo-terminal for running commands.
+                This can be useful e.g. to get color output, but can also break
+                in some environments.
         """
         self._args = args
         self._env = env
@@ -207,6 +209,7 @@ class ShellCommandEvaluator:
         self._tempfile_suffixes = tempfile_suffixes
         self._write_to_file = write_to_file
         self._newline = newline
+        self._use_pty = use_pty
 
     def __call__(self, example: Example) -> None:
         """
@@ -254,7 +257,7 @@ class ShellCommandEvaluator:
             result = _run_with_color_and_capture_separate(
                 command=[str(item) for item in [*self._args, temp_file]],
                 env=self._env,
-                use_pty=False,
+                use_pty=self._use_pty,
             )
 
             with contextlib.suppress(FileNotFoundError):
