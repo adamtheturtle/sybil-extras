@@ -27,10 +27,20 @@ def _run_with_color_and_capture_separate(
     Run a command in a pseudo-terminal to preserve color, capture both stdout
     and stderr separately, and provide live output.
     """
-    stdout_master_fd, stdout_slave_fd = os.openpty() if use_pty else (1, 1)
-    stderr_master_fd, stderr_slave_fd = os.openpty() if use_pty else (1, 1)
-    stdout = stdout_slave_fd if use_pty else subprocess.PIPE
-    stderr = stderr_slave_fd if use_pty else subprocess.PIPE
+    stdout_slave_fd = -1
+    stderr_slave_fd = -1
+
+    with contextlib.suppress(AttributeError):
+        stdout_master_fd, stdout_slave_fd = (
+            os.openpty() if use_pty else (-1, -1)
+        )
+    with contextlib.suppress(AttributeError):
+        stderr_master_fd, stderr_slave_fd = (
+            os.openpty() if use_pty else (-1, -1)
+        )
+
+    stdout = subprocess.PIPE if stdout_slave_fd == -1 else stdout_slave_fd
+    stderr = subprocess.PIPE if stderr_slave_fd == -1 else stderr_slave_fd
 
     with subprocess.Popen(
         args=command,
@@ -211,7 +221,7 @@ class ShellCommandEvaluator:
         self._newline = newline
         assert not (
             use_pty and platform.system() == "Windows"
-        ), "Cannot use pty with Windows"
+        ), "pty is not available"
         self._use_pty = use_pty
 
     def __call__(self, example: Example) -> None:
