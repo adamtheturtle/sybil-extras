@@ -55,16 +55,16 @@ def _run_with_color_and_capture_separate(
         stdout_output_chunks: list[bytes] = []
         stderr_output_chunks: list[bytes] = []
 
+        if stdout_master_fd is None or stderr_master_fd is None:
+            assert process.stdout is not None
+            assert process.stderr is not None
+            stdout_master_fd = process.stdout.fileno()
+            stderr_master_fd = process.stderr.fileno()
+
         while True:
             chunk_size = 1024
-            if stdout_master_fd is not None and stderr_master_fd is not None:
-                stdout_chunk_bytes = os.read(stdout_master_fd, chunk_size)
-                stderr_chunk_bytes = os.read(stderr_master_fd, chunk_size)
-            else:
-                assert process.stdout is not None
-                assert process.stderr is not None
-                stdout_chunk_bytes = process.stdout.read(chunk_size)
-                stderr_chunk_bytes = process.stderr.read(chunk_size)
+            stdout_chunk_bytes = os.read(stdout_master_fd, chunk_size)
+            stderr_chunk_bytes = os.read(stderr_master_fd, chunk_size)
 
             stdout_chunk_bytes = stdout_chunk_bytes.replace(b"\r\n", b"\n")
             stderr_chunk_bytes = stderr_chunk_bytes.replace(b"\r\n", b"\n")
@@ -82,10 +82,6 @@ def _run_with_color_and_capture_separate(
                 and not stderr_chunk_bytes
             ):
                 break
-
-    if stdout_master_fd is not None and stderr_master_fd is not None:
-        os.close(fd=stdout_master_fd)
-        os.close(fd=stderr_master_fd)
 
     return_code = process.wait()
 
