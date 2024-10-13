@@ -33,10 +33,10 @@ def _run_with_color_and_capture_separate(
         stdout = stdout_slave_fd
         stderr = stderr_slave_fd
     else:
-        stdout_slave_fd = None
-        stderr_slave_fd = None
-        stdout_master_fd = None
-        stderr_master_fd = None
+        stdout_slave_fd = -1
+        stderr_slave_fd = -1
+        stdout_master_fd = -1
+        stderr_master_fd = -1
         stdout = subprocess.PIPE
         stderr = subprocess.PIPE
 
@@ -48,17 +48,16 @@ def _run_with_color_and_capture_separate(
         env=env,
         close_fds=True,
     ) as process:
-        if stdout_slave_fd is not None and stderr_slave_fd is not None:
+        if use_pty:
             os.close(fd=stdout_slave_fd)
             os.close(fd=stderr_slave_fd)
 
         stdout_output_chunks: list[bytes] = []
         stderr_output_chunks: list[bytes] = []
 
-        if stdout_master_fd is None or stderr_master_fd is None:
-            assert process.stdout is not None
-            assert process.stderr is not None
+        if process.stdout is not None:
             stdout_master_fd = process.stdout.fileno()
+        if process.stderr is not None:
             stderr_master_fd = process.stderr.fileno()
 
         while True:
