@@ -9,6 +9,7 @@ linter
 namespace
 ons
 parsers
+pragma
 pytest
 rst
 stderr
