@@ -27,6 +27,8 @@ def _run_with_color_and_capture_separate(
     Run a command in a pseudo-terminal to preserve color, capture both stdout
     and stderr separately, and provide live output.
     """
+    stderr_master_fd = -1
+    stderr_master_fd = -1
     stdout_slave_fd = -1
     stderr_slave_fd = -1
 
