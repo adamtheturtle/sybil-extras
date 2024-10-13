@@ -110,6 +110,7 @@ def test_rm(
         args=["rm"],
         pad_file=False,
         write_to_file=False,
+        use_pty=False,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
