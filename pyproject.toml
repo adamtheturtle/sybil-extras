@@ -195,7 +195,6 @@ enable = [
 
 disable = [
     'too-few-public-methods',
-    'too-complex',
     'too-many-locals',
     'too-many-arguments',
     'too-many-instance-attributes',
@@ -309,9 +308,9 @@ exclude_also = [
 
 [tool.mypy]
 
-exclude = [ "build" ]
 strict = true
 files = [ "." ]
+exclude = [ "build" ]
 
 [tool.pyright]
 
