@@ -75,7 +75,7 @@ def _run_with_color_and_capture_separate(
                 process.poll() is None,
                 stdout_chunk_bytes := b"",
                 stderr_chunk_bytes := b"",
-            ]
+            ],
         ):
             chunk_size = 1024
             stdout_chunk_bytes = os.read(stdout_master_fd, chunk_size)
