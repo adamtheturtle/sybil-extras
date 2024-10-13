@@ -17,7 +17,7 @@ from sybil import Example
 from sybil.evaluators.python import pad
 
 
-def run_with_color_and_capture_separate(
+def _run_with_color_and_capture_separate(
     command: list[str | Path],
     env: Mapping[str, str] | None = None,
 ) -> subprocess.CompletedProcess[bytes]:
@@ -245,7 +245,7 @@ class ShellCommandEvaluator:
 
         temp_file_content = ""
         try:
-            result = run_with_color_and_capture_separate(
+            result = _run_with_color_and_capture_separate(
                 command=[str(item) for item in [*self._args, temp_file]],
                 env=self._env,
             )
