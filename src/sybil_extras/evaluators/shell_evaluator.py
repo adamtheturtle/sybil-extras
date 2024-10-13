@@ -46,13 +46,13 @@ def run_with_color_and_capture_separate(
             try:
                 stdout_chunk_bytes = os.read(stdout_master_fd, chunk_size)
             except OSError:
-                continue
+                break
 
             try:
-                stdout_chunk_bytes = stdout_chunk_bytes.replace(b"\r\n", b"\n")
+                stderr_chunk_bytes = os.read(stderr_master_fd, chunk_size)
             except OSError:
-                continue
-            stderr_chunk_bytes = os.read(stderr_master_fd, chunk_size)
+                break
+            stdout_chunk_bytes = stdout_chunk_bytes.replace(b"\r\n", b"\n")
             stderr_chunk_bytes = stderr_chunk_bytes.replace(b"\r\n", b"\n")
 
             if stdout_chunk_bytes:
