@@ -75,12 +75,10 @@ def _run_with_color_and_capture_separate(
             stdout_chunk_bytes = os.read(stdout_master_fd, chunk_size)
             stderr_chunk_bytes = os.read(stderr_master_fd, chunk_size)
 
-            if stdout_chunk_bytes:
-                sys.stdout.buffer.write(stdout_chunk_bytes)
-                stdout_output_chunks.append(stdout_chunk_bytes)
-            if stderr_chunk_bytes:
-                sys.stderr.buffer.write(stderr_chunk_bytes)
-                stderr_output_chunks.append(stderr_chunk_bytes)
+            sys.stdout.buffer.write(stdout_chunk_bytes)
+            stdout_output_chunks.append(stdout_chunk_bytes)
+            sys.stderr.buffer.write(stderr_chunk_bytes)
+            stderr_output_chunks.append(stderr_chunk_bytes)
 
             if (
                 process.poll() is not None
