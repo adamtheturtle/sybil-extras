@@ -23,9 +23,11 @@ def _run_with_color_and_capture_separate(
     env: Mapping[str, str] | None = None,
     use_pty: bool,
 ) -> subprocess.CompletedProcess[bytes]:
-    """
-    Run a command in a pseudo-terminal to preserve color, capture both stdout
-    and stderr separately, and provide live output.
+    """Run a command in a pseudo-terminal to preserve color, capture both
+    stdout and stderr separately, and provide live output.
+
+    When ``use_pty`` is ``True``, newlines are translated to CRLF in order to
+    move the cursor.
     """
     stdout_master_fd = -1
     stderr_master_fd = -1
@@ -70,27 +72,22 @@ def _run_with_color_and_capture_separate(
             else process.stderr.fileno()
         )
 
-        while True:
+        while any(
+            [
+                process.poll() is None,
+                stdout_chunk_bytes := b"",
+                stderr_chunk_bytes := b"",
+            ],
+        ):
             chunk_size = 1024
+
             stdout_chunk_bytes = os.read(stdout_master_fd, chunk_size)
             stderr_chunk_bytes = os.read(stderr_master_fd, chunk_size)
 
-            stdout_chunk_bytes = stdout_chunk_bytes.replace(b"\r\n", b"\n")
-            stderr_chunk_bytes = stderr_chunk_bytes.replace(b"\r\n", b"\n")
-
-            if stdout_chunk_bytes:
-                sys.stdout.buffer.write(stdout_chunk_bytes)
-                stdout_output_chunks.append(stdout_chunk_bytes)
-            if stderr_chunk_bytes:
-                sys.stderr.buffer.write(stderr_chunk_bytes)
-                stderr_output_chunks.append(stderr_chunk_bytes)
-
-            if (
-                process.poll() is not None
-                and not stdout_chunk_bytes
-                and not stderr_chunk_bytes
-            ):
-                break
+            sys.stdout.buffer.write(stdout_chunk_bytes)
+            stdout_output_chunks.append(stdout_chunk_bytes)
+            sys.stderr.buffer.write(stderr_chunk_bytes)
+            stderr_output_chunks.append(stderr_chunk_bytes)
 
     if use_pty:  # pragma: no cover
         os.close(fd=stdout_master_fd)
