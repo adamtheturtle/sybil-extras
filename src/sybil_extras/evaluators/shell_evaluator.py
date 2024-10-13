@@ -221,15 +221,16 @@ class ShellCommandEvaluator:
         self._tempfile_suffixes = tempfile_suffixes
         self._write_to_file = write_to_file
         self._newline = newline
-        assert not (
-            use_pty and platform.system() == "Windows"
-        ), "pty is not available"
         self._use_pty = use_pty
 
     def __call__(self, example: Example) -> None:
         """
         Run the shell command on the example file.
         """
+        assert not (
+            self._use_pty and platform.system() == "Windows"
+        ), "pty is not available"
+
         if self._pad_file:
             source = pad(
                 source=example.parsed,
