@@ -70,7 +70,13 @@ def _run_with_color_and_capture_separate(
             else process.stderr.fileno()
         )
 
-        while True:
+        while any(
+            [
+                process.poll() is None,
+                stdout_chunk_bytes := b"",
+                stderr_chunk_bytes := b"",
+            ]
+        ):
             chunk_size = 1024
             stdout_chunk_bytes = os.read(stdout_master_fd, chunk_size)
             stderr_chunk_bytes = os.read(stderr_master_fd, chunk_size)
@@ -79,13 +85,6 @@ def _run_with_color_and_capture_separate(
             stdout_output_chunks.append(stdout_chunk_bytes)
             sys.stderr.buffer.write(stderr_chunk_bytes)
             stderr_output_chunks.append(stderr_chunk_bytes)
-
-            if (
-                process.poll() is not None
-                and not stdout_chunk_bytes
-                and not stderr_chunk_bytes
-            ):
-                break
 
     if use_pty:  # pragma: no cover
         os.close(fd=stdout_master_fd)
