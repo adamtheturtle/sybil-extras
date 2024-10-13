@@ -53,6 +53,7 @@ def test_error(rst_file: Path) -> None:
         args=args,
         pad_file=False,
         write_to_file=False,
+        use_pty=False,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -85,6 +86,7 @@ def test_output_shown(
         ],
         pad_file=False,
         write_to_file=False,
+        use_pty=False,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -137,6 +139,7 @@ def test_pass_env(
         env={"ENV_KEY": "ENV_VALUE"},
         pad_file=False,
         write_to_file=False,
+        use_pty=False,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -166,6 +169,7 @@ def test_global_env(
         ],
         pad_file=False,
         write_to_file=False,
+        use_pty=False,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -195,6 +199,7 @@ def test_file_is_passed(
         args=["sh", "-c", sh_function, "_", file_path],
         pad_file=False,
         write_to_file=False,
+        use_pty=False,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -216,6 +221,7 @@ def test_file_path(rst_file: Path, capsys: pytest.CaptureFixture[str]) -> None:
         args=["echo"],
         pad_file=False,
         write_to_file=False,
+        use_pty=False,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -248,6 +254,7 @@ def test_file_suffix(
         pad_file=False,
         write_to_file=False,
         tempfile_suffixes=suffixes,
+        use_pty=False,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -274,6 +281,7 @@ def test_file_prefix(
         pad_file=False,
         write_to_file=False,
         tempfile_name_prefix=prefix,
+        use_pty=False,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -301,6 +309,7 @@ def test_pad(rst_file: Path, tmp_path: Path) -> None:
         args=["sh", "-c", sh_function, "_", file_path],
         pad_file=True,
         write_to_file=False,
+        use_pty=False,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -342,6 +351,7 @@ def test_write_to_file(
         args=["cp", file_with_new_content],
         pad_file=False,
         write_to_file=write_to_file,
+        use_pty=False,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -375,6 +385,7 @@ def test_pad_and_write(rst_file: Path) -> None:
         args=["true"],
         pad_file=True,
         write_to_file=True,
+        use_pty=False,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -395,6 +406,7 @@ def test_no_changes_mtime(rst_file: Path) -> None:
         args=["true"],
         pad_file=True,
         write_to_file=True,
+        use_pty=False,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -424,6 +436,7 @@ def test_non_utf8_output(
         args=["sh", str(script)],
         pad_file=False,
         write_to_file=False,
+        use_pty=False,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -523,6 +536,7 @@ def test_newline_system(
         args=["sh", "-c", sh_function, "_", file_path],
         pad_file=False,
         write_to_file=False,
+        use_pty=False,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -567,6 +581,7 @@ def test_newline_given(
         pad_file=False,
         write_to_file=False,
         newline=given_newline,
+        use_pty=False,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
