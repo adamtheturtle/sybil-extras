@@ -3,8 +3,6 @@ An evaluator for running shell commands on example files.
 """
 
 import contextlib
-import os
-import pty
 import subprocess
 import sys
 import textwrap
@@ -25,33 +23,37 @@ def run_with_color_and_capture_separate(
     Run a command in a pseudo-terminal to preserve color, capture both stdout
     and stderr separately, and provide live output.
     """
-    stdout_master_fd, stdout_slave_fd = pty.openpty()
-    stderr_master_fd, stderr_slave_fd = pty.openpty()
+    # stdout_master_fd, stdout_slave_fd = pty.openpty()
+    # stderr_master_fd, stderr_slave_fd = pty.openpty()
+    stdout_master_fd = subprocess.PIPE
+    stderr_master_fd = subprocess.PIPE
 
     with subprocess.Popen(
         args=command,
-        stdout=stdout_slave_fd,
-        stderr=stderr_slave_fd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         stdin=subprocess.PIPE,
         env=env,
-        close_fds=False,
+        close_fds=True,
     ) as process:
-        os.close(fd=stdout_slave_fd)
-        os.close(fd=stderr_slave_fd)
+        # os.close(fd=stdout_slave_fd)
+        # os.close(fd=stderr_slave_fd)
 
         stdout_output_chunks: list[bytes] = []
         stderr_output_chunks: list[bytes] = []
+        assert process.stdout is not None
+        assert process.stderr is not None
 
         while True:
             chunk_size = 1024
             try:
-                stdout_chunk_bytes = os.read(stdout_master_fd, chunk_size)
+                stdout_chunk_bytes = process.stdout.read(chunk_size)
             except OSError as e:
                 print(f"OSError: {e.errno}, {e.strerror}")
                 raise
 
             try:
-                stderr_chunk_bytes = os.read(stderr_master_fd, chunk_size)
+                stderr_chunk_bytes = process.stderr.read(chunk_size)
             except OSError as e:
                 print(f"OSError: {e.errno}, {e.strerror}")
                 raise
@@ -72,9 +74,6 @@ def run_with_color_and_capture_separate(
                 and not stderr_chunk_bytes
             ):
                 break
-
-    os.close(fd=stdout_master_fd)
-    os.close(fd=stderr_master_fd)
 
     return_code = process.wait()
 
