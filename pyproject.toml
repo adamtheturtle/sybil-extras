@@ -316,6 +316,7 @@ exclude = [ "build" ]
 
 reportUnnecessaryTypeIgnoreComment = true
 typeCheckingMode = "strict"
+exclude = [ "build" ]
 
 [tool.interrogate]
 fail-under = 100
