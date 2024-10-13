@@ -2,6 +2,7 @@
 An evaluator for running shell commands on example files.
 """
 
+import contextlib
 import os
 import pty
 import subprocess
@@ -239,14 +240,18 @@ class ShellCommandEvaluator:
             newline=self._newline,
         )
 
+        temp_file_content = ""
         try:
             result = run_with_color_and_capture_separate(
                 command=[str(item) for item in [*self._args, temp_file]],
                 env=self._env,
             )
-            temp_file_content = temp_file.read_text(encoding="utf-8")
+
+            with contextlib.suppress(FileNotFoundError):
+                temp_file_content = temp_file.read_text(encoding="utf-8")
         finally:
-            temp_file.unlink()
+            with contextlib.suppress(FileNotFoundError):
+                temp_file.unlink()
 
         if self._write_to_file:
             existing_file_path = Path(example.path)

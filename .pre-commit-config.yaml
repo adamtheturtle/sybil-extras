@@ -84,7 +84,7 @@ repos:
 
       - id: shellcheck
         name: shellcheck
-        entry: uv run --extra=dev shellcheck --shell=bash --exclude=SC1017
+        entry: uv run --extra=dev shellcheck --shell=bash
         language: python
         types_or: [shell]
         additional_dependencies: [uv]
@@ -92,7 +92,7 @@ repos:
       - id: shellcheck-docs
         name: shellcheck-docs
         entry: uvx --python=3.13 doccmd --language=shell --language=console --command="shellcheck
-          --shell=bash --exclude=SC1017 --exclude=SC1017"
+          --shell=bash"
         language: python
         types_or: [markdown, rst]
         additional_dependencies: [uv]
@@ -114,7 +114,7 @@ repos:
       - id: mypy
         name: mypy
         stages: [pre-push]
-        entry: uv run --extra=dev -m mypy .
+        entry: uv run --extra=dev -m mypy
         language: python
         types_or: [python, toml]
         pass_filenames: false
@@ -130,7 +130,7 @@ repos:
       - id: check-manifest
         name: check-manifest
         stages: [pre-push]
-        entry: uv run --extra=dev -m check_manifest .
+        entry: uv run --extra=dev -m check_manifest
         language: python
         pass_filenames: false
 

@@ -39,8 +39,8 @@ dynamic = [
     "version",
 ]
 dependencies = [
-    "beartype",
-    "sybil",
+    "beartype>=0.19.0",
+    "sybil>=8.0.0",
 ]
 optional-dependencies.dev = [
     "actionlint-py==1.7.3.17",
@@ -311,6 +311,7 @@ exclude_also = [
 
 exclude = [ "build" ]
 strict = true
+files = [ "." ]
 
 [tool.pyright]
 
@@ -333,9 +334,6 @@ ignore_path = [
     "./src/*.egg-info/",
     "./src/*/_setuptools_scm_version.txt",
 ]
-
-# See https://github.com/PyCQA/doc8/issues/78
-ignore = [ "D004" ]
 
 [tool.vulture]
 # Ideally we would limit the paths to the source code where we want to ignore names,
