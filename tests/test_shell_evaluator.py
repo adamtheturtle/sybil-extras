@@ -460,7 +460,7 @@ def test_no_file_left_behind_on_interruption(
         text="""\
         import time
 
-        time.sleep(10)
+        time.sleep(2)
         """,
     )
 
