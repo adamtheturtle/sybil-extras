@@ -505,12 +505,10 @@ def test_no_file_left_behind_on_interruption(
     )
 
     # Sanity check the script by checking that it can run fine.
-    sanity_check_args = [sys.executable, str(evaluator_script)]
-    subprocess.run(args=sanity_check_args, check=True)
+    run_script_args = [sys.executable, str(evaluator_script)]
+    subprocess.run(args=run_script_args, check=True)
 
-    with subprocess.Popen(
-        args=[sys.executable, evaluator_script],
-    ) as evaluator_process:
+    with subprocess.Popen(args=run_script_args) as evaluator_process:
         time.sleep(0.1)
         os.kill(evaluator_process.pid, signal.SIGINT)
         evaluator_process.wait()
