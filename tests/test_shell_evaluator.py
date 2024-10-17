@@ -486,6 +486,7 @@ def test_no_file_left_behind_on_interruption(
             args=[sys.executable, Path("{sleep_python_script}")],
             pad_file=False,
             write_to_file=True,
+            use_pty=False,
         )
 
         parser = CodeBlockParser(language="python", evaluator=evaluator)
@@ -502,6 +503,10 @@ def test_no_file_left_behind_on_interruption(
         data=run_shell_command_evaluator_script_content,
         encoding="utf-8",
     )
+
+    # Sanity check the script by checking that it can run fine.
+    sanity_check_args = [sys.executable, str(evaluator_script)]
+    subprocess.run(args=sanity_check_args, check=True)
 
     with subprocess.Popen(
         args=[sys.executable, evaluator_script],
