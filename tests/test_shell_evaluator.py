@@ -460,7 +460,7 @@ def test_no_file_left_behind_on_interruption(
         text="""\
         import time
 
-        time.sleep(10)
+        time.sleep(2)
         """,
     )
 
@@ -473,7 +473,7 @@ def test_no_file_left_behind_on_interruption(
     run_shell_command_evaluator_script_content = textwrap.dedent(
         text=f"""\
         import sys
-        from pathlib import Path
+        from pathlib import PosixPath, Path
 
         from sybil import Sybil
         from sybil.parsers.rest.codeblock import CodeBlockParser
@@ -483,15 +483,16 @@ def test_no_file_left_behind_on_interruption(
         )
 
         evaluator = ShellCommandEvaluator(
-            args=[sys.executable, Path("{sleep_python_script}")],
+            args=[sys.executable, "{sleep_python_script.as_posix()}"],
             pad_file=False,
             write_to_file=True,
+            use_pty=False,
         )
 
         parser = CodeBlockParser(language="python", evaluator=evaluator)
         sybil = Sybil(parsers=[parser])
 
-        document = sybil.parse(path=Path("{rst_file}"))
+        document = sybil.parse(path=Path("{rst_file.as_posix()}"))
         (example,) = document.examples()
         example.evaluate()
         """,
@@ -503,9 +504,11 @@ def test_no_file_left_behind_on_interruption(
         encoding="utf-8",
     )
 
-    with subprocess.Popen(
-        args=[sys.executable, evaluator_script],
-    ) as evaluator_process:
+    # Sanity check the script by checking that it can run fine.
+    run_script_args = [sys.executable, str(evaluator_script)]
+    subprocess.run(args=run_script_args, check=True)
+
+    with subprocess.Popen(args=run_script_args) as evaluator_process:
         time.sleep(0.1)
         os.kill(evaluator_process.pid, signal.SIGINT)
         evaluator_process.wait()
