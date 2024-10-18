@@ -486,7 +486,6 @@ def test_no_file_left_behind_on_interruption(
             args=[sys.executable, Path("{sleep_python_script}")],
             pad_file=False,
             write_to_file=True,
-            use_pty=False,
         )
 
         parser = CodeBlockParser(language="python", evaluator=evaluator)
