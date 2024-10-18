@@ -473,7 +473,7 @@ def test_no_file_left_behind_on_interruption(
     run_shell_command_evaluator_script_content = textwrap.dedent(
         text=f"""\
         import sys
-        from pathlib import Path
+        from pathlib import PosixPath, Path
 
         from sybil import Sybil
         from sybil.parsers.rest.codeblock import CodeBlockParser
@@ -483,7 +483,7 @@ def test_no_file_left_behind_on_interruption(
         )
 
         evaluator = ShellCommandEvaluator(
-            args=[sys.executable, Path(r"{sleep_python_script}")],
+            args=[sys.executable, {sleep_python_script.as_posix()}],
             pad_file=False,
             write_to_file=True,
             use_pty=False,
@@ -492,7 +492,7 @@ def test_no_file_left_behind_on_interruption(
         parser = CodeBlockParser(language="python", evaluator=evaluator)
         sybil = Sybil(parsers=[parser])
 
-        document = sybil.parse(path=Path("{rst_file}"))
+        document = sybil.parse(path=Path("{rst_file.as_posix()}"))
         (example,) = document.examples()
         example.evaluate()
         """,
