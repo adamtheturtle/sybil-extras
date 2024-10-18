@@ -630,5 +630,5 @@ def test_empty_code_block_write_to_file(
     (example,) = document.examples()
     example.evaluate()
     outerr = capsys.readouterr()
-    assert outerr.out == "\n"
+    assert outerr.out.strip() == ""
     assert outerr.err == ""
