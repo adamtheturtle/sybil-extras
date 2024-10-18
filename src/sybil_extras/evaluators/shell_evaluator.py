@@ -149,7 +149,7 @@ def _get_indentation(example: Example) -> str:
     """
     Get the indentation of the parsed code in the example.
     """
-    first_line = str(example.parsed).split("\n", 1)[0]
+    first_line = str(example.parsed).split(sep="\n", maxsplit=1)[0]
     region_text = example.document.text[
         example.region.start : example.region.end
     ]
@@ -157,7 +157,14 @@ def _get_indentation(example: Example) -> str:
     region_lines_matching_first_line = [
         line for line in region_lines if line.lstrip() == first_line.lstrip()
     ]
-    first_region_line_matching_first_line = region_lines_matching_first_line[0]
+    try:
+        first_region_line_matching_first_line = (
+            region_lines_matching_first_line[0]
+        )
+    except IndexError:
+        # Empty code block
+        return ""
+
     left_padding_region_line = len(
         first_region_line_matching_first_line
     ) - len(first_region_line_matching_first_line.lstrip())

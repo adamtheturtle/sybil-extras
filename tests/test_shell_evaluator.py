@@ -598,3 +598,37 @@ def test_newline_given(
     includes_lf = b"\n" in content_bytes
     assert includes_crlf == expect_crlf
     assert includes_lf
+
+
+def test_empty_code_block_write_to_file(
+    rst_file: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """
+    No error is given with an empty code block.
+    """
+    content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+        After empty code block
+        """
+    )
+    rst_file.write_text(data=content, encoding="utf-8")
+    evaluator = ShellCommandEvaluator(
+        args=["cat"],
+        pad_file=False,
+        write_to_file=True,
+        use_pty=False,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    example.evaluate()
+    outerr = capsys.readouterr()
+    assert outerr.out.strip() == ""
+    assert outerr.err == ""
