@@ -48,7 +48,7 @@ optional-dependencies.dev = [
     "doc8==1.1.2",
     "docformatter==1.7.5",
     "interrogate==1.7.0",
-    "mypy==1.12.1",
+    "mypy[faster-cache]==1.13.0",
     "pre-commit==4.0.1",
     "pydocstyle==6.3",
     "pyenchant==3.3.0rc1",
