@@ -125,7 +125,7 @@ repos:
         stages: [pre-push]
         entry: uvx --python=3.13 doccmd --language=python --command="mypy"
         language: python
-        types_or: [markdown, rst, python, toml]
+        types_or: [markdown, rst]
 
       - id: check-manifest
         name: check-manifest
@@ -148,7 +148,7 @@ repos:
         stages: [pre-push]
         entry: uvx --python=3.13 doccmd --language=python --command="pyright"
         language: python
-        types_or: [markdown, rst, python, toml]
+        types_or: [markdown, rst]
 
       - id: vulture
         name: vulture
@@ -192,7 +192,7 @@ repos:
         entry: uvx --python=3.13 doccmd --language=python --command="pylint"
         language: python
         stages: [manual]
-        types_or: [markdown, rst, python, toml]
+        types_or: [markdown, rst]
 
       - id: ruff-check-fix
         name: Ruff check fix
