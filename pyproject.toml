@@ -48,7 +48,7 @@ optional-dependencies.dev = [
     "doc8==1.1.2",
     "docformatter==1.7.5",
     "interrogate==1.7.0",
-    "mypy[faster-cache]==1.13.0",
+    "mypy[faster-cache]==1.14.0",
     "pre-commit==4.0.1",
     "pydocstyle==6.3",
     "pyenchant==3.3.0rc1",
@@ -310,6 +310,7 @@ exclude_also = [
 strict = true
 files = [ "." ]
 exclude = [ "build" ]
+follow_untyped_imports = true
 
 [tool.pyright]
 
