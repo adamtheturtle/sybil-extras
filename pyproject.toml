@@ -113,6 +113,11 @@ lint.ignore = [
     "PLR0913",
 ]
 
+lint.per-file-ignores."doccmd_*.py" = [
+    # Allow 'assert' in docs.
+    "S101",
+]
+
 lint.per-file-ignores."tests/**/test_*.py" = [
     # Allow 'assert' as we use it for tests.
     "S101",
