@@ -221,6 +221,9 @@ class ShellCommandEvaluator:
             use_pty: Whether to use a pseudo-terminal for running commands.
                 This can be useful e.g. to get color output, but can also break
                 in some environments. Not supported on Windows.
+
+        Raises:
+            ValueError: If pseudo-terminal is requested on Windows.
         """
         self._args = args
         self._env = env
@@ -235,9 +238,11 @@ class ShellCommandEvaluator:
         """
         Run the shell command on the example file.
         """
-        assert not (
+        if (
             self._use_pty and platform.system() == "Windows"
-        ), "pty is not available"
+        ):  # pragma: no cover
+            msg = "Pseudo-terminal not supported on Windows."
+            raise ValueError(msg)
 
         if self._pad_file:
             source = pad(

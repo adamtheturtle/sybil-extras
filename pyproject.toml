@@ -111,10 +111,11 @@ lint.ignore = [
     # Ignore "too-many-*" errors as they seem to get in the way more than
     # helping.
     "PLR0913",
+]
+
+lint.per-file-ignores."tests/**/test_*.py" = [
     # Allow 'assert' as we use it for tests.
     "S101",
-    # Ignore this rule which might go away and is too strict.
-    "S603",
 ]
 
 # Do not automatically remove commented out code.
