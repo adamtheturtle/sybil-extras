@@ -323,6 +323,7 @@ plugins = [
 
 [tool.pyright]
 
+enableTypeIgnoreComments = false
 reportUnnecessaryTypeIgnoreComment = true
 typeCheckingMode = "strict"
 exclude = [ "build", ".venv" ]

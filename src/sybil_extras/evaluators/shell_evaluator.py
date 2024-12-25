@@ -337,7 +337,13 @@ class ShellCommandEvaluator:
             modified_content = existing_file_content.replace(
                 content_to_replace,
                 replacement,
-                count=1,
+                # In Python 3.13 it became possible to use
+                # ``count`` as a keyword argument.
+                #
+                # Because we use ``mypy-strict-kwargs``, this means
+                # that in Python 3.13 we must use ``count`` as a
+                # keyword argument, or we get a ``mypy`` error.
+                1,  # type: ignore[misc,unused-ignore]
             )
 
             if existing_file_content != modified_content:
