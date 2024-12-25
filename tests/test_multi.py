@@ -36,7 +36,9 @@ def _failing_evaluator(example: Example) -> None:
     """
     Evaluator that intentionally fails by raising an AssertionError.
     """
-    raise AssertionError("Failure in failing_evaluator: " + str(example))
+    raise AssertionError(
+        "Failure in failing_evaluator: " + str(object=example)
+    )
 
 
 @pytest.fixture(name="rst_file")
@@ -85,5 +87,8 @@ def test_multi_evaluator_raises_on_failure(rst_file: Path) -> None:
 
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
-    with pytest.raises(AssertionError, match="Failure in failing_evaluator"):
+    with pytest.raises(
+        expected_exception=AssertionError,
+        match="Failure in failing_evaluator",
+    ):
         example.evaluate()
