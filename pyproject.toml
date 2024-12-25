@@ -49,6 +49,7 @@ optional-dependencies.dev = [
     "docformatter==1.7.5",
     "interrogate==1.7.0",
     "mypy[faster-cache]==1.14.0",
+    "mypy-strict-kwargs==2024.12.25",
     "pre-commit==4.0.1",
     "pydocstyle==6.3",
     "pyenchant==3.3.0rc1",
@@ -316,9 +317,13 @@ strict = true
 files = [ "." ]
 exclude = [ "build" ]
 follow_untyped_imports = true
+plugins = [
+    "mypy_strict_kwargs",
+]
 
 [tool.pyright]
 
+enableTypeIgnoreComments = false
 reportUnnecessaryTypeIgnoreComment = true
 typeCheckingMode = "strict"
 exclude = [ "build", ".venv" ]

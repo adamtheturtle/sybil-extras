@@ -362,7 +362,7 @@ def test_write_to_file(
     example.evaluate()
     rst_file_content = rst_file.read_text(encoding="utf-8")
     modified_content = textwrap.dedent(
-        """\
+        text="""\
         Not in code block
 
         .. code-block:: python
@@ -434,7 +434,7 @@ def test_non_utf8_output(
     script.write_bytes(data=sh_function)
     script.chmod(mode=stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
     evaluator = ShellCommandEvaluator(
-        args=["sh", str(script)],
+        args=["sh", str(object=script)],
         pad_file=False,
         write_to_file=False,
         use_pty=False,
@@ -505,7 +505,7 @@ def test_no_file_left_behind_on_interruption(
     )
 
     # Sanity check the script by checking that it can run fine.
-    run_script_args = [sys.executable, str(evaluator_script)]
+    run_script_args = [sys.executable, str(object=evaluator_script)]
     subprocess.run(args=run_script_args, check=True)
 
     with subprocess.Popen(args=run_script_args) as evaluator_process:
@@ -513,7 +513,7 @@ def test_no_file_left_behind_on_interruption(
         os.kill(evaluator_process.pid, signal.SIGINT)
         evaluator_process.wait()
 
-    assert set(rst_file.parent.glob("**/*")) == {
+    assert set(rst_file.parent.glob(pattern="**/*")) == {
         rst_file,
         evaluator_script,
         sleep_python_script,

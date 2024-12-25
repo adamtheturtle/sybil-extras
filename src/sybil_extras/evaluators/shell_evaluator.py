@@ -149,7 +149,7 @@ def _get_indentation(example: Example) -> str:
     """
     Get the indentation of the parsed code in the example.
     """
-    first_line = str(example.parsed).split(sep="\n", maxsplit=1)[0]
+    first_line = str(object=example.parsed).split(sep="\n", maxsplit=1)[0]
     region_text = example.document.text[
         example.region.start : example.region.end
     ]
@@ -276,7 +276,7 @@ class ShellCommandEvaluator:
         # newline to the end of the file if it is missing.
         new_source = source + "\n" if not source.endswith("\n") else source
         temp_file.write_text(
-            new_source,
+            data=new_source,
             encoding="utf-8",
             newline=self._newline,
         )
@@ -284,7 +284,9 @@ class ShellCommandEvaluator:
         temp_file_content = ""
         try:
             result = _run_with_color_and_capture_separate(
-                command=[str(item) for item in [*self._args, temp_file]],
+                command=[
+                    str(object=item) for item in [*self._args, temp_file]
+                ],
                 env=self._env,
                 use_pty=self._use_pty,
             )
@@ -335,7 +337,17 @@ class ShellCommandEvaluator:
             modified_content = existing_file_content.replace(
                 content_to_replace,
                 replacement,
-                1,
+                # In Python 3.13 it became possible to use
+                # ``count`` as a keyword argument.
+                #
+                # Because we use ``mypy-strict-kwargs``, this means
+                # that in Python 3.13 we must use ``count`` as a
+                # keyword argument, or we get a ``mypy`` error.
+                #
+                # However, we also want to support Python <3.13, so we
+                # use a positional argument for ``count`` and we ignore
+                # the error.
+                1,  # type: ignore[misc,unused-ignore]
             )
 
             if existing_file_content != modified_content:
