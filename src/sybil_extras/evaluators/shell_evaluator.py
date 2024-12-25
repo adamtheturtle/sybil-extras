@@ -343,6 +343,10 @@ class ShellCommandEvaluator:
                 # Because we use ``mypy-strict-kwargs``, this means
                 # that in Python 3.13 we must use ``count`` as a
                 # keyword argument, or we get a ``mypy`` error.
+                #
+                # However, we also want to support Python <3.13, so we
+                # use a positional argument for ``count`` and we ignore
+                # the error.
                 1,  # type: ignore[misc,unused-ignore]
             )
 
