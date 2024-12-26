@@ -18,6 +18,7 @@ ci:
     - mypy-docs
     - pylint
     - pylint-docs
+    - pylint-verifytypes
     - pyproject-fmt-fix
     - pyright
     - pyright-docs
@@ -193,6 +194,15 @@ repos:
         language: python
         stages: [manual]
         types_or: [markdown, rst]
+
+      - id: pyright-verifytypes
+        name: pyright-verifytypes
+        stages: [pre-push]
+        entry: uv run --extra=dev -m pyright --verifytypes sybil_extras
+        language: python
+        pass_filenames: false
+        types_or: [python]
+        additional_dependencies: [uv==0.4.25]
 
       - id: ruff-check-fix
         name: Ruff check fix
