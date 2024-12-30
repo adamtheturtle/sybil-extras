@@ -67,7 +67,7 @@ optional-dependencies.dev = [
     "shellcheck-py==0.10.0.1",
     "shfmt-py==3.7.0.1",
     "sybil==9.0.0",
-    "uv==0.5.12",
+    "uv==0.5.13",
     "vulture==2.14",
     "yamlfix==1.17.0",
 ]
