@@ -3,6 +3,7 @@ fail_fast: true
 
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
+default_install_hook_types: [pre-commit, pre-push, commit-msg]
 
 ci:
   # We use system Python, with required dependencies specified in pyproject.toml.
@@ -12,6 +13,7 @@ ci:
     - check-manifest
     - deptry
     - doc8
+    - docformatter
     - interrogate
     - interrogate-docs
     - mypy
@@ -27,16 +29,14 @@ ci:
     - ruff-check-fix-docs
     - ruff-format-fix
     - ruff-format-fix-docs
-    - docformatter
     - shellcheck
     - shellcheck-docs
     - shfmt
     - shfmt-docs
+    - sphinx-lint
     - vulture
     - vulture-docs
     - yamlfix
-
-default_install_hook_types: [pre-commit, pre-push, commit-msg]
 
 repos:
   - repo: meta
@@ -74,21 +74,21 @@ repos:
         language: python
         pass_filenames: false
         types_or: [yaml]
-        additional_dependencies: [uv==0.4.25]
+        additional_dependencies: [uv==0.5.14]
 
       - id: docformatter
         name: docformatter
         entry: uv run --extra=dev -m docformatter --in-place
         language: python
         types_or: [python]
-        additional_dependencies: [uv==0.4.25]
+        additional_dependencies: [uv==0.5.14]
 
       - id: shellcheck
         name: shellcheck
         entry: uv run --extra=dev shellcheck --shell=bash
         language: python
         types_or: [shell]
-        additional_dependencies: [uv==0.4.25]
+        additional_dependencies: [uv==0.5.14]
 
       - id: shellcheck-docs
         name: shellcheck-docs
@@ -96,14 +96,14 @@ repos:
           --shell=bash"
         language: python
         types_or: [markdown, rst]
-        additional_dependencies: [uv==0.4.25]
+        additional_dependencies: [uv==0.5.14]
 
       - id: shfmt
         name: shfmt
         entry: uv run --extra=dev shfmt --write --space-redirects --indent=4
         language: python
         types_or: [shell]
-        additional_dependencies: [uv==0.4.25]
+        additional_dependencies: [uv==0.5.14]
 
       - id: shfmt-docs
         name: shfmt-docs
@@ -119,7 +119,7 @@ repos:
         language: python
         types_or: [python, toml]
         pass_filenames: false
-        additional_dependencies: [uv==0.4.25]
+        additional_dependencies: [uv==0.5.14]
 
       - id: mypy-docs
         name: mypy-docs
@@ -142,7 +142,7 @@ repos:
         language: python
         types_or: [python, toml]
         pass_filenames: false
-        additional_dependencies: [uv==0.4.25]
+        additional_dependencies: [uv==0.5.14]
 
       - id: pyright-docs
         name: pyright-docs
@@ -157,7 +157,7 @@ repos:
         language: python
         types_or: [python]
         pass_filenames: false
-        additional_dependencies: [uv==0.4.25]
+        additional_dependencies: [uv==0.5.14]
 
       - id: vulture-docs
         name: vulture docs
@@ -171,14 +171,14 @@ repos:
         language: python
         pass_filenames: false
         types_or: [toml]
-        additional_dependencies: [uv==0.4.25]
+        additional_dependencies: [uv==0.5.14]
 
       - id: deptry
         name: deptry
         entry: uv run --extra=dev -m deptry src/
         language: python
         pass_filenames: false
-        additional_dependencies: [uv==0.4.25]
+        additional_dependencies: [uv==0.5.14]
 
       - id: pylint
         name: pylint
@@ -186,7 +186,7 @@ repos:
         language: python
         stages: [manual]
         pass_filenames: false
-        additional_dependencies: [uv==0.4.25]
+        additional_dependencies: [uv==0.5.14]
 
       - id: pylint-docs
         name: pylint-docs
@@ -202,14 +202,14 @@ repos:
         language: python
         pass_filenames: false
         types_or: [python]
-        additional_dependencies: [uv==0.4.25]
+        additional_dependencies: [uv==0.5.14]
 
       - id: ruff-check-fix
         name: Ruff check fix
         entry: uv run --extra=dev -m ruff check --fix
         language: python
         types_or: [python]
-        additional_dependencies: [uv==0.4.25]
+        additional_dependencies: [uv==0.5.14]
 
       - id: ruff-check-fix-docs
         name: Ruff check fix docs
@@ -222,7 +222,7 @@ repos:
         entry: uv run --extra=dev -m ruff format
         language: python
         types_or: [python]
-        additional_dependencies: [uv==0.4.25]
+        additional_dependencies: [uv==0.5.14]
 
       - id: ruff-format-fix-docs
         name: Ruff format docs
@@ -242,7 +242,7 @@ repos:
         entry: uv run --extra=dev -m interrogate
         language: python
         types_or: [python]
-        additional_dependencies: [uv==0.4.25]
+        additional_dependencies: [uv==0.5.14]
 
       - id: interrogate-docs
         name: interrogate docs
@@ -256,11 +256,19 @@ repos:
         language: python
         types_or: [toml]
         files: pyproject.toml
-        additional_dependencies: [uv==0.4.25]
+        additional_dependencies: [uv==0.5.14]
 
       - id: yamlfix
         name: yamlfix
         entry: uv run --extra=dev yamlfix
         language: python
         types_or: [yaml]
-        additional_dependencies: [uv==0.4.25]
+        additional_dependencies: [uv==0.5.14]
+
+      - id: sphinx-lint
+        name: sphinx-lint
+        entry: uv run --extra=dev sphinx-lint --enable=all --disable=line-too-long
+          *.rst
+        language: python
+        types_or: [rst]
+        additional_dependencies: [uv==0.5.14]
