@@ -18,10 +18,10 @@ ci:
     - mypy-docs
     - pylint
     - pylint-docs
-    - pylint-verifytypes
     - pyproject-fmt-fix
     - pyright
     - pyright-docs
+    - pyright-verifytypes
     - pyroma
     - ruff-check-fix
     - ruff-check-fix-docs
