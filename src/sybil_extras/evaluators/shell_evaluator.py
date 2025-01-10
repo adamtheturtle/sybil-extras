@@ -65,7 +65,13 @@ def _run_with_color_and_capture_separate(
             os.close(fd=stdout_master_fd)
 
         else:
-            while True:
+            while any(
+                [
+                    process.poll() is None,
+                    stdout_chunk := b"",
+                    stderr_chunk := b"",
+                ],
+            ):
                 stdout_chunk = (
                     process.stdout.read(chunk_size) if process.stdout else b""
                 )
@@ -82,13 +88,6 @@ def _run_with_color_and_capture_separate(
                     sys.stderr.buffer.write(stderr_chunk)
                     sys.stderr.buffer.flush()
                     stderr_output_chunks.append(stderr_chunk)
-
-                if (
-                    not stdout_chunk
-                    and not stderr_chunk
-                    and process.poll() is not None
-                ):
-                    break
 
         return_code = process.wait()
 
