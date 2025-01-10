@@ -54,7 +54,7 @@ def _run_with_color_and_capture_separate(
         stdout_output_chunks: list[bytes] = []
         stderr_output_chunks: list[bytes] = []
 
-        if use_pty:
+        if use_pty:  # pragma: no cover
             os.close(fd=slave_fd)
 
             while chunk := os.read(stdout_master_fd, chunk_size):
