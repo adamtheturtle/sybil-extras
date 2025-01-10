@@ -58,10 +58,11 @@ def _run_with_color_and_capture_separate(
         if use_pty:  # pragma: no cover
             os.close(fd=slave_fd)
 
-            while chunk := os.read(stdout_master_fd, chunk_size):
-                sys.stdout.buffer.write(chunk)
-                sys.stdout.buffer.flush()
-                stdout_output_chunks.append(chunk)
+            with contextlib.suppress(OSError):
+                while chunk := os.read(stdout_master_fd, chunk_size):
+                    sys.stdout.buffer.write(chunk)
+                    sys.stdout.buffer.flush()
+                    stdout_output_chunks.append(chunk)
 
             os.close(fd=stdout_master_fd)
 
