@@ -716,7 +716,7 @@ def test_bad_command_error(*, rst_file: Path, use_pty_option: bool) -> None:
     # the platform.
     error_substring = b"option"
 
-    if use_pty_option:
+    if use_pty_option:  # pragma: no cover
         assert exc.value.stderr == b""
         assert error_substring in exc.value.stdout
     else:
