@@ -635,8 +635,9 @@ def test_empty_code_block_write_to_file(
 
 
 def test_pty(rst_file: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    """
-    PTY is used if requested.
+    """There is no error if setting ``use_pty=True``.
+
+    In future we may have real tests that this uses a pseudo-terminal.
     """
     evaluator = ShellCommandEvaluator(
         args=["echo", "Hello, PTY!"],
