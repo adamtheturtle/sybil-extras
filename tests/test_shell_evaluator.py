@@ -712,4 +712,4 @@ def test_bad_command_error(*, rst_file: Path, use_pty_option: bool) -> None:
     # The last element is the path to the temporary file.
     assert exc.value.cmd[:-1] == args
 
-    assert "unknownoption" in exc.value.stderr
+    assert b"unknownoption" in exc.value.stderr
