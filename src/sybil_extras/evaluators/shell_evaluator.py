@@ -34,7 +34,8 @@ def _run_with_color_and_capture_separate(
     slave_fd = -1
 
     if use_pty:  # pragma: no cover
-        stdout_master_fd, slave_fd = os.openpty()
+        with contextlib.suppress(AttributeError):
+            stdout_master_fd, slave_fd = os.openpty()
         stdout = slave_fd
         stderr = slave_fd
     else:
