@@ -113,7 +113,7 @@ def test_output_shown(
     outerr = capsys.readouterr()
     expected_output = "Hello, Sybil!\n"
     expected_stderr = "Hello Stderr!\n"
-    if use_pty_option:
+    if use_pty_option:  # pragma: no cover
         expected_output = expected_output.replace("\n", "\r\n")
         expected_stderr = expected_stderr.replace("\n", "\r\n")
 
@@ -489,7 +489,7 @@ def test_non_utf8_output(
     example.evaluate()
     output = capsysbinary.readouterr().out
     expected_output = b"\xc0\x80\n"
-    if use_pty_option:
+    if use_pty_option:  # pragma: no cover
         expected_output = expected_output.replace(b"\n", b"\r\n")
     assert output == expected_output
 
