@@ -25,86 +25,104 @@ def _run_with_color_and_capture_separate(
     use_pty: bool,
 ) -> subprocess.CompletedProcess[bytes]:
     """Run a command in a pseudo-terminal to preserve color, capture both
-    stdout and stderr separately, and provide live output.
+    stdout and stderr together, and provide live output.
 
     When ``use_pty`` is ``True``, newlines are translated to CRLF in order to
     move the cursor.
     """
     stdout_master_fd = -1
-    stderr_master_fd = -1
-    stdout_slave_fd = -1
-    stderr_slave_fd = -1
+    slave_fd = -1
 
-    with contextlib.suppress(AttributeError):
-        stdout_master_fd, stdout_slave_fd = (
-            os.openpty() if use_pty else (-1, -1)
-        )
-    with contextlib.suppress(AttributeError):
-        stderr_master_fd, stderr_slave_fd = (
-            os.openpty() if use_pty else (-1, -1)
-        )
+    try:
+        if use_pty:
+            # Open a single pty for both stdout and stderr
+            stdout_master_fd, slave_fd = os.openpty()
+            stdout = slave_fd
+            stderr = slave_fd
+        else:
+            stdout = subprocess.PIPE
+            stderr = subprocess.PIPE
 
-    stdout = subprocess.PIPE if stdout_slave_fd == -1 else stdout_slave_fd
-    stderr = subprocess.PIPE if stderr_slave_fd == -1 else stderr_slave_fd
+        with subprocess.Popen(
+            args=command,
+            stdout=stdout,
+            stderr=stderr,
+            stdin=subprocess.PIPE,
+            env=env,
+            close_fds=True,
+        ) as process:
+            if use_pty:
+                os.close(fd=slave_fd)
 
-    with subprocess.Popen(
-        args=command,
-        stdout=stdout,
-        stderr=stderr,
-        stdin=subprocess.PIPE,
-        env=env,
-        close_fds=True,
-    ) as process:
-        if use_pty:  # pragma: no cover
-            os.close(fd=stdout_slave_fd)
-            os.close(fd=stderr_slave_fd)
+            stdout_output_chunks: list[bytes] = []
+            stderr_output_chunks: list[bytes] = []
 
-        stdout_output_chunks: list[bytes] = []
-        stderr_output_chunks: list[bytes] = []
+            while True:
+                if use_pty:
+                    try:
+                        # Read from the master fd
+                        chunk = os.read(stdout_master_fd, 1024)
+                        if not chunk:
+                            break
+                        # Write to stdout buffer for live display
+                        sys.stdout.buffer.write(chunk)
+                        sys.stdout.buffer.flush()
+                        # Append to stdout output
+                        stdout_output_chunks.append(chunk)
+                    except OSError:
+                        break
+                else:
+                    # Read from stdout and stderr separately
+                    stdout_chunk = (
+                        process.stdout.read(1024) if process.stdout else b""
+                    )
+                    stderr_chunk = (
+                        process.stderr.read(1024) if process.stderr else b""
+                    )
 
-        stdout_master_fd = (
-            stdout_master_fd
-            if process.stdout is None
-            else process.stdout.fileno()
-        )
-        stderr_master_fd = (
-            stderr_master_fd
-            if process.stderr is None
-            else process.stderr.fileno()
-        )
+                    if stdout_chunk:
+                        sys.stdout.buffer.write(stdout_chunk)
+                        sys.stdout.buffer.flush()
+                        stdout_output_chunks.append(stdout_chunk)
 
-        while any(
-            [
-                process.poll() is None,
-                stdout_chunk_bytes := b"",
-                stderr_chunk_bytes := b"",
-            ],
-        ):
-            chunk_size = 1024
+                    if stderr_chunk:
+                        sys.stderr.buffer.write(stderr_chunk)
+                        sys.stderr.buffer.flush()
+                        stderr_output_chunks.append(stderr_chunk)
 
-            stdout_chunk_bytes = os.read(stdout_master_fd, chunk_size)
-            stderr_chunk_bytes = os.read(stderr_master_fd, chunk_size)
+                    # Exit loop if process has terminated and no more output
+                    if (
+                        not stdout_chunk
+                        and not stderr_chunk
+                        and process.poll() is not None
+                    ):
+                        break
 
-            sys.stdout.buffer.write(stdout_chunk_bytes)
-            stdout_output_chunks.append(stdout_chunk_bytes)
-            sys.stderr.buffer.write(stderr_chunk_bytes)
-            stderr_output_chunks.append(stderr_chunk_bytes)
+            if use_pty:
+                os.close(fd=stdout_master_fd)
 
-    if use_pty:  # pragma: no cover
-        os.close(fd=stdout_master_fd)
-        os.close(fd=stderr_master_fd)
+            return_code = process.wait()
 
-    return_code = process.wait()
+            stdout_output = b"".join(stdout_output_chunks)
+            stderr_output = (
+                b"".join(stderr_output_chunks) if not use_pty else b""
+            )
 
-    stdout_output = b"".join(stdout_output_chunks)
-    stderr_output = b"".join(stderr_output_chunks)
+            return subprocess.CompletedProcess(
+                args=command,
+                returncode=return_code,
+                stdout=stdout_output,
+                stderr=stderr_output,
+            )
 
-    return subprocess.CompletedProcess[bytes](
-        args=command,
-        returncode=return_code,
-        stdout=stdout_output,
-        stderr=stderr_output,
-    )
+    finally:
+        # Ensure all file descriptors are closed
+        if slave_fd != -1:
+            with contextlib.suppress(OSError):
+                os.close(slave_fd)
+        if stdout_master_fd != -1:
+            with contextlib.suppress(OSError):
+                os.close(stdout_master_fd)
 
 
 @beartype

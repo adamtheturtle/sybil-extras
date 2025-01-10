@@ -114,8 +114,8 @@ def test_output_shown(
     expected_output = "Hello, Sybil!\n"
     expected_stderr = "Hello Stderr!\n"
     if use_pty_option:  # pragma: no cover
-        expected_output = expected_output.replace("\n", "\r\n")
-        expected_stderr = expected_stderr.replace("\n", "\r\n")
+        expected_output = "Hello, Sybil!\r\nHello Stderr!\r\n"
+        expected_stderr = ""
 
     assert outerr.out == expected_output
     assert outerr.err == expected_stderr
@@ -714,4 +714,11 @@ def test_bad_command_error(*, rst_file: Path, use_pty_option: bool) -> None:
 
     # We can't be more specific about the error message because it depends on
     # the platform.
-    assert b"option" in exc.value.stderr
+    error_substring = b"option"
+
+    if use_pty_option:
+        assert exc.value.stderr == b""
+        assert error_substring in exc.value.stdout
+    else:
+        assert error_substring in exc.value.stderr
+        assert exc.value.stdout == b""
