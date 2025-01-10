@@ -18,6 +18,20 @@ from sybil.parsers.rest.codeblock import CodeBlockParser
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 
 
+@pytest.fixture(
+    name="use_pty_option",
+    # On CI we cannot use the pseudo-terminal.
+    params=[True, False] if sys.stdout.isatty() else [False],
+)
+def fixture_use_pty_option(
+    request: pytest.FixtureRequest,
+) -> bool:
+    """
+    Test with and without the pseudo-terminal.
+    """
+    return bool(request.param)
+
+
 @pytest.fixture(name="rst_file")
 def fixture_rst_file(tmp_path: Path) -> Path:
     """
@@ -44,7 +58,7 @@ def fixture_rst_file(tmp_path: Path) -> Path:
     return test_document
 
 
-def test_error(rst_file: Path) -> None:
+def test_error(*, rst_file: Path, use_pty_option: bool) -> None:
     """
     A ``subprocess.CalledProcessError`` is raised if the command fails.
     """
@@ -53,7 +67,7 @@ def test_error(rst_file: Path) -> None:
         args=args,
         pad_file=False,
         write_to_file=False,
-        use_pty=False,
+        use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -72,8 +86,10 @@ def test_error(rst_file: Path) -> None:
 
 
 def test_output_shown(
+    *,
     rst_file: Path,
     capsys: pytest.CaptureFixture[str],
+    use_pty_option: bool,
 ) -> None:
     """
     Output is shown.
@@ -86,7 +102,7 @@ def test_output_shown(
         ],
         pad_file=False,
         write_to_file=False,
-        use_pty=False,
+        use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -95,13 +111,21 @@ def test_output_shown(
     (example,) = document.examples()
     example.evaluate()
     outerr = capsys.readouterr()
-    assert outerr.out == "Hello, Sybil!\n"
-    assert outerr.err == "Hello Stderr!\n"
+    expected_output = "Hello, Sybil!\n"
+    expected_stderr = "Hello Stderr!\n"
+    if use_pty_option:  # pragma: no cover
+        expected_output = expected_output.replace("\n", "\r\n")
+        expected_stderr = expected_stderr.replace("\n", "\r\n")
+
+    assert outerr.out == expected_output
+    assert outerr.err == expected_stderr
 
 
 def test_rm(
+    *,
     rst_file: Path,
     capsys: pytest.CaptureFixture[str],
+    use_pty_option: bool,
 ) -> None:
     """
     Output is shown.
@@ -110,7 +134,7 @@ def test_rm(
         args=["rm"],
         pad_file=False,
         write_to_file=False,
-        use_pty=False,
+        use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -124,8 +148,10 @@ def test_rm(
 
 
 def test_pass_env(
+    *,
     rst_file: Path,
     tmp_path: Path,
+    use_pty_option: bool,
 ) -> None:
     """
     It is possible to pass environment variables to the command.
@@ -140,7 +166,7 @@ def test_pass_env(
         env={"ENV_KEY": "ENV_VALUE"},
         pad_file=False,
         write_to_file=False,
-        use_pty=False,
+        use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -153,8 +179,10 @@ def test_pass_env(
 
 
 def test_global_env(
+    *,
     rst_file: Path,
     tmp_path: Path,
+    use_pty_option: bool,
 ) -> None:
     """
     Global environment variables are sent to the command by default.
@@ -170,7 +198,7 @@ def test_global_env(
         ],
         pad_file=False,
         write_to_file=False,
-        use_pty=False,
+        use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -184,8 +212,10 @@ def test_global_env(
 
 
 def test_file_is_passed(
+    *,
     rst_file: Path,
     tmp_path: Path,
+    use_pty_option: bool,
 ) -> None:
     """A file with the code block content is passed to the command.
 
@@ -200,7 +230,7 @@ def test_file_is_passed(
         args=["sh", "-c", sh_function, "_", file_path],
         pad_file=False,
         write_to_file=False,
-        use_pty=False,
+        use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -212,7 +242,12 @@ def test_file_is_passed(
     assert file_path.read_text(encoding="utf-8") == expected_content
 
 
-def test_file_path(rst_file: Path, capsys: pytest.CaptureFixture[str]) -> None:
+def test_file_path(
+    *,
+    rst_file: Path,
+    capsys: pytest.CaptureFixture[str],
+    use_pty_option: bool,
+) -> None:
     """
     The given file path is random and absolute, and starts with a name
     resembling the documentation file name, but without any hyphens or periods,
@@ -222,7 +257,7 @@ def test_file_path(rst_file: Path, capsys: pytest.CaptureFixture[str]) -> None:
         args=["echo"],
         pad_file=False,
         write_to_file=False,
-        use_pty=False,
+        use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -243,8 +278,10 @@ def test_file_path(rst_file: Path, capsys: pytest.CaptureFixture[str]) -> None:
 
 
 def test_file_suffix(
+    *,
     rst_file: Path,
     capsys: pytest.CaptureFixture[str],
+    use_pty_option: bool,
 ) -> None:
     """
     The given file suffixes are used.
@@ -255,7 +292,7 @@ def test_file_suffix(
         pad_file=False,
         write_to_file=False,
         tempfile_suffixes=suffixes,
-        use_pty=False,
+        use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -270,8 +307,10 @@ def test_file_suffix(
 
 
 def test_file_prefix(
+    *,
     rst_file: Path,
     capsys: pytest.CaptureFixture[str],
+    use_pty_option: bool,
 ) -> None:
     """
     The given file prefixes are used.
@@ -282,7 +321,7 @@ def test_file_prefix(
         pad_file=False,
         write_to_file=False,
         tempfile_name_prefix=prefix,
-        use_pty=False,
+        use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -295,7 +334,7 @@ def test_file_prefix(
     assert given_file_path.name.startswith("custom_prefix_")
 
 
-def test_pad(rst_file: Path, tmp_path: Path) -> None:
+def test_pad(*, rst_file: Path, tmp_path: Path, use_pty_option: bool) -> None:
     """If pad is True, the file content is padded.
 
     This test relies heavily on the exact formatting of the
@@ -310,7 +349,7 @@ def test_pad(rst_file: Path, tmp_path: Path) -> None:
         args=["sh", "-c", sh_function, "_", file_path],
         pad_file=True,
         write_to_file=False,
-        use_pty=False,
+        use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -338,6 +377,7 @@ def test_write_to_file(
     rst_file: Path,
     *,
     write_to_file: bool,
+    use_pty_option: bool,
 ) -> None:
     """
     Changes are written to the original file iff `write_to_file` is True.
@@ -352,7 +392,7 @@ def test_write_to_file(
         args=["cp", file_with_new_content],
         pad_file=False,
         write_to_file=write_to_file,
-        use_pty=False,
+        use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -376,7 +416,7 @@ def test_write_to_file(
         assert rst_file_content == original_content
 
 
-def test_pad_and_write(rst_file: Path) -> None:
+def test_pad_and_write(*, rst_file: Path, use_pty_option: bool) -> None:
     """
     Changes are written to the original file without the added padding.
     """
@@ -386,7 +426,7 @@ def test_pad_and_write(rst_file: Path) -> None:
         args=["true"],
         pad_file=True,
         write_to_file=True,
-        use_pty=False,
+        use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -398,7 +438,7 @@ def test_pad_and_write(rst_file: Path) -> None:
     assert rst_file_content == original_content
 
 
-def test_no_changes_mtime(rst_file: Path) -> None:
+def test_no_changes_mtime(*, rst_file: Path, use_pty_option: bool) -> None:
     """
     The modification time of the file is not changed if no changes are made.
     """
@@ -407,7 +447,7 @@ def test_no_changes_mtime(rst_file: Path) -> None:
         args=["true"],
         pad_file=True,
         write_to_file=True,
-        use_pty=False,
+        use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -420,9 +460,11 @@ def test_no_changes_mtime(rst_file: Path) -> None:
 
 
 def test_non_utf8_output(
+    *,
     rst_file: Path,
     capsysbinary: pytest.CaptureFixture[bytes],
     tmp_path: Path,
+    use_pty_option: bool,
 ) -> None:
     """
     Non-UTF-8 output is handled.
@@ -437,7 +479,7 @@ def test_non_utf8_output(
         args=["sh", str(object=script)],
         pad_file=False,
         write_to_file=False,
-        use_pty=False,
+        use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -446,7 +488,10 @@ def test_non_utf8_output(
     (example,) = document.examples()
     example.evaluate()
     output = capsysbinary.readouterr().out
-    assert output == b"\xc0\x80\n"
+    expected_output = b"\xc0\x80\n"
+    if use_pty_option:  # pragma: no cover
+        expected_output = expected_output.replace(b"\n", b"\r\n")
+    assert output == expected_output
 
 
 def test_no_file_left_behind_on_interruption(
@@ -522,9 +567,11 @@ def test_no_file_left_behind_on_interruption(
 
 @pytest.mark.parametrize(argnames="source_newline", argvalues=["\n", "\r\n"])
 def test_newline_system(
+    *,
     rst_file: Path,
     tmp_path: Path,
     source_newline: str,
+    use_pty_option: bool,
 ) -> None:
     """
     The system line endings are used by default.
@@ -540,7 +587,7 @@ def test_newline_system(
         args=["sh", "-c", sh_function, "_", file_path],
         pad_file=False,
         write_to_file=False,
-        use_pty=False,
+        use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -569,6 +616,7 @@ def test_newline_given(
     source_newline: str,
     given_newline: str,
     expect_crlf: bool,
+    use_pty_option: bool,
 ) -> None:
     """
     The given line ending option is used.
@@ -585,7 +633,7 @@ def test_newline_given(
         pad_file=False,
         write_to_file=False,
         newline=given_newline,
-        use_pty=False,
+        use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
@@ -601,8 +649,10 @@ def test_newline_given(
 
 
 def test_empty_code_block_write_to_file(
+    *,
     rst_file: Path,
     capsys: pytest.CaptureFixture[str],
+    use_pty_option: bool,
 ) -> None:
     """
     No error is given with an empty code block.
@@ -621,7 +671,7 @@ def test_empty_code_block_write_to_file(
         args=["cat"],
         pad_file=False,
         write_to_file=True,
-        use_pty=False,
+        use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
