@@ -682,3 +682,34 @@ def test_empty_code_block_write_to_file(
     outerr = capsys.readouterr()
     assert outerr.out.strip() == ""
     assert outerr.err == ""
+
+
+def test_bad_command_error(*, rst_file: Path, use_pty_option: bool) -> None:
+    """A ``subprocess.CalledProcessError`` is raised if the command is invalid.
+
+    This includes the command output.
+    """
+    args = ["sh", "--unknownoption"]
+    evaluator = ShellCommandEvaluator(
+        args=args,
+        pad_file=False,
+        write_to_file=False,
+        use_pty=use_pty_option,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+
+    with pytest.raises(
+        expected_exception=subprocess.CalledProcessError
+    ) as exc:
+        example.evaluate()
+
+    expected_returncode = 2
+    assert exc.value.returncode == expected_returncode
+    # The last element is the path to the temporary file.
+    assert exc.value.cmd[:-1] == args
+
+    assert exc.value.stderr
