@@ -42,6 +42,8 @@ def _run_with_color_and_capture_separate(
         stdout = subprocess.PIPE
         stderr = subprocess.PIPE
 
+    chunk_size = 1024
+
     with subprocess.Popen(
         args=command,
         stdout=stdout,
@@ -58,19 +60,18 @@ def _run_with_color_and_capture_separate(
 
         while True:
             if use_pty:
-                chunk = os.read(stdout_master_fd, 1024)
+                chunk = os.read(stdout_master_fd, chunk_size)
                 if not chunk:
                     break
                 sys.stdout.buffer.write(chunk)
                 sys.stdout.buffer.flush()
                 stdout_output_chunks.append(chunk)
             else:
-                # Read from stdout and stderr separately
                 stdout_chunk = (
-                    process.stdout.read(1024) if process.stdout else b""
+                    process.stdout.read(chunk_size) if process.stdout else b""
                 )
                 stderr_chunk = (
-                    process.stderr.read(1024) if process.stderr else b""
+                    process.stderr.read(chunk_size) if process.stderr else b""
                 )
 
                 if stdout_chunk:
