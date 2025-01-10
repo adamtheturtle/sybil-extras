@@ -51,21 +51,19 @@ def _run_with_color_and_capture_separate(
         env=env,
         close_fds=True,
     ) as process:
-        if use_pty:
-            os.close(fd=slave_fd)
-
         stdout_output_chunks: list[bytes] = []
         stderr_output_chunks: list[bytes] = []
 
-        while True:
-            if use_pty:
-                chunk = os.read(stdout_master_fd, chunk_size)
-                if not chunk:
-                    break
+        if use_pty:
+            os.close(fd=slave_fd)
+
+            while chunk := os.read(stdout_master_fd, chunk_size):
                 sys.stdout.buffer.write(chunk)
                 sys.stdout.buffer.flush()
                 stdout_output_chunks.append(chunk)
-            else:
+
+        else:
+            while True:
                 stdout_chunk = (
                     process.stdout.read(chunk_size) if process.stdout else b""
                 )
