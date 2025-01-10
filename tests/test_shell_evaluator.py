@@ -107,8 +107,14 @@ def test_output_shown(
     (example,) = document.examples()
     example.evaluate()
     outerr = capsys.readouterr()
-    assert outerr.out == "Hello, Sybil!\n"
-    assert outerr.err == "Hello Stderr!\n"
+    expected_output = "Hello, Sybil!\n"
+    expected_stderr = "Hello Stderr!\n"
+    if use_pty_option:
+        expected_output = expected_output.replace("\n", "\r\n")
+        expected_stderr = expected_stderr.replace("\n", "\r\n")
+
+    assert outerr.out == expected_output
+    assert outerr.err == expected_stderr
 
 
 def test_rm(
@@ -478,7 +484,10 @@ def test_non_utf8_output(
     (example,) = document.examples()
     example.evaluate()
     output = capsysbinary.readouterr().out
-    assert output == b"\xc0\x80\n"
+    expected_output = b"\xc0\x80\n"
+    if use_pty_option:
+        expected_output = expected_output.replace(b"\n", b"\r\n")
+    assert output == expected_output
 
 
 def test_no_file_left_behind_on_interruption(
