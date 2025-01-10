@@ -58,18 +58,12 @@ def _run_with_color_and_capture_separate(
 
         while True:
             if use_pty:
-                try:
-                    # Read from the master fd
-                    chunk = os.read(stdout_master_fd, 1024)
-                    if not chunk:
-                        break
-                    # Write to stdout buffer for live display
-                    sys.stdout.buffer.write(chunk)
-                    sys.stdout.buffer.flush()
-                    # Append to stdout output
-                    stdout_output_chunks.append(chunk)
-                except OSError:
+                chunk = os.read(stdout_master_fd, 1024)
+                if not chunk:
                     break
+                sys.stdout.buffer.write(chunk)
+                sys.stdout.buffer.flush()
+                stdout_output_chunks.append(chunk)
             else:
                 # Read from stdout and stderr separately
                 stdout_chunk = (
