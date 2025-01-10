@@ -17,6 +17,7 @@ from sybil import Example
 from sybil.evaluators.python import pad
 
 
+@beartype
 def _run_with_color_and_capture_separate(
     *,
     command: list[str | Path],
