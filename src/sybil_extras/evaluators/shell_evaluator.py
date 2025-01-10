@@ -62,6 +62,8 @@ def _run_with_color_and_capture_separate(
                 sys.stdout.buffer.flush()
                 stdout_output_chunks.append(chunk)
 
+            os.close(fd=stdout_master_fd)
+
         else:
             while True:
                 stdout_chunk = (
@@ -87,9 +89,6 @@ def _run_with_color_and_capture_separate(
                     and process.poll() is not None
                 ):
                     break
-
-        if use_pty:
-            os.close(fd=stdout_master_fd)
 
         return_code = process.wait()
 
