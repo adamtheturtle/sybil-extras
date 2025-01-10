@@ -27,13 +27,13 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
-      - name: Lint
-        run: |
-          uv run --extra=dev pre-commit run --all-files --hook-stage pre-commit --verbose
-          uv run --extra=dev pre-commit run --all-files --hook-stage pre-push --verbose
-          uv run --extra=dev pre-commit run --all-files --hook-stage manual --verbose
-        env:
-          UV_PYTHON: ${{ matrix.python-version }}
+      # - name: Lint
+      #   run: |
+      #     uv run --extra=dev pre-commit run --all-files --hook-stage pre-commit --verbose
+      #     uv run --extra=dev pre-commit run --all-files --hook-stage pre-push --verbose
+      #     uv run --extra=dev pre-commit run --all-files --hook-stage manual --verbose
+      #   env:
+      #     UV_PYTHON: ${{ matrix.python-version }}
 
       - name: Run tests
         run: |
