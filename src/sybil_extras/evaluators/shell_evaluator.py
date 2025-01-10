@@ -83,7 +83,6 @@ def _run_with_color_and_capture_separate(
                     sys.stderr.buffer.flush()
                     stderr_output_chunks.append(stderr_chunk)
 
-                # Exit loop if process has terminated and no more output
                 if (
                     not stdout_chunk
                     and not stderr_chunk
@@ -97,7 +96,7 @@ def _run_with_color_and_capture_separate(
         return_code = process.wait()
 
         stdout_output = b"".join(stdout_output_chunks)
-        stderr_output = b"".join(stderr_output_chunks) if not use_pty else b""
+        stderr_output = b"".join(stderr_output_chunks)
 
         return subprocess.CompletedProcess(
             args=command,
