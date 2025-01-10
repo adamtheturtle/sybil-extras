@@ -18,7 +18,11 @@ from sybil.parsers.rest.codeblock import CodeBlockParser
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 
 
-@pytest.fixture(name="use_pty_option", params=[True, False])
+@pytest.fixture(
+    name="use_pty_option",
+    # On CI we cannot use the pseudo-terminal.
+    params=[True, False] if sys.stdout.isatty() else [False],
+)
 def fixture_use_pty_option(
     request: pytest.FixtureRequest,
 ) -> bool:
