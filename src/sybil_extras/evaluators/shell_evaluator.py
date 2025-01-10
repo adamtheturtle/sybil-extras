@@ -34,7 +34,6 @@ def _run_with_color_and_capture_separate(
     slave_fd = -1
 
     if use_pty:  # pragma: no cover
-        # Open a single pty for both stdout and stderr
         stdout_master_fd, slave_fd = os.openpty()
         stdout = slave_fd
         stderr = slave_fd
