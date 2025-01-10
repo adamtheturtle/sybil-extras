@@ -632,3 +632,24 @@ def test_empty_code_block_write_to_file(
     outerr = capsys.readouterr()
     assert outerr.out.strip() == ""
     assert outerr.err == ""
+
+
+def test_pty(rst_file: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    """
+    PTY is used if requested.
+    """
+    evaluator = ShellCommandEvaluator(
+        args=["echo", "Hello, PTY!"],
+        pad_file=False,
+        write_to_file=False,
+        use_pty=True,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    example.evaluate()
+    outerr = capsys.readouterr()
+    assert outerr.out.startswith("Hello, PTY!")
+    assert outerr.err == ""
