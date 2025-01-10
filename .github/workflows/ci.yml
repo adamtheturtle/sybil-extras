@@ -28,6 +28,7 @@ jobs:
         uses: astral-sh/setup-uv@v5
 
       - name: Install Expect
+        if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y expect
 
       - name: Lint
