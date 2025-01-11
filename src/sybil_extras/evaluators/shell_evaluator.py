@@ -33,7 +33,7 @@ def _run_with_color_and_capture_separate(
     stdout_master_fd = -1
     slave_fd = -1
 
-    if use_pty:  # pragma: no cover
+    if use_pty:
         with contextlib.suppress(AttributeError):
             stdout_master_fd, slave_fd = os.openpty()
         stdout = slave_fd
@@ -55,7 +55,7 @@ def _run_with_color_and_capture_separate(
         stdout_output_chunks: list[bytes] = []
         stderr_output_chunks: list[bytes] = []
 
-        if use_pty:  # pragma: no cover
+        if use_pty:
             os.close(fd=slave_fd)
 
             with contextlib.suppress(OSError):
@@ -236,9 +236,7 @@ class ShellCommandEvaluator:
         """
         Run the shell command on the example file.
         """
-        if (
-            self._use_pty and platform.system() == "Windows"
-        ):  # pragma: no cover
+        if self._use_pty and platform.system() == "Windows":
             msg = "Pseudo-terminal not supported on Windows."
             raise ValueError(msg)
 
