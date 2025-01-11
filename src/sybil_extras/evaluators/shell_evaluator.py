@@ -43,6 +43,8 @@ def _run_with_color_and_capture_separate(
         stderr = subprocess.PIPE
 
     chunk_size = 1024
+    stdout_output_chunks: list[bytes] = []
+    stderr_output_chunks: list[bytes] = []
 
     with subprocess.Popen(
         args=command,
@@ -52,9 +54,6 @@ def _run_with_color_and_capture_separate(
         env=env,
         close_fds=True,
     ) as process:
-        stdout_output_chunks: list[bytes] = []
-        stderr_output_chunks: list[bytes] = []
-
         if use_pty:
             os.close(fd=slave_fd)
 
