@@ -58,6 +58,10 @@ def _run_with_color_and_capture_separate(
         if use_pty:
             os.close(fd=slave_fd)
 
+            # On some platforms, an ``OSError`` is raised when reading from
+            # a master file descriptor that has no corresponding slave file.
+            # I think that this may be described in
+            # https://bugs.python.org/issue5380#msg82827
             with contextlib.suppress(OSError):
                 while chunk := os.read(stdout_master_fd, chunk_size):
                     sys.stdout.buffer.write(chunk)
