@@ -113,7 +113,7 @@ def test_output_shown(
     outerr = capsys.readouterr()
     expected_output = "Hello, Sybil!\n"
     expected_stderr = "Hello Stderr!\n"
-    if use_pty_option:  # pragma: no cover
+    if use_pty_option:
         expected_output = "Hello, Sybil!\r\nHello Stderr!\r\n"
         expected_stderr = ""
 
@@ -489,7 +489,7 @@ def test_non_utf8_output(
     example.evaluate()
     output = capsysbinary.readouterr().out
     expected_output = b"\xc0\x80\n"
-    if use_pty_option:  # pragma: no cover
+    if use_pty_option:
         expected_output = expected_output.replace(b"\n", b"\r\n")
     assert output == expected_output
 
@@ -716,7 +716,7 @@ def test_bad_command_error(*, rst_file: Path, use_pty_option: bool) -> None:
     # the platform.
     error_substring = b"option"
 
-    if use_pty_option:  # pragma: no cover
+    if use_pty_option:
         assert exc.value.stderr == b""
         assert error_substring in exc.value.stdout
     else:

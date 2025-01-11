@@ -22,6 +22,12 @@ jobs:
 
     runs-on: ${{ matrix.platform }}
 
+    env:
+      # We run tests against "." and not the tests directory as we test the README
+      # and documentation.
+      # We use "-s" to allow for the pty tests to run.
+      TEST_COMMAND: uv run --extra=dev pytest -s -vvv .
+
     steps:
       - uses: actions/checkout@v4
       - name: Install uv
@@ -35,11 +41,21 @@ jobs:
         env:
           UV_PYTHON: ${{ matrix.python-version }}
 
-      - name: Run tests
+      - name: Run tests Linux
+        if: matrix.platform == 'ubuntu-latest'
         run: |
-          # We run tests against "." and not the tests directory as we test the README
-          # and documentation.
-          uv run --extra=dev pytest -s -vvv --cov-fail-under 100 --cov=src/ --cov=tests . --cov-report=xml
+          ${{ env.TEST_COMMAND }} --cov=src/ --cov=tests --cov-report term-missing --cov-report=xml --cov-fail-under 100
+        env:
+          UV_PYTHON: ${{ matrix.python-version }}
+        # See https://github.com/actions/runner/issues/241#issuecomment-2510875317 - this means we run
+        # as a pty.
+        shell: script -q -e -a /dev/null -c "bash {0}"
+
+      # Wasteful to run this on Linux, but worth it to see if any issues are platform specific,
+      # and to ensure the tests run without a tty.
+      - name: Run tests all platforms (no tty)
+        run: |
+          ${{ env.TEST_COMMAND }}
         env:
           UV_PYTHON: ${{ matrix.python-version }}
 
