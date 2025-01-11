@@ -240,7 +240,9 @@ class ShellCommandEvaluator:
         """
         Run the shell command on the example file.
         """
-        if self._use_pty and platform.system() == "Windows":
+        if (
+            self._use_pty and platform.system() == "Windows"
+        ):  # pragma: no cover
             msg = "Pseudo-terminal not supported on Windows."
             raise ValueError(msg)
 
