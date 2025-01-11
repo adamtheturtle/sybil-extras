@@ -604,10 +604,10 @@ def test_newline_system(
 @pytest.mark.parametrize(argnames="source_newline", argvalues=["\n", "\r\n"])
 @pytest.mark.parametrize(
     argnames=("given_newline", "expect_crlf"),
-    argvalues=(
-        ["\n", False],
-        ["\r\n", True],
-    ),
+    argvalues=[
+        ("\n", False),
+        ("\r\n", True),
+    ],
 )
 def test_newline_given(
     *,
