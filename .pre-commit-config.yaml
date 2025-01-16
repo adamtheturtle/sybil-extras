@@ -111,6 +111,7 @@ repos:
           --no-pad-file --command="shfmt --write --space-redirects --indent=4"
         language: python
         types_or: [markdown, rst]
+        additional_dependencies: [uv==0.5.20]
 
       - id: mypy
         name: mypy
@@ -127,6 +128,7 @@ repos:
         entry: uvx --python=3.13 doccmd --language=python --command="mypy"
         language: python
         types_or: [markdown, rst]
+        additional_dependencies: [uv==0.5.20]
 
       - id: check-manifest
         name: check-manifest
@@ -134,6 +136,7 @@ repos:
         entry: uv run --extra=dev -m check_manifest
         language: python
         pass_filenames: false
+        additional_dependencies: [uv==0.5.20]
 
       - id: pyright
         name: pyright
@@ -150,6 +153,7 @@ repos:
         entry: uvx --python=3.13 doccmd --language=python --command="pyright"
         language: python
         types_or: [markdown, rst]
+        additional_dependencies: [uv==0.5.20]
 
       - id: vulture
         name: vulture
@@ -164,6 +168,7 @@ repos:
         entry: uvx --python=3.13 doccmd --language=python --command="vulture"
         language: python
         types_or: [markdown, rst]
+        additional_dependencies: [uv==0.5.20]
 
       - id: pyroma
         name: pyroma
@@ -194,6 +199,7 @@ repos:
         language: python
         stages: [manual]
         types_or: [markdown, rst]
+        additional_dependencies: [uv==0.5.20]
 
       - id: pyright-verifytypes
         name: pyright-verifytypes
@@ -216,6 +222,7 @@ repos:
         entry: uvx --python=3.13 doccmd --language=python --command="ruff check --fix"
         language: python
         types_or: [markdown, rst]
+        additional_dependencies: [uv==0.5.20]
 
       - id: ruff-format-fix
         name: Ruff format
@@ -230,12 +237,14 @@ repos:
           format"
         language: python
         types_or: [markdown, rst]
+        additional_dependencies: [uv==0.5.20]
 
       - id: doc8
         name: doc8
         entry: uv run --extra=dev -m doc8
         language: python
         types_or: [rst]
+        additional_dependencies: [uv==0.5.20]
 
       - id: interrogate
         name: interrogate
@@ -249,6 +258,7 @@ repos:
         entry: uvx --python=3.13 doccmd --language=python --command="interrogate"
         language: python
         types_or: [markdown, rst]
+        additional_dependencies: [uv==0.5.20]
 
       - id: pyproject-fmt-fix
         name: pyproject-fmt
