@@ -505,7 +505,7 @@ def test_no_file_left_behind_on_interruption(
         text="""\
         import time
 
-        time.sleep(2)
+        time.sleep(0.5)
         """,
     )
 
