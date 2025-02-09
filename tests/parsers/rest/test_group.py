@@ -40,7 +40,7 @@ def test_group(tmp_path: Path) -> None:
     test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
-    group_parser = GroupParser(directive="custom-skip")
+    group_parser = GroupParser(directive="group")
     code_parser = PythonCodeBlockParser()
 
     sybil = Sybil(parsers=[code_parser, group_parser])
