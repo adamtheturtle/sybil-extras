@@ -27,7 +27,7 @@ class CustomDirectiveSkipParser:
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """
-        Yield regions to skip.
+        Yield skip regions.
         """
         return self._abstract_skip_parser(document=document)
 
