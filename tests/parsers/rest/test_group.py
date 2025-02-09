@@ -25,17 +25,18 @@ def test_group(tmp_path: Path) -> None:
 
     .. code-block:: python
 
-        x = [*x, 2]
+        x = [*x, 1]
 
     .. code-block:: python
 
-        x = [*x, 3]
+        x = [*x, 2]
 
     .. group: end
 
     .. code-block:: python
 
-        x = [*x, 4]
+        x = [*x, 3]
+
     """
 
     test_document = tmp_path / "test.rst"
@@ -50,13 +51,24 @@ def test_group(tmp_path: Path) -> None:
     for example in document.examples():
         example.evaluate()
 
-    assert document.namespace["x"] == [2, 3, 4]
-
     parsed_examples = [example.parsed for example in document.examples()]
-    expected = dedent(
-        text="""\
-        x = [*x, 2]
-        x = [*x, 3]
-        """
-    )
-    assert expected in parsed_examples
+    expected = [
+        "x = []\n",
+        dedent(
+            text="""\
+            x = [*x, 1]
+
+            x = [*x, 2]
+            """
+        ),
+        "x = [*x, 3]\n",
+    ]
+    assert parsed_examples == expected
+
+    assert document.namespace["x"] == [1, 2, 3]
+
+
+# TODO: With skips before / in the middle
+# TODO: With an empty group
+# TODO: With end before start / without start
+# TODO: With different evaluators in the middle
