@@ -20,7 +20,7 @@ class GroupParser:
         Args:
             directive: The name of the directive to use for grouping.
         """
-        self.lexers = LexerCollection(
+        self.lexers: LexerCollection = LexerCollection(
             [DirectiveInCommentLexer(directive=directive)]
         )
 
