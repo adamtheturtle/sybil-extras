@@ -3,6 +3,7 @@ Tests for the group parser for reST.
 """
 
 from pathlib import Path
+from textwrap import dedent
 
 from sybil import Sybil
 from sybil.parsers.rest.codeblock import PythonCodeBlockParser
@@ -45,11 +46,17 @@ def test_group(tmp_path: Path) -> None:
 
     sybil = Sybil(parsers=[code_parser, group_parser])
     document = sybil.parse(path=test_document)
-    expected_num_examples = expected_num_regions = 5
-    assert len(list(document.examples())) == expected_num_examples
-    assert len(list(document.regions)) == expected_num_regions
 
     for example in document.examples():
         example.evaluate()
 
-    assert document.namespace["x"] == [1, 2, 3, 4]
+    assert document.namespace["x"] == [2, 3, 4]
+
+    parsed_examples = [example.parsed for example in document.examples()]
+    expected = dedent(
+        text="""\
+        x = [*x, 2]
+        x = [*x, 3]
+        """
+    )
+    assert expected in parsed_examples
