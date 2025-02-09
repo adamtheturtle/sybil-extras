@@ -45,9 +45,9 @@ def test_group(tmp_path: Path) -> None:
 
     sybil = Sybil(parsers=[code_parser, group_parser])
     document = sybil.parse(path=test_document)
-    examples = list(document.examples())
-    expected_num_examples = 3
-    assert len(examples) == expected_num_examples
+    expected_num_examples = expected_num_regions = 5
+    assert len(list(document.examples())) == expected_num_examples
+    assert len(list(document.regions)) == expected_num_regions
 
     for example in document.examples():
         example.evaluate()
