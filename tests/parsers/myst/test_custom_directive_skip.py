@@ -15,7 +15,7 @@ from sybil_extras.parsers.myst.custom_directive_skip import (
 
 def test_skip(tmp_path: Path) -> None:
     """
-    Test that the custom directive skip parser skips the directive.
+    Test that the custom directive skip parser can be used to set skips.
     """
     content = """\
     Example
