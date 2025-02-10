@@ -203,6 +203,7 @@ def test_group_with_skip(tmp_path: Path) -> None:
     for example in document.examples():
         example.evaluate()
 
+    assert document.namespace["x"] == [1, 3]
     parsed_examples = [example.parsed for example in document.examples()]
     expected = [
         "x = []\n",
@@ -213,11 +214,10 @@ def test_group_with_skip(tmp_path: Path) -> None:
             x = [*x, 2]
             """
         ),
-        "x = [*x, 3]\n",
+        ("next", None),
+        "x = [*x, 3]",
     ]
     assert parsed_examples == expected
-
-    assert document.namespace["x"] == [1, 2]
 
 
 # TODO: With skips before / in the middle

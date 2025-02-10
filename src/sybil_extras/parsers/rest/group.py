@@ -43,7 +43,6 @@ class GroupParser:
                     break
             if current_sub_regions:
                 first_sub_region = current_sub_regions[0]
-                last_sub_region = current_sub_regions[-1]
 
                 parsed_text = "\n".join(
                     region.parsed for region in current_sub_regions
@@ -62,7 +61,7 @@ class GroupParser:
 
                 yield Region(
                     start=first_sub_region.start,
-                    end=last_sub_region.end,
+                    end=first_sub_region.end,
                     parsed=parsed,
                     evaluator=first_sub_region.evaluator,
                 )
