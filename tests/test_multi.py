@@ -77,7 +77,7 @@ def test_multi_evaluator_runs_all(rst_file: Path) -> None:
 
 def test_multi_evaluator_raises_on_failure(rst_file: Path) -> None:
     """
-    Test that MultiEvaluator raises an error if an evaluator fails.
+    MultiEvaluator raises an error if an evaluator fails.
     """
     evaluators = [_evaluator_1, _failing_evaluator, _evaluator_3]
     multi_evaluator = MultiEvaluator(evaluators=evaluators)
