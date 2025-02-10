@@ -3,6 +3,9 @@
 sybil-extras
 ============
 
+.. contents::
+   :local:
+
 Add ons for `Sybil <http://sybil.readthedocs.io>`_.
 
 Installation
@@ -12,8 +15,8 @@ Installation
 
     $ pip install sybil-extras
 
-Usage
------
+Evaluators
+----------
 
 MultiEvaluator
 ^^^^^^^^^^^^^^
@@ -79,6 +82,9 @@ ShellCommandEvaluator
     sybil = Sybil(parsers=[parser])
 
     pytest_collect_file = sybil.pytest()
+
+Parsers
+-------
 
 CustomDirectiveSkipParser
 ^^^^^^^^^^^^^^^^^^^^^^^^^

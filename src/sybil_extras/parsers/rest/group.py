@@ -10,6 +10,14 @@ from sybil.parsers.rest.lexers import DirectiveInCommentLexer
 from sybil.region import Lexeme
 
 
+def validate_sub_regions(regions: Sequence[Region]) -> None:
+    evaluators = {region.evaluator for region in regions}
+    breakpoint()
+    assert len(evaluators) == 1, (
+        "All sub-regions must have the same evaluator."
+    )
+
+
 class GroupParser:
     """
     A group parser for reST.
@@ -34,6 +42,7 @@ class GroupParser:
             for first, second in zip(lexed_regions, lexed_regions, strict=True)
         ]
         current_sub_regions: Sequence[Region] = []
+        breakpoint()
         for start_region, end_region in start_end_pairs:
             current_sub_regions = []
             for _, region in document.regions:
@@ -42,6 +51,7 @@ class GroupParser:
                 elif region.start > end_region.start:
                     break
             if current_sub_regions:
+                validate_sub_regions(regions=current_sub_regions)
                 first_sub_region = current_sub_regions[0]
 
                 parsed_text = "\n".join(

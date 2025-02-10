@@ -197,7 +197,7 @@ def test_group_with_skip(tmp_path: Path) -> None:
     code_parser = PythonCodeBlockParser()
     skip_parser = SkipParser()
 
-    sybil = Sybil(parsers=[code_parser, group_parser, skip_parser])
+    sybil = Sybil(parsers=[code_parser, skip_parser, group_parser])
     document = sybil.parse(path=test_document)
 
     for example in document.examples():
@@ -221,5 +221,6 @@ def test_group_with_skip(tmp_path: Path) -> None:
 
 
 # TODO: With skips before / in the middle
+# TODO: Document that it must be the last parser
 # TODO: With end before start / without start
 # TODO: With different evaluators in the middle
