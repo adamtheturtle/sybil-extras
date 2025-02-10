@@ -18,7 +18,7 @@ class CustomDirectiveSkipParser:
     def __init__(self, directive: str) -> None:
         """
         Args:
-            directive: The name of the directive to skip.
+            directive: The name of the directive to use for skipping.
         """
         # This matches the ``sybil.parsers.markdown.SkipParser``, other than
         # it does not hardcode the directive "skip".
