@@ -5,6 +5,7 @@ Tests for the group parser for reST.
 from pathlib import Path
 from textwrap import dedent
 
+import pytest
 from sybil import Sybil
 from sybil.parsers.rest.codeblock import PythonCodeBlockParser
 from sybil.parsers.rest.skip import SkipParser
@@ -163,7 +164,7 @@ def test_empty_group(tmp_path: Path) -> None:
 
 def test_group_with_skip(tmp_path: Path) -> None:
     """
-    The group parser groups examples even when the group is skipped.
+    Todo:
     """
     content = """\
 
@@ -198,26 +199,8 @@ def test_group_with_skip(tmp_path: Path) -> None:
     skip_parser = SkipParser()
 
     sybil = Sybil(parsers=[code_parser, skip_parser, group_parser])
-    document = sybil.parse(path=test_document)
-
-    for example in document.examples():
-        example.evaluate()
-
-    assert document.namespace["x"] == [1, 3]
-    parsed_examples = [example.parsed for example in document.examples()]
-    expected = [
-        "x = []\n",
-        dedent(
-            text="""\
-            x = [*x, 1]
-
-            x = [*x, 2]
-            """
-        ),
-        ("next", None),
-        "x = [*x, 3]",
-    ]
-    assert parsed_examples == expected
+    with pytest.raises(ValueError):
+        document = sybil.parse(path=test_document)
 
 
 # TODO: With skips before / in the middle

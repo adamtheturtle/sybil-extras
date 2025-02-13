@@ -12,10 +12,9 @@ from sybil.region import Lexeme
 
 def validate_sub_regions(regions: Sequence[Region]) -> None:
     evaluators = {region.evaluator for region in regions}
-    breakpoint()
-    assert len(evaluators) == 1, (
-        "All sub-regions must have the same evaluator."
-    )
+    if len(evaluators) != 1:
+        message = "All sub-regions of a group must have the same evaluator."
+        raise ValueError(message)
 
 
 class GroupParser:
@@ -42,7 +41,6 @@ class GroupParser:
             for first, second in zip(lexed_regions, lexed_regions, strict=True)
         ]
         current_sub_regions: Sequence[Region] = []
-        breakpoint()
         for start_region, end_region in start_end_pairs:
             current_sub_regions = []
             for _, region in document.regions:
