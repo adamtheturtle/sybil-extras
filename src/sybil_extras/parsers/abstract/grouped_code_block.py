@@ -50,7 +50,7 @@ class AbstractGroupedCodeBlockParser:
                 _validate_sub_regions(regions=current_sub_regions)
                 first_sub_region = current_sub_regions[0]
 
-                parsed_text = "\n".join(
+                parsed_text = "".join(
                     region.parsed for region in current_sub_regions
                 )
 
