@@ -124,9 +124,11 @@ GroupedCodeBlockParser
 
     """Use GroupedCodeBlockParser to group code blocks by a custom directive."""
 
+    import sys
     from pathlib import Path
 
     from sybil import Sybil
+    from sybil.example import Example
     from sybil.parsers.rest.codeblock import PythonCodeBlockParser
 
     # Similar parsers are available at
@@ -134,17 +136,23 @@ GroupedCodeBlockParser
     # sybil_extras.parsers.myst.grouped_code_block.
     from sybil_extras.parsers.rest.grouped_code_block import GroupedCodeBlockParser
 
-    group_parser = GroupedCodeBlockParser(directive="group")
+
+    def evaluator(example: Example) -> None:
+        """Evaluate the code block by printing it."""
+        sys.stdout.write(example.parsed)
+
+
+    group_parser = GroupedCodeBlockParser(directive="group", evaluator=evaluator)
     code_block_parser = PythonCodeBlockParser()
 
     sybil = Sybil(parsers=[code_block_parser, group_parser])
 
     document = sybil.parse(path=Path("CHANGELOG.rst"))
 
-    for example in document.examples():
+    for item in document.examples():
         # One evaluate call will evaluate a code block with the contents of all
         # code blocks in the group.
-        example.evaluate()
+        item.evaluate()
 
 This makes Sybil act as though all of the code blocks within a group are a single code block.
 The first code block in the group is expanded to include all of the code blocks in the group.

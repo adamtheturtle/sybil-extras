@@ -4,13 +4,11 @@ Tests for the group parser for Markdown.
 
 from pathlib import Path
 
-import pytest
 from sybil import Sybil
 from sybil.example import Example
 from sybil.parsers.markdown.codeblock import (
     CodeBlockParser,
 )
-from sybil.parsers.markdown.skip import SkipParser
 
 from sybil_extras.parsers.markdown.grouped_code_block import (
     GroupedCodeBlockParser,
@@ -58,7 +56,10 @@ def test_group(tmp_path: Path) -> None:
             example.parsed,
         ]
 
-    group_parser = GroupedCodeBlockParser(directive="group")
+    group_parser = GroupedCodeBlockParser(
+        directive="group",
+        evaluator=evaluator,
+    )
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
     sybil = Sybil(parsers=[code_block_parser, group_parser])
@@ -110,7 +111,10 @@ def test_nothing_after_group(tmp_path: Path) -> None:
             example.parsed,
         ]
 
-    group_parser = GroupedCodeBlockParser(directive="group")
+    group_parser = GroupedCodeBlockParser(
+        directive="group",
+        evaluator=evaluator,
+    )
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
     sybil = Sybil(parsers=[code_block_parser, group_parser])
@@ -157,7 +161,10 @@ def test_empty_group(tmp_path: Path) -> None:
             example.parsed,
         ]
 
-    group_parser = GroupedCodeBlockParser(directive="group")
+    group_parser = GroupedCodeBlockParser(
+        directive="group",
+        evaluator=evaluator,
+    )
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
     sybil = Sybil(parsers=[code_block_parser, group_parser])
@@ -170,47 +177,3 @@ def test_empty_group(tmp_path: Path) -> None:
         "x = []\n",
         "x = [*x, 3]\n",
     ]
-
-
-def test_group_with_skip(tmp_path: Path) -> None:
-    """
-    An error is raised when a group contains a skip.
-    """
-    content = """\
-
-    ```python
-     x = []
-    ```
-
-    <!--- group: start -->
-
-    ```python
-     x = [*x, 1]
-    ```
-
-    <!--- skip: next -->
-
-    ```python
-     x = [*x, 2]
-    ```
-
-    <!--- group: end -->
-
-    ```python
-     x = [*x, 3]
-    ```
-    """
-
-    test_document = tmp_path / "test.md"
-    test_document.write_text(data=content, encoding="utf-8")
-
-    group_parser = GroupedCodeBlockParser(directive="group")
-    code_block_parser = CodeBlockParser(language="python")
-    skip_parser = SkipParser()
-
-    sybil = Sybil(parsers=[code_block_parser, skip_parser, group_parser])
-    with pytest.raises(
-        expected_exception=ValueError,
-        match="All sub-regions of a group must have the same evaluator.",
-    ):
-        sybil.parse(path=test_document)
