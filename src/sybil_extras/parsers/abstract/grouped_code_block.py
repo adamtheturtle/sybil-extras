@@ -124,7 +124,7 @@ class AbstractGroupedCodeBlockParser:
             evaluator: The evaluator to use for evaluating the combined region.
         """
         self.lexers: LexerCollection = LexerCollection(lexers)
-        self.grouper = _Grouper(evaluator=evaluator)
+        self.grouper: _Grouper = _Grouper(evaluator=evaluator)
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """
