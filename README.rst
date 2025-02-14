@@ -146,6 +146,30 @@ Typically, this is most useful at the end of a list of parsers.
 All parsed regions within the group must have the same evaluator.
 This means, for example, that you cannot use skip directives within a group.
 
+A reStructuredText example:
+
+.. code-block:: rst
+
+   .. code-block:: python
+
+      x = 1
+
+   .. group: start
+
+   .. code-block:: python
+
+       def hello() -> None:
+           """Print a greeting."""
+           print("Hello, world!")
+
+   .. code-block:: python
+
+       """Run a function which is defined in the previous code block."""
+
+       hello()
+
+   .. group: end
+
 .. |Build Status| image:: https://github.com/adamtheturtle/sybil-extras/actions/workflows/ci.yml/badge.svg?branch=main
    :target: https://github.com/adamtheturtle/sybil-extras/actions
 .. |codecov| image:: https://codecov.io/gh/adamtheturtle/sybil-extras/branch/main/graph/badge.svg
