@@ -153,6 +153,7 @@ A reStructuredText example:
    .. code-block:: python
 
       x = 1
+      print(x)
 
    .. group: start
 
