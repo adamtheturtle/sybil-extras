@@ -14,7 +14,7 @@ from sybil.typing import Evaluator, Lexer
 @dataclass
 class _GroupState:
     """
-    Skip state.
+    Group state.
     """
 
     combined_text: str | None = None
@@ -68,7 +68,7 @@ class _Grouper:
 
     def _evaluate_other_example(self, example: Example) -> None:
         """
-        Evaluate an example that is not a skip example.
+        Evaluate an example that is not a group example.
         """
         state = self._document_state[example.document]
 
