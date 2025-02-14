@@ -19,7 +19,6 @@ class _GroupState:
     Skip state.
     """
 
-    remove: bool = False
     last_action: str | None = None
     combined_text: str | None = None
 
@@ -45,14 +44,6 @@ class _Grouper:
             self.document_state[document] = _GroupState()
         return self.document_state[example.document]
 
-    def remove(self, example: Example) -> None:
-        """
-        Remove the state for this document.
-        """
-        document = example.document
-        document.pop_evaluator(evaluator=self)
-        del self.document_state[document]
-
     def evaluate_skip_example(self, example: Example) -> None:
         """
         Evaluate a skip example.
@@ -72,8 +63,7 @@ class _Grouper:
         state.last_action = action
 
         if action == "start":
-            document = example.document
-            document.push_evaluator(evaluator=self)
+            example.document.push_evaluator(evaluator=self)
         elif action == "end":
             if state.combined_text is not None:
                 region = Region(
@@ -91,15 +81,14 @@ class _Grouper:
                     namespace=example.namespace,
                 )
                 self.evaluator(new_example)
-            self.remove(example=example)
+            example.document.pop_evaluator(evaluator=self)
+            del self.document_state[example.document]
 
     def evaluate_other_example(self, example: Example) -> None:
         """
         Evaluate an example that is not a skip example.
         """
         state = self.state_for(example=example)
-        if state.remove:
-            self.remove(example=example)
 
         if "source" in example.region.lexemes:
             if state.combined_text is None:
@@ -107,14 +96,20 @@ class _Grouper:
             else:
                 state.combined_text += example.parsed
 
-    def __call__(self, example: Example) -> None:
+    def __call__(self, /, example: Example) -> None:
         """
         Call the evaluator.
         """
-        if example.region.evaluator is self:
+        # We use ``id`` equivalence rather than ``is`` to avoid a
+        # Pyright error.
+        if id(example.region.evaluator) == id(self):
             self.evaluate_skip_example(example=example)
-        else:
-            self.evaluate_other_example(example=example)
+            return
+
+        self.evaluate_other_example(example=example)
+
+    # Satisfy vulture.
+    _caller = __call__
 
 
 class AbstractGroupedCodeBlockParser:
