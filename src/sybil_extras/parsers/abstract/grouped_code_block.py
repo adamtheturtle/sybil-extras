@@ -6,6 +6,7 @@ import re
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
+from typing import Literal
 
 from sybil import Document, Example, Region
 from sybil.parsers.abstract.lexers import LexerCollection
@@ -20,7 +21,7 @@ class _GroupState:
     Skip state.
     """
 
-    last_action: str | None = None
+    last_action: Literal["start", "end"] | None = None
     combined_text: str | None = None
 
 
