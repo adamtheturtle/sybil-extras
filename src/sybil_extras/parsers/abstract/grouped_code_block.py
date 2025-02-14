@@ -37,7 +37,7 @@ class AbstractGroupedCodeBlockParser:
         Yield regions to evaluate, grouped by start and end comments.
         """
         lexed_regions = self.lexers(document)
-        start_end_pairs = list(zip(lexed_regions, lexed_regions, strict=True))
+        start_end_pairs = zip(lexed_regions, lexed_regions, strict=True)
         current_sub_regions: Sequence[Region] = []
         for start_region, end_region in start_end_pairs:
             current_sub_regions = []
