@@ -19,6 +19,7 @@ class GroupedCodeBlockParser(AbstractGroupedCodeBlockParser):
         """
         Args:
             directive: The name of the directive to use for grouping.
+            evaluator: The evaluator to use for evaluating the combined region.
         """
         lexers = [DirectiveInCommentLexer(directive=directive)]
         super().__init__(lexers=lexers, evaluator=evaluator)
