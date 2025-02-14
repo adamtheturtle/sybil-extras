@@ -32,16 +32,16 @@ class _Grouper:
         """
         Add document state.
         """
-        self.document_state: dict[Document, _GroupState] = {}
-        self.evaluator = evaluator
+        self._document_state: dict[Document, _GroupState] = {}
+        self._evaluator = evaluator
 
     def state_for(self, document: Document) -> _GroupState:
         """
         Get the state for this document.
         """
-        if document not in self.document_state:
-            self.document_state[document] = _GroupState()
-        return self.document_state[document]
+        if document not in self._document_state:
+            self._document_state[document] = _GroupState()
+        return self._document_state[document]
 
     def evaluate_skip_example(self, example: Example) -> None:
         """
@@ -69,7 +69,7 @@ class _Grouper:
                     start=example.region.start,
                     end=example.region.end,
                     parsed=state.combined_text,
-                    evaluator=self.evaluator,
+                    evaluator=self._evaluator,
                     lexemes=example.region.lexemes,
                 )
                 new_example = Example(
@@ -79,9 +79,9 @@ class _Grouper:
                     region=region,
                     namespace=example.namespace,
                 )
-                self.evaluator(new_example)
+                self._evaluator(new_example)
             example.document.pop_evaluator(evaluator=self)
-            del self.document_state[example.document]
+            del self._document_state[example.document]
 
     def evaluate_other_example(self, example: Example) -> None:
         """
