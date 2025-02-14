@@ -1,5 +1,5 @@
 """
-Tests for the group parser for reST.
+Tests for the group parser for Markdown.
 """
 
 from pathlib import Path
@@ -7,10 +7,15 @@ from pathlib import Path
 import pytest
 from sybil import Sybil
 from sybil.example import Example
-from sybil.parsers.rest.codeblock import CodeBlockParser, PythonCodeBlockParser
-from sybil.parsers.rest.skip import SkipParser
+from sybil.parsers.markdown.codeblock import (
+    CodeBlockParser,
+    PythonCodeBlockParser,
+)
+from sybil.parsers.markdown.skip import SkipParser
 
-from sybil_extras.parsers.rest.grouped_code_block import GroupedCodeBlockParser
+from sybil_extras.parsers.markdown.grouped_code_block import (
+    GroupedCodeBlockParser,
+)
 
 
 def test_group(tmp_path: Path) -> None:
@@ -19,25 +24,25 @@ def test_group(tmp_path: Path) -> None:
     """
     content = """\
 
-    .. code-block:: python
+    ```python
+    x = []
+    ```
 
-        x = []
+    <!--- group: start -->
 
-    .. group: start
+    ```python
+    x = [*x, 1]
+    ```
 
-    .. code-block:: python
+    ```python
+     x = [*x, 2]
+    ```
 
-        x = [*x, 1]
+    <!--- group: end -->
 
-    .. code-block:: python
-
-        x = [*x, 2]
-
-    .. group: end
-
-    .. code-block:: python
-
-        x = [*x, 3]
+    ```python
+     x = [*x, 3]
+    ```
 
     """
 
@@ -76,21 +81,21 @@ def test_nothing_after_group(tmp_path: Path) -> None:
     """
     content = """\
 
-    .. code-block:: python
+    ```python
+     x = []
+    ```
 
-        x = []
+    <!--- group: start -->
 
-    .. group: start
+    ```python
+     x = [*x, 1]
+    ```
 
-    .. code-block:: python
+    ```python
+     x = [*x, 2]
+    ```
 
-        x = [*x, 1]
-
-    .. code-block:: python
-
-        x = [*x, 2]
-
-    .. group: end
+    <!--- group: end -->
     """
 
     test_document = tmp_path / "test.rst"
@@ -127,17 +132,17 @@ def test_empty_group(tmp_path: Path) -> None:
     """
     content = """\
 
-    .. code-block:: python
+    ```python
+     x = []
+    ```
 
-        x = []
+    <!--- group: start -->
 
-    .. group: start
+    <!--- group: end -->
 
-    .. group: end
-
-    .. code-block:: python
-
-        x = [*x, 3]
+    ```python
+     x = [*x, 3]
+    ```
     """
 
     test_document = tmp_path / "test.rst"
@@ -164,7 +169,7 @@ def test_empty_group(tmp_path: Path) -> None:
 
     assert document.namespace["blocks"] == [
         "x = []\n",
-        "x = [*x, 3]",
+        "x = [*x, 3]\n",
     ]
 
 
@@ -174,27 +179,27 @@ def test_group_with_skip(tmp_path: Path) -> None:
     """
     content = """\
 
-    .. code-block:: python
+    ```python
+     x = []
+    ```
 
-        x = []
+    <!--- group: start -->
 
-    .. group: start
+    ```python
+     x = [*x, 1]
+    ```
 
-    .. code-block:: python
+    <!--- skip: next -->
 
-        x = [*x, 1]
+    ```python
+     x = [*x, 2]
+    ```
 
-    .. skip: next
+    <!--- group: end -->
 
-    .. code-block:: python
-
-        x = [*x, 2]
-
-    .. group: end
-
-    .. code-block:: python
-
-        x = [*x, 3]
+    ```python
+     x = [*x, 3]
+    ```
     """
 
     test_document = tmp_path / "test.rst"
@@ -228,25 +233,25 @@ def test_python_codeblock(tmp_path: Path) -> None:
     """
     content = """\
 
-    .. code-block:: python
+    ```python
+     x = []
+    ```
 
-        x = []
+    <!--- group: start -->
 
-    .. group: start
+    ```python
+     x = [*x, 1]
+    ```
 
-    .. code-block:: python
+    ```python
+     x = [*x, 2]
+    ```
 
-        x = [*x, 1]
+    <!--- group: end -->
 
-    .. code-block:: python
-
-        x = [*x, 2]
-
-    .. group: end
-
-    .. code-block:: python
-
-        x = [*x, 3]
+    ```python
+     x = [*x, 3]
+    ```
 
     """
 
