@@ -6,7 +6,6 @@ import re
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from typing import Literal
 
 from sybil import Document, Example, Region
 from sybil.parsers.abstract.lexers import LexerCollection
@@ -21,7 +20,6 @@ class _GroupState:
     Skip state.
     """
 
-    last_action: Literal["start", "end"] | None = None
     combined_text: str | None = None
 
 
@@ -46,17 +44,6 @@ class _Grouper:
         """
         state = self._document_state[example.document]
         (action,) = example.parsed
-
-        if action not in ("start", "end"):
-            raise ValueError("Bad skip action: " + action)
-        if state.last_action is None and action not in ("start",):
-            msg = f"'skip: {action}' must follow 'skip: start'"
-            raise ValueError(msg)
-        if state.last_action and action != "end":
-            msg = f"'skip: {action}' cannot follow 'skip: {state.last_action}'"
-            raise ValueError(msg)
-
-        state.last_action = action
 
         if action == "start":
             example.document.push_evaluator(evaluator=self)
