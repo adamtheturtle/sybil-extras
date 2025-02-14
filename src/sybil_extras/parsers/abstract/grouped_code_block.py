@@ -60,25 +60,27 @@ class _Grouper:
 
         if action == "start":
             example.document.push_evaluator(evaluator=self)
-        elif action == "end":
-            if state.combined_text is not None:
-                region = Region(
-                    start=example.region.start,
-                    end=example.region.end,
-                    parsed=state.combined_text,
-                    evaluator=self._evaluator,
-                    lexemes=example.region.lexemes,
-                )
-                new_example = Example(
-                    document=example.document,
-                    line=example.line,
-                    column=example.column,
-                    region=region,
-                    namespace=example.namespace,
-                )
-                self._evaluator(new_example)
-            example.document.pop_evaluator(evaluator=self)
-            del self._document_state[example.document]
+            return
+
+        if state.combined_text is not None:
+            region = Region(
+                start=example.region.start,
+                end=example.region.end,
+                parsed=state.combined_text,
+                evaluator=self._evaluator,
+                lexemes=example.region.lexemes,
+            )
+            new_example = Example(
+                document=example.document,
+                line=example.line,
+                column=example.column,
+                region=region,
+                namespace=example.namespace,
+            )
+            self._evaluator(new_example)
+
+        example.document.pop_evaluator(evaluator=self)
+        del self._document_state[example.document]
 
     def _evaluate_other_example(self, example: Example) -> None:
         """
