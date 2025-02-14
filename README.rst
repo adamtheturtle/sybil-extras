@@ -146,7 +146,6 @@ GroupedCodeBlockParser
         # code blocks in the group.
         example.evaluate()
 
-
 This makes Sybil act as though all of the code blocks within a group are a single code block.
 The first code block in the group is expanded to include all of the code blocks in the group.
 Typically, this is most useful at the end of a list of parsers.
