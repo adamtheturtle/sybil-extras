@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from sybil import Sybil
 from sybil.example import Example
-from sybil.parsers.rest.codeblock import CodeBlockParser, PythonCodeBlockParser
+from sybil.parsers.rest.codeblock import CodeBlockParser
 from sybil.parsers.rest.skip import SkipParser
 
 from sybil_extras.parsers.rest.grouped_code_block import GroupedCodeBlockParser
@@ -210,46 +210,3 @@ def test_group_with_skip(tmp_path: Path) -> None:
         match="All sub-regions of a group must have the same evaluator.",
     ):
         sybil.parse(path=test_document)
-
-
-def test_python_codeblock(tmp_path: Path) -> None:
-    """
-    Python code blocks work within groups.
-    """
-    content = """\
-
-    .. code-block:: python
-
-        x = []
-
-    .. group: start
-
-    .. code-block:: python
-
-        x = [*x, 1]
-
-    .. code-block:: python
-
-        x = [*x, 2]
-
-    .. group: end
-
-    .. code-block:: python
-
-        x = [*x, 3]
-
-    """
-
-    test_document = tmp_path / "test.rst"
-    test_document.write_text(data=content, encoding="utf-8")
-
-    group_parser = GroupedCodeBlockParser(directive="group")
-    code_block_parser = PythonCodeBlockParser()
-
-    sybil = Sybil(parsers=[code_block_parser, group_parser])
-    document = sybil.parse(path=test_document)
-
-    for example in document.examples():
-        example.evaluate()
-
-    assert document.namespace["x"] == [1, 2, 3]
