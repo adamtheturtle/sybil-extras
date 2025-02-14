@@ -3,6 +3,7 @@ A group parser for reST.
 """
 
 import re
+from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
@@ -32,15 +33,15 @@ class _Grouper:
         """
         Add document state.
         """
-        self._document_state: dict[Document, _GroupState] = {}
+        self._document_state: dict[Document, _GroupState] = defaultdict(
+            _GroupState
+        )
         self._evaluator = evaluator
 
     def state_for(self, document: Document) -> _GroupState:
         """
         Get the state for this document.
         """
-        if document not in self._document_state:
-            self._document_state[document] = _GroupState()
         return self._document_state[document]
 
     def evaluate_skip_example(self, example: Example) -> None:
