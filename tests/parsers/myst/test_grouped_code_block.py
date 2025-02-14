@@ -200,18 +200,8 @@ def test_group_with_skip(tmp_path: Path) -> None:
     test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
-    def evaluator(example: Example) -> None:
-        """
-        Add code block content to the namespace.
-        """
-        existing_blocks = example.document.namespace.get("blocks", [])
-        example.document.namespace["blocks"] = [
-            *existing_blocks,
-            example.parsed,
-        ]
-
     group_parser = GroupedCodeBlockParser(directive="group")
-    code_parser = CodeBlockParser(language="python", evaluator=evaluator)
+    code_parser = CodeBlockParser(language="python")
     skip_parser = SkipParser()
 
     sybil = Sybil(parsers=[code_parser, skip_parser, group_parser])
