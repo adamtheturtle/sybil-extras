@@ -268,11 +268,10 @@ def test_no_argument(tmp_path: Path) -> None:
     test_document = tmp_path / "test.md"
     test_document.write_text(data=content, encoding="utf-8")
 
-    def evaluator(example: Example) -> None:
+    def evaluator(_: Example) -> None:
         """
         No-op evaluator.
         """
-        del example
 
     group_parser = GroupedCodeBlockParser(
         directive="group",

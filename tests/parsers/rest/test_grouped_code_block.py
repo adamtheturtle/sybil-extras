@@ -264,11 +264,10 @@ def test_no_argument(tmp_path: Path) -> None:
     test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
-    def evaluator(example: Example) -> None:
+    def evaluator(_: Example) -> None:
         """
         No-op evaluator.
         """
-        del example
 
     group_parser = GroupedCodeBlockParser(
         directive="group",
@@ -277,5 +276,34 @@ def test_no_argument(tmp_path: Path) -> None:
 
     sybil = Sybil(parsers=[group_parser])
     expected_error = r"missing arguments to group"
+    with pytest.raises(expected_exception=ValueError, match=expected_error):
+        sybil.parse(path=test_document)
+
+
+def test_malformed_argument(tmp_path: Path) -> None:
+    """
+    An error is raised when a group directive has no arguments.
+    """
+    content = """\
+    .. group: not_start_or_end
+
+    .. group: end
+    """
+
+    test_document = tmp_path / "test.rst"
+    test_document.write_text(data=content, encoding="utf-8")
+
+    def evaluator(_: Example) -> None:
+        """
+        No-op evaluator.
+        """
+
+    group_parser = GroupedCodeBlockParser(
+        directive="group",
+        evaluator=evaluator,
+    )
+
+    sybil = Sybil(parsers=[group_parser])
+    expected_error = r"malformed arguments to group: 'not_start_or_end'"
     with pytest.raises(expected_exception=ValueError, match=expected_error):
         sybil.parse(path=test_document)

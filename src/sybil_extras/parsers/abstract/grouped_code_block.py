@@ -11,7 +11,7 @@ from sybil import Document, Example, Region
 from sybil.parsers.abstract.lexers import LexerCollection
 from sybil.typing import Evaluator, Lexer
 
-GROUP_ARGUMENTS_PATTERN = re.compile(pattern=r"(\w+)")
+GROUP_ARGUMENTS_PATTERN = re.compile(pattern=r"(start|end)")
 
 
 @dataclass
@@ -124,7 +124,7 @@ class AbstractGroupedCodeBlockParser:
 
             match = GROUP_ARGUMENTS_PATTERN.match(string=arguments)
             if match is None:
-                directive = lexed.lexemes.get("directive", "skip")
+                directive = lexed.lexemes["directive"]
                 msg = f"malformed arguments to {directive}: {arguments!r}"
                 raise ValueError(msg)
 
