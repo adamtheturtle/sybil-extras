@@ -72,7 +72,7 @@ def test_group(tmp_path: Path) -> None:
 
     assert document.namespace["blocks"] == [
         "x = []\n",
-        "x = [*x, 1]\n\nx = [*x, 2]\n",
+        "x = [*x, 1]\nx = [*x, 2]\n",
         "x = [*x, 3]\n",
     ]
 
@@ -127,7 +127,7 @@ def test_nothing_after_group(tmp_path: Path) -> None:
 
     assert document.namespace["blocks"] == [
         "x = []\n",
-        "x = [*x, 1]\n\nx = [*x, 2]\n",
+        "x = [*x, 1]\nx = [*x, 2]\n",
     ]
 
 
