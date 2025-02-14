@@ -139,6 +139,9 @@ GroupedCodeBlockParser
 
     pytest_collect_file = sybil.pytest()
 
+This makes Sybil act as though all of the code blocks within a group are a single code block.
+The first code block in the group is expanded to include all of the code blocks in the group.
+
 .. |Build Status| image:: https://github.com/adamtheturtle/sybil-extras/actions/workflows/ci.yml/badge.svg?branch=main
    :target: https://github.com/adamtheturtle/sybil-extras/actions
 .. |codecov| image:: https://codecov.io/gh/adamtheturtle/sybil-extras/branch/main/graph/badge.svg

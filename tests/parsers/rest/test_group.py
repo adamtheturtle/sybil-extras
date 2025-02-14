@@ -10,7 +10,7 @@ from sybil.example import Example
 from sybil.parsers.rest.codeblock import CodeBlockParser
 from sybil.parsers.rest.skip import SkipParser
 
-from sybil_extras.parsers.rest.group import GroupedCodeBlockParser
+from sybil_extras.parsers.rest.grouped_code_block import GroupedCodeBlockParser
 
 
 def test_group(tmp_path: Path) -> None:
