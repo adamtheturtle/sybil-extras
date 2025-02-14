@@ -4,11 +4,9 @@ Tests for the group parser for reST.
 
 from pathlib import Path
 
-import pytest
 from sybil import Sybil
 from sybil.example import Example
 from sybil.parsers.rest.codeblock import CodeBlockParser
-from sybil.parsers.rest.skip import SkipParser
 
 from sybil_extras.parsers.rest.grouped_code_block import GroupedCodeBlockParser
 
