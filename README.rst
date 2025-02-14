@@ -175,7 +175,7 @@ A reStructuredText example:
 
        def hello() -> None:
            """Print a greeting."""
-           sys.out.write("Hello, world!")
+           sys.stdout.write("Hello, world!")
 
 
        hello()
