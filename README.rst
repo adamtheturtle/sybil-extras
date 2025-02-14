@@ -124,6 +124,8 @@ GroupedCodeBlockParser
 
     """Use GroupedCodeBlockParser to group code blocks by a custom directive."""
 
+    from pathlib import Path
+
     from sybil import Sybil
     from sybil.parsers.rest.codeblock import PythonCodeBlockParser
 
@@ -137,7 +139,12 @@ GroupedCodeBlockParser
 
     sybil = Sybil(parsers=[code_block_parser, group_parser])
 
-    pytest_collect_file = sybil.pytest()
+    document = sybil.parse(path=Path("path/to/file.rst"))
+
+    for example in document.examples():
+        # One evaluate call will evaluate a code block with the contents of all
+        # code blocks in the group.
+        example.evaluate()
 
 This makes Sybil act as though all of the code blocks within a group are a single code block.
 The first code block in the group is expanded to include all of the code blocks in the group.
@@ -152,23 +159,32 @@ A reStructuredText example:
 
    .. code-block:: python
 
+      """Code block outside the group."""
+
       x = 1
-      print(x)
+      assert x == 1
 
    .. group: start
 
    .. code-block:: python
 
+       """Define a function to use in the next code block."""
+
+       import sys
+
+
        def hello() -> None:
            """Print a greeting."""
-           print("Hello, world!")
+           sys.out.write("Hello, world!")
+
+
+       hello()
 
    .. code-block:: python
 
        """Run a function which is defined in the previous code block."""
 
-       # We don't do this yet - doccmd does not support groups
-       # hello()
+       # We don't run ``hello()`` yet - doccmd does not support groups
 
    .. group: end
 
