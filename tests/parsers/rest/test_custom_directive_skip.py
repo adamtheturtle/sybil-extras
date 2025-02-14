@@ -38,9 +38,9 @@ def test_skip(tmp_path: Path) -> None:
     test_document.write_text(data=content, encoding="utf-8")
 
     skip_parser = CustomDirectiveSkipParser(directive="custom-skip")
-    code_parser = PythonCodeBlockParser()
+    code_block_parser = PythonCodeBlockParser()
 
-    sybil = Sybil(parsers=[code_parser, skip_parser])
+    sybil = Sybil(parsers=[code_block_parser, skip_parser])
     document = sybil.parse(path=test_document)
     skip_states: list[SkipState] = []
     for example in document.examples():
