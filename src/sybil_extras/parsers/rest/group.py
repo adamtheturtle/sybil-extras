@@ -10,7 +10,7 @@ from sybil.parsers.rest.lexers import DirectiveInCommentLexer
 from sybil.region import Lexeme
 
 
-def validate_sub_regions(regions: Sequence[Region]) -> None:
+def _validate_sub_regions(regions: Sequence[Region]) -> None:
     evaluators = {region.evaluator for region in regions}
     if len(evaluators) != 1:
         message = "All sub-regions of a group must have the same evaluator."
@@ -49,7 +49,7 @@ class GroupParser:
                 elif region.start > end_region.start:
                     break
             if current_sub_regions:
-                validate_sub_regions(regions=current_sub_regions)
+                _validate_sub_regions(regions=current_sub_regions)
                 first_sub_region = current_sub_regions[0]
 
                 parsed_text = "\n".join(
