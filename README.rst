@@ -166,7 +166,8 @@ A reStructuredText example:
 
        """Run a function which is defined in the previous code block."""
 
-       hello()
+       # We don't do this yet - doccmd does not support groups
+       # hello()
 
    .. group: end
 

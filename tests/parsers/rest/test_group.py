@@ -211,3 +211,5 @@ def test_group_with_skip(tmp_path: Path) -> None:
 
 
 # TODO: With end before start / without start
+
+# TODO: Once doccmd is updated, update the README to require a group
