@@ -105,14 +105,14 @@ class AbstractGroupedCodeBlockParser:
             lexers: The lexers to use to find regions.
             evaluator: The evaluator to use for evaluating the combined region.
         """
-        self.lexers: LexerCollection = LexerCollection(lexers)
-        self.grouper: _Grouper = _Grouper(evaluator=evaluator)
+        self._lexers: LexerCollection = LexerCollection(lexers)
+        self._grouper: _Grouper = _Grouper(evaluator=evaluator)
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """
         Yield regions to evaluate, grouped by start and end comments.
         """
-        for lexed in self.lexers(document):
+        for lexed in self._lexers(document):
             arguments = lexed.lexemes["arguments"]
             if not arguments:
                 directive = lexed.lexemes["directive"]
@@ -128,5 +128,5 @@ class AbstractGroupedCodeBlockParser:
                 start=lexed.start,
                 end=lexed.end,
                 parsed=arguments,
-                evaluator=self.grouper,
+                evaluator=self._grouper,
             )
