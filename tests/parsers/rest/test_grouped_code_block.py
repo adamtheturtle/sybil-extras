@@ -224,7 +224,7 @@ def test_group_with_skip(tmp_path: Path) -> None:
 
 def test_python_codeblock(tmp_path: Path) -> None:
     """
-    Python codeblocks work within groups.
+    Python code blocks work within groups.
     """
     content = """\
 
