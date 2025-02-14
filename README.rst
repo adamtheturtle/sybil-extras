@@ -124,9 +124,11 @@ GroupedCodeBlockParser
 
     """Use GroupedCodeBlockParser to group code blocks by a custom directive."""
 
+    import sys
     from pathlib import Path
 
     from sybil import Sybil
+    from sybil.example import Example
     from sybil.parsers.rest.codeblock import PythonCodeBlockParser
 
     # Similar parsers are available at
@@ -134,10 +136,16 @@ GroupedCodeBlockParser
     # sybil_extras.parsers.myst.grouped_code_block.
     from sybil_extras.parsers.rest.grouped_code_block import GroupedCodeBlockParser
 
-    group_parser = GroupedCodeBlockParser(directive="group", evaluator=evaluator,)
+
+    def evaluator(example: Example) -> None:
+        """Evaluate the code block by printing it."""
+        sys.stdout.write(example.parsed)
+
+
+    group_parser = GroupedCodeBlockParser(directive="group", evaluator=evaluator)
     code_block_parser = PythonCodeBlockParser()
 
-    sybil = Sybil(parsers=[code_block_parser, group_parser])
+    sybil = Sybil(parsers=[group_parser, code_block_parser])
 
     document = sybil.parse(path=Path("CHANGELOG.rst"))
 
@@ -146,12 +154,11 @@ GroupedCodeBlockParser
         # code blocks in the group.
         example.evaluate()
 
-This makes Sybil act as though all of the code blocks within a group are a single code block.
-The first code block in the group is expanded to include all of the code blocks in the group.
-Typically, this is most useful at the end of a list of parsers.
-
-All parsed regions within the group must have the same evaluator.
-This means, for example, that you cannot use skip directives within a group.
+This makes Sybil act as though all of the code blocks within a group are a single code block,
+to be evaluated with the ``evaluator`` given to ``GroupedCodeBlockParser``.
+A group is defined by a pair of comments, ``group: start`` and ``group: end``.
+The ``group: end`` example is expanded to include the contents of the code blocks in the group.
+This means that skip directives in the group are not respected.
 
 A reStructuredText example:
 
