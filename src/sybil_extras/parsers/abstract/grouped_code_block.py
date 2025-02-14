@@ -30,7 +30,7 @@ class AbstractGroupedCodeBlockParser:
         Args:
             lexers: The lexers to use to find regions.
         """
-        self.lexers = LexerCollection(lexers)
+        self.lexers: LexerCollection = LexerCollection(lexers)
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """
