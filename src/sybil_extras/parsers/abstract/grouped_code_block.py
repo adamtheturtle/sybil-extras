@@ -2,7 +2,6 @@
 A group parser for reST.
 """
 
-import re
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
@@ -10,8 +9,6 @@ from dataclasses import dataclass
 from sybil import Document, Example, Region
 from sybil.parsers.abstract.lexers import LexerCollection
 from sybil.typing import Evaluator, Lexer
-
-GROUP_ARGUMENTS_PATTERN = re.compile(pattern=r"(start|end)")
 
 
 @dataclass
@@ -43,7 +40,7 @@ class _Grouper:
         Evaluate a grouper marker.
         """
         state = self._document_state[example.document]
-        (action,) = example.parsed
+        action = example.parsed
 
         if action == "start":
             example.document.push_evaluator(evaluator=self)
@@ -122,8 +119,7 @@ class AbstractGroupedCodeBlockParser:
                 msg = f"missing arguments to {directive}"
                 raise ValueError(msg)
 
-            match = GROUP_ARGUMENTS_PATTERN.match(string=arguments)
-            if match is None:
+            if arguments not in ("start", "end"):
                 directive = lexed.lexemes["directive"]
                 msg = f"malformed arguments to {directive}: {arguments!r}"
                 raise ValueError(msg)
@@ -131,6 +127,6 @@ class AbstractGroupedCodeBlockParser:
             yield Region(
                 start=lexed.start,
                 end=lexed.end,
-                parsed=match.groups(),
+                parsed=arguments,
                 evaluator=self.grouper,
             )
