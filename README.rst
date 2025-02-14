@@ -139,12 +139,13 @@ GroupedCodeBlockParser
 
     sybil = Sybil(parsers=[code_block_parser, group_parser])
 
-    document = sybil.parse(path=Path("path/to/file.rst"))
+    document = sybil.parse(path=Path("CHANGELOG.rst"))
 
     for example in document.examples():
         # One evaluate call will evaluate a code block with the contents of all
         # code blocks in the group.
         example.evaluate()
+
 
 This makes Sybil act as though all of the code blocks within a group are a single code block.
 The first code block in the group is expanded to include all of the code blocks in the group.
