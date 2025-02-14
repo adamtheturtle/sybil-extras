@@ -17,9 +17,9 @@ def _validate_sub_regions(regions: Sequence[Region]) -> None:
         raise ValueError(message)
 
 
-class GroupParser:
+class GroupedCodeBlockParser:
     """
-    A group parser for reST.
+    A code block group parser for reST.
     """
 
     def __init__(self, directive: str) -> None:

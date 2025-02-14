@@ -10,7 +10,7 @@ from sybil.example import Example
 from sybil.parsers.rest.codeblock import CodeBlockParser
 from sybil.parsers.rest.skip import SkipParser
 
-from sybil_extras.parsers.rest.group import GroupParser
+from sybil_extras.parsers.rest.group import GroupedCodeBlockParser
 
 
 def test_group(tmp_path: Path) -> None:
@@ -51,7 +51,7 @@ def test_group(tmp_path: Path) -> None:
             example.parsed,
         ]
 
-    group_parser = GroupParser(directive="group")
+    group_parser = GroupedCodeBlockParser(directive="group")
     code_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
     sybil = Sybil(parsers=[code_parser, group_parser])
@@ -100,7 +100,7 @@ def test_nothing_after_group(tmp_path: Path) -> None:
             example.parsed,
         ]
 
-    group_parser = GroupParser(directive="group")
+    group_parser = GroupedCodeBlockParser(directive="group")
     code_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
     sybil = Sybil(parsers=[code_parser, group_parser])
@@ -144,7 +144,7 @@ def test_empty_group(tmp_path: Path) -> None:
             example.parsed,
         ]
 
-    group_parser = GroupParser(directive="group")
+    group_parser = GroupedCodeBlockParser(directive="group")
     code_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
     sybil = Sybil(parsers=[code_parser, group_parser])
@@ -198,7 +198,7 @@ def test_group_with_skip(tmp_path: Path) -> None:
             example.parsed,
         ]
 
-    group_parser = GroupParser(directive="group")
+    group_parser = GroupedCodeBlockParser(directive="group")
     code_parser = CodeBlockParser(language="python", evaluator=evaluator)
     skip_parser = SkipParser()
 
