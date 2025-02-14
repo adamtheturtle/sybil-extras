@@ -7,17 +7,7 @@ from collections.abc import Iterable, Sequence
 from sybil import Document, Region
 from sybil.parsers.abstract.lexers import LexerCollection
 from sybil.region import Lexeme
-from sybil.typing import Lexer
-
-
-def _validate_sub_regions(regions: Sequence[Region]) -> None:
-    """
-    Raise an error if sub-regions do not all have the same evaluator.
-    """
-    evaluators = {region.evaluator for region in regions}
-    if len(evaluators) != 1:
-        message = "All sub-regions of a group must have the same evaluator."
-        raise ValueError(message)
+from sybil.typing import Evaluator, Lexer
 
 
 class AbstractGroupedCodeBlockParser:
@@ -25,12 +15,14 @@ class AbstractGroupedCodeBlockParser:
     An abstract parser for grouping code blocks.
     """
 
-    def __init__(self, lexers: Sequence[Lexer]) -> None:
+    def __init__(self, lexers: Sequence[Lexer], evaluator: Evaluator) -> None:
         """
         Args:
             lexers: The lexers to use to find regions.
+            evaluator: The evaluator to use for evaluating the combined region.
         """
         self.lexers: LexerCollection = LexerCollection(lexers)
+        self.evaluator: Evaluator = evaluator
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """
@@ -47,7 +39,6 @@ class AbstractGroupedCodeBlockParser:
                 elif region.start > end_region.start:
                     break
             if current_sub_regions:
-                _validate_sub_regions(regions=current_sub_regions)
                 first_sub_region = current_sub_regions[0]
 
                 parsed_text = "".join(
@@ -69,6 +60,6 @@ class AbstractGroupedCodeBlockParser:
                     start=first_sub_region.start,
                     end=first_sub_region.end,
                     parsed=parsed,
-                    evaluator=first_sub_region.evaluator,
+                    evaluator=self.evaluator,
                 )
                 break
