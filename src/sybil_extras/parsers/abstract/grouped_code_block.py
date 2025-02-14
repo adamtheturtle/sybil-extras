@@ -35,20 +35,19 @@ class _Grouper:
         self.document_state: dict[Document, _GroupState] = {}
         self.evaluator = evaluator
 
-    def state_for(self, example: Example) -> _GroupState:
+    def state_for(self, document: Document) -> _GroupState:
         """
         Get the state for this document.
         """
-        document = example.document
         if document not in self.document_state:
             self.document_state[document] = _GroupState()
-        return self.document_state[example.document]
+        return self.document_state[document]
 
     def evaluate_skip_example(self, example: Example) -> None:
         """
         Evaluate a skip example.
         """
-        state = self.state_for(example=example)
+        state = self.state_for(document=example.document)
         (action,) = example.parsed
 
         if action not in ("start", "end"):
@@ -88,7 +87,7 @@ class _Grouper:
         """
         Evaluate an example that is not a skip example.
         """
-        state = self.state_for(example=example)
+        state = self.state_for(document=example.document)
 
         if "source" in example.region.lexemes:
             if state.combined_text is None:
