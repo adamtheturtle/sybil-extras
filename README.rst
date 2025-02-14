@@ -184,7 +184,7 @@ A reStructuredText example:
 
        """Run a function which is defined in the previous code block."""
 
-       # We don't run ``hello()`` yet - doccmd does not support groups
+       # We don't run ``hello()`` yet - ``doccmd`` does not support groups
 
    .. group: end
 
