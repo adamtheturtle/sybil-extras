@@ -4,7 +4,6 @@ Tests for the group parser for Markdown.
 
 from pathlib import Path
 
-import pytest
 from sybil import Sybil
 from sybil.example import Example
 from sybil.parsers.markdown.codeblock import (
@@ -227,12 +226,17 @@ def test_group_with_skip(tmp_path: Path) -> None:
         directive="group",
         evaluator=evaluator,
     )
-    code_parser = CodeBlockParser(language="python")
+    code_parser = CodeBlockParser(language="python", evaluator=evaluator)
     skip_parser = SkipParser()
 
     sybil = Sybil(parsers=[code_parser, skip_parser, group_parser])
-    with pytest.raises(
-        expected_exception=ValueError,
-        match="All sub-regions of a group must have the same evaluator.",
-    ):
-        sybil.parse(path=test_document)
+    document = sybil.parse(path=test_document)
+
+    for example in document.examples():
+        example.evaluate()
+
+    assert document.namespace["blocks"] == [
+        "x = []\n",
+        "x = [*x, 1]\nx = [*x, 2]\n",
+        "x = [*x, 3]\n",
+    ]

@@ -24,7 +24,7 @@ class SkipState:
     remove: bool = False
     exception: Exception | None = None
     last_action: str | None = None
-    combined_text: str = ""
+    combined_text: str | None = None
 
 
 class Skipper:
@@ -84,21 +84,22 @@ class Skipper:
         if action == "start":
             self.install(example=example)
         elif action == "end":
-            region = Region(
-                start=example.region.start,
-                end=example.region.end,
-                parsed=state.combined_text,
-                evaluator=self.evaluator,
-                lexemes=example.region.lexemes,
-            )
-            new_example = Example(
-                document=example.document,
-                line=example.line,
-                column=example.column,
-                region=region,
-                namespace=example.namespace,
-            )
-            self.evaluator(new_example)
+            if state.combined_text is not None:
+                region = Region(
+                    start=example.region.start,
+                    end=example.region.end,
+                    parsed=state.combined_text,
+                    evaluator=self.evaluator,
+                    lexemes=example.region.lexemes,
+                )
+                new_example = Example(
+                    document=example.document,
+                    line=example.line,
+                    column=example.column,
+                    region=region,
+                    namespace=example.namespace,
+                )
+                self.evaluator(new_example)
             self.remove(example=example)
 
     def evaluate_other_example(self, example: Example) -> None:
@@ -111,7 +112,11 @@ class Skipper:
         if not state.active:
             raise NotEvaluated
 
-        state.combined_text += example.parsed
+        if "source" in example.region.lexemes:
+            if state.combined_text is None:
+                state.combined_text = example.parsed
+            else:
+                state.combined_text += example.parsed
 
         if state.exception is not None:
             raise state.exception
@@ -135,6 +140,7 @@ class AbstractGroupedCodeBlockParser:
         """
         Args:
             lexers: The lexers to use to find regions.
+            evaluator: The evaluator to use for evaluating the combined region.
         """
         self.lexers: LexerCollection = LexerCollection(lexers)
         self.grouper = Skipper(evaluator=evaluator)

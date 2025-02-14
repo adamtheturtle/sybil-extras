@@ -222,8 +222,17 @@ def test_group_with_skip(tmp_path: Path) -> None:
         directive="group",
         evaluator=evaluator,
     )
-    code_parser = CodeBlockParser(language="python")
+    code_parser = CodeBlockParser(language="python", evaluator=evaluator)
     skip_parser = SkipParser()
 
     sybil = Sybil(parsers=[code_parser, skip_parser, group_parser])
-    # TODO
+    document = sybil.parse(path=test_document)
+
+    for example in document.examples():
+        example.evaluate()
+
+    assert document.namespace["blocks"] == [
+        "x = []\n",
+        "x = [*x, 1]\nx = [*x, 2]\n",
+        "x = [*x, 3]",
+    ]
