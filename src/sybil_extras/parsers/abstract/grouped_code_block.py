@@ -15,7 +15,7 @@ GROUP_ARGUMENTS_PATTERN = re.compile(pattern=r"(\w+)")
 
 
 @dataclass
-class SkipState:
+class _GroupState:
     """
     Skip state.
     """
@@ -27,7 +27,7 @@ class SkipState:
     combined_text: str | None = None
 
 
-class Skipper:
+class _Grouper:
     """
     A skipper.
     """
@@ -36,16 +36,16 @@ class Skipper:
         """
         Add document state.
         """
-        self.document_state: dict[Document, SkipState] = {}
+        self.document_state: dict[Document, _GroupState] = {}
         self.evaluator = evaluator
 
-    def state_for(self, example: Example) -> SkipState:
+    def state_for(self, example: Example) -> _GroupState:
         """
         Get the state for this document.
         """
         document = example.document
         if document not in self.document_state:
-            self.document_state[document] = SkipState()
+            self.document_state[document] = _GroupState()
         return self.document_state[example.document]
 
     def install(self, example: Example) -> None:
@@ -143,7 +143,7 @@ class AbstractGroupedCodeBlockParser:
             evaluator: The evaluator to use for evaluating the combined region.
         """
         self.lexers: LexerCollection = LexerCollection(lexers)
-        self.grouper = Skipper(evaluator=evaluator)
+        self.grouper = _Grouper(evaluator=evaluator)
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """
