@@ -42,6 +42,17 @@ def test_group(tmp_path: Path) -> None:
      x = [*x, 3]
     ```
 
+    <!--- group: start -->
+
+    ```python
+    x = [*x, 4]
+    ```
+
+    ```python
+     x = [*x, 5]
+    ```
+
+    <!--- group: end -->
     """
 
     test_document = tmp_path / "test.rst"
@@ -73,6 +84,7 @@ def test_group(tmp_path: Path) -> None:
         "x = []\n",
         "x = [*x, 1]\nx = [*x, 2]\n",
         "x = [*x, 3]\n",
+        "x = [*x, 4]\nx = [*x, 5]\n",
     ]
 
 
