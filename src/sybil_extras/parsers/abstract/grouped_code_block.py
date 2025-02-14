@@ -2,22 +2,108 @@
 A group parser for reST.
 """
 
+import re
 from collections.abc import Iterable, Sequence
+from dataclasses import dataclass
 
-from sybil import Document, Region
+from sybil import Document, Example, Region
+from sybil.example import NotEvaluated
 from sybil.parsers.abstract.lexers import LexerCollection
-from sybil.region import Lexeme
 from sybil.typing import Lexer
 
+GROUP_ARGUMENTS_PATTERN = re.compile(pattern=r"(\w+)")
 
-def _validate_sub_regions(regions: Sequence[Region]) -> None:
+
+@dataclass
+class SkipState:
     """
-    Raise an error if sub-regions do not all have the same evaluator.
+    Skip state.
     """
-    evaluators = {region.evaluator for region in regions}
-    if len(evaluators) != 1:
-        message = "All sub-regions of a group must have the same evaluator."
-        raise ValueError(message)
+
+    active: bool = True
+    remove: bool = False
+    exception: Exception | None = None
+    last_action: str | None = None
+
+
+class Skipper:
+    """
+    A skipper.
+    """
+
+    def __init__(self) -> None:
+        """
+        Add document state.
+        """
+        self.document_state: dict[Document, SkipState] = {}
+
+    def state_for(self, example: Example) -> SkipState:
+        """
+        Get the state for this document.
+        """
+        document = example.document
+        if document not in self.document_state:
+            self.document_state[document] = SkipState()
+        return self.document_state[example.document]
+
+    def install(self, example: Example) -> None:
+        """
+        Install the state for this document.
+        """
+        document = example.document
+        document.push_evaluator(evaluator=self)
+
+    def remove(self, example: Example) -> None:
+        """
+        Remove the state for this document.
+        """
+        document = example.document
+        document.pop_evaluator(evaluator=self)
+        del self.document_state[document]
+
+    def evaluate_skip_example(self, example: Example) -> None:
+        """
+        Evaluate a skip example.
+        """
+        state = self.state_for(example=example)
+        (action,) = example.parsed
+
+        if action not in ("start", "end"):
+            raise ValueError("Bad skip action: " + action)
+        if state.last_action is None and action not in ("start",):
+            msg = f"'skip: {action}' must follow 'skip: start'"
+            raise ValueError(msg)
+        if state.last_action and action != "end":
+            msg = f"'skip: {action}' cannot follow 'skip: {state.last_action}'"
+            raise ValueError(msg)
+
+        state.last_action = action
+
+        if action == "start":
+            self.install(example=example)
+        elif action == "end":
+            self.remove(example=example)
+
+    def evaluate_other_example(self, example: Example) -> None:
+        """
+        Evaluate an example that is not a skip example.
+        """
+        state = self.state_for(example=example)
+        if state.remove:
+            self.remove(example=example)
+        if not state.active:
+            raise NotEvaluated
+        if state.exception is not None:
+            raise state.exception
+
+    def __call__(self, example: Example) -> None:
+        """
+        Call the evaluator.
+        """
+        if example.region.evaluator is self:
+            self.evaluate_skip_example(example=example)
+        else:
+            self.evaluate_other_example(example=example)
 
 
 class AbstractGroupedCodeBlockParser:
@@ -31,44 +117,23 @@ class AbstractGroupedCodeBlockParser:
             lexers: The lexers to use to find regions.
         """
         self.lexers: LexerCollection = LexerCollection(lexers)
+        self.grouper = Skipper()
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """
         Yield regions to evaluate, grouped by start and end comments.
         """
-        lexed_regions = self.lexers(document)
-        start_end_pairs = zip(lexed_regions, lexed_regions, strict=True)
-        current_sub_regions: Sequence[Region] = []
-        for start_region, end_region in start_end_pairs:
-            current_sub_regions = []
-            for _, region in document.regions:
-                if start_region.start < region.start < end_region.end:
-                    current_sub_regions = [*current_sub_regions, region]
-                elif region.start > end_region.start:
-                    break
-            if current_sub_regions:
-                _validate_sub_regions(regions=current_sub_regions)
-                first_sub_region = current_sub_regions[0]
+        for lexed in self.lexers(document):
+            arguments = lexed.lexemes["arguments"]
+            match = GROUP_ARGUMENTS_PATTERN.match(string=arguments)
+            if match is None:
+                directive = lexed.lexemes.get("directive", "skip")
+                msg = f"malformed arguments to {directive}: {arguments!r}"
+                raise ValueError(msg)
 
-                parsed_text = "\n".join(
-                    region.parsed for region in current_sub_regions
-                )
-
-                parsed = Lexeme(
-                    text=parsed_text,
-                    line_offset=first_sub_region.parsed.line_offset,
-                    offset=first_sub_region.parsed.offset,
-                )
-
-                for current_sub_region in current_sub_regions:
-                    document.regions.remove(
-                        (current_sub_region.start, current_sub_region)
-                    )
-
-                yield Region(
-                    start=first_sub_region.start,
-                    end=first_sub_region.end,
-                    parsed=parsed,
-                    evaluator=first_sub_region.evaluator,
-                )
-                break
+            yield Region(
+                start=lexed.start,
+                end=lexed.end,
+                parsed=match.groups(),
+                evaluator=self.grouper,
+            )
