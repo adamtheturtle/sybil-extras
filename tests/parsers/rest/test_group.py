@@ -210,6 +210,4 @@ def test_group_with_skip(tmp_path: Path) -> None:
         sybil.parse(path=test_document)
 
 
-# TODO: With skips before
-# TODO: Document that it must be the last parser
 # TODO: With end before start / without start

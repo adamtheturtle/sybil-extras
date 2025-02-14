@@ -132,15 +132,19 @@ GroupedCodeBlockParser
     # sybil_extras.parsers.myst.grouped_code_block.
     from sybil_extras.parsers.rest.grouped_code_block import GroupedCodeBlockParser
 
-    group_parser = GroupedCodeBlockParser(directive="custom-marker-group")
+    group_parser = GroupedCodeBlockParser(directive="group")
     code_block_parser = PythonCodeBlockParser()
 
-    sybil = Sybil(parsers=[group_parser, code_block_parser])
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
 
     pytest_collect_file = sybil.pytest()
 
 This makes Sybil act as though all of the code blocks within a group are a single code block.
 The first code block in the group is expanded to include all of the code blocks in the group.
+Typically, this is most useful at the end of a list of parsers.
+
+All parsed regions within the group must have the same evaluator.
+This means, for example, that you cannot use skip directives within a group.
 
 .. |Build Status| image:: https://github.com/adamtheturtle/sybil-extras/actions/workflows/ci.yml/badge.svg?branch=main
    :target: https://github.com/adamtheturtle/sybil-extras/actions
