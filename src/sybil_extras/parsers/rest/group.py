@@ -2,17 +2,12 @@
 A group parser for reST.
 """
 
-import re
 from collections.abc import Iterable, Sequence
-from dataclasses import dataclass
-from typing import Literal
 
 from sybil import Document, Region
-from sybil.example import Example, NotEvaluated
 from sybil.parsers.abstract.lexers import LexerCollection
 from sybil.parsers.rest.lexers import DirectiveInCommentLexer
-
-GROUP_ARGUMENTS_PATTERN = re.compile(pattern=r"(\w+)")
+from sybil.region import Lexeme
 
 
 def validate_sub_regions(regions: Sequence[Region]) -> None:
@@ -20,75 +15,6 @@ def validate_sub_regions(regions: Sequence[Region]) -> None:
     if len(evaluators) != 1:
         message = "All sub-regions of a group must have the same evaluator."
         raise ValueError(message)
-
-
-@dataclass
-class GroupState:
-    active: bool
-    last_action: Literal["start", "end"] | None = None
-    examples: list[Example] | None = None
-
-
-class GroupEvaluator:
-    def __init__(self) -> None:
-        self.document_state: dict[Document, GroupState] = {}
-
-    def state_for(self, example: Example) -> GroupState:
-        document = example.document
-        if document not in self.document_state:
-            self.document_state[document] = GroupState(active=True)
-        return self.document_state[example.document]
-
-    def remove(self, example: Example) -> None:
-        document = example.document
-        document.pop_evaluator(evaluator=self)
-        del self.document_state[document]
-
-    def install(
-        self,
-        example: Example,
-    ) -> None:
-        document = example.document
-        document.push_evaluator(evaluator=self)
-
-    def evaluate_group_example(self, example: Example) -> None:
-        state = self.state_for(example=example)
-        action = example.parsed
-
-        if action not in ("start", "end"):
-            raise ValueError("Bad group action: " + action)
-
-        if state.last_action is None and action != "start":
-            msg = f"'group: {action}' must follow 'group: start'"
-            raise ValueError(msg)
-        if state.last_action and action != "end":
-            msg = (
-                f"'group: {action}' cannot follow 'group: {state.last_action}'"
-            )
-            raise ValueError(msg)
-
-        state.last_action = action
-
-        if action == "start":
-            self.install(example=example)
-        elif action == "end":
-            for inner_example in state.examples or []:
-                inner_example.evaluate()
-            state.examples = None
-            self.remove(example=example)
-
-    def evaluate_other_example(self, example: Example) -> None:
-        state = self.state_for(example=example)
-        if not state.active:
-            raise NotEvaluated
-
-        examples = state.examples or []
-        state.examples = [*examples, example]
-
-    def __call__(self, example: Example) -> None:
-        if example.region.evaluator is self:
-            return self.evaluate_group_example(example=example)
-        return self.evaluate_other_example(example=example)
 
 
 class GroupParser:
@@ -104,24 +30,47 @@ class GroupParser:
         self.lexers: LexerCollection = LexerCollection(
             [DirectiveInCommentLexer(directive=directive)]
         )
-        self._group_evaluator = GroupEvaluator()
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """
         Yield regions to evaluate, grouped by start and end comments.
         """
-        for lexed in self.lexers(document):
-            arguments = lexed.lexemes["arguments"]
-            match = GROUP_ARGUMENTS_PATTERN.match(string=arguments)
-            if match is None:
-                directive = lexed.lexemes.get("directive", "group")
-                message = f"malformed arguments to {directive}: {arguments!r}"
-                raise ValueError(message)
-            (parsed,) = match.groups()
+        lexed_regions = self.lexers(document)
+        start_end_pairs = [
+            (first, second)
+            for first, second in zip(lexed_regions, lexed_regions, strict=True)
+        ]
+        current_sub_regions: Sequence[Region] = []
+        for start_region, end_region in start_end_pairs:
+            current_sub_regions = []
+            for _, region in document.regions:
+                if start_region.start < region.start < end_region.end:
+                    current_sub_regions = [*current_sub_regions, region]
+                elif region.start > end_region.start:
+                    break
+            if current_sub_regions:
+                validate_sub_regions(regions=current_sub_regions)
+                first_sub_region = current_sub_regions[0]
 
-            yield Region(
-                start=lexed.start,
-                end=lexed.end,
-                parsed=parsed,
-                evaluator=self._group_evaluator,
-            )
+                parsed_text = "\n".join(
+                    region.parsed for region in current_sub_regions
+                )
+
+                parsed = Lexeme(
+                    text=parsed_text,
+                    line_offset=first_sub_region.parsed.line_offset,
+                    offset=first_sub_region.parsed.offset,
+                )
+
+                for current_sub_region in current_sub_regions:
+                    document.regions.remove(
+                        (current_sub_region.start, current_sub_region)
+                    )
+
+                yield Region(
+                    start=first_sub_region.start,
+                    end=first_sub_region.end,
+                    parsed=parsed,
+                    evaluator=first_sub_region.evaluator,
+                )
+                break

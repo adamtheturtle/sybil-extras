@@ -3,12 +3,11 @@ Tests for the group parser for reST.
 """
 
 from pathlib import Path
-from textwrap import dedent
 
 import pytest
 from sybil import Sybil
 from sybil.example import Example
-from sybil.parsers.rest.codeblock import CodeBlockParser, PythonCodeBlockParser
+from sybil.parsers.rest.codeblock import CodeBlockParser
 from sybil.parsers.rest.skip import SkipParser
 
 from sybil_extras.parsers.rest.group import GroupParser
@@ -63,10 +62,9 @@ def test_group(tmp_path: Path) -> None:
 
     assert document.namespace["blocks"] == [
         "x = []\n",
-        "x = [*x, 1]\n\nx = [*x, 2]",
+        "x = [*x, 1]\n\nx = [*x, 2]\n",
         "x = [*x, 3]\n",
     ]
-    assert document.namespace["x"] == [1, 2, 3]
 
 
 def test_nothing_after_group(tmp_path: Path) -> None:
@@ -95,8 +93,15 @@ def test_nothing_after_group(tmp_path: Path) -> None:
     test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
+    def evaluator(example: Example) -> None:
+        existing_blocks = example.document.namespace.get("blocks", [])
+        example.document.namespace["blocks"] = [
+            *existing_blocks,
+            example.parsed,
+        ]
+
     group_parser = GroupParser(directive="group")
-    code_parser = PythonCodeBlockParser()
+    code_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
     sybil = Sybil(parsers=[code_parser, group_parser])
     document = sybil.parse(path=test_document)
@@ -104,20 +109,10 @@ def test_nothing_after_group(tmp_path: Path) -> None:
     for example in document.examples():
         example.evaluate()
 
-    parsed_examples = [example.parsed for example in document.examples()]
-    expected = [
+    assert document.namespace["blocks"] == [
         "x = []\n",
-        dedent(
-            text="""\
-            x = [*x, 1]
-
-            x = [*x, 2]
-            """
-        ),
+        "x = [*x, 1]\n\nx = [*x, 2]\n",
     ]
-    assert parsed_examples == expected
-
-    assert document.namespace["x"] == [1, 2]
 
 
 def test_empty_group(tmp_path: Path) -> None:
@@ -142,8 +137,15 @@ def test_empty_group(tmp_path: Path) -> None:
     test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
+    def evaluator(example: Example) -> None:
+        existing_blocks = example.document.namespace.get("blocks", [])
+        example.document.namespace["blocks"] = [
+            *existing_blocks,
+            example.parsed,
+        ]
+
     group_parser = GroupParser(directive="group")
-    code_parser = PythonCodeBlockParser()
+    code_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
     sybil = Sybil(parsers=[code_parser, group_parser])
     document = sybil.parse(path=test_document)
@@ -151,14 +153,10 @@ def test_empty_group(tmp_path: Path) -> None:
     for example in document.examples():
         example.evaluate()
 
-    parsed_examples = [example.parsed for example in document.examples()]
-    expected = [
+    assert document.namespace["blocks"] == [
         "x = []\n",
         "x = [*x, 3]",
     ]
-    assert parsed_examples == expected
-
-    assert document.namespace["x"] == [3]
 
 
 def test_group_with_skip(tmp_path: Path) -> None:
@@ -193,12 +191,22 @@ def test_group_with_skip(tmp_path: Path) -> None:
     test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
+    def evaluator(example: Example) -> None:
+        existing_blocks = example.document.namespace.get("blocks", [])
+        example.document.namespace["blocks"] = [
+            *existing_blocks,
+            example.parsed,
+        ]
+
     group_parser = GroupParser(directive="group")
-    code_parser = PythonCodeBlockParser()
+    code_parser = CodeBlockParser(language="python", evaluator=evaluator)
     skip_parser = SkipParser()
 
     sybil = Sybil(parsers=[code_parser, skip_parser, group_parser])
-    with pytest.raises(expected_exception=ValueError):
+    with pytest.raises(
+        expected_exception=ValueError,
+        match="All sub-regions of a group must have the same evaluator.",
+    ):
         sybil.parse(path=test_document)
 
 
