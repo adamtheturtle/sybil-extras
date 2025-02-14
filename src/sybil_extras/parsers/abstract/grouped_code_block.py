@@ -96,7 +96,7 @@ class _Grouper:
         Call the evaluator.
         """
         # We use ``id`` equivalence rather than ``is`` to avoid a
-        # Pyright error.
+        # ``pyright`` error.
         if id(example.region.evaluator) == id(self):
             self._evaluate_grouper_example(example=example)
             return
