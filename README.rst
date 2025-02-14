@@ -117,6 +117,77 @@ the Sybil documentation for skipping examples in
 and `MyST <https://sybil.readthedocs.io/en/latest/myst.html#skipping-examples>`_ files,
 but with custom text, e.g. ``custom-marker-skip`` replacing the word ``skip``.
 
+GroupedCodeBlockParser
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+    """Use GroupedCodeBlockParser to group code blocks by a custom directive."""
+
+    from pathlib import Path
+
+    from sybil import Sybil
+    from sybil.parsers.rest.codeblock import PythonCodeBlockParser
+
+    # Similar parsers are available at
+    # sybil_extras.parsers.markdown.grouped_code_block and
+    # sybil_extras.parsers.myst.grouped_code_block.
+    from sybil_extras.parsers.rest.grouped_code_block import GroupedCodeBlockParser
+
+    group_parser = GroupedCodeBlockParser(directive="group")
+    code_block_parser = PythonCodeBlockParser()
+
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
+
+    document = sybil.parse(path=Path("CHANGELOG.rst"))
+
+    for example in document.examples():
+        # One evaluate call will evaluate a code block with the contents of all
+        # code blocks in the group.
+        example.evaluate()
+
+This makes Sybil act as though all of the code blocks within a group are a single code block.
+The first code block in the group is expanded to include all of the code blocks in the group.
+Typically, this is most useful at the end of a list of parsers.
+
+All parsed regions within the group must have the same evaluator.
+This means, for example, that you cannot use skip directives within a group.
+
+A reStructuredText example:
+
+.. code-block:: rst
+
+   .. code-block:: python
+
+      """Code block outside the group."""
+
+      x = 1
+      assert x == 1
+
+   .. group: start
+
+   .. code-block:: python
+
+       """Define a function to use in the next code block."""
+
+       import sys
+
+
+       def hello() -> None:
+           """Print a greeting."""
+           sys.stdout.write("Hello, world!")
+
+
+       hello()
+
+   .. code-block:: python
+
+       """Run a function which is defined in the previous code block."""
+
+       # We don't run ``hello()`` yet - ``doccmd`` does not support groups
+
+   .. group: end
+
 .. |Build Status| image:: https://github.com/adamtheturtle/sybil-extras/actions/workflows/ci.yml/badge.svg?branch=main
    :target: https://github.com/adamtheturtle/sybil-extras/actions
 .. |codecov| image:: https://codecov.io/gh/adamtheturtle/sybil-extras/branch/main/graph/badge.svg
