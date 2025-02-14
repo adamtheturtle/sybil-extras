@@ -71,7 +71,7 @@ def test_group(tmp_path: Path) -> None:
     )
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
-    sybil = Sybil(parsers=[group_parser, code_block_parser])
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
     document = sybil.parse(path=test_document)
 
     for example in document.examples():
@@ -127,7 +127,7 @@ def test_nothing_after_group(tmp_path: Path) -> None:
     )
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
-    sybil = Sybil(parsers=[group_parser, code_block_parser])
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
     document = sybil.parse(path=test_document)
 
     for example in document.examples():
@@ -177,7 +177,7 @@ def test_empty_group(tmp_path: Path) -> None:
     )
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
-    sybil = Sybil(parsers=[group_parser, code_block_parser])
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
     document = sybil.parse(path=test_document)
 
     for example in document.examples():

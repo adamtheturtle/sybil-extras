@@ -145,7 +145,7 @@ GroupedCodeBlockParser
     group_parser = GroupedCodeBlockParser(directive="group", evaluator=evaluator)
     code_block_parser = PythonCodeBlockParser()
 
-    sybil = Sybil(parsers=[group_parser, code_block_parser])
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
 
     document = sybil.parse(path=Path("CHANGELOG.rst"))
 
