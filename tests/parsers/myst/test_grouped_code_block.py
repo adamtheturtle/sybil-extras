@@ -57,9 +57,9 @@ def test_group(tmp_path: Path) -> None:
         directive="group",
         evaluator=evaluator,
     )
-    code_parser = CodeBlockParser(language="python", evaluator=evaluator)
+    code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
-    sybil = Sybil(parsers=[code_parser, group_parser])
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
     document = sybil.parse(path=test_document)
 
     for example in document.examples():
@@ -112,9 +112,9 @@ def test_nothing_after_group(tmp_path: Path) -> None:
         directive="group",
         evaluator=evaluator,
     )
-    code_parser = CodeBlockParser(language="python", evaluator=evaluator)
+    code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
-    sybil = Sybil(parsers=[code_parser, group_parser])
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
     document = sybil.parse(path=test_document)
 
     for example in document.examples():
@@ -162,9 +162,9 @@ def test_empty_group(tmp_path: Path) -> None:
         directive="group",
         evaluator=evaluator,
     )
-    code_parser = CodeBlockParser(language="python", evaluator=evaluator)
+    code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
-    sybil = Sybil(parsers=[code_parser, group_parser])
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
     document = sybil.parse(path=test_document)
 
     for example in document.examples():
@@ -222,10 +222,10 @@ def test_group_with_skip(tmp_path: Path) -> None:
         directive="group",
         evaluator=evaluator,
     )
-    code_parser = CodeBlockParser(language="python", evaluator=evaluator)
+    code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
     skip_parser = SkipParser()
 
-    sybil = Sybil(parsers=[code_parser, skip_parser, group_parser])
+    sybil = Sybil(parsers=[code_block_parser, skip_parser, group_parser])
     document = sybil.parse(path=test_document)
 
     for example in document.examples():
