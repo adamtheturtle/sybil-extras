@@ -38,17 +38,11 @@ class _Grouper:
         )
         self._evaluator = evaluator
 
-    def state_for(self, document: Document) -> _GroupState:
-        """
-        Get the state for this document.
-        """
-        return self._document_state[document]
-
     def evaluate_skip_example(self, example: Example) -> None:
         """
         Evaluate a skip example.
         """
-        state = self.state_for(document=example.document)
+        state = self._document_state[example.document]
         (action,) = example.parsed
 
         if action not in ("start", "end"):
@@ -88,7 +82,7 @@ class _Grouper:
         """
         Evaluate an example that is not a skip example.
         """
-        state = self.state_for(document=example.document)
+        state = self._document_state[example.document]
 
         if "source" in example.region.lexemes:
             if state.combined_text is None:
