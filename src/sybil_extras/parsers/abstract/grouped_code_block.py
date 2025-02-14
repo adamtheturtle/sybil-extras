@@ -7,7 +7,6 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
 from sybil import Document, Example, Region
-from sybil.example import NotEvaluated
 from sybil.parsers.abstract.lexers import LexerCollection
 from sybil.typing import Evaluator, Lexer
 
@@ -20,9 +19,7 @@ class _GroupState:
     Skip state.
     """
 
-    active: bool = True
     remove: bool = False
-    exception: Exception | None = None
     last_action: str | None = None
     combined_text: str | None = None
 
@@ -47,13 +44,6 @@ class _Grouper:
         if document not in self.document_state:
             self.document_state[document] = _GroupState()
         return self.document_state[example.document]
-
-    def install(self, example: Example) -> None:
-        """
-        Install the state for this document.
-        """
-        document = example.document
-        document.push_evaluator(evaluator=self)
 
     def remove(self, example: Example) -> None:
         """
@@ -82,7 +72,8 @@ class _Grouper:
         state.last_action = action
 
         if action == "start":
-            self.install(example=example)
+            document = example.document
+            document.push_evaluator(evaluator=self)
         elif action == "end":
             if state.combined_text is not None:
                 region = Region(
@@ -109,17 +100,12 @@ class _Grouper:
         state = self.state_for(example=example)
         if state.remove:
             self.remove(example=example)
-        if not state.active:
-            raise NotEvaluated
 
         if "source" in example.region.lexemes:
             if state.combined_text is None:
                 state.combined_text = example.parsed
             else:
                 state.combined_text += example.parsed
-
-        if state.exception is not None:
-            raise state.exception
 
     def __call__(self, example: Example) -> None:
         """
