@@ -4,6 +4,7 @@ Tests for the group parser for MyST.
 
 from pathlib import Path
 
+import pytest
 from sybil import Sybil
 from sybil.example import Example
 from sybil.parsers.myst.codeblock import CodeBlockParser

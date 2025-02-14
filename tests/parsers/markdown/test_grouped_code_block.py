@@ -4,11 +4,13 @@ Tests for the group parser for Markdown.
 
 from pathlib import Path
 
+import pytest
 from sybil import Sybil
 from sybil.example import Example
 from sybil.parsers.markdown.codeblock import (
     CodeBlockParser,
 )
+from sybil.parsers.markdown.skip import SkipParser
 
 from sybil_extras.parsers.markdown.grouped_code_block import (
     GroupedCodeBlockParser,
