@@ -26,21 +26,22 @@ class _GroupState:
 
 class _Grouper:
     """
-    A skipper.
+    Group code blocks.
     """
 
     def __init__(self, evaluator: Evaluator) -> None:
         """
-        Add document state.
+        Args:
+            evaluator: The evaluator to use for evaluating the combined region.
         """
         self._document_state: dict[Document, _GroupState] = defaultdict(
             _GroupState
         )
         self._evaluator = evaluator
 
-    def evaluate_skip_example(self, example: Example) -> None:
+    def _evaluate_grouper_example(self, example: Example) -> None:
         """
-        Evaluate a skip example.
+        Evaluate a grouper marker.
         """
         state = self._document_state[example.document]
         (action,) = example.parsed
@@ -78,7 +79,7 @@ class _Grouper:
             example.document.pop_evaluator(evaluator=self)
             del self._document_state[example.document]
 
-    def evaluate_other_example(self, example: Example) -> None:
+    def _evaluate_other_example(self, example: Example) -> None:
         """
         Evaluate an example that is not a skip example.
         """
@@ -97,10 +98,10 @@ class _Grouper:
         # We use ``id`` equivalence rather than ``is`` to avoid a
         # Pyright error.
         if id(example.region.evaluator) == id(self):
-            self.evaluate_skip_example(example=example)
+            self._evaluate_grouper_example(example=example)
             return
 
-        self.evaluate_other_example(example=example)
+        self._evaluate_other_example(example=example)
 
     # Satisfy vulture.
     _caller = __call__
