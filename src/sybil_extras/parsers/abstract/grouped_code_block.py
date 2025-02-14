@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from sybil import Document, Example, Region
 from sybil.example import NotEvaluated
 from sybil.parsers.abstract.lexers import LexerCollection
-from sybil.typing import Lexer
+from sybil.typing import Evaluator, Lexer
 
 GROUP_ARGUMENTS_PATTERN = re.compile(pattern=r"(\w+)")
 
@@ -24,6 +24,7 @@ class SkipState:
     remove: bool = False
     exception: Exception | None = None
     last_action: str | None = None
+    combined_text: str = ""
 
 
 class Skipper:
@@ -31,11 +32,12 @@ class Skipper:
     A skipper.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, evaluator: Evaluator) -> None:
         """
         Add document state.
         """
         self.document_state: dict[Document, SkipState] = {}
+        self.evaluator = evaluator
 
     def state_for(self, example: Example) -> SkipState:
         """
@@ -82,6 +84,21 @@ class Skipper:
         if action == "start":
             self.install(example=example)
         elif action == "end":
+            region = Region(
+                start=example.region.start,
+                end=example.region.end,
+                parsed=state.combined_text,
+                evaluator=self.evaluator,
+                lexemes=example.region.lexemes,
+            )
+            new_example = Example(
+                document=example.document,
+                line=example.line,
+                column=example.column,
+                region=region,
+                namespace=example.namespace,
+            )
+            self.evaluator(new_example)
             self.remove(example=example)
 
     def evaluate_other_example(self, example: Example) -> None:
@@ -93,6 +110,9 @@ class Skipper:
             self.remove(example=example)
         if not state.active:
             raise NotEvaluated
+
+        state.combined_text += example.parsed
+
         if state.exception is not None:
             raise state.exception
 
@@ -111,13 +131,13 @@ class AbstractGroupedCodeBlockParser:
     An abstract parser for grouping code blocks.
     """
 
-    def __init__(self, lexers: Sequence[Lexer]) -> None:
+    def __init__(self, lexers: Sequence[Lexer], evaluator: Evaluator) -> None:
         """
         Args:
             lexers: The lexers to use to find regions.
         """
         self.lexers: LexerCollection = LexerCollection(lexers)
-        self.grouper = Skipper()
+        self.grouper = Skipper(evaluator=evaluator)
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """
