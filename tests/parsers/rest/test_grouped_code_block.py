@@ -191,7 +191,7 @@ def test_empty_group(tmp_path: Path) -> None:
 
 def test_group_with_skip(tmp_path: Path) -> None:
     """
-    An error is raised when a group contains a skip.
+    No error is raised when a group contains a skip.
     """
     content = """\
 
