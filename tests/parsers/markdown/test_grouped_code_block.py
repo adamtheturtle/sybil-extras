@@ -60,9 +60,9 @@ def test_group(tmp_path: Path) -> None:
         ]
 
     group_parser = GroupedCodeBlockParser(directive="group")
-    code_parser = CodeBlockParser(language="python", evaluator=evaluator)
+    code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
-    sybil = Sybil(parsers=[code_parser, group_parser])
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
     document = sybil.parse(path=test_document)
 
     for example in document.examples():
@@ -112,9 +112,9 @@ def test_nothing_after_group(tmp_path: Path) -> None:
         ]
 
     group_parser = GroupedCodeBlockParser(directive="group")
-    code_parser = CodeBlockParser(language="python", evaluator=evaluator)
+    code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
-    sybil = Sybil(parsers=[code_parser, group_parser])
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
     document = sybil.parse(path=test_document)
 
     for example in document.examples():
@@ -159,9 +159,9 @@ def test_empty_group(tmp_path: Path) -> None:
         ]
 
     group_parser = GroupedCodeBlockParser(directive="group")
-    code_parser = CodeBlockParser(language="python", evaluator=evaluator)
+    code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
-    sybil = Sybil(parsers=[code_parser, group_parser])
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
     document = sybil.parse(path=test_document)
 
     for example in document.examples():
@@ -206,10 +206,10 @@ def test_group_with_skip(tmp_path: Path) -> None:
     test_document.write_text(data=content, encoding="utf-8")
 
     group_parser = GroupedCodeBlockParser(directive="group")
-    code_parser = CodeBlockParser(language="python")
+    code_block_parser = CodeBlockParser(language="python")
     skip_parser = SkipParser()
 
-    sybil = Sybil(parsers=[code_parser, skip_parser, group_parser])
+    sybil = Sybil(parsers=[code_block_parser, skip_parser, group_parser])
     with pytest.raises(
         expected_exception=ValueError,
         match="All sub-regions of a group must have the same evaluator.",
@@ -249,9 +249,9 @@ def test_python_codeblock(tmp_path: Path) -> None:
     test_document.write_text(data=content, encoding="utf-8")
 
     group_parser = GroupedCodeBlockParser(directive="group")
-    code_parser = PythonCodeBlockParser()
+    code_block_parser = PythonCodeBlockParser()
 
-    sybil = Sybil(parsers=[code_parser, group_parser])
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
     document = sybil.parse(path=test_document)
 
     for example in document.examples():
