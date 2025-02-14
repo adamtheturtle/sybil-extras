@@ -149,10 +149,10 @@ GroupedCodeBlockParser
 
     document = sybil.parse(path=Path("CHANGELOG.rst"))
 
-    for example in document.examples():
+    for item in document.examples():
         # One evaluate call will evaluate a code block with the contents of all
         # code blocks in the group.
-        example.evaluate()
+        item.evaluate()
 
 This makes Sybil act as though all of the code blocks within a group are a single code block,
 to be evaluated with the ``evaluator`` given to ``GroupedCodeBlockParser``.
