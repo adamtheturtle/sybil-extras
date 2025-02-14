@@ -4,10 +4,10 @@ Tests for the group parser for MyST.
 
 from pathlib import Path
 
+import pytest
 from sybil import Sybil
 from sybil.example import Example
 from sybil.parsers.myst.codeblock import CodeBlockParser
-from sybil.parsers.myst.skip import SkipParser
 
 from sybil_extras.parsers.myst.grouped_code_block import GroupedCodeBlockParser
 
@@ -38,17 +38,6 @@ def test_group(tmp_path: Path) -> None:
      x = [*x, 3]
     ```
 
-    <!--- group: start -->
-
-    ```python
-    x = [*x, 4]
-    ```
-
-    ```python
-     x = [*x, 5]
-    ```
-
-    <!--- group: end -->
     """
 
     test_document = tmp_path / "test.rst"
@@ -70,7 +59,7 @@ def test_group(tmp_path: Path) -> None:
     )
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
-    sybil = Sybil(parsers=[group_parser, code_block_parser])
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
     document = sybil.parse(path=test_document)
 
     for example in document.examples():
@@ -80,7 +69,6 @@ def test_group(tmp_path: Path) -> None:
         "x = []\n",
         "x = [*x, 1]\nx = [*x, 2]\n",
         "x = [*x, 3]\n",
-        "x = [*x, 4]\nx = [*x, 5]\n",
     ]
 
 
@@ -126,7 +114,7 @@ def test_nothing_after_group(tmp_path: Path) -> None:
     )
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
-    sybil = Sybil(parsers=[group_parser, code_block_parser])
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
     document = sybil.parse(path=test_document)
 
     for example in document.examples():
@@ -176,7 +164,7 @@ def test_empty_group(tmp_path: Path) -> None:
     )
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
-    sybil = Sybil(parsers=[group_parser, code_block_parser])
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
     document = sybil.parse(path=test_document)
 
     for example in document.examples():
@@ -188,63 +176,31 @@ def test_empty_group(tmp_path: Path) -> None:
     ]
 
 
-def test_group_with_skip(tmp_path: Path) -> None:
+def test_no_argument(tmp_path: Path) -> None:
     """
-    An error is raised when a group contains a skip.
+    An error is raised when a group directive has no arguments.
     """
     content = """\
-
-    ```python
-     x = []
-    ```
-
-    <!--- group: start -->
-
-    ```python
-     x = [*x, 1]
-    ```
-
-    <!--- skip: next -->
-
-    ```python
-     x = [*x, 2]
-    ```
+    <!--- group -->
 
     <!--- group: end -->
-
-    ```python
-     x = [*x, 3]
-    ```
     """
 
-    test_document = tmp_path / "test.rst"
+    test_document = tmp_path / "test.md"
     test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(example: Example) -> None:
         """
-        Add code block content to the namespace.
+        No-op evaluator.
         """
-        existing_blocks = example.document.namespace.get("blocks", [])
-        example.document.namespace["blocks"] = [
-            *existing_blocks,
-            example.parsed,
-        ]
+        del example
 
     group_parser = GroupedCodeBlockParser(
         directive="group",
         evaluator=evaluator,
     )
-    code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
-    skip_parser = SkipParser()
 
-    sybil = Sybil(parsers=[code_block_parser, skip_parser, group_parser])
-    document = sybil.parse(path=test_document)
-
-    for example in document.examples():
-        example.evaluate()
-
-    assert document.namespace["blocks"] == [
-        "x = []\n",
-        "x = [*x, 1]\nx = [*x, 2]\n",
-        "x = [*x, 3]\n",
-    ]
+    sybil = Sybil(parsers=[group_parser])
+    expected_error = r"missing arguments to group"
+    with pytest.raises(expected_exception=ValueError, match=expected_error):
+        sybil.parse(path=test_document)

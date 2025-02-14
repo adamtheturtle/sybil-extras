@@ -117,6 +117,11 @@ class AbstractGroupedCodeBlockParser:
         """
         for lexed in self.lexers(document):
             arguments = lexed.lexemes["arguments"]
+            if not arguments:
+                directive = lexed.lexemes["directive"]
+                msg = f"missing arguments to {directive}"
+                raise ValueError(msg)
+
             match = GROUP_ARGUMENTS_PATTERN.match(string=arguments)
             if match is None:
                 directive = lexed.lexemes.get("directive", "skip")

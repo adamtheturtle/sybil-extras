@@ -4,6 +4,7 @@ Tests for the group parser for Markdown.
 
 from pathlib import Path
 
+import pytest
 from sybil import Sybil
 from sybil.example import Example
 from sybil.parsers.markdown.codeblock import (
@@ -55,7 +56,7 @@ def test_group(tmp_path: Path) -> None:
     <!--- group: end -->
     """
 
-    test_document = tmp_path / "test.rst"
+    test_document = tmp_path / "test.md"
     test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(example: Example) -> None:
@@ -111,7 +112,7 @@ def test_nothing_after_group(tmp_path: Path) -> None:
     <!--- group: end -->
     """
 
-    test_document = tmp_path / "test.rst"
+    test_document = tmp_path / "test.md"
     test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(example: Example) -> None:
@@ -161,7 +162,7 @@ def test_empty_group(tmp_path: Path) -> None:
     ```
     """
 
-    test_document = tmp_path / "test.rst"
+    test_document = tmp_path / "test.md"
     test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(example: Example) -> None:
@@ -221,7 +222,7 @@ def test_group_with_skip(tmp_path: Path) -> None:
     ```
     """
 
-    test_document = tmp_path / "test.rst"
+    test_document = tmp_path / "test.md"
     test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(example: Example) -> None:
@@ -252,3 +253,33 @@ def test_group_with_skip(tmp_path: Path) -> None:
         "x = [*x, 1]\nx = [*x, 2]\n",
         "x = [*x, 3]\n",
     ]
+
+
+def test_no_argument(tmp_path: Path) -> None:
+    """
+    An error is raised when a group directive has no arguments.
+    """
+    content = """\
+    <!--- group -->
+
+    <!--- group: end -->
+    """
+
+    test_document = tmp_path / "test.md"
+    test_document.write_text(data=content, encoding="utf-8")
+
+    def evaluator(example: Example) -> None:
+        """
+        No-op evaluator.
+        """
+        del example
+
+    group_parser = GroupedCodeBlockParser(
+        directive="group",
+        evaluator=evaluator,
+    )
+
+    sybil = Sybil(parsers=[group_parser])
+    expected_error = r"missing arguments to group"
+    with pytest.raises(expected_exception=ValueError, match=expected_error):
+        sybil.parse(path=test_document)
