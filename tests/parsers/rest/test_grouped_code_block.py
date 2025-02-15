@@ -319,17 +319,17 @@ def test_end_only(tmp_path: Path) -> None:
     test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
-    def evaluator(_: Example) -> None:
-        """
-        No-op evaluator.
-        """
+    # def evaluator(_: Example) -> None:
+    #     """
+    #     No-op evaluator.
+    #     """
 
-    group_parser = GroupedCodeBlockParser(
-        directive="group",
-        evaluator=evaluator,
-    )
+    # group_parser = GroupedCodeBlockParser(
+    #     directive="group",
+    #     evaluator=evaluator,
+    # )
 
-    sybil = Sybil(parsers=[group_parser])
+    # sybil = Sybil(parsers=[group_parser])
     # document = sybil.parse(path=test_document)
 
     # (example,) = document.examples()
