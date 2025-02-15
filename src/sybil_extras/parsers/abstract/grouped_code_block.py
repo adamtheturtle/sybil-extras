@@ -28,15 +28,17 @@ class _Grouper:
     Group code blocks.
     """
 
-    def __init__(self, evaluator: Evaluator) -> None:
+    def __init__(self, evaluator: Evaluator, directive: str) -> None:
         """
         Args:
             evaluator: The evaluator to use for evaluating the combined region.
+            directive: The name of the directive to use for grouping.
         """
         self._document_state: dict[Document, _GroupState] = defaultdict(
             _GroupState
         )
         self._evaluator = evaluator
+        self._directive = directive
 
     def _evaluate_grouper_example(self, example: Example) -> None:
         """
@@ -51,7 +53,10 @@ class _Grouper:
             return
 
         if state.last_action != "start":
-            msg = "end without start"
+            msg = (
+                f"'{self._directive}: {action}' "
+                f"must follow '{self._directive}: start'"
+            )
             raise ValueError(msg)
 
         if state.combined_text is not None:
@@ -113,14 +118,23 @@ class AbstractGroupedCodeBlockParser:
     An abstract parser for grouping code blocks.
     """
 
-    def __init__(self, lexers: Sequence[Lexer], evaluator: Evaluator) -> None:
+    def __init__(
+        self,
+        lexers: Sequence[Lexer],
+        evaluator: Evaluator,
+        directive: str,
+    ) -> None:
         """
         Args:
             lexers: The lexers to use to find regions.
             evaluator: The evaluator to use for evaluating the combined region.
+            directive: The name of the directive to use for grouping.
         """
         self._lexers: LexerCollection = LexerCollection(lexers)
-        self._grouper: _Grouper = _Grouper(evaluator=evaluator)
+        self._grouper: _Grouper = _Grouper(
+            evaluator=evaluator,
+            directive=directive,
+        )
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """
