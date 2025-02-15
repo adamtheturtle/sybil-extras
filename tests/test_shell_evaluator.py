@@ -117,7 +117,7 @@ def test_output_shown(
         expected_output = "Hello, Sybil!\r\nHello Stderr!\r\n"
         expected_stderr = ""
 
-    assert outerr.out == expected_output
+    assert outerr.out == expected_output, (outerr.out, outerr.err)
     assert outerr.err == expected_stderr
 
 
