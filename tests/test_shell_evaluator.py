@@ -88,7 +88,7 @@ def test_error(*, rst_file: Path, use_pty_option: bool) -> None:
 def test_output_shown(
     *,
     rst_file: Path,
-    capsys: pytest.CaptureFixture[str],
+    capfd: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
     """
@@ -110,7 +110,8 @@ def test_output_shown(
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
-    outerr = capsys.readouterr()
+    outerr = capfd.readouterr()
+    breakpoint()
     expected_output = "Hello, Sybil!\n"
     expected_stderr = "Hello Stderr!\n"
     if use_pty_option:

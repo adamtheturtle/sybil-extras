@@ -39,20 +39,20 @@ def _run_with_color_and_capture_separate(
         stdout = slave_fd
         stderr = slave_fd
     else:
-        stdout = subprocess.PIPE
-        stderr = subprocess.PIPE
+        stdout = None
+        stderr = None
 
     chunk_size = 1024
 
-    with subprocess.Popen(
-        args=command,
-        stdout=stdout,
-        stderr=stderr,
-        stdin=subprocess.PIPE,
-        env=env,
-        close_fds=True,
-    ) as process:
-        if use_pty:
+    if use_pty:
+        with subprocess.Popen(
+            args=command,
+            stdout=stdout,
+            stderr=stderr,
+            stdin=subprocess.PIPE,
+            env=env,
+            close_fds=True,
+        ) as process:
             os.close(fd=slave_fd)
 
             # On some platforms, an ``OSError`` is raised when reading from
@@ -65,38 +65,48 @@ def _run_with_color_and_capture_separate(
                     sys.stdout.buffer.flush()
 
             os.close(fd=stdout_master_fd)
-
-        else:
-            while any(
-                [
-                    process.poll() is None,
-                    stdout_chunk := b"",
-                    stderr_chunk := b"",
-                ],
-            ):
-                stdout_chunk = (
-                    process.stdout.read(chunk_size) if process.stdout else b""
-                )
-                stderr_chunk = (
-                    process.stderr.read(chunk_size) if process.stderr else b""
-                )
-
-                for chunk, stream in [
-                    (stdout_chunk, sys.stdout.buffer),
-                    (stderr_chunk, sys.stderr.buffer),
-                ]:
-                    if chunk:
-                        stream.write(chunk)
-                        stream.flush()
-
-        return_code = process.wait()
-
-        return subprocess.CompletedProcess(
+            return_code = process.wait()
+    else:
+        breakpoint()
+        result = subprocess.run(
             args=command,
-            returncode=return_code,
-            stdout=None,
-            stderr=None,
+            stdout=stdout,
+            stderr=stderr,
+            stdin=subprocess.PIPE,
+            env=env,
+            check=False,
         )
+        return_code = result.returncode
+        # while any(
+        #     [
+        #         process.poll() is None,
+        #         stdout_chunk := b"",
+        #         stderr_chunk := b"",
+        #     ],
+        # ):
+        #     stdout_chunk = (
+        #         process.stdout.read(chunk_size) if process.stdout else b""
+        #     )
+        #     stderr_chunk = (
+        #         process.stderr.read(chunk_size) if process.stderr else b""
+        #     )
+
+        #     for chunk, stream in [
+        #         (stdout_chunk, sys.stdout.buffer),
+        #         (stderr_chunk, sys.stderr.buffer),
+        #     ]:
+        #         if chunk:
+        #             stream.write(chunk)
+        #             stream.flush()
+
+        # return_code = process.wait()
+
+    return subprocess.CompletedProcess(
+        args=command,
+        returncode=return_code,
+        stdout=None,
+        stderr=None,
+    )
 
 
 @beartype
