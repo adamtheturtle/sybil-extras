@@ -5,7 +5,6 @@ A group parser for reST.
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from typing import Literal
 
 from sybil import Document, Example, Region
 from sybil.example import NotEvaluated
@@ -20,7 +19,6 @@ class _GroupState:
     """
 
     combined_text: str | None = None
-    last_action: Literal["start", "end"] | None = None
 
 
 class _Grouper:
@@ -28,17 +26,15 @@ class _Grouper:
     Group code blocks.
     """
 
-    def __init__(self, evaluator: Evaluator, directive: str) -> None:
+    def __init__(self, evaluator: Evaluator) -> None:
         """
         Args:
             evaluator: The evaluator to use for evaluating the combined region.
-            directive: The name of the directive to use for grouping.
         """
         self._document_state: dict[Document, _GroupState] = defaultdict(
             _GroupState
         )
         self._evaluator = evaluator
-        self._directive = directive
 
     def _evaluate_grouper_example(self, example: Example) -> None:
         """
@@ -70,7 +66,6 @@ class _Grouper:
 
         example.document.pop_evaluator(evaluator=self)
         del self._document_state[example.document]
-        state.last_action = action
 
     def _evaluate_other_example(self, example: Example) -> None:
         """
@@ -110,23 +105,14 @@ class AbstractGroupedCodeBlockParser:
     An abstract parser for grouping code blocks.
     """
 
-    def __init__(
-        self,
-        lexers: Sequence[Lexer],
-        evaluator: Evaluator,
-        directive: str,
-    ) -> None:
+    def __init__(self, lexers: Sequence[Lexer], evaluator: Evaluator) -> None:
         """
         Args:
             lexers: The lexers to use to find regions.
             evaluator: The evaluator to use for evaluating the combined region.
-            directive: The name of the directive to use for grouping.
         """
         self._lexers: LexerCollection = LexerCollection(lexers)
-        self._grouper: _Grouper = _Grouper(
-            evaluator=evaluator,
-            directive=directive,
-        )
+        self._grouper: _Grouper = _Grouper(evaluator=evaluator)
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """
