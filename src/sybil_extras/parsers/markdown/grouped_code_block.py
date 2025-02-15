@@ -24,4 +24,8 @@ class GroupedCodeBlockParser(AbstractGroupedCodeBlockParser):
         lexers = [
             DirectiveInHTMLCommentLexer(directive=directive),
         ]
-        super().__init__(lexers=lexers, evaluator=evaluator)
+        super().__init__(
+            lexers=lexers,
+            evaluator=evaluator,
+            directive=directive,
+        )
