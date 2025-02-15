@@ -333,4 +333,6 @@ def test_end_only(tmp_path: Path) -> None:
     document = sybil.parse(path=test_document)
 
     (example,) = document.examples()
-    example.evaluate()
+    match = r"end without start"
+    with pytest.raises(expected_exception=ValueError, match=match):
+        example.evaluate()
