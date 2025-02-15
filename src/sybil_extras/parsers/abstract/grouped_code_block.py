@@ -5,6 +5,7 @@ A group parser for reST.
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
+from typing import Literal
 
 from sybil import Document, Example, Region
 from sybil.example import NotEvaluated
@@ -19,6 +20,7 @@ class _GroupState:
     """
 
     combined_text: str | None = None
+    last_action: Literal["start", "end"] | None = None
 
 
 class _Grouper:
@@ -45,7 +47,12 @@ class _Grouper:
 
         if action == "start":
             example.document.push_evaluator(evaluator=self)
+            state.last_action = action
             return
+
+        if state.last_action != "start":
+            msg = "end without start"
+            raise ValueError(msg)
 
         if state.combined_text is not None:
             region = Region(
@@ -66,6 +73,7 @@ class _Grouper:
 
         example.document.pop_evaluator(evaluator=self)
         del self._document_state[example.document]
+        state.last_action = action
 
     def _evaluate_other_example(self, example: Example) -> None:
         """

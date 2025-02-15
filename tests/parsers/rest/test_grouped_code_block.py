@@ -332,5 +332,5 @@ def test_end_only(tmp_path: Path) -> None:
     sybil = Sybil(parsers=[group_parser])
     document = sybil.parse(path=test_document)
 
-    for example in document.examples():
-        example.evaluate()
+    (example,) = document.examples()
+    example.evaluate()
