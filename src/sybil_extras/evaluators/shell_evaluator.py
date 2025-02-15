@@ -32,19 +32,13 @@ def _run_with_color_and_capture_separate(
     """
     stdout_master_fd = -1
     slave_fd = -1
+    chunk_size = 1024
 
     if use_pty:
         with contextlib.suppress(AttributeError):
             stdout_master_fd, slave_fd = os.openpty()
         stdout = slave_fd
         stderr = slave_fd
-    else:
-        stdout = None
-        stderr = None
-
-    chunk_size = 1024
-
-    if use_pty:
         with subprocess.Popen(
             args=command,
             stdout=stdout,
@@ -67,39 +61,15 @@ def _run_with_color_and_capture_separate(
             os.close(fd=stdout_master_fd)
             return_code = process.wait()
     else:
-        breakpoint()
         result = subprocess.run(
             args=command,
-            stdout=stdout,
-            stderr=stderr,
+            stdout=None,
+            stderr=None,
             stdin=subprocess.PIPE,
             env=env,
             check=False,
         )
         return_code = result.returncode
-        # while any(
-        #     [
-        #         process.poll() is None,
-        #         stdout_chunk := b"",
-        #         stderr_chunk := b"",
-        #     ],
-        # ):
-        #     stdout_chunk = (
-        #         process.stdout.read(chunk_size) if process.stdout else b""
-        #     )
-        #     stderr_chunk = (
-        #         process.stderr.read(chunk_size) if process.stderr else b""
-        #     )
-
-        #     for chunk, stream in [
-        #         (stdout_chunk, sys.stdout.buffer),
-        #         (stderr_chunk, sys.stderr.buffer),
-        #     ]:
-        #         if chunk:
-        #             stream.write(chunk)
-        #             stream.flush()
-
-        # return_code = process.wait()
 
     return subprocess.CompletedProcess(
         args=command,

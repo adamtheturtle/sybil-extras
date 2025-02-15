@@ -111,7 +111,6 @@ def test_output_shown(
     (example,) = document.examples()
     example.evaluate()
     outerr = capfd.readouterr()
-    breakpoint()
     expected_output = "Hello, Sybil!\n"
     expected_stderr = "Hello Stderr!\n"
     if use_pty_option:
@@ -125,7 +124,7 @@ def test_output_shown(
 def test_rm(
     *,
     rst_file: Path,
-    capsys: pytest.CaptureFixture[str],
+    capfd: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
     """
@@ -143,7 +142,7 @@ def test_rm(
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
-    outerr = capsys.readouterr()
+    outerr = capfd.readouterr()
     assert outerr.out == ""
     assert outerr.err == ""
 
@@ -246,7 +245,7 @@ def test_file_is_passed(
 def test_file_path(
     *,
     rst_file: Path,
-    capsys: pytest.CaptureFixture[str],
+    capfd: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
     """
@@ -266,14 +265,14 @@ def test_file_path(
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
-    output = capsys.readouterr().out
+    output = capfd.readouterr().out
     given_file_path = Path(output.strip())
     assert given_file_path.parent == rst_file.parent
     assert given_file_path.is_absolute()
     assert not given_file_path.exists()
     assert given_file_path.name.startswith("test_document_example_rst_")
     example.evaluate()
-    output = capsys.readouterr().out
+    output = capfd.readouterr().out
     new_given_file_path = Path(output.strip())
     assert new_given_file_path != given_file_path
 
@@ -281,7 +280,7 @@ def test_file_path(
 def test_file_suffix(
     *,
     rst_file: Path,
-    capsys: pytest.CaptureFixture[str],
+    capfd: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
     """
@@ -301,7 +300,7 @@ def test_file_suffix(
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
-    output = capsys.readouterr().out
+    output = capfd.readouterr().out
     given_file_path = Path(output.strip())
     assert given_file_path.name.startswith("test_document_example_rst_")
     assert given_file_path.suffixes == suffixes
@@ -310,7 +309,7 @@ def test_file_suffix(
 def test_file_prefix(
     *,
     rst_file: Path,
-    capsys: pytest.CaptureFixture[str],
+    capfd: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
     """
@@ -330,7 +329,7 @@ def test_file_prefix(
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
-    output = capsys.readouterr().out
+    output = capfd.readouterr().out
     given_file_path = Path(output.strip())
     assert given_file_path.name.startswith("custom_prefix_")
 
@@ -463,7 +462,7 @@ def test_no_changes_mtime(*, rst_file: Path, use_pty_option: bool) -> None:
 def test_non_utf8_output(
     *,
     rst_file: Path,
-    capsysbinary: pytest.CaptureFixture[bytes],
+    capfdbinary: pytest.CaptureFixture[bytes],
     tmp_path: Path,
     use_pty_option: bool,
 ) -> None:
@@ -488,7 +487,7 @@ def test_non_utf8_output(
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
-    output = capsysbinary.readouterr().out
+    output = capfdbinary.readouterr().out
     expected_output = b"\xc0\x80\n"
     if use_pty_option:
         expected_output = expected_output.replace(b"\n", b"\r\n")
@@ -652,7 +651,7 @@ def test_newline_given(
 def test_empty_code_block_write_to_file(
     *,
     rst_file: Path,
-    capsys: pytest.CaptureFixture[str],
+    capfd: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
     """
@@ -680,7 +679,7 @@ def test_empty_code_block_write_to_file(
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
-    outerr = capsys.readouterr()
+    outerr = capfd.readouterr()
     assert outerr.out.strip() == ""
     assert outerr.err == ""
 
