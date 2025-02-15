@@ -43,8 +43,6 @@ def _run_with_color_and_capture_separate(
         stderr = subprocess.PIPE
 
     chunk_size = 1024
-    stdout_output_chunks: list[bytes] = []
-    stderr_output_chunks: list[bytes] = []
 
     with subprocess.Popen(
         args=command,
@@ -65,7 +63,6 @@ def _run_with_color_and_capture_separate(
                 while chunk := os.read(stdout_master_fd, chunk_size):
                     sys.stdout.buffer.write(chunk)
                     sys.stdout.buffer.flush()
-                    stdout_output_chunks.append(chunk)
 
             os.close(fd=stdout_master_fd)
 
@@ -84,25 +81,21 @@ def _run_with_color_and_capture_separate(
                     process.stderr.read(chunk_size) if process.stderr else b""
                 )
 
-                for chunk, stream, output_chunks in [
-                    (stdout_chunk, sys.stdout.buffer, stdout_output_chunks),
-                    (stderr_chunk, sys.stderr.buffer, stderr_output_chunks),
+                for chunk, stream in [
+                    (stdout_chunk, sys.stdout.buffer),
+                    (stderr_chunk, sys.stderr.buffer),
                 ]:
                     if chunk:
                         stream.write(chunk)
                         stream.flush()
-                        output_chunks.append(chunk)
 
         return_code = process.wait()
-
-        stdout_output = b"".join(stdout_output_chunks)
-        stderr_output = b"".join(stderr_output_chunks)
 
         return subprocess.CompletedProcess(
             args=command,
             returncode=return_code,
-            stdout=stdout_output,
-            stderr=stderr_output,
+            stdout=None,
+            stderr=None,
         )
 
 
