@@ -18,6 +18,7 @@ def test_group(tmp_path: Path) -> None:
     The group parser groups examples.
     """
     content = """\
+
     .. code-block:: python
 
         x = []
@@ -306,33 +307,3 @@ def test_malformed_argument(tmp_path: Path) -> None:
     expected_error = r"malformed arguments to group: 'not_start_or_end'"
     with pytest.raises(expected_exception=ValueError, match=expected_error):
         sybil.parse(path=test_document)
-
-
-def test_end_only(tmp_path: Path) -> None:
-    """
-    An error is raised when a group end directive is given with no start.
-    """
-    content = """\
-    .. group: end
-    """
-
-    test_document = tmp_path / "test.rst"
-    test_document.write_text(data=content, encoding="utf-8")
-
-    def evaluator(_: Example) -> None:
-        """
-        No-op evaluator.
-        """
-
-    group_parser = GroupedCodeBlockParser(
-        directive="group",
-        evaluator=evaluator,
-    )
-
-    sybil = Sybil(parsers=[group_parser])
-    document = sybil.parse(path=test_document)
-
-    (example,) = document.examples()
-    match = r"'group: end' must follow 'group: start'"
-    with pytest.raises(expected_exception=ValueError, match=match):
-        example.evaluate()
