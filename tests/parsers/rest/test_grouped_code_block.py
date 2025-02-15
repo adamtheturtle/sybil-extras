@@ -329,7 +329,7 @@ def test_end_only(tmp_path: Path) -> None:
         evaluator=evaluator,
     )
 
-    sybil = Sybil(parsers=[group_parser])
+    # sybil = Sybil(parsers=[group_parser])
     # document = sybil.parse(path=test_document)
 
     # (example,) = document.examples()
