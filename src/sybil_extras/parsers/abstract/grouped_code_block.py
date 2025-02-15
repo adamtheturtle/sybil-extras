@@ -52,6 +52,9 @@ class _Grouper:
             state.last_action = action
             return
 
+        example.document.pop_evaluator(evaluator=self)
+        del self._document_state[example.document]
+
         if state.last_action != "start":
             msg = (
                 f"'{self._directive}: {action}' "
@@ -76,8 +79,6 @@ class _Grouper:
             )
             self._evaluator(new_example)
 
-        example.document.pop_evaluator(evaluator=self)
-        del self._document_state[example.document]
         state.last_action = action
 
     def _evaluate_other_example(self, example: Example) -> None:
