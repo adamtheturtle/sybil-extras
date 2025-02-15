@@ -312,4 +312,27 @@ def test_end_only(tmp_path: Path) -> None:
     """
     An error is raised when a group end directive is given with no start.
     """
-    assert tmp_path
+    content = """\
+    .. group: end
+    """
+
+    test_document = tmp_path / "test.rst"
+    test_document.write_text(data=content, encoding="utf-8")
+
+    def evaluator(_: Example) -> None:
+        """
+        No-op evaluator.
+        """
+
+    group_parser = GroupedCodeBlockParser(
+        directive="group",
+        evaluator=evaluator,
+    )
+
+    sybil = Sybil(parsers=[group_parser])
+    # document = sybil.parse(path=test_document)
+
+    # (example,) = document.examples()
+    # match = r"'group: end' must follow 'group: start'"
+    # with pytest.raises(expected_exception=ValueError, match=match):
+    #     example.evaluate()
