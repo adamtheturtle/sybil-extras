@@ -329,8 +329,8 @@ def test_end_only(tmp_path: Path) -> None:
         evaluator=evaluator,
     )
 
-    # sybil = Sybil(parsers=[group_parser])
-    # document = sybil.parse(path=test_document)
+    sybil = Sybil(parsers=[group_parser], path=str(object=tmp_path))
+    document = sybil.parse(path=test_document)
 
     # (example,) = document.examples()
     # match = r"'group: end' must follow 'group: start'"
