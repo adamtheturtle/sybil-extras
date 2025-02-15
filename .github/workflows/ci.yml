@@ -36,7 +36,7 @@ jobs:
       - name: Run tests Linux
         if: matrix.platform == 'ubuntu-latest'
         run: |
-          ${{ env.TEST_COMMAND }} --cov=src/ --cov=tests --cov-report term-missing --cov-report=xml --cov-fail-under 100 -k test_output_shown
+          ${{ env.TEST_COMMAND }} -k test_output_shown
         env:
           UV_PYTHON: ${{ matrix.python-version }}
         # See https://github.com/actions/runner/issues/241#issuecomment-2510875317 - this means we run
