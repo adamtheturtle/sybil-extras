@@ -329,10 +329,10 @@ def test_end_only(tmp_path: Path) -> None:
         evaluator=evaluator,
     )
 
-    sybil = Sybil(parsers=[group_parser], path=str(object=tmp_path))
+    sybil = Sybil(parsers=[group_parser])
     document = sybil.parse(path=test_document)
 
-    # (example,) = document.examples()
-    # match = r"'group: end' must follow 'group: start'"
-    # with pytest.raises(expected_exception=ValueError, match=match):
-    #     example.evaluate()
+    (example,) = document.examples()
+    match = r"'group: end' must follow 'group: start'"
+    with pytest.raises(expected_exception=ValueError, match=match):
+        example.evaluate()
