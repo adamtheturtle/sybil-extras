@@ -17,8 +17,8 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ['3.11', '3.12']
-        platform: [ubuntu-latest]
+        python-version: ['3.11', '3.12', '3.13']
+        platform: [ubuntu-latest, windows-latest]
 
     runs-on: ${{ matrix.platform }}
 
@@ -33,10 +33,18 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
+      - name: Lint
+        run: |
+          uv run --extra=dev pre-commit run --all-files --hook-stage pre-commit --verbose
+          uv run --extra=dev pre-commit run --all-files --hook-stage pre-push --verbose
+          uv run --extra=dev pre-commit run --all-files --hook-stage manual --verbose
+        env:
+          UV_PYTHON: ${{ matrix.python-version }}
+
       - name: Run tests Linux
         if: matrix.platform == 'ubuntu-latest'
         run: |
-          ${{ env.TEST_COMMAND }} -k test_output_shown
+          ${{ env.TEST_COMMAND }} --cov=src/ --cov=tests --cov-report term-missing --cov-report=xml --cov-fail-under 100
         env:
           UV_PYTHON: ${{ matrix.python-version }}
         # See https://github.com/actions/runner/issues/241#issuecomment-2510875317 - this means we run
@@ -50,3 +58,12 @@ jobs:
           ${{ env.TEST_COMMAND }}
         env:
           UV_PYTHON: ${{ matrix.python-version }}
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - uses: pre-commit-ci/lite-action@v1.1.0
+        if: always()
