@@ -5,6 +5,7 @@ Next
 ----
 
 * Drop support for Python 3.10.
+* Add ``GroupedCodeBlockParser`` for parsing groups of code blocks.
 
 2025.01.11
 ----------

@@ -7,6 +7,7 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
 from sybil import Document, Example, Region
+from sybil.example import NotEvaluated
 from sybil.parsers.abstract.lexers import LexerCollection
 from sybil.typing import Evaluator, Lexer
 
@@ -72,11 +73,16 @@ class _Grouper:
         """
         state = self._document_state[example.document]
 
-        if "source" in example.region.lexemes:
+        is_code_block = "source" in example.region.lexemes
+
+        if is_code_block:
             if state.combined_text is None:
                 state.combined_text = example.parsed
             else:
                 state.combined_text += example.parsed
+            return
+
+        raise NotEvaluated
 
     def __call__(self, /, example: Example) -> None:
         """

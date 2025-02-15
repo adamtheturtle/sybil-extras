@@ -158,7 +158,6 @@ This makes Sybil act as though all of the code blocks within a group are a singl
 to be evaluated with the ``evaluator`` given to ``GroupedCodeBlockParser``.
 A group is defined by a pair of comments, ``group: start`` and ``group: end``.
 The ``group: end`` example is expanded to include the contents of the code blocks in the group.
-This means that skip directives in the group are not respected.
 
 A reStructuredText example:
 
