@@ -21,16 +21,6 @@ from sybil.evaluators.python import pad
 
 
 @beartype
-def _process_stream(stream: IO[bytes], output: IO[bytes] | BytesIO) -> None:
-    """
-    Write from an input stream to an output stream.
-    """
-    while chunk := stream.read(1024):
-        output.write(chunk)
-        output.flush()
-
-
-@beartype
 def _run_command(
     *,
     command: list[str | Path],
@@ -41,6 +31,18 @@ def _run_command(
     Run a command in a pseudo-terminal to preserve color.
     """
     chunk_size = 1024
+
+    @beartype
+    def _process_stream(
+        stream: IO[bytes], output: IO[bytes] | BytesIO
+    ) -> None:
+        """
+        Write from an input stream to an output stream.
+        """
+        while chunk := stream.read(chunk_size):
+            output.write(chunk)
+            output.flush()
+
     if use_pty:
         stdout_master_fd = -1
         slave_fd = -1
