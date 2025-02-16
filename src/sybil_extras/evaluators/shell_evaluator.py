@@ -8,13 +8,26 @@ import platform
 import subprocess
 import sys
 import textwrap
+import threading
 import uuid
 from collections.abc import Mapping, Sequence
+from io import BytesIO
 from pathlib import Path
+from typing import IO
 
 from beartype import beartype
 from sybil import Example
 from sybil.evaluators.python import pad
+
+
+@beartype
+def _process_stream(stream: IO[bytes], output: IO[bytes] | BytesIO) -> None:
+    """
+    Write from an input stream to an output stream.
+    """
+    while chunk := stream.read(1024):
+        output.write(chunk)
+        output.flush()
 
 
 @beartype
@@ -27,10 +40,10 @@ def _run_command(
     """
     Run a command in a pseudo-terminal to preserve color.
     """
+    chunk_size = 1024
     if use_pty:
         stdout_master_fd = -1
         slave_fd = -1
-        chunk_size = 1024
         with contextlib.suppress(AttributeError):
             stdout_master_fd, slave_fd = os.openpty()
 
@@ -64,13 +77,35 @@ def _run_command(
             stderr=None,
         )
 
-    return subprocess.run(
+    with subprocess.Popen(
         args=command,
-        stdout=None,
-        stderr=None,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         stdin=subprocess.PIPE,
         env=env,
-        check=False,
+    ) as process:
+        stdout_thread = threading.Thread(
+            target=_process_stream,
+            args=(process.stdout, sys.stdout.buffer),
+        )
+        stderr_thread = threading.Thread(
+            target=_process_stream,
+            args=(process.stderr, sys.stderr.buffer),
+        )
+
+        stdout_thread.start()
+        stderr_thread.start()
+
+        stdout_thread.join()
+        stderr_thread.join()
+
+        return_code = process.wait()
+
+    return subprocess.CompletedProcess(
+        args=command,
+        returncode=return_code,
+        stdout=None,
+        stderr=None,
     )
 
 

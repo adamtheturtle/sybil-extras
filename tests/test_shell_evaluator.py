@@ -11,7 +11,9 @@ import textwrap
 import time
 from pathlib import Path
 
+import click
 import pytest
+from click.testing import CliRunner
 from sybil import Sybil
 from sybil.parsers.rest.codeblock import CodeBlockParser
 
@@ -88,7 +90,7 @@ def test_error(*, rst_file: Path, use_pty_option: bool) -> None:
 def test_output_shown(
     *,
     rst_file: Path,
-    capfd: pytest.CaptureFixture[str],
+    capsys: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
     """
@@ -110,7 +112,7 @@ def test_output_shown(
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
-    outerr = capfd.readouterr()
+    outerr = capsys.readouterr()
     expected_output = "Hello, Sybil!\n"
     expected_stderr = "Hello Stderr!\n"
     if use_pty_option:
@@ -124,7 +126,7 @@ def test_output_shown(
 def test_rm(
     *,
     rst_file: Path,
-    capfd: pytest.CaptureFixture[str],
+    capsys: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
     """
@@ -142,7 +144,7 @@ def test_rm(
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
-    outerr = capfd.readouterr()
+    outerr = capsys.readouterr()
     assert outerr.out == ""
     assert outerr.err == ""
 
@@ -245,7 +247,7 @@ def test_file_is_passed(
 def test_file_path(
     *,
     rst_file: Path,
-    capfd: pytest.CaptureFixture[str],
+    capsys: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
     """
@@ -265,7 +267,7 @@ def test_file_path(
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
-    output = capfd.readouterr().out
+    output = capsys.readouterr().out
     stripped_output = output.strip()
     assert stripped_output
     given_file_path = Path(stripped_output)
@@ -274,7 +276,7 @@ def test_file_path(
     assert not given_file_path.exists()
     assert given_file_path.name.startswith("test_document_example_rst_")
     example.evaluate()
-    output = capfd.readouterr().out
+    output = capsys.readouterr().out
     new_given_file_path = Path(output.strip())
     assert new_given_file_path != given_file_path
 
@@ -282,7 +284,7 @@ def test_file_path(
 def test_file_suffix(
     *,
     rst_file: Path,
-    capfd: pytest.CaptureFixture[str],
+    capsys: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
     """
@@ -302,7 +304,7 @@ def test_file_suffix(
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
-    output = capfd.readouterr().out
+    output = capsys.readouterr().out
     stripped_output = output.strip()
     assert stripped_output
     given_file_path = Path(stripped_output)
@@ -313,7 +315,7 @@ def test_file_suffix(
 def test_file_prefix(
     *,
     rst_file: Path,
-    capfd: pytest.CaptureFixture[str],
+    capsys: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
     """
@@ -333,7 +335,7 @@ def test_file_prefix(
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
-    output = capfd.readouterr().out
+    output = capsys.readouterr().out
     stripped_output = output.strip()
     assert stripped_output
     given_file_path = Path(stripped_output)
@@ -468,7 +470,7 @@ def test_no_changes_mtime(*, rst_file: Path, use_pty_option: bool) -> None:
 def test_non_utf8_output(
     *,
     rst_file: Path,
-    capfdbinary: pytest.CaptureFixture[bytes],
+    capsysbinary: pytest.CaptureFixture[bytes],
     tmp_path: Path,
     use_pty_option: bool,
 ) -> None:
@@ -493,7 +495,7 @@ def test_non_utf8_output(
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
-    output = capfdbinary.readouterr().out
+    output = capsysbinary.readouterr().out
     expected_output = b"\xc0\x80\n"
     if use_pty_option:
         expected_output = expected_output.replace(b"\n", b"\r\n")
@@ -657,7 +659,7 @@ def test_newline_given(
 def test_empty_code_block_write_to_file(
     *,
     rst_file: Path,
-    capfd: pytest.CaptureFixture[str],
+    capsys: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
     """
@@ -685,7 +687,7 @@ def test_empty_code_block_write_to_file(
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
-    outerr = capfd.readouterr()
+    outerr = capsys.readouterr()
     assert outerr.out.strip() == ""
     assert outerr.err == ""
 
@@ -716,3 +718,43 @@ def test_bad_command_error(*, rst_file: Path, use_pty_option: bool) -> None:
     assert exc.value.returncode == expected_returncode
     # The last element is the path to the temporary file.
     assert exc.value.cmd[:-1] == args
+
+
+def test_click_runner(*, rst_file: Path, use_pty_option: bool) -> None:
+    """
+    The click runner can pick up the command output.
+    """
+
+    @click.command()
+    def _main() -> None:
+        """
+        Click command to run a shell command.
+        """
+        evaluator = ShellCommandEvaluator(
+            args=[
+                "sh",
+                "-c",
+                "echo 'Hello, Sybil!' && echo >&2 'Hello Stderr!'",
+            ],
+            pad_file=False,
+            write_to_file=False,
+            use_pty=use_pty_option,
+        )
+        parser = CodeBlockParser(language="python", evaluator=evaluator)
+        sybil = Sybil(parsers=[parser])
+
+        document = sybil.parse(path=rst_file)
+        (example,) = document.examples()
+        example.evaluate()
+
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(cli=_main)
+    assert result.exit_code == 0, (result.stdout, result.stderr)
+    expected_output = "Hello, Sybil!\n"
+    expected_stderr = "Hello Stderr!\n"
+    if use_pty_option:
+        expected_output = "Hello, Sybil!\nHello Stderr!\n"
+        expected_stderr = ""
+
+    assert result.stdout == expected_output
+    assert result.stderr == expected_stderr
