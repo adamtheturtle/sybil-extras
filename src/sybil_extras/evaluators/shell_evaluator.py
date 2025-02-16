@@ -11,7 +11,7 @@ import textwrap
 import threading
 import uuid
 from collections.abc import Mapping, Sequence
-from io import BufferedReader, BytesIO
+from io import BytesIO
 from pathlib import Path
 from typing import IO
 
@@ -34,12 +34,13 @@ def _run_command(
 
     @beartype
     def _process_stream(
-        stream: BufferedReader, output: IO[bytes] | BytesIO
+        stream_fileno: int,
+        output: IO[bytes] | BytesIO,
     ) -> None:
         """
         Write from an input stream to an output stream.
         """
-        while chunk := stream.read(chunk_size):
+        while chunk := os.read(stream_fileno, chunk_size):
             output.write(chunk)
             output.flush()
 
@@ -66,42 +67,42 @@ def _run_command(
             # I think that this may be described in
             # https://bugs.python.org/issue5380#msg82827
             with contextlib.suppress(OSError):
-                while chunk := os.read(stdout_master_fd, chunk_size):
-                    sys.stdout.buffer.write(chunk)
-                    sys.stdout.buffer.flush()
+                _process_stream(
+                    stream_fileno=stdout_master_fd,
+                    output=sys.stdout.buffer,
+                )
 
             os.close(fd=stdout_master_fd)
-            return_code = process.wait()
-        return subprocess.CompletedProcess(
+
+    else:
+        with subprocess.Popen(
             args=command,
-            returncode=return_code,
-            stdout=None,
-            stderr=None,
-        )
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE,
+            env=env,
+        ) as process:
+            if (
+                process.stdout is None or process.stderr is None
+            ):  # pragma: no cover
+                raise ValueError
 
-    with subprocess.Popen(
-        args=command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        stdin=subprocess.PIPE,
-        env=env,
-    ) as process:
-        stdout_thread = threading.Thread(
-            target=_process_stream,
-            args=(process.stdout, sys.stdout.buffer),
-        )
-        stderr_thread = threading.Thread(
-            target=_process_stream,
-            args=(process.stderr, sys.stderr.buffer),
-        )
+            stdout_thread = threading.Thread(
+                target=_process_stream,
+                args=(process.stdout.fileno(), sys.stdout.buffer),
+            )
+            stderr_thread = threading.Thread(
+                target=_process_stream,
+                args=(process.stderr.fileno(), sys.stderr.buffer),
+            )
 
-        stdout_thread.start()
-        stderr_thread.start()
+            stdout_thread.start()
+            stderr_thread.start()
 
-        stdout_thread.join()
-        stderr_thread.join()
+            stdout_thread.join()
+            stderr_thread.join()
 
-        return_code = process.wait()
+    return_code = process.wait()
 
     return subprocess.CompletedProcess(
         args=command,
