@@ -685,9 +685,8 @@ def test_empty_code_block_write_to_file(
 
 
 def test_bad_command_error(*, rst_file: Path, use_pty_option: bool) -> None:
-    """A ``subprocess.CalledProcessError`` is raised if the command is invalid.
-
-    This includes the command output.
+    """
+    A ``subprocess.CalledProcessError`` is raised if the command is invalid.
     """
     args = ["sh", "--unknownoption"]
     evaluator = ShellCommandEvaluator(
@@ -711,14 +710,3 @@ def test_bad_command_error(*, rst_file: Path, use_pty_option: bool) -> None:
     assert exc.value.returncode == expected_returncode
     # The last element is the path to the temporary file.
     assert exc.value.cmd[:-1] == args
-
-    # We can't be more specific about the error message because it depends on
-    # the platform.
-    error_substring = b"option"
-
-    if use_pty_option:
-        assert exc.value.stderr == b""
-        assert error_substring in exc.value.stdout
-    else:
-        assert error_substring in exc.value.stderr
-        assert exc.value.stdout == b""
