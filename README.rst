@@ -156,6 +156,9 @@ GroupedCodeBlockParser
 
 This makes Sybil act as though all of the code blocks within a group are a single code block,
 to be evaluated with the ``evaluator`` given to ``GroupedCodeBlockParser``.
+
+Only code blocks parsed by another parser in the same Sybil instance will be grouped.
+
 A group is defined by a pair of comments, ``group: start`` and ``group: end``.
 The ``group: end`` example is expanded to include the contents of the code blocks in the group.
 
