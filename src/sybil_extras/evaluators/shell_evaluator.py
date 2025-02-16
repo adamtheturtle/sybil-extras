@@ -18,14 +18,13 @@ from sybil.evaluators.python import pad
 
 
 @beartype
-def _run_with_color_and_capture_separate(
+def _run_command(
     *,
     command: list[str | Path],
     env: Mapping[str, str] | None = None,
     use_pty: bool,
 ) -> subprocess.CompletedProcess[bytes]:
-    """Run a command in a pseudo-terminal to preserve color, capture both
-    stdout and stderr together, and provide live output.
+    """Run a command in a pseudo-terminal to preserve color.
 
     When ``use_pty`` is ``True``, newlines are translated to CRLF in order to
     move the cursor.
@@ -256,7 +255,7 @@ class ShellCommandEvaluator:
 
         temp_file_content = ""
         try:
-            result = _run_with_color_and_capture_separate(
+            result = _run_command(
                 command=[
                     str(object=item) for item in [*self._args, temp_file]
                 ],
