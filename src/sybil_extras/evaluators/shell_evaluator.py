@@ -32,29 +32,21 @@ def _run_with_color_and_capture_separate(
     """
     stdout_master_fd = -1
     slave_fd = -1
+    chunk_size = 1024
 
     if use_pty:
         with contextlib.suppress(AttributeError):
             stdout_master_fd, slave_fd = os.openpty()
         stdout = slave_fd
         stderr = slave_fd
-    else:
-        stdout = subprocess.PIPE
-        stderr = subprocess.PIPE
-
-    chunk_size = 1024
-    stdout_output_chunks: list[bytes] = []
-    stderr_output_chunks: list[bytes] = []
-
-    with subprocess.Popen(
-        args=command,
-        stdout=stdout,
-        stderr=stderr,
-        stdin=subprocess.PIPE,
-        env=env,
-        close_fds=True,
-    ) as process:
-        if use_pty:
+        with subprocess.Popen(
+            args=command,
+            stdout=stdout,
+            stderr=stderr,
+            stdin=subprocess.PIPE,
+            env=env,
+            close_fds=True,
+        ) as process:
             os.close(fd=slave_fd)
 
             # On some platforms, an ``OSError`` is raised when reading from
@@ -65,45 +57,26 @@ def _run_with_color_and_capture_separate(
                 while chunk := os.read(stdout_master_fd, chunk_size):
                     sys.stdout.buffer.write(chunk)
                     sys.stdout.buffer.flush()
-                    stdout_output_chunks.append(chunk)
 
             os.close(fd=stdout_master_fd)
-
-        else:
-            while any(
-                [
-                    process.poll() is None,
-                    stdout_chunk := b"",
-                    stderr_chunk := b"",
-                ],
-            ):
-                stdout_chunk = (
-                    process.stdout.read(chunk_size) if process.stdout else b""
-                )
-                stderr_chunk = (
-                    process.stderr.read(chunk_size) if process.stderr else b""
-                )
-
-                for chunk, stream, output_chunks in [
-                    (stdout_chunk, sys.stdout.buffer, stdout_output_chunks),
-                    (stderr_chunk, sys.stderr.buffer, stderr_output_chunks),
-                ]:
-                    if chunk:
-                        stream.write(chunk)
-                        stream.flush()
-                        output_chunks.append(chunk)
-
-        return_code = process.wait()
-
-        stdout_output = b"".join(stdout_output_chunks)
-        stderr_output = b"".join(stderr_output_chunks)
-
-        return subprocess.CompletedProcess(
+            return_code = process.wait()
+    else:
+        result = subprocess.run(
             args=command,
-            returncode=return_code,
-            stdout=stdout_output,
-            stderr=stderr_output,
+            stdout=None,
+            stderr=None,
+            stdin=subprocess.PIPE,
+            env=env,
+            check=False,
         )
+        return_code = result.returncode
+
+    return subprocess.CompletedProcess(
+        args=command,
+        returncode=return_code,
+        stdout=None,
+        stderr=None,
+    )
 
 
 @beartype
