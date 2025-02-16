@@ -731,7 +731,11 @@ def test_click_runner(*, rst_file: Path, use_pty_option: bool) -> None:
         Click command to run a shell command.
         """
         evaluator = ShellCommandEvaluator(
-            args=["echo", "Hello, Sybil!"],
+            args=[
+                "sh",
+                "-c",
+                "echo 'Hello, Sybil!' && echo >&2 'Hello Stderr!'",
+            ],
             pad_file=False,
             write_to_file=False,
             use_pty=use_pty_option,
@@ -747,5 +751,10 @@ def test_click_runner(*, rst_file: Path, use_pty_option: bool) -> None:
     result = runner.invoke(cli=_main)
     assert result.exit_code == 0, (result.stdout, result.stderr)
     expected_output = "Hello, Sybil!\n"
+    expected_stderr = "Hello Stderr!\n"
+    if use_pty_option:
+        expected_output = "Hello, Sybil!\nHello Stderr!\n"
+        expected_stderr = ""
+
     assert result.stdout == expected_output
-    assert result.stderr == ""
+    assert result.stderr == expected_stderr
