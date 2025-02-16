@@ -266,7 +266,9 @@ def test_file_path(
     (example,) = document.examples()
     example.evaluate()
     output = capfd.readouterr().out
-    given_file_path = Path(output.strip())
+    stripped_output = output.strip()
+    assert stripped_output
+    given_file_path = Path(stripped_output)
     assert given_file_path.parent == rst_file.parent
     assert given_file_path.is_absolute()
     assert not given_file_path.exists()
@@ -301,7 +303,9 @@ def test_file_suffix(
     (example,) = document.examples()
     example.evaluate()
     output = capfd.readouterr().out
-    given_file_path = Path(output.strip())
+    stripped_output = output.strip()
+    assert stripped_output
+    given_file_path = Path(stripped_output)
     assert given_file_path.name.startswith("test_document_example_rst_")
     assert given_file_path.suffixes == suffixes
 
@@ -330,7 +334,9 @@ def test_file_prefix(
     (example,) = document.examples()
     example.evaluate()
     output = capfd.readouterr().out
-    given_file_path = Path(output.strip())
+    stripped_output = output.strip()
+    assert stripped_output
+    given_file_path = Path(stripped_output)
     assert given_file_path.name.startswith("custom_prefix_")
 
 
