@@ -11,7 +11,7 @@ import textwrap
 import threading
 import uuid
 from collections.abc import Mapping, Sequence
-from io import BytesIO
+from io import BufferedReader, BytesIO
 from pathlib import Path
 from typing import IO
 
@@ -34,7 +34,7 @@ def _run_command(
 
     @beartype
     def _process_stream(
-        stream: IO[bytes], output: IO[bytes] | BytesIO
+        stream: BufferedReader, output: IO[bytes] | BytesIO
     ) -> None:
         """
         Write from an input stream to an output stream.
