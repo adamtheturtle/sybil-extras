@@ -66,8 +66,8 @@ def _run_command(
 
     return subprocess.run(
         args=command,
-        stdout=None,
-        stderr=None,
+        stdout=sys.stdout,
+        stderr=sys.stdout,
         stdin=subprocess.PIPE,
         env=env,
         check=False,
