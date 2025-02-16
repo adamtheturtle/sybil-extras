@@ -11,7 +11,9 @@ import textwrap
 import time
 from pathlib import Path
 
+import click
 import pytest
+from click.testing import CliRunner
 from sybil import Sybil
 from sybil.parsers.rest.codeblock import CodeBlockParser
 
@@ -716,3 +718,34 @@ def test_bad_command_error(*, rst_file: Path, use_pty_option: bool) -> None:
     assert exc.value.returncode == expected_returncode
     # The last element is the path to the temporary file.
     assert exc.value.cmd[:-1] == args
+
+
+def test_click_runner(*, rst_file: Path, use_pty_option: bool) -> None:
+    """
+    The click runner can pick up the command output.
+    """
+
+    @click.command()
+    def _main() -> None:
+        """
+        Click command to run a shell command.
+        """
+        evaluator = ShellCommandEvaluator(
+            args=["echo", "Hello, Sybil!"],
+            pad_file=False,
+            write_to_file=False,
+            use_pty=use_pty_option,
+        )
+        parser = CodeBlockParser(language="python", evaluator=evaluator)
+        sybil = Sybil(parsers=[parser])
+
+        document = sybil.parse(path=rst_file)
+        (example,) = document.examples()
+        example.evaluate()
+
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(cli=_main)
+    assert result.exit_code == 0, (result.stdout, result.stderr)
+    expected_output = "Hello, Sybil!\n"
+    assert result.stdout == expected_output
+    assert result.stderr == ""
