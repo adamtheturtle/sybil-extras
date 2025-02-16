@@ -11,6 +11,7 @@ import textwrap
 import threading
 import uuid
 from collections.abc import Mapping, Sequence
+from io import BytesIO
 from pathlib import Path
 from typing import IO
 
@@ -20,7 +21,7 @@ from sybil.evaluators.python import pad
 
 
 @beartype
-def _process_stream(stream: IO[bytes], output: IO[bytes]) -> None:
+def _process_stream(stream: IO[bytes], output: IO[bytes] | BytesIO) -> None:
     """
     Write from an input stream to an output stream.
     """
@@ -89,7 +90,7 @@ def _run_command(
         )
         stderr_thread = threading.Thread(
             target=_process_stream,
-            args=(process.stderr, sys.stderr),
+            args=(process.stderr, sys.stderr.buffer),
         )
 
         stdout_thread.start()
