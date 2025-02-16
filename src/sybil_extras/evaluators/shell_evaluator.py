@@ -24,18 +24,16 @@ def _run_command(
     env: Mapping[str, str] | None = None,
     use_pty: bool,
 ) -> subprocess.CompletedProcess[bytes]:
-    """Run a command in a pseudo-terminal to preserve color.
-
-    When ``use_pty`` is ``True``, newlines are translated to CRLF in order to
-    move the cursor.
     """
-    stdout_master_fd = -1
-    slave_fd = -1
-    chunk_size = 1024
-
+    Run a command in a pseudo-terminal to preserve color.
+    """
     if use_pty:
+        stdout_master_fd = -1
+        slave_fd = -1
+        chunk_size = 1024
         with contextlib.suppress(AttributeError):
             stdout_master_fd, slave_fd = os.openpty()
+
         stdout = slave_fd
         stderr = slave_fd
         with subprocess.Popen(
@@ -59,22 +57,20 @@ def _run_command(
 
             os.close(fd=stdout_master_fd)
             return_code = process.wait()
-    else:
-        result = subprocess.run(
+        return subprocess.CompletedProcess(
             args=command,
+            returncode=return_code,
             stdout=None,
             stderr=None,
-            stdin=subprocess.PIPE,
-            env=env,
-            check=False,
         )
-        return_code = result.returncode
 
-    return subprocess.CompletedProcess(
+    return subprocess.run(
         args=command,
-        returncode=return_code,
         stdout=None,
         stderr=None,
+        stdin=subprocess.PIPE,
+        env=env,
+        check=False,
     )
 
 
