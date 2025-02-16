@@ -48,6 +48,12 @@ class _Grouper:
         action = example.parsed
 
         if action == "start":
+            if state.last_action == "start":
+                msg = (
+                    f"'{self._directive}: start' "
+                    f"must be followed by '{self._directive}: end'"
+                )
+                raise ValueError(msg)
             example.document.push_evaluator(evaluator=self)
             state.last_action = action
             return

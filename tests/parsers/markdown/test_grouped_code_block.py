@@ -312,3 +312,39 @@ def test_end_only(tmp_path: Path) -> None:
     match = r"'group: end' must follow 'group: start'"
     with pytest.raises(expected_exception=ValueError, match=match):
         example.evaluate()
+
+
+def test_start_after_start(tmp_path: Path) -> None:
+    """
+    An error is raised when a group start directive is given after another
+    start.
+    """
+    content = """\
+    <!--- group: start -->
+
+    <!--- group: start -->
+    """
+
+    test_document = tmp_path / "test.rst"
+    test_document.write_text(data=content, encoding="utf-8")
+
+    def evaluator(_: Example) -> None:
+        """
+        No-op evaluator.
+        """
+
+    group_parser = GroupedCodeBlockParser(
+        directive="group",
+        evaluator=evaluator,
+    )
+
+    sybil = Sybil(parsers=[group_parser])
+    document = sybil.parse(path=test_document)
+
+    (first_start_example, second_start_example) = document.examples()
+
+    first_start_example.evaluate()
+
+    match = r"'group: start' must be followed by 'group: end'"
+    with pytest.raises(expected_exception=ValueError, match=match):
+        second_start_example.evaluate()
