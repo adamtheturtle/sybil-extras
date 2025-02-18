@@ -4,6 +4,7 @@ Tests for the custom directive skip parser for Markdown.
 
 from pathlib import Path
 
+import pytest
 from sybil import Sybil
 from sybil.evaluators.skip import SkipState
 from sybil.parsers.markdown.codeblock import PythonCodeBlockParser
@@ -81,3 +82,27 @@ def test_skip(tmp_path: Path) -> None:
         ),
     ]
     assert skip_states == expected_skip_states
+
+
+def test_directive_name_in_error(tmp_path: Path) -> None:
+    """
+    The custom directive skip parser includes the directive name in errors.
+    """
+    skip_parser = CustomDirectiveSkipParser(directive="custom-skip")
+    content = """\
+    <!--- custom-skip: end -->
+    """
+
+    test_document = tmp_path / "test.md"
+    test_document.write_text(data=content, encoding="utf-8")
+
+    skip_parser = CustomDirectiveSkipParser(directive="custom-skip")
+
+    sybil = Sybil(parsers=[skip_parser])
+    document = sybil.parse(path=test_document)
+    (example,) = document.examples()
+    with pytest.raises(
+        expected_exception=ValueError,
+        match="'custom-skip: end' must follow 'custom-skip: start'",
+    ):
+        example.evaluate()
