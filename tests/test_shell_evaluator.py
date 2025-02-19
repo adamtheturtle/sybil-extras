@@ -33,7 +33,7 @@ def fixture_use_pty_option(
     Test with and without the pseudo-terminal.
     """
     use_pty = bool(request.param)
-    if use_pty and platform.system() == "Windows":
+    if use_pty and platform.system() == "Windows":  # pragma: no cover
         pytest.skip(reason="PTY is not supported on Windows.")
     return use_pty
 
