@@ -31,6 +31,7 @@ class CustomDirectiveSkipParser:
         ]
         self._abstract_skip_parser = AbstractSkipParser(lexers=lexers)
         self._abstract_skip_parser.skipper = Skipper(directive=directive)
+        self._abstract_skip_parser.directive = directive
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """

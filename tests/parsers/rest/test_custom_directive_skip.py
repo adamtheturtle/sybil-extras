@@ -68,9 +68,10 @@ def test_skip(tmp_path: Path) -> None:
     assert skip_states == expected_skip_states
 
 
-def test_directive_name_in_error(tmp_path: Path) -> None:
+def test_directive_name_in_evaluate_error(tmp_path: Path) -> None:
     """
-    The custom directive skip parser includes the directive name in errors.
+    The custom directive skip parser includes the directive name in evaluation
+    errors.
     """
     skip_parser = CustomDirectiveSkipParser(directive="custom-skip")
     content = """\
@@ -90,3 +91,26 @@ def test_directive_name_in_error(tmp_path: Path) -> None:
         match="'custom-skip: end' must follow 'custom-skip: start'",
     ):
         example.evaluate()
+
+
+def test_directive_name_in_parse_error(tmp_path: Path) -> None:
+    """
+    The custom directive skip parser includes the directive name in parsing
+    errors.
+    """
+    skip_parser = CustomDirectiveSkipParser(directive="custom-skip")
+    content = """\
+    .. custom-skip: !!!
+    """
+
+    test_document = tmp_path / "test.rst"
+    test_document.write_text(data=content, encoding="utf-8")
+
+    skip_parser = CustomDirectiveSkipParser(directive="custom-skip")
+
+    sybil = Sybil(parsers=[skip_parser])
+    with pytest.raises(
+        expected_exception=ValueError,
+        match="malformed arguments to custom-skip: '!!!'",
+    ):
+        sybil.parse(path=test_document)
