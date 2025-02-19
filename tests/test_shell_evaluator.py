@@ -23,7 +23,7 @@ from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 @pytest.fixture(
     name="use_pty_option",
     # On CI we cannot use the pseudo-terminal.
-    params=[True, False] if sys.stdout.isatty() else [False],
+    params=[True, False],
 )
 def fixture_use_pty_option(
     request: pytest.FixtureRequest,
