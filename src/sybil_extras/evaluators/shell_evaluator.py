@@ -3,6 +3,7 @@ An evaluator for running shell commands on example files.
 """
 
 import contextlib
+import copy
 import os
 import platform
 import subprocess
@@ -15,7 +16,9 @@ from io import BytesIO
 from pathlib import Path
 from typing import IO
 
+import pexpect
 from beartype import beartype
+from pexpect.popen_spawn import PopenSpawn
 from sybil import Example
 from sybil.evaluators.python import pad
 
@@ -45,71 +48,79 @@ def _run_command(
             output.flush()
 
     if use_pty:
-        stdout_master_fd = -1
-        slave_fd = -1
-        with contextlib.suppress(AttributeError):
-            stdout_master_fd, slave_fd = os.openpty()
+        if env is None:
+            pexpect_env = None
+        else:
+            pexpect_env = copy.deepcopy(x=os.environ)
+            pexpect_env.clear()
+            pexpect_env.update(env)
 
-        stdout = slave_fd
-        stderr = slave_fd
-        with subprocess.Popen(
-            args=command,
-            stdout=stdout,
-            stderr=stderr,
-            stdin=subprocess.PIPE,
-            env=env,
-            close_fds=True,
-        ) as process:
-            os.close(fd=slave_fd)
-
-            # On some platforms, an ``OSError`` is raised when reading from
-            # a master file descriptor that has no corresponding slave file.
-            # I think that this may be described in
-            # https://bugs.python.org/issue5380#msg82827
-            with contextlib.suppress(OSError):
-                _process_stream(
-                    stream_fileno=stdout_master_fd,
-                    output=sys.stdout.buffer,
-                )
-
-            os.close(fd=stdout_master_fd)
-
-    else:
-        with subprocess.Popen(
-            args=command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            stdin=subprocess.PIPE,
-            env=env,
-        ) as process:
-            if (
-                process.stdout is None or process.stderr is None
-            ):  # pragma: no cover
-                raise ValueError
-
-            stdout_thread = threading.Thread(
-                target=_process_stream,
-                args=(process.stdout.fileno(), sys.stdout.buffer),
+        if platform.system() == "Windows":
+            # On Windows, use PopenSpawn, which uses pipes rather than a real
+            # PTY.
+            popen_spawn_child: PopenSpawn[str] = PopenSpawn(
+                cmd=command,
+                env=pexpect_env,
             )
-            stderr_thread = threading.Thread(
-                target=_process_stream,
-                args=(process.stderr.fileno(), sys.stderr.buffer),
+            popen_spawn_child.logfile_read = sys.stdout.buffer
+
+            popen_spawn_child.expect(pattern=pexpect.EOF)
+            return_code = popen_spawn_child.exitstatus or 0
+        else:
+            # On POSIX systems, use spawn which provides a true PTY.
+            child: pexpect.spawn[str] = pexpect.spawn(
+                command=str(object=command[0]),
+                args=[str(object=arg) for arg in command[1:]],
+                env=pexpect_env,
             )
+            child.logfile_read = sys.stdout.buffer
 
-            stdout_thread.start()
-            stderr_thread.start()
+            child.expect(pattern=pexpect.EOF)
+            child.close()
+            return_code = child.exitstatus or 0
 
-            stdout_thread.join()
-            stderr_thread.join()
+        return subprocess.CompletedProcess(
+            args=command,
+            returncode=return_code,
+            stdout=None,
+            stderr=None,
+        )
 
-    return_code = process.wait()
-
-    return subprocess.CompletedProcess(
+    with subprocess.Popen(
         args=command,
-        returncode=return_code,
-        stdout=None,
-        stderr=None,
-    )
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=subprocess.PIPE,
+        env=env,
+    ) as process:
+        if (
+            process.stdout is None or process.stderr is None
+        ):  # pragma: no cover
+            raise ValueError
+
+        stdout_thread = threading.Thread(
+            target=_process_stream,
+            args=(process.stdout.fileno(), sys.stdout.buffer),
+        )
+        stderr_thread = threading.Thread(
+            target=_process_stream,
+            args=(process.stderr.fileno(), sys.stderr.buffer),
+        )
+
+        stdout_thread.start()
+        stderr_thread.start()
+
+        stdout_thread.join()
+        stderr_thread.join()
+
+        return_code = process.wait()
+
+        return subprocess.CompletedProcess(
+            args=command,
+            returncode=return_code,
+            stdout=None,
+            stderr=None,
+        )
 
 
 @beartype
@@ -226,10 +237,7 @@ class ShellCommandEvaluator:
                 for formatters.
             use_pty: Whether to use a pseudo-terminal for running commands.
                 This can be useful e.g. to get color output, but can also break
-                in some environments. Not supported on Windows.
-
-        Raises:
-            ValueError: If pseudo-terminal is requested on Windows.
+                in some environments.
         """
         self._args = args
         self._env = env
@@ -244,12 +252,6 @@ class ShellCommandEvaluator:
         """
         Run the shell command on the example file.
         """
-        if (
-            self._use_pty and platform.system() == "Windows"
-        ):  # pragma: no cover
-            msg = "Pseudo-terminal not supported on Windows."
-            raise ValueError(msg)
-
         if self._pad_file:
             source = pad(
                 source=example.parsed,

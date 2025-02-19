@@ -3,7 +3,6 @@ Tests for the ShellCommandEvaluator.
 """
 
 import os
-import platform
 import signal
 import stat
 import subprocess
@@ -32,10 +31,7 @@ def fixture_use_pty_option(
     """
     Test with and without the pseudo-terminal.
     """
-    use_pty = bool(request.param)
-    if use_pty and platform.system() == "Windows":  # pragma: no cover
-        pytest.skip(reason="PTY is not supported on Windows.")
-    return use_pty
+    return bool(request.param)
 
 
 @pytest.fixture(name="rst_file")
