@@ -55,7 +55,7 @@ def _run_command(
             pexpect_env.clear()
             pexpect_env.update(env)
 
-        if platform.system() == "Windows":
+        if platform.system() == "Windows":  # pragma: no cover
             # On Windows, use PopenSpawn, which uses pipes rather than a real
             # pseudo-terminal.
             popen_spawn_child: PopenSpawn[str] = PopenSpawn(  # pylint: disable=unsubscriptable-object
@@ -66,7 +66,7 @@ def _run_command(
 
             popen_spawn_child.expect(pattern=pexpect.EOF)
             return_code = popen_spawn_child.exitstatus or 0
-        else:
+        else:  # pragma: no cover
             # On POSIX systems, use spawn which provides a true
             # pseudo-terminal.
             child: pexpect.spawn[str] = pexpect.spawn(  # pylint: disable=unsubscriptable-object
