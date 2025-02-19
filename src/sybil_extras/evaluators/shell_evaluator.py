@@ -57,8 +57,8 @@ def _run_command(
 
         if platform.system() == "Windows":
             # On Windows, use PopenSpawn, which uses pipes rather than a real
-            # PTY.
-            popen_spawn_child: PopenSpawn[str] = PopenSpawn(
+            # pseudo-terminal.
+            popen_spawn_child: PopenSpawn[str] = PopenSpawn(  # pylint: disable=unsubscriptable-object
                 cmd=command,
                 env=pexpect_env,
             )
@@ -67,8 +67,9 @@ def _run_command(
             popen_spawn_child.expect(pattern=pexpect.EOF)
             return_code = popen_spawn_child.exitstatus or 0
         else:
-            # On POSIX systems, use spawn which provides a true PTY.
-            child: pexpect.spawn[str] = pexpect.spawn(
+            # On POSIX systems, use spawn which provides a true
+            # pseudo-terminal.
+            child: pexpect.spawn[str] = pexpect.spawn(  # pylint: disable=unsubscriptable-object
                 command=str(object=command[0]),
                 args=[str(object=arg) for arg in command[1:]],
                 env=pexpect_env,
