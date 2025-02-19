@@ -4,6 +4,9 @@ Changelog
 Next
 ----
 
+2025.02.19
+----------
+
 * Use the custom skip directive's directive name in parsing errors.
 
 2025.02.18.1
