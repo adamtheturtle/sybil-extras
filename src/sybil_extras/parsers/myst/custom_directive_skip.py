@@ -2,6 +2,7 @@
 A custom directive skip parser for MyST.
 """
 
+import re
 from collections.abc import Iterable
 
 from sybil import Document, Region
@@ -26,8 +27,12 @@ class CustomDirectiveSkipParser:
         # This matches the ``sybil.parsers.myst.SkipParser``, other than
         # it does not hardcode the directive "skip".
         lexers = [
-            DirectiveInPercentCommentLexer(directive=directive),
-            DirectiveInHTMLCommentLexer(directive=directive),
+            DirectiveInPercentCommentLexer(
+                directive=re.escape(pattern=directive),
+            ),
+            DirectiveInHTMLCommentLexer(
+                directive=re.escape(pattern=directive),
+            ),
         ]
         self._abstract_skip_parser = AbstractSkipParser(lexers=lexers)
         self._abstract_skip_parser.skipper = Skipper(directive=directive)
