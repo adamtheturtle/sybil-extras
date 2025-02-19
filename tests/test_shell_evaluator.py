@@ -3,6 +3,7 @@ Tests for the ShellCommandEvaluator.
 """
 
 import os
+import platform
 import signal
 import stat
 import subprocess
@@ -23,7 +24,7 @@ from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 @pytest.fixture(
     name="use_pty_option",
     # On CI we cannot use the pseudo-terminal.
-    params=[True, False] if sys.stdout.isatty() else [False],
+    params=[True, False],
 )
 def fixture_use_pty_option(
     request: pytest.FixtureRequest,
@@ -31,7 +32,10 @@ def fixture_use_pty_option(
     """
     Test with and without the pseudo-terminal.
     """
-    return bool(request.param)
+    use_pty = bool(request.param)
+    if use_pty and platform.system() == "Windows":  # pragma: no cover
+        pytest.skip(reason="PTY is not supported on Windows.")
+    return use_pty
 
 
 @pytest.fixture(name="rst_file")
