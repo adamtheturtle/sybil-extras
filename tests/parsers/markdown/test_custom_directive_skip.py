@@ -130,3 +130,30 @@ def test_directive_name_in_parse_error(tmp_path: Path) -> None:
         match="malformed arguments to custom-skip: '!!!'",
     ):
         sybil.parse(path=test_document)
+
+
+def test_directive_name_not_regex_escaped(tmp_path: Path) -> None:
+    """
+    If the directive name is not regex-escaped, it is still matched.
+    """
+    content = """\
+    <!--- custom-skip[has_square_brackets]: next -->
+
+    ```python
+    block = 1
+    ```
+    """
+
+    test_document = tmp_path / "test.md"
+    test_document.write_text(data=content, encoding="utf-8")
+
+    code_block_parser = PythonCodeBlockParser()
+    skip_parser = CustomDirectiveSkipParser(
+        directive="custom-skip[has_square_brackets]",
+    )
+    sybil = Sybil(parsers=[code_block_parser, skip_parser])
+    document = sybil.parse(path=test_document)
+    for example in document.examples():
+        example.evaluate()
+
+    assert not document.namespace

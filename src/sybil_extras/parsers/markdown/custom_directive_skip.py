@@ -2,6 +2,7 @@
 A custom directive skip parser for Markdown.
 """
 
+import re
 from collections.abc import Iterable
 
 from sybil import Document, Region
@@ -22,7 +23,9 @@ class CustomDirectiveSkipParser:
         """
         # This matches the ``sybil.parsers.markdown.SkipParser``, other than
         # it does not hardcode the directive "skip".
-        lexers = [DirectiveInHTMLCommentLexer(directive=directive)]
+        lexers = [
+            DirectiveInHTMLCommentLexer(directive=re.escape(pattern=directive))
+        ]
         self._abstract_skip_parser = AbstractSkipParser(lexers=lexers)
         self._abstract_skip_parser.skipper = Skipper(directive=directive)
         self._abstract_skip_parser.directive = directive
