@@ -762,3 +762,36 @@ def test_click_runner(*, rst_file: Path, use_pty_option: bool) -> None:
 
     assert result.stdout == expected_output
     assert result.stderr == expected_stderr
+
+
+def test_encoding(*, rst_file: Path, use_pty_option: bool) -> None:
+    """
+    The given encoding is used.
+    """
+    encoding = "utf-16"
+    content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+           x = 2 + 2
+           assert x == 4
+        """
+    )
+    rst_file.write_text(data=content, encoding=encoding)
+    evaluator = ShellCommandEvaluator(
+        args=["cat"],
+        pad_file=False,
+        write_to_file=True,
+        use_pty=use_pty_option,
+        encoding=encoding,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser], encoding=encoding)
+
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    example.evaluate()
+    given_file_content = rst_file.read_text(encoding=encoding)
+    assert given_file_content == content
