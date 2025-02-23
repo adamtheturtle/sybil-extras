@@ -201,6 +201,7 @@ class ShellCommandEvaluator:
         pad_file: bool,
         write_to_file: bool,
         use_pty: bool,
+        encoding: str | None = None,
     ) -> None:
         """Initialize the evaluator.
 
@@ -227,6 +228,9 @@ class ShellCommandEvaluator:
             use_pty: Whether to use a pseudo-terminal for running commands.
                 This can be useful e.g. to get color output, but can also break
                 in some environments. Not supported on Windows.
+            encoding: The encoding to use reading documents which include a
+                given example, and for the temporary file. If ``None``,
+                use the system default.
 
         Raises:
             ValueError: If pseudo-terminal is requested on Windows.
@@ -239,6 +243,7 @@ class ShellCommandEvaluator:
         self._write_to_file = write_to_file
         self._newline = newline
         self._use_pty = use_pty
+        self._encoding = encoding
 
     def __call__(self, example: Example) -> None:
         """
@@ -283,7 +288,7 @@ class ShellCommandEvaluator:
         new_source = source + "\n" if not source.endswith("\n") else source
         temp_file.write_text(
             data=new_source,
-            encoding="utf-8",
+            encoding=self._encoding,
             newline=self._newline,
         )
 
@@ -298,7 +303,9 @@ class ShellCommandEvaluator:
             )
 
             with contextlib.suppress(FileNotFoundError):
-                temp_file_content = temp_file.read_text(encoding="utf-8")
+                temp_file_content = temp_file.read_text(
+                    encoding=self._encoding
+                )
         finally:
             with contextlib.suppress(FileNotFoundError):
                 temp_file.unlink()
@@ -306,7 +313,7 @@ class ShellCommandEvaluator:
         if self._write_to_file:
             existing_file_path = Path(example.path)
             existing_file_content = existing_file_path.read_text(
-                encoding="utf-8"
+                encoding=self._encoding
             )
             existing_region_content = example.region.parsed
             indent_prefix = _get_indentation(example=example)
@@ -363,7 +370,7 @@ class ShellCommandEvaluator:
                 # we have seen that confuse the Git index.
                 existing_file_path.write_text(
                     data=modified_content,
-                    encoding="utf-8",
+                    encoding=self._encoding,
                 )
 
         if result.returncode != 0:
