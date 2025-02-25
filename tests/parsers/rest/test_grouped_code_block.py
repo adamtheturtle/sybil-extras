@@ -471,7 +471,7 @@ def test_with_shell_command_evaluator(tmp_path: Path) -> None:
     output_document = tmp_path / "output.txt"
 
     shell_evaluator = ShellCommandEvaluator(
-        args=["sh", "-c", f"cat $0 > {output_document}"],
+        args=["sh", "-c", f"cat $0 > {output_document.as_posix()}"],
         pad_file=True,
         write_to_file=False,
         use_pty=False,
