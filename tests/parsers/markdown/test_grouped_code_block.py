@@ -2,6 +2,7 @@
 Tests for the group parser for Markdown.
 """
 
+import textwrap
 from pathlib import Path
 
 import pytest
@@ -12,6 +13,7 @@ from sybil.parsers.markdown.codeblock import (
 )
 from sybil.parsers.markdown.skip import SkipParser
 
+from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 from sybil_extras.parsers.markdown.grouped_code_block import (
     GroupedCodeBlockParser,
 )
@@ -420,3 +422,68 @@ def test_directive_name_not_regex_escaped(tmp_path: Path) -> None:
         "x = [*x, 3]\n",
         "x = [*x, 4]\nx = [*x, 5]\n",
     ]
+
+
+def test_with_shell_command_evaluator(tmp_path: Path) -> None:
+    """
+    The group parser groups examples.
+    """
+    content = """\
+    <!--- group: start -->
+
+    ```python
+        x = [*x, 1]
+    ```
+
+    ```python
+        x = [*x, 2]
+    ```
+
+    <!--- group: end -->
+    """
+
+    test_document = tmp_path / "test.rst"
+    test_document.write_text(data=content, encoding="utf-8")
+
+    output_document = tmp_path / "output.txt"
+
+    shell_evaluator = ShellCommandEvaluator(
+        args=["sh", "-c", f"cat $0 > {output_document.as_posix()}"],
+        pad_file=True,
+        write_to_file=False,
+        use_pty=False,
+    )
+    group_parser = GroupedCodeBlockParser(
+        directive="group",
+        evaluator=shell_evaluator,
+    )
+    code_block_parser = CodeBlockParser(language="python")
+
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
+    document = sybil.parse(path=test_document)
+
+    for example in document.examples():
+        example.evaluate()
+
+    output_document_content = output_document.read_text(encoding="utf-8")
+    # There is a lot of whitespace in the output document content because
+    # when we use the grouper we replace the group end directive with a
+    # combined block.
+    expected_output_document_content = textwrap.dedent(
+        text="""\
+
+
+
+
+
+
+
+
+
+
+
+        x = [*x, 1]
+        x = [*x, 2]
+        """,
+    )
+    assert output_document_content == expected_output_document_content
