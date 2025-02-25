@@ -4,6 +4,9 @@ Changelog
 Next
 ----
 
+2025.02.25
+----------
+
 * Support unescaped directives for ``GroupedCodeBlockParser``.
 
 2025.02.19
