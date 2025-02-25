@@ -2,6 +2,7 @@
 Tests for the group parser for reST.
 """
 
+import textwrap
 from pathlib import Path
 
 import pytest
@@ -467,8 +468,10 @@ def test_with_shell_command_evaluator(tmp_path: Path) -> None:
     test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
+    output_document = tmp_path / "output.txt"
+
     shell_evaluator = ShellCommandEvaluator(
-        args=["cat"],
+        args=["sh", "-c", f"cat $0 > {output_document}"],
         pad_file=True,
         write_to_file=False,
         use_pty=False,
@@ -485,9 +488,23 @@ def test_with_shell_command_evaluator(tmp_path: Path) -> None:
     for example in document.examples():
         example.evaluate()
 
-    assert document.namespace["blocks"] == [
-        "x = []\n",
-        "x = [*x, 1]\nx = [*x, 2]\n",
-        "x = [*x, 3]\n",
-        "x = [*x, 4]\nx = [*x, 5]\n",
-    ]
+    output_document_content = output_document.read_text(encoding="utf-8")
+    expected_output_document_content = textwrap.dedent(
+        text="""\
+
+
+
+
+
+
+
+
+
+
+
+
+        x = [*x, 1]
+        x = [*x, 2]
+        """,
+    )
+    assert output_document_content == expected_output_document_content
