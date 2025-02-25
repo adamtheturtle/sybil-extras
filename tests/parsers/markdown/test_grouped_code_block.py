@@ -348,3 +348,75 @@ def test_start_after_start(tmp_path: Path) -> None:
     match = r"'group: start' must be followed by 'group: end'"
     with pytest.raises(expected_exception=ValueError, match=match):
         second_start_example.evaluate()
+
+
+def test_directive_name_not_regex_escaped(tmp_path: Path) -> None:
+    """
+    If the directive name is not regex-escaped, it is still matched.
+    """
+    content = """\
+
+    ```python
+    x = []
+    ```
+
+    <!--- custom-group[has_square_brackets]: start -->
+
+    ```python
+    x = [*x, 1]
+    ```
+
+    ```python
+     x = [*x, 2]
+    ```
+
+    <!--- custom-group[has_square_brackets]: end -->
+
+    ```python
+     x = [*x, 3]
+    ```
+
+    <!--- custom-group[has_square_brackets]: start -->
+
+    ```python
+    x = [*x, 4]
+    ```
+
+    ```python
+     x = [*x, 5]
+    ```
+
+    <!--- custom-group[has_square_brackets]: end -->
+    """
+
+    test_document = tmp_path / "test.rst"
+    test_document.write_text(data=content, encoding="utf-8")
+
+    def evaluator(example: Example) -> None:
+        """
+        Add code block content to the namespace.
+        """
+        existing_blocks = example.document.namespace.get("blocks", [])
+        example.document.namespace["blocks"] = [
+            *existing_blocks,
+            example.parsed,
+        ]
+
+    group_parser = GroupedCodeBlockParser(
+        directive="custom-group[has_square_brackets]",
+        evaluator=evaluator,
+    )
+    code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
+
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
+    document = sybil.parse(path=test_document)
+
+    for example in document.examples():
+        example.evaluate()
+
+    assert document.namespace["blocks"] == [
+        "x = []\n",
+        "x = [*x, 1]\nx = [*x, 2]\n",
+        "x = [*x, 3]\n",
+        "x = [*x, 4]\nx = [*x, 5]\n",
+    ]
