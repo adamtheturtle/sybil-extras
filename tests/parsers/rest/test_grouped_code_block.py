@@ -489,6 +489,9 @@ def test_with_shell_command_evaluator(tmp_path: Path) -> None:
         example.evaluate()
 
     output_document_content = output_document.read_text(encoding="utf-8")
+    # There is a lot of whitespace in the output document content because
+    # when we use the grouper we replace the group end directive with a
+    # combined block.
     expected_output_document_content = textwrap.dedent(
         text="""\
 
