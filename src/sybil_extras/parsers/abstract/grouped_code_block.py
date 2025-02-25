@@ -10,6 +10,7 @@ from typing import Literal
 from sybil import Document, Example, Region
 from sybil.example import NotEvaluated
 from sybil.parsers.abstract.lexers import LexerCollection
+from sybil.region import Lexeme
 from sybil.typing import Evaluator, Lexer
 
 
@@ -19,7 +20,7 @@ class _GroupState:
     Group state.
     """
 
-    combined_text: str | None = None
+    combined_text: Lexeme | None = None
     last_action: Literal["start", "end"] | None = None
 
 
@@ -98,7 +99,11 @@ class _Grouper:
             if state.combined_text is None:
                 state.combined_text = example.parsed
             else:
-                state.combined_text += example.parsed
+                state.combined_text = Lexeme(
+                    text=state.combined_text.text + example.parsed,
+                    offset=state.combined_text.offset,
+                    line_offset=state.combined_text.line_offset,
+                )
             return
 
         raise NotEvaluated
