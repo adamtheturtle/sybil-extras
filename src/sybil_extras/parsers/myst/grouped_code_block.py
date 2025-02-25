@@ -2,6 +2,8 @@
 A group parser for MyST.
 """
 
+import re
+
 from sybil.parsers.markdown.lexers import DirectiveInHTMLCommentLexer
 from sybil.parsers.myst.lexers import (
     DirectiveInPercentCommentLexer,
@@ -25,8 +27,12 @@ class GroupedCodeBlockParser(AbstractGroupedCodeBlockParser):
             evaluator: The evaluator to use for evaluating the combined region.
         """
         lexers = [
-            DirectiveInPercentCommentLexer(directive=directive),
-            DirectiveInHTMLCommentLexer(directive=directive),
+            DirectiveInPercentCommentLexer(
+                directive=re.escape(pattern=directive),
+            ),
+            DirectiveInHTMLCommentLexer(
+                directive=re.escape(pattern=directive),
+            ),
         ]
         super().__init__(
             lexers=lexers,

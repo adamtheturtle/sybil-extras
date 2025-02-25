@@ -2,6 +2,8 @@
 A group parser for reST.
 """
 
+import re
+
 from sybil.parsers.rest.lexers import DirectiveInCommentLexer
 from sybil.typing import Evaluator
 
@@ -21,7 +23,9 @@ class GroupedCodeBlockParser(AbstractGroupedCodeBlockParser):
             directive: The name of the directive to use for grouping.
             evaluator: The evaluator to use for evaluating the combined region.
         """
-        lexers = [DirectiveInCommentLexer(directive=directive)]
+        lexers = [
+            DirectiveInCommentLexer(directive=re.escape(pattern=directive)),
+        ]
         super().__init__(
             lexers=lexers,
             evaluator=evaluator,
