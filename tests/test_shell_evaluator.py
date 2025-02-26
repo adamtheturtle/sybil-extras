@@ -428,9 +428,7 @@ def test_write_to_file(
         assert rst_file_content == original_content
 
 
-def test_write_to_file_multiple(
-    *, tmp_path: Path, use_pty_option: bool
-) -> None:
+def test_write_to_file_multiple(*, tmp_path: Path) -> None:
     """
     If multiple code blocks are present with the same content, changes are
     written to the code block which needs changing.
@@ -438,6 +436,11 @@ def test_write_to_file_multiple(
     content = textwrap.dedent(
         text="""\
         Not in code block
+
+        .. code-block:: python
+
+           x = 2 + 2
+           assert x == 4
 
         .. code-block:: python
 
@@ -461,18 +464,23 @@ def test_write_to_file_multiple(
         args=["cp", file_with_new_content],
         pad_file=False,
         write_to_file=True,
-        use_pty=use_pty_option,
+        use_pty=False,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
-    (first_example, _) = document.examples()
-    first_example.evaluate()
+    (_, second_example, _) = document.examples()
+    second_example.evaluate()
     rst_file_content = rst_file.read_text(encoding="utf-8")
     modified_content = textwrap.dedent(
         text="""\
         Not in code block
+
+        .. code-block:: python
+
+           x = 2 + 2
+           assert x == 4
 
         .. code-block:: python
 
