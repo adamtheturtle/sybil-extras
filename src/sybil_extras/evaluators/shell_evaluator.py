@@ -21,6 +21,65 @@ from sybil.evaluators.python import pad
 
 
 @beartype
+def _document_content_with_example_content_replaced(
+    *,
+    example: Example,
+    existing_file_content: str,
+    pad_file: bool,
+    unindented_new_example_content: str,
+) -> str:
+    """
+    Get the document content with the example content replaced.
+    """
+    existing_region_content = example.region.parsed
+    indent_prefix = _get_indentation(example=example)
+    indented_existing_region_content = textwrap.indent(
+        text=existing_region_content,
+        prefix=indent_prefix,
+    )
+
+    indented_temp_file_content = textwrap.indent(
+        text=unindented_new_example_content,
+        prefix=indent_prefix,
+    )
+
+    # Some regions are given to us with a trailing newline, and
+    # some are not.  We need to remove the trailing newline from
+    # the existing region content to avoid a double newline.
+    #
+    # There is no such thing as a code block with two trailing
+    # newlines, so we need not worry about tools which add this.
+    content_to_replace = indented_existing_region_content.rstrip("\n")
+    replacement = indented_temp_file_content.rstrip("\n")
+
+    # Examples are given with no leading newline.
+    # While it is possible that a formatter added leading newlines,
+    # we assume that this is not the case, and we remove any leading
+    # newlines from the replacement which were added by the padding.
+    if pad_file:
+        replacement = _lstrip_newlines(
+            input_string=replacement,
+            number_of_newlines=example.line + example.parsed.line_offset,
+        )
+
+    return existing_file_content.replace(
+        content_to_replace,
+        replacement,
+        # In Python 3.13 it became possible to use
+        # ``count`` as a keyword argument.
+        #
+        # Because we use ``mypy-strict-kwargs``, this means
+        # that in Python 3.13 we must use ``count`` as a
+        # keyword argument, or we get a ``mypy`` error.
+        #
+        # However, we also want to support Python <3.13, so we
+        # use a positional argument for ``count`` and we ignore
+        # the error.
+        1,  # type: ignore[misc,unused-ignore]
+    )
+
+
+@beartype
 def _run_command(
     *,
     command: list[str | Path],
@@ -315,52 +374,11 @@ class ShellCommandEvaluator:
             existing_file_content = existing_file_path.read_text(
                 encoding=self._encoding
             )
-            existing_region_content = example.region.parsed
-            indent_prefix = _get_indentation(example=example)
-            indented_existing_region_content = textwrap.indent(
-                text=existing_region_content,
-                prefix=indent_prefix,
-            )
-
-            indented_temp_file_content = textwrap.indent(
-                text=temp_file_content,
-                prefix=indent_prefix,
-            )
-
-            # Some regions are given to us with a trailing newline, and
-            # some are not.  We need to remove the trailing newline from
-            # the existing region content to avoid a double newline.
-            #
-            # There is no such thing as a code block with two trailing
-            # newlines, so we need not worry about tools which add this.
-            content_to_replace = indented_existing_region_content.rstrip("\n")
-            replacement = indented_temp_file_content.rstrip("\n")
-
-            # Examples are given with no leading newline.
-            # While it is possible that a formatter added leading newlines,
-            # we assume that this is not the case, and we remove any leading
-            # newlines from the replacement which were added by the padding.
-            if self._pad_file:
-                replacement = _lstrip_newlines(
-                    input_string=replacement,
-                    number_of_newlines=example.line
-                    + example.parsed.line_offset,
-                )
-
-            modified_content = existing_file_content.replace(
-                content_to_replace,
-                replacement,
-                # In Python 3.13 it became possible to use
-                # ``count`` as a keyword argument.
-                #
-                # Because we use ``mypy-strict-kwargs``, this means
-                # that in Python 3.13 we must use ``count`` as a
-                # keyword argument, or we get a ``mypy`` error.
-                #
-                # However, we also want to support Python <3.13, so we
-                # use a positional argument for ``count`` and we ignore
-                # the error.
-                1,  # type: ignore[misc,unused-ignore]
+            modified_content = _document_content_with_example_content_replaced(
+                existing_file_content=existing_file_content,
+                example=example,
+                pad_file=self._pad_file,
+                unindented_new_example_content=temp_file_content,
             )
 
             if existing_file_content != modified_content:
