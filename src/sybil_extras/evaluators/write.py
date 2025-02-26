@@ -110,24 +110,15 @@ def _document_content_with_example_content_replaced(
     )
 
     document_start = existing_file_content[: example.region.start]
-    document_with_start_blanked_out = (
-        len(document_start) * " "
-        + existing_file_content[example.region.start :]
-    )
+    document_without_start = existing_file_content[example.region.start :]
 
-    document_with_replacement_and_start_blanked_out = (
-        document_with_start_blanked_out.replace(
-            indented_existing_region_content.rstrip("\n"),
-            new_example_content,
-            count=1,
-        )
-    )
-
-    return document_with_replacement_and_start_blanked_out.replace(
-        len(document_start) * " ",
-        document_start,
+    document_with_replacement_and_no_start = document_without_start.replace(
+        indented_existing_region_content.rstrip("\n"),
+        new_example_content,
         count=1,
     )
+
+    return document_start + document_with_replacement_and_no_start
 
 
 @beartype
