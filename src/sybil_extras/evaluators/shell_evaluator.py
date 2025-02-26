@@ -315,12 +315,14 @@ class ShellCommandEvaluator:
             existing_file_content = existing_file_path.read_text(
                 encoding=self._encoding
             )
-            existing_region_content = example.region.parsed
+            existing_file_lines = existing_file_content.splitlines()
+            existing_file_lines_before_example = existing_file_lines[
+                : example.line + example.parsed.line_offset
+            ]
+            existing_file_content_after_example = existing_file_content[
+                example.region.end :
+            ]
             indent_prefix = _get_indentation(example=example)
-            indented_existing_region_content = textwrap.indent(
-                text=existing_region_content,
-                prefix=indent_prefix,
-            )
 
             indented_temp_file_content = textwrap.indent(
                 text=temp_file_content,
@@ -332,8 +334,8 @@ class ShellCommandEvaluator:
             # the existing region content to avoid a double newline.
             #
             # There is no such thing as a code block with two trailing
-            # newlines, so we need not worry about tools which add this.
-            content_to_replace = indented_existing_region_content.rstrip("\n")
+            # newlines in reStructuredText, so we choose not to worry about
+            # tools which add this.
             replacement = indented_temp_file_content.rstrip("\n")
 
             # Examples are given with no leading newline.
@@ -347,21 +349,15 @@ class ShellCommandEvaluator:
                     + example.parsed.line_offset,
                 )
 
-            modified_content = existing_file_content.replace(
-                content_to_replace,
-                replacement,
-                # In Python 3.13 it became possible to use
-                # ``count`` as a keyword argument.
-                #
-                # Because we use ``mypy-strict-kwargs``, this means
-                # that in Python 3.13 we must use ``count`` as a
-                # keyword argument, or we get a ``mypy`` error.
-                #
-                # However, we also want to support Python <3.13, so we
-                # use a positional argument for ``count`` and we ignore
-                # the error.
-                1,  # type: ignore[misc,unused-ignore]
-            )
+            modified_content_lines = [
+                *existing_file_lines_before_example,
+                *replacement.splitlines(),
+            ]
+            modified_content = "\n".join(modified_content_lines)
+            if existing_file_content_after_example.strip("\n"):
+                modified_content += "\n"
+            if existing_file_content_after_example:
+                modified_content += existing_file_content_after_example
 
             if existing_file_content != modified_content:
                 # We avoid writing to the file if the content is the same.
