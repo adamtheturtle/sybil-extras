@@ -4,7 +4,7 @@ A group parser for reST.
 
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
 
 from sybil import Document, Example, Region
@@ -20,8 +20,30 @@ class _GroupState:
     Group state.
     """
 
-    combined_text: Lexeme | None = None
     last_action: Literal["start", "end"] | None = None
+    examples: Sequence[Example] = field(default_factory=list)
+
+    @property
+    def combined_text(self) -> Lexeme | None:
+        """
+        Get the combined text.
+        """
+        if not self.examples:
+            return None
+
+        result = self.examples[0].parsed
+        for example in self.examples[1:]:
+            result = Lexeme(
+                text=result.text + example.parsed,
+                offset=result.offset,
+                line_offset=result.line_offset,
+            )
+
+        return Lexeme(
+            text=result.text,
+            offset=result.offset,
+            line_offset=result.line_offset,
+        )
 
 
 class _Grouper:
@@ -96,14 +118,7 @@ class _Grouper:
         is_code_block = "source" in example.region.lexemes
 
         if is_code_block:
-            if state.combined_text is None:
-                state.combined_text = example.parsed
-            else:
-                state.combined_text = Lexeme(
-                    text=state.combined_text.text + example.parsed,
-                    offset=state.combined_text.offset,
-                    line_offset=state.combined_text.line_offset,
-                )
+            state.examples = [*state.examples, example]
             return
 
         raise NotEvaluated
