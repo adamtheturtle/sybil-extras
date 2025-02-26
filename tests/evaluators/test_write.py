@@ -30,7 +30,7 @@ def fixture_rst_file(tmp_path: Path) -> Path:
     return test_document
 
 
-def test_write_to_file_multiple(*, tmp_path: Path) -> None:
+def test_write_to_file_multiple_same(*, tmp_path: Path) -> None:
     """
     If multiple code blocks are present with the same content, changes are
     written to the code block which needs changing.
@@ -84,6 +84,75 @@ def test_write_to_file_multiple(*, tmp_path: Path) -> None:
 
            x = 2 + 2
            assert x == 4
+
+        .. code-block:: python
+
+           foobar
+
+        .. code-block:: python
+
+           x = 2 + 2
+           assert x == 4
+        """,
+    )
+    assert rst_file_content == modified_content
+    assert second_example.document.text == modified_content
+
+
+def test_write_multiple_to_file(*, tmp_path: Path) -> None:
+    """
+    Multiple code blocks can be written to the file even if they change the
+    length of the contents.
+    """
+    content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+           x = 2 + 2
+           assert x == 4
+
+        .. code-block:: python
+
+           x = 2 + 2
+           assert x == 4
+
+        .. code-block:: python
+
+           x = 2 + 2
+           assert x == 4
+        """
+    )
+    rst_file = tmp_path / "test_document.example.rst"
+    rst_file.write_text(data=content, encoding="utf-8")
+
+    def evaluator(example: Example) -> None:
+        """
+        Set the parsed text to 'foobar'.
+        """
+        example.parsed.text = "foobar"
+
+    write_evaluator = WriteCodeBlockEvaluator(
+        strip_leading_newlines=True,
+        encoding="utf-8",
+    )
+    multi_evaluator = MultiEvaluator(evaluators=[evaluator, write_evaluator])
+    parser = CodeBlockParser(language="python", evaluator=multi_evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (first_example, second_example, _) = document.examples()
+    second_example.evaluate()
+    first_example.evaluate()
+    rst_file_content = rst_file.read_text(encoding="utf-8")
+    modified_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+           foobar
 
         .. code-block:: python
 

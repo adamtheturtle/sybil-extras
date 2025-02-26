@@ -108,7 +108,7 @@ def _document_content_with_example_content_replaced(
     # There is no such thing as a code block with two trailing
     # newlines in reStructuredText, so we choose not to worry about
     # tools which add this.
-    replacement = indented_temp_file_content.rstrip("\n")
+    replacement = indented_temp_file_content.rstrip("\n") + "\n"
 
     # Examples are given with no leading newline.
     # While it is possible that a formatter added leading newlines,
