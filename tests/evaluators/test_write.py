@@ -104,10 +104,72 @@ def test_write_to_file_multiple(*, tmp_path: Path) -> None:
     assert second_example.document.text == modified_content
 
 
-"""
-TODO:
+def test_no_changes_mtime(*, rst_file: Path) -> None:
+    """
+    The modification time of the file is not changed if no changes are made.
+    """
+    original_mtime = rst_file.stat().st_mtime
 
-    # Add multiple newlines to show that they are not included in the file.
-    # No code block in reSructuredText ends with multiple newlines.
-    new_content = "foobar\n\n"
-"""
+    write_evaluator = WriteCodeBlockEvaluator(
+        strip_leading_newlines=True,
+        encoding="utf-8",
+    )
+    parser = CodeBlockParser(language="python", evaluator=write_evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    example.evaluate()
+    new_mtime = rst_file.stat().st_mtime
+    assert new_mtime == original_mtime
+
+
+def test_empty_code_block_write_to_file(
+    *,
+    rst_file: Path,
+) -> None:
+    """
+    No error is given with an empty code block.
+    """
+    content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+        After empty code block
+        """
+    )
+    rst_file.write_text(data=content, encoding="utf-8")
+
+    def evaluator(example: Example) -> None:
+        """
+        Set the parsed text to 'foobar'.
+        """
+        example.parsed.text = "foobar"
+
+    write_evaluator = WriteCodeBlockEvaluator(
+        strip_leading_newlines=True,
+        encoding="utf-8",
+    )
+    multi_evaluator = MultiEvaluator(evaluators=[evaluator, write_evaluator])
+    parser = CodeBlockParser(language="python", evaluator=multi_evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    example.evaluate()
+
+    rst_file_content = rst_file.read_text(encoding="utf-8")
+    modified_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+           foobar
+
+        After empty code block
+        """,
+    )
+    assert rst_file_content == modified_content

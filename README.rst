@@ -46,6 +46,7 @@ MultiEvaluator
 
     pytest_collect_file = sybil.pytest()
 
+
 ShellCommandEvaluator
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -69,14 +70,53 @@ ShellCommandEvaluator
         # line numbers in the error messages match the
         # line numbers in the source document.
         pad_file=True,
-        # Don't write any changes back to the source document.
-        # This option is useful when running a linter or formatter
-        # which modifies the code.
-        write_to_file=False,
         # Use a pseudo-terminal for running commands.
         # This can be useful e.g. to get color output, but can also break
         # in some environments.
         use_pty=True,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    pytest_collect_file = sybil.pytest()
+
+WriteCodeBlockEvaluator
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+    """
+    Use WriteCodeBlockEvaluator to write modified code block contents
+    to the original document.
+    """
+
+    from pathlib import Path
+
+    from sybil import Sybil
+    from sybil.parsers.rest.codeblock import CodeBlockParser
+
+    from sybil_extras.evaluators.multi import MultiEvaluator
+    from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
+    from sybil_extras.evaluators.write_code_block import WriteCodeBlockEvaluator
+
+    write_evaluator = WriteCodeBlockEvaluator(
+        path=Path("example.py"),
+        # The code block is written to a temporary file
+        # with these suffixes.
+        tempfile_suffixes=[".example", ".py"],
+    )
+    shell_evaluator = ShellCommandEvaluator(
+        args=["ruff"],
+        tempfile_suffixes=[".example", ".py"],
+    )
+    evaluator = MultiEvaluator(
+        evaluators=[
+            shell_evaluator,
+            # Put the ``WriteCodeBlockEvaluator`` after the
+            # ``ShellCommandEvaluator`` # so that the code block is written to the
+            # file after running the command.
+            write_evaluator,
+        ],
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
