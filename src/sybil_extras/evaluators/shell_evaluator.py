@@ -370,10 +370,7 @@ class ShellCommandEvaluator:
                 temp_file.unlink()
 
         if self._write_to_file:
-            existing_file_path = Path(example.path)
-            existing_file_content = existing_file_path.read_text(
-                encoding=self._encoding
-            )
+            existing_file_content = example.document.text
             modified_content = _document_content_with_example_content_replaced(
                 existing_file_content=existing_file_content,
                 example=example,
@@ -386,7 +383,7 @@ class ShellCommandEvaluator:
                 # This is because writing to the file will update the file's
                 # modification time, which can cause unnecessary rebuilds, and
                 # we have seen that confuse the Git index.
-                existing_file_path.write_text(
+                Path(example.path).write_text(
                     data=modified_content,
                     encoding=self._encoding,
                 )
