@@ -490,7 +490,6 @@ def test_no_file_left_behind_on_interruption(
         evaluator = ShellCommandEvaluator(
             args=[sys.executable, "{sleep_python_script.as_posix()}"],
             pad_file=False,
-            write_to_file=True,
             use_pty=False,
         )
 
