@@ -24,17 +24,21 @@ class _GroupState:
     examples: Sequence[Example] = field(default_factory=list)
 
     @property
-    def combined_text(self) -> Lexeme | None:
-        """
-        Get the combined text.
-        """
-        if not self.examples:
-            return None
+    def combined_text(self) -> Lexeme:
+        """Get the combined text.
 
+        Pad the examples with newlines to ensure that line numbers in
+        error messages match the line numbers in the source.
+        """
         result = self.examples[0].parsed
         for example in self.examples[1:]:
+            existing_lines = len(result.text.splitlines())
+            padding_lines = (
+                example.line - self.examples[0].line - existing_lines
+            )
+            padding = "\n" * padding_lines
             result = Lexeme(
-                text=result.text + example.parsed,
+                text=result.text + padding + example.parsed,
                 offset=result.offset,
                 line_offset=result.line_offset,
             )
@@ -88,18 +92,18 @@ class _Grouper:
             )
             raise ValueError(msg)
 
-        if state.combined_text is not None:
+        if state.examples:
             region = Region(
-                start=example.region.start,
-                end=example.region.end,
+                start=state.examples[0].region.start,
+                end=state.examples[-1].region.end,
                 parsed=state.combined_text,
                 evaluator=self._evaluator,
                 lexemes=example.region.lexemes,
             )
             new_example = Example(
                 document=example.document,
-                line=example.line,
-                column=example.column,
+                line=state.examples[0].line,
+                column=state.examples[0].column,
                 region=region,
                 namespace=example.namespace,
             )
