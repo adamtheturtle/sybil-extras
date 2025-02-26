@@ -70,8 +70,7 @@ def _document_content_with_example_content_replaced(
     modified_content = "\n".join(modified_content_lines)
     if existing_file_content_after_example.strip("\n"):
         modified_content += "\n"
-    if existing_file_content_after_example:
-        modified_content += existing_file_content_after_example
+    modified_content += existing_file_content_after_example
     return modified_content
 
 
