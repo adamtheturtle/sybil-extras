@@ -467,8 +467,8 @@ def test_write_to_file_multiple(
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
-    (first_example, _) = document.examples()
-    first_example.evaluate()
+    (_, second_example) = document.examples()
+    second_example.evaluate()
     rst_file_content = rst_file.read_text(encoding="utf-8")
     modified_content = textwrap.dedent(
         text="""\
@@ -476,12 +476,12 @@ def test_write_to_file_multiple(
 
         .. code-block:: python
 
-           foobar
+           x = 2 + 2
+           assert x == 4
 
         .. code-block:: python
 
-           x = 2 + 2
-           assert x == 4
+           foobar
         """,
     )
     assert rst_file_content == modified_content
