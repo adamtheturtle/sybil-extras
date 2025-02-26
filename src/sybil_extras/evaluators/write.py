@@ -87,46 +87,47 @@ def _document_content_with_example_content_replaced(
     """
     Get the document content with the example content replaced.
     """
-    existing_file_lines = existing_file_content.splitlines()
-    existing_file_lines_before_example = existing_file_lines[
-        : example.line + example.parsed.line_offset
-    ]
-    existing_file_content_after_example = existing_file_content[
-        example.region.end :
-    ]
     indent_prefix = _get_indentation(example=example)
     unindented_new_example_content = str(object=example.parsed.text)
-    indented_temp_file_content = textwrap.indent(
+    new_example_content = textwrap.indent(
         text=unindented_new_example_content,
         prefix=indent_prefix,
     )
-
-    # Some regions are given to us with a trailing newline, and
-    # some are not.  We need to remove the trailing newline from
-    # the existing region content to avoid a double newline.
-    #
-    # There is no such thing as a code block with two trailing
-    # newlines in reStructuredText, so we choose not to worry about
-    # tools which add this.
-    replacement = indented_temp_file_content.rstrip("\n") + "\n"
 
     # Examples are given with no leading newline.
     # While it is possible that a formatter added leading newlines,
     # we assume that this is not the case, and we remove any leading
     # newlines from the replacement which were added by the padding.
     if strip_leading_newlines:
-        replacement = _lstrip_newlines(
-            input_string=replacement,
+        new_example_content = _lstrip_newlines(
+            input_string=new_example_content,
             number_of_newlines=example.line + example.parsed.line_offset,
         )
 
-    modified_content_lines = [
-        *existing_file_lines_before_example,
-        *replacement.splitlines(),
-    ]
-    modified_content = "\n".join(modified_content_lines)
-    modified_content += existing_file_content_after_example
-    return modified_content
+    indented_existing_region_content = textwrap.indent(
+        text=example.region.parsed,
+        prefix=indent_prefix,
+    )
+
+    document_start = existing_file_content[: example.region.start]
+    document_with_start_blanked_out = (
+        len(document_start) * " "
+        + existing_file_content[example.region.start :]
+    )
+
+    document_with_replacement_and_start_blanked_out = (
+        document_with_start_blanked_out.replace(
+            indented_existing_region_content.rstrip("\n"),
+            new_example_content,
+            count=1,
+        )
+    )
+
+    return document_with_replacement_and_start_blanked_out.replace(
+        len(document_start) * " ",
+        document_start,
+        count=1,
+    )
 
 
 @beartype
