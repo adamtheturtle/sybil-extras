@@ -24,7 +24,7 @@ class _GroupState:
     examples: Sequence[Example] = field(default_factory=list)
 
     @property
-    def combined_text(self) -> Lexeme | None:
+    def combined_text(self) -> Lexeme:
         """Get the combined text.
 
         Pad the examples with newlines to ensure that line numbers in
