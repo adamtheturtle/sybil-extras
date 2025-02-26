@@ -57,11 +57,6 @@ def test_write_to_file_multiple(*, tmp_path: Path) -> None:
     )
     rst_file = tmp_path / "test_document.example.rst"
     rst_file.write_text(data=content, encoding="utf-8")
-    file_with_new_content = tmp_path / "new_file.txt"
-    # Add multiple newlines to show that they are not included in the file.
-    # No code block in reSructuredText ends with multiple newlines.
-    new_content = "foobar\n\n"
-    file_with_new_content.write_text(data=new_content, encoding="utf-8")
 
     def evaluator(example: Example) -> None:
         """
