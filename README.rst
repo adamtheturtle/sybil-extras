@@ -97,7 +97,7 @@ WriteCodeBlockEvaluator
 
     from sybil_extras.evaluators.multi import MultiEvaluator
     from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
-    from sybil_extras.evaluators.write_code_block import WriteCodeBlockEvaluator
+    from sybil_extras.evaluators.write import WriteCodeBlockEvaluator
 
     write_evaluator = WriteCodeBlockEvaluator(
         path=Path("example.py"),
