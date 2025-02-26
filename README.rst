@@ -108,6 +108,8 @@ WriteCodeBlockEvaluator
     shell_evaluator = ShellCommandEvaluator(
         args=["ruff"],
         tempfile_suffixes=[".example", ".py"],
+        pad_file=True,
+        use_pty=True,
     )
     evaluator = MultiEvaluator(
         evaluators=[
