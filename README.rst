@@ -90,8 +90,6 @@ WriteCodeBlockEvaluator
     to the original document.
     """
 
-    from pathlib import Path
-
     from sybil import Sybil
     from sybil.parsers.rest.codeblock import CodeBlockParser
 
@@ -100,10 +98,8 @@ WriteCodeBlockEvaluator
     from sybil_extras.evaluators.write import WriteCodeBlockEvaluator
 
     write_evaluator = WriteCodeBlockEvaluator(
-        path=Path("example.py"),
-        # The code block is written to a temporary file
-        # with these suffixes.
-        tempfile_suffixes=[".example", ".py"],
+        strip_leading_newlines=True,
+        encoding="utf-8",
     )
     shell_evaluator = ShellCommandEvaluator(
         args=["ruff"],
