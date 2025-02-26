@@ -397,7 +397,7 @@ def test_write_to_file(
     original_content = rst_file.read_text(encoding="utf-8")
     file_with_new_content = tmp_path / "new_file.txt"
     # Add multiple newlines to show that they are not included in the file.
-    # No code block ends with multiple newlines.
+    # No code block in reSructuredText ends with multiple newlines.
     new_content = "foobar\n\n"
     file_with_new_content.write_text(data=new_content, encoding="utf-8")
     evaluator = ShellCommandEvaluator(
@@ -426,6 +426,65 @@ def test_write_to_file(
         assert rst_file_content == modified_content
     else:
         assert rst_file_content == original_content
+
+
+def test_write_to_file_multiple(
+    *, tmp_path: Path, use_pty_option: bool
+) -> None:
+    """
+    If multiple code blocks are present with the same content, changes are
+    written to the code block which needs changing.
+    """
+    content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+           x = 2 + 2
+           assert x == 4
+
+        .. code-block:: python
+
+           x = 2 + 2
+           assert x == 4
+        """
+    )
+    rst_file = tmp_path / "test_document.example.rst"
+    rst_file.write_text(data=content, encoding="utf-8")
+    file_with_new_content = tmp_path / "new_file.txt"
+    # Add multiple newlines to show that they are not included in the file.
+    # No code block in reSructuredText ends with multiple newlines.
+    new_content = "foobar\n\n"
+    file_with_new_content.write_text(data=new_content, encoding="utf-8")
+    evaluator = ShellCommandEvaluator(
+        args=["cp", file_with_new_content],
+        pad_file=False,
+        write_to_file=True,
+        use_pty=use_pty_option,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (first_example, _) = document.examples()
+    first_example.evaluate()
+    rst_file_content = rst_file.read_text(encoding="utf-8")
+    modified_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+           foobar
+
+        .. code-block:: python
+
+           x = 2 + 2
+           assert x == 4
+        """,
+    )
+    assert rst_file_content == modified_content
 
 
 def test_pad_and_write(*, rst_file: Path, use_pty_option: bool) -> None:
