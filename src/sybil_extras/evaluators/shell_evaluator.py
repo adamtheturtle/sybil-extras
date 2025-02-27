@@ -31,6 +31,12 @@ def _document_content_with_example_content_replaced(
     """
     Get the document content with the example content replaced.
     """
+    if not example.parsed:
+        msg = (
+            "Replacing empty code blocks is not supported as we cannot "
+            "determine the indentation."
+        )
+        raise ValueError(msg)
     existing_file_lines = existing_file_content.splitlines()
     existing_file_lines_before_example = existing_file_lines[
         : example.line + example.parsed.line_offset
@@ -217,13 +223,7 @@ def _get_indentation(example: Example) -> str:
     region_lines_matching_first_line = [
         line for line in region_lines if line.lstrip() == first_line.lstrip()
     ]
-    try:
-        first_region_line_matching_first_line = (
-            region_lines_matching_first_line[0]
-        )
-    except IndexError:
-        # Empty code block
-        return ""
+    first_region_line_matching_first_line = region_lines_matching_first_line[0]
 
     left_padding_region_line = len(
         first_region_line_matching_first_line
