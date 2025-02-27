@@ -112,12 +112,19 @@ def _document_content_with_example_content_replaced(
     document_start = existing_file_content[: example.region.start]
     document_without_start = existing_file_content[example.region.start :]
 
+    if not indented_existing_region_content:
+        breakpoint()
+        raise ValueError(
+            "Replacing empty code blocks is not supported as we cannot determine the indentation."
+        )
+
     document_with_replacement_and_no_start = document_without_start.replace(
         indented_existing_region_content.rstrip("\n"),
         new_example_content,
         count=1,
     )
 
+    breakpoint()
     return document_start + document_with_replacement_and_no_start
 
 
