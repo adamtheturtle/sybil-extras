@@ -413,7 +413,7 @@ def test_write_to_file(
     (example,) = document.examples()
     example.evaluate()
     rst_file_content = rst_file.read_text(encoding="utf-8")
-    modified_content = textwrap.dedent(
+    expected_content = textwrap.dedent(
         text="""\
         Not in code block
 
@@ -423,7 +423,7 @@ def test_write_to_file(
         """,
     )
     if write_to_file:
-        assert rst_file_content == modified_content
+        assert rst_file_content == expected_content
     else:
         assert rst_file_content == original_content
 
@@ -473,7 +473,7 @@ def test_write_to_file_multiple(*, tmp_path: Path) -> None:
     (_, second_example, _) = document.examples()
     second_example.evaluate()
     rst_file_content = rst_file.read_text(encoding="utf-8")
-    modified_content = textwrap.dedent(
+    expected_content = textwrap.dedent(
         text="""\
         Not in code block
 
@@ -492,7 +492,7 @@ def test_write_to_file_multiple(*, tmp_path: Path) -> None:
            assert x == 4
         """,
     )
-    assert rst_file_content == modified_content
+    assert rst_file_content == expected_content
 
 
 def test_pad_and_write(*, rst_file: Path, use_pty_option: bool) -> None:
