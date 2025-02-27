@@ -74,7 +74,16 @@ def _document_content_with_example_content_replaced(
     document_with_replacement_and_no_start = document_without_start.replace(
         indented_existing_region_content.rstrip("\n"),
         replacement,
-        count=1,
+        # In Python 3.13 it became possible to use
+        # ``count`` as a keyword argument.
+        # Because we use ``mypy-strict-kwargs``, this means
+        # that in Python 3.13 we must use ``count`` as a
+        # keyword argument, or we get a ``mypy`` error.
+        #
+        # However, we also want to support Python <3.13, so we
+        # use a positional argument for ``count`` and we ignore
+        # the error.
+        1,  # type: ignore[misc,unused-ignore]
     )
 
     return document_start + document_with_replacement_and_no_start
