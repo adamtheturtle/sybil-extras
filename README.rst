@@ -142,7 +142,17 @@ GroupedCodeBlockParser
         sys.stdout.write(example.parsed)
 
 
-    group_parser = GroupedCodeBlockParser(directive="group", evaluator=evaluator)
+    group_parser = GroupedCodeBlockParser(
+        directive="group",
+        evaluator=evaluator,
+        # Pad the groups with newlines so that the
+        # line number differences between blocks in the output match the
+        # line number differences in the source document.
+        # This is useful for error messages that reference line numbers.
+        # However, this is detrimental to commands that expect the file
+        # to not have a bunch of newlines in it, such as formatters.
+        pad_groups=True,
+    )
     code_block_parser = PythonCodeBlockParser()
 
     sybil = Sybil(parsers=[code_block_parser, group_parser])
