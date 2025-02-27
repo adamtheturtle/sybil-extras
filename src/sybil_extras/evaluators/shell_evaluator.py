@@ -44,6 +44,11 @@ def _document_content_with_example_content_replaced(
         prefix=indent_prefix,
     )
 
+    indented_existing_region_content = textwrap.indent(
+        text=example.region.parsed,
+        prefix=indent_prefix,
+    )
+
     # Some regions are given to us with a trailing newline, and
     # some are not.  We need to remove the trailing newline from
     # the existing region content to avoid a double newline.
@@ -63,15 +68,23 @@ def _document_content_with_example_content_replaced(
             number_of_newlines=example.line + example.parsed.line_offset,
         )
 
-    modified_content_lines = [
-        *existing_file_lines_before_example,
-        *replacement.splitlines(),
-    ]
-    modified_content = "\n".join(modified_content_lines)
-    if existing_file_content_after_example.strip("\n"):
-        modified_content += "\n"
-    modified_content += existing_file_content_after_example
-    return modified_content
+    document_start = existing_file_content[: example.region.start]
+
+    document_without_start = existing_file_content[example.region.start :]
+
+    if not indented_existing_region_content:
+        raise ValueError(
+            "Replacing empty code blocks is not supported as we cannot determine the indentation."
+        )
+
+    document_with_replacement_and_no_start = document_without_start.replace(
+        indented_existing_region_content.rstrip("\n"),
+        replacement,
+        count=1,
+    )
+
+    # breakpoint()
+    return document_start + document_with_replacement_and_no_start
 
 
 @beartype
