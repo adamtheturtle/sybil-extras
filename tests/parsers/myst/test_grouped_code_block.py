@@ -59,6 +59,7 @@ def test_group(tmp_path: Path) -> None:
     group_parser = GroupedCodeBlockParser(
         directive="group",
         evaluator=evaluator,
+        pad_groups=True,
     )
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
@@ -114,6 +115,7 @@ def test_nothing_after_group(tmp_path: Path) -> None:
     group_parser = GroupedCodeBlockParser(
         directive="group",
         evaluator=evaluator,
+        pad_groups=True,
     )
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
@@ -164,6 +166,7 @@ def test_empty_group(tmp_path: Path) -> None:
     group_parser = GroupedCodeBlockParser(
         directive="group",
         evaluator=evaluator,
+        pad_groups=True,
     )
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
@@ -224,6 +227,7 @@ def test_group_with_skip(tmp_path: Path) -> None:
     group_parser = GroupedCodeBlockParser(
         directive="group",
         evaluator=evaluator,
+        pad_groups=True,
     )
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
     skip_parser = SkipParser()
@@ -262,6 +266,7 @@ def test_no_argument(tmp_path: Path) -> None:
     group_parser = GroupedCodeBlockParser(
         directive="group",
         evaluator=evaluator,
+        pad_groups=True,
     )
 
     sybil = Sybil(parsers=[group_parser])
@@ -289,6 +294,7 @@ def test_end_only(tmp_path: Path) -> None:
     group_parser = GroupedCodeBlockParser(
         directive="group",
         evaluator=evaluator,
+        pad_groups=True,
     )
 
     sybil = Sybil(parsers=[group_parser])
@@ -322,6 +328,7 @@ def test_start_after_start(tmp_path: Path) -> None:
     group_parser = GroupedCodeBlockParser(
         directive="group",
         evaluator=evaluator,
+        pad_groups=True,
     )
 
     sybil = Sybil(parsers=[group_parser])
@@ -391,6 +398,7 @@ def test_directive_name_not_regex_escaped(tmp_path: Path) -> None:
     group_parser = GroupedCodeBlockParser(
         directive="custom-group[has_square_brackets]",
         evaluator=evaluator,
+        pad_groups=True,
     )
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
@@ -440,6 +448,7 @@ def test_with_shell_command_evaluator(tmp_path: Path) -> None:
     group_parser = GroupedCodeBlockParser(
         directive="group",
         evaluator=shell_evaluator,
+        pad_groups=True,
     )
     code_block_parser = CodeBlockParser(language="python")
 
