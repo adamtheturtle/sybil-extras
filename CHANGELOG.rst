@@ -4,6 +4,9 @@ Changelog
 Next
 ----
 
+2025.02.27.1
+------------
+
 * Add option in ``GroupedCodeBlockParser`` to not pad the groups.
 
 2025.02.25
