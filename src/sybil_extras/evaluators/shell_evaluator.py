@@ -223,13 +223,7 @@ def _get_indentation(example: Example) -> str:
     region_lines_matching_first_line = [
         line for line in region_lines if line.lstrip() == first_line.lstrip()
     ]
-    try:
-        first_region_line_matching_first_line = (
-            region_lines_matching_first_line[0]
-        )
-    except IndexError:
-        # Empty code block
-        return ""
+    first_region_line_matching_first_line = region_lines_matching_first_line[0]
 
     left_padding_region_line = len(
         first_region_line_matching_first_line
