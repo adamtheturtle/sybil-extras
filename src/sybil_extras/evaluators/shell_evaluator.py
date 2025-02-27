@@ -31,13 +31,6 @@ def _document_content_with_example_content_replaced(
     """
     Get the document content with the example content replaced.
     """
-    existing_file_lines = existing_file_content.splitlines()
-    existing_file_lines_before_example = existing_file_lines[
-        : example.line + example.parsed.line_offset
-    ]
-    existing_file_content_after_example = existing_file_content[
-        example.region.end :
-    ]
     indent_prefix = _get_indentation(example=example)
     indented_temp_file_content = textwrap.indent(
         text=unindented_new_example_content,
@@ -73,9 +66,11 @@ def _document_content_with_example_content_replaced(
     document_without_start = existing_file_content[example.region.start :]
 
     if not indented_existing_region_content:
-        raise ValueError(
-            "Replacing empty code blocks is not supported as we cannot determine the indentation."
+        msg = (
+            "Replacing empty code blocks is not supported as we cannot "
+            "determine the indentation."
         )
+        raise ValueError(msg)
 
     document_with_replacement_and_no_start = document_without_start.replace(
         indented_existing_region_content.rstrip("\n"),
@@ -83,7 +78,6 @@ def _document_content_with_example_content_replaced(
         count=1,
     )
 
-    # breakpoint()
     return document_start + document_with_replacement_and_no_start
 
 
