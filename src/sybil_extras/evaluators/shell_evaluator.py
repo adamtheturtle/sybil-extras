@@ -37,16 +37,14 @@ def _document_content_with_example_content_replaced(
             "determine the indentation."
         )
         raise ValueError(msg)
-    existing_file_lines = existing_file_content.splitlines()
-    existing_file_lines_before_example = existing_file_lines[
-        : example.line + example.parsed.line_offset
-    ]
-    existing_file_content_after_example = existing_file_content[
-        example.region.end :
-    ]
     indent_prefix = _get_indentation(example=example)
     indented_temp_file_content = textwrap.indent(
         text=unindented_new_example_content,
+        prefix=indent_prefix,
+    )
+
+    indented_existing_region_content = textwrap.indent(
+        text=example.region.parsed,
         prefix=indent_prefix,
     )
 
@@ -69,15 +67,26 @@ def _document_content_with_example_content_replaced(
             number_of_newlines=example.line + example.parsed.line_offset,
         )
 
-    modified_content_lines = [
-        *existing_file_lines_before_example,
-        *replacement.splitlines(),
-    ]
-    modified_content = "\n".join(modified_content_lines)
-    if existing_file_content_after_example.strip("\n"):
-        modified_content += "\n"
-    modified_content += existing_file_content_after_example
-    return modified_content
+    document_start = existing_file_content[: example.region.start]
+
+    document_without_start = existing_file_content[example.region.start :]
+
+    document_with_replacement_and_no_start = document_without_start.replace(
+        indented_existing_region_content.rstrip("\n"),
+        replacement,
+        # In Python 3.13 it became possible to use
+        # ``count`` as a keyword argument.
+        # Because we use ``mypy-strict-kwargs``, this means
+        # that in Python 3.13 we must use ``count`` as a
+        # keyword argument, or we get a ``mypy`` error.
+        #
+        # However, we also want to support Python <3.13, so we
+        # use a positional argument for ``count`` and we ignore
+        # the error.
+        1,  # type: ignore[misc,unused-ignore]
+    )
+
+    return document_start + document_with_replacement_and_no_start
 
 
 @beartype
