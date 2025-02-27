@@ -31,6 +31,12 @@ def _document_content_with_example_content_replaced(
     """
     Get the document content with the example content replaced.
     """
+    if not example.parsed:
+        msg = (
+            "Replacing empty code blocks is not supported as we cannot "
+            "determine the indentation."
+        )
+        raise ValueError(msg)
     existing_file_lines = existing_file_content.splitlines()
     existing_file_lines_before_example = existing_file_lines[
         : example.line + example.parsed.line_offset

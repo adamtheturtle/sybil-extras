@@ -729,12 +729,12 @@ def test_newline_given(
 
 def test_empty_code_block_write_to_file(
     *,
+    tmp_path: Path,
     rst_file: Path,
-    capsys: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
     """
-    No error is given with an empty code block.
+    An error is given when trying to write to an empty code block.
     """
     content = textwrap.dedent(
         text="""\
@@ -746,8 +746,13 @@ def test_empty_code_block_write_to_file(
         """
     )
     rst_file.write_text(data=content, encoding="utf-8")
+    file_with_new_content = tmp_path / "new_file.txt"
+    # Add multiple newlines to show that they are not included in the file.
+    # No code block in reSructuredText ends with multiple newlines.
+    new_content = "foobar\n\n"
+    file_with_new_content.write_text(data=new_content, encoding="utf-8")
     evaluator = ShellCommandEvaluator(
-        args=["cat"],
+        args=["cp", file_with_new_content],
         pad_file=False,
         write_to_file=True,
         use_pty=use_pty_option,
@@ -757,10 +762,12 @@ def test_empty_code_block_write_to_file(
 
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
-    example.evaluate()
-    outerr = capsys.readouterr()
-    assert outerr.out.strip() == ""
-    assert outerr.err == ""
+    expected_msg = (
+        "Replacing empty code blocks is not supported as we cannot "
+        "determine the indentation."
+    )
+    with pytest.raises(expected_exception=ValueError, match=expected_msg):
+        example.evaluate()
 
 
 def test_bad_command_error(*, rst_file: Path, use_pty_option: bool) -> None:
