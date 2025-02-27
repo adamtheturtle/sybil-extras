@@ -519,8 +519,9 @@ def test_with_shell_command_evaluator(tmp_path: Path) -> None:
 
 
 def test_no_pad_groups(tmp_path: Path) -> None:
-    """
-    It is possible to avoid padding the groups.
+    """It is possible to avoid padding the groups.
+
+    One new line is added between the code blocks.
     """
     content = """\
     .. group: start
@@ -571,8 +572,6 @@ def test_no_pad_groups(tmp_path: Path) -> None:
 
 
         x = [*x, 1]
-
-
 
         x = [*x, 2]
         """,
