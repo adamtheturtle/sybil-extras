@@ -249,6 +249,30 @@ def _get_indentation(example: Example) -> str:
 
 
 @beartype
+def _raise_cannot_replace_error() -> None:
+    """
+    We cannot write to an empty code block, so raise an error.
+    """
+    msg = (
+        "Replacing empty code blocks is not supported as we cannot "
+        "determine the indentation."
+    )
+    raise ValueError(msg)
+
+
+@beartype
+def _no_op_document_content_writer(
+    example: Example,
+    document_content: str,
+) -> None:
+    """
+    Do nothing.
+    """
+    del example
+    del document_content
+
+
+@beartype
 class ShellCommandEvaluator:
     """
     Run a shell command on the example file.
@@ -308,23 +332,21 @@ class ShellCommandEvaluator:
         self._pad_file = pad_file
         self._tempfile_name_prefix = tempfile_name_prefix
         self._tempfile_suffixes = tempfile_suffixes
-        self._write_to_file = write_to_file
+
+        if write_to_file:
+            self._on_write_to_empty_code_block = _raise_cannot_replace_error
+            self._on_write_to_non_empty_code_block = self._overwrite_document
+        else:
+            self._on_write_to_empty_code_block = lambda: None
+            self._on_write_to_non_empty_code_block = (
+                _no_op_document_content_writer
+            )
+
         self._newline = newline
         self._use_pty = use_pty
         self._encoding = encoding
 
-    def _raise_cannot_replace_error(self) -> None:
-        """
-        We cannot write to an empty code block, so raise an error.
-        """
-        if self._write_to_file:
-            msg = (
-                "Replacing empty code blocks is not supported as we cannot "
-                "determine the indentation."
-            )
-            raise ValueError(msg)
-
-    def _on_write_to_non_empty_code_block(
+    def _overwrite_document(
         self,
         example: Example,
         document_content: str,
@@ -332,11 +354,10 @@ class ShellCommandEvaluator:
         """
         Overwrite the file with the new content.
         """
-        if self._write_to_file:
-            Path(example.path).write_text(
-                data=document_content,
-                encoding=self._encoding,
-            )
+        Path(example.path).write_text(
+            data=document_content,
+            encoding=self._encoding,
+        )
 
     def __call__(self, example: Example) -> None:
         """
@@ -410,7 +431,7 @@ class ShellCommandEvaluator:
             example=example,
             pad_file=self._pad_file,
             unindented_new_example_content=temp_file_content,
-            on_write_to_empty_code_block=self._raise_cannot_replace_error,
+            on_write_to_empty_code_block=self._on_write_to_empty_code_block,
         )
 
         # We avoid writing to the file if the content is the same.
