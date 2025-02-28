@@ -31,6 +31,17 @@ def _document_content_with_example_content_replaced(
     """
     Get the document content with the example content replaced.
     """
+    # Some regions are given to us with a trailing newline, and
+    # some are not.  We need to remove the trailing newline from
+    # the existing region content to avoid a double newline.
+    #
+    # There is no such thing as a code block with two trailing
+    # newlines in reStructuredText, so we choose not to worry about
+    # tools which add this.
+
+    unindented_new_example_content = unindented_new_example_content.rstrip(
+        "\n"
+    )
     if not unindented_new_example_content and not example.parsed:
         return existing_file_content
 
@@ -45,20 +56,12 @@ def _document_content_with_example_content_replaced(
         text=unindented_new_example_content,
         prefix=indent_prefix,
     )
+    replacement = indented_temp_file_content
 
     indented_existing_region_content = textwrap.indent(
         text=example.region.parsed,
         prefix=indent_prefix,
     )
-
-    # Some regions are given to us with a trailing newline, and
-    # some are not.  We need to remove the trailing newline from
-    # the existing region content to avoid a double newline.
-    #
-    # There is no such thing as a code block with two trailing
-    # newlines in reStructuredText, so we choose not to worry about
-    # tools which add this.
-    replacement = indented_temp_file_content.rstrip("\n")
 
     # Examples are given with no leading newline.
     # While it is possible that a formatter added leading newlines,

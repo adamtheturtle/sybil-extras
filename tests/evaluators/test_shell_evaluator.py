@@ -770,11 +770,21 @@ def test_empty_code_block_write_content_to_file(
         example.evaluate()
 
 
+@pytest.mark.parametrize(
+    argnames="new_content",
+    argvalues=[
+        "",
+        # Code blocks in reStructuredText cannot contain just newlines.
+        # Therefore we treat this as an empty code block.
+        "\n\n",
+    ],
+)
 def test_empty_code_block_write_empty_to_file(
     *,
     tmp_path: Path,
     rst_file: Path,
     use_pty_option: bool,
+    new_content: str,
 ) -> None:
     """
     No error is given when trying to write empty content to an empty code
@@ -791,7 +801,7 @@ def test_empty_code_block_write_empty_to_file(
     )
     rst_file.write_text(data=content, encoding="utf-8")
     file_with_new_content = tmp_path / "new_file.txt"
-    file_with_new_content.write_text(data="", encoding="utf-8")
+    file_with_new_content.write_text(data=new_content, encoding="utf-8")
     evaluator = ShellCommandEvaluator(
         args=["cp", file_with_new_content],
         pad_file=False,
