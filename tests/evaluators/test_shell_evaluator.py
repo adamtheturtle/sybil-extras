@@ -727,14 +727,14 @@ def test_newline_given(
     assert includes_lf
 
 
-def test_empty_code_block_write_to_file(
+def test_empty_code_block_write_content_to_file(
     *,
     tmp_path: Path,
     rst_file: Path,
     use_pty_option: bool,
 ) -> None:
     """
-    An error is given when trying to write to an empty code block.
+    An error is given when trying to write content to an empty code block.
     """
     content = textwrap.dedent(
         text="""\
@@ -768,6 +768,43 @@ def test_empty_code_block_write_to_file(
     )
     with pytest.raises(expected_exception=ValueError, match=expected_msg):
         example.evaluate()
+
+
+def test_empty_code_block_write_empty_to_file(
+    *,
+    tmp_path: Path,
+    rst_file: Path,
+    use_pty_option: bool,
+) -> None:
+    """
+    No error is given when trying to write empty content to an empty code
+    block.
+    """
+    content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+        After empty code block
+        """
+    )
+    rst_file.write_text(data=content, encoding="utf-8")
+    file_with_new_content = tmp_path / "new_file.txt"
+    file_with_new_content.write_text(data="", encoding="utf-8")
+    evaluator = ShellCommandEvaluator(
+        args=["cp", file_with_new_content],
+        pad_file=False,
+        write_to_file=True,
+        use_pty=use_pty_option,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    example.evaluate()
+    assert rst_file.read_text(encoding="utf-8") == content
 
 
 def test_bad_command_error(*, rst_file: Path, use_pty_option: bool) -> None:

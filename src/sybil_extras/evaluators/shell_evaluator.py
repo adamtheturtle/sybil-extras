@@ -31,6 +31,9 @@ def _document_content_with_example_content_replaced(
     """
     Get the document content with the example content replaced.
     """
+    if not unindented_new_example_content and not example.parsed:
+        return existing_file_content
+
     if not example.parsed:
         msg = (
             "Replacing empty code blocks is not supported as we cannot "
