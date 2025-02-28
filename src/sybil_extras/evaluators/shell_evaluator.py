@@ -379,24 +379,50 @@ class ShellCommandEvaluator:
             with contextlib.suppress(FileNotFoundError):
                 temp_file.unlink()
 
-        if self._write_to_file:
-            existing_file_content = example.document.text
+        existing_file_content = example.document.text
+
+        def _on_write_to_empty_code_block(value_error: ValueError) -> None:
+            """
+            We cannot write to an empty code block, so raise an error.
+            """
+            if self._write_to_file:
+                raise value_error
+
+        def _on_write_to_non_empty_code_block(
+            example: Example,
+            document_content: str,
+        ) -> None:
+            """
+            Overwrite the file with the new content.
+            """
+            if self._write_to_file:
+                Path(example.path).write_text(
+                    data=document_content,
+                    encoding=self._encoding,
+                )
+
+        try:
             modified_content = _document_content_with_example_content_replaced(
                 existing_file_content=existing_file_content,
                 example=example,
                 pad_file=self._pad_file,
                 unindented_new_example_content=temp_file_content,
             )
+            content_changed = modified_content != existing_file_content
+        except ValueError as exc:
+            content_changed = False
+            modified_content = ""
+            _on_write_to_empty_code_block(value_error=exc)
 
-            if existing_file_content != modified_content:
-                # We avoid writing to the file if the content is the same.
-                # This is because writing to the file will update the file's
-                # modification time, which can cause unnecessary rebuilds, and
-                # we have seen that confuse the Git index.
-                Path(example.path).write_text(
-                    data=modified_content,
-                    encoding=self._encoding,
-                )
+        # We avoid writing to the file if the content is the same.
+        # This is because writing to the file will update the file's
+        # modification time, which can cause unnecessary rebuilds, and
+        # we have seen that confuse the Git index.
+        if content_changed:
+            _on_write_to_non_empty_code_block(
+                example=example,
+                document_content=modified_content,
+            )
 
         if result.returncode != 0:
             raise subprocess.CalledProcessError(
