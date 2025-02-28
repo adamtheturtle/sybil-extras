@@ -444,8 +444,8 @@ class ShellCommandEvaluator:
         # we have seen that confuse the Git index.
         if modified_content != existing_file_content:
             self.on_write_to_non_empty_code_block(
-                example=example,
-                document_content=modified_content,
+                example,
+                modified_content,
             )
 
         if result.returncode != 0:
