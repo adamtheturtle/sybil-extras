@@ -334,11 +334,11 @@ class ShellCommandEvaluator:
         self._tempfile_suffixes = tempfile_suffixes
 
         if write_to_file:
-            self._on_write_to_empty_code_block = _raise_cannot_replace_error
-            self._on_write_to_non_empty_code_block = self._overwrite_document
+            self.on_write_to_empty_code_block = _raise_cannot_replace_error
+            self.on_write_to_non_empty_code_block = self._overwrite_document
         else:
-            self._on_write_to_empty_code_block = lambda: None
-            self._on_write_to_non_empty_code_block = (
+            self.on_write_to_empty_code_block = lambda: None
+            self.on_write_to_non_empty_code_block = (
                 _no_op_document_content_writer
             )
 
@@ -431,7 +431,7 @@ class ShellCommandEvaluator:
             example=example,
             pad_file=self._pad_file,
             unindented_new_example_content=temp_file_content,
-            on_write_to_empty_code_block=self._on_write_to_empty_code_block,
+            on_write_to_empty_code_block=self.on_write_to_empty_code_block,
         )
 
         # We avoid writing to the file if the content is the same.
@@ -439,7 +439,7 @@ class ShellCommandEvaluator:
         # modification time, which can cause unnecessary rebuilds, and
         # we have seen that confuse the Git index.
         if modified_content != existing_file_content:
-            self._on_write_to_non_empty_code_block(
+            self.on_write_to_non_empty_code_block(
                 example=example,
                 document_content=modified_content,
             )
