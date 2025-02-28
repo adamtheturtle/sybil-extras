@@ -258,7 +258,10 @@ def _raise_cannot_replace_error(
     """
     del document_content
     msg = (
-        f"Cannot replace empty code block in {example.path}. "
+        # Use ``.as_posix()`` to avoid the Windows path separator.
+        # This probably is worse, but is easier for consistent testing.
+        f"Cannot replace empty code block in {Path(example.path).as_posix()} "
+        f"on line {example.line}. "
         "Replacing empty code blocks is not supported as we cannot "
         "determine the indentation."
     )
