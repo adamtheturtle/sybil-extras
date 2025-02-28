@@ -337,7 +337,9 @@ class ShellCommandEvaluator:
             self.on_write_to_empty_code_block: Callable[[], None] = (
                 _raise_cannot_replace_error
             )
-            self.on_write_to_non_empty_code_block = self._overwrite_document
+            self.on_write_to_non_empty_code_block: Callable[
+                [Example, str], None
+            ] = self._overwrite_document
         else:
             self.on_write_to_empty_code_block = lambda: None
             self.on_write_to_non_empty_code_block = (
