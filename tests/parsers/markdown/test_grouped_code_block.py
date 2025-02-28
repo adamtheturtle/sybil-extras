@@ -458,8 +458,8 @@ def test_with_shell_command_evaluator(tmp_path: Path) -> None:
     shell_evaluator = ShellCommandEvaluator(
         args=["sh", "-c", f"cat $0 > {output_document.as_posix()}"],
         pad_file=True,
+        write_to_file=False,
         use_pty=False,
-        write_to_file=True,
     )
     group_parser = GroupedCodeBlockParser(
         directive="group",
@@ -474,6 +474,7 @@ def test_with_shell_command_evaluator(tmp_path: Path) -> None:
     for example in document.examples():
         example.evaluate()
 
+    output_document_content = output_document.read_text(encoding="utf-8")
     expected_output_document_content = textwrap.dedent(
         text="""\
 
@@ -486,7 +487,6 @@ def test_with_shell_command_evaluator(tmp_path: Path) -> None:
         x = [*x, 2]
         """,
     )
-    output_document_content = output_document.read_text(encoding="utf-8")
     assert output_document_content == expected_output_document_content
 
 
