@@ -27,7 +27,7 @@ def _document_content_with_example_content_replaced(
     existing_file_content: str,
     pad_file: bool,
     unindented_new_example_content: str,
-    on_write_to_empty_code_block: Callable[[], None],
+    on_write_to_empty_code_block: Callable[[Example, str], None],
 ) -> str:
     """
     Get the document content with the example content replaced.
@@ -47,7 +47,7 @@ def _document_content_with_example_content_replaced(
         return existing_file_content
 
     if not example.parsed:
-        on_write_to_empty_code_block()
+        on_write_to_empty_code_block(example, "")
         return existing_file_content
 
     indent_prefix = _get_indentation(example=example)
@@ -249,11 +249,16 @@ def _get_indentation(example: Example) -> str:
 
 
 @beartype
-def _raise_cannot_replace_error() -> None:
+def _raise_cannot_replace_error(
+    example: Example,
+    document_content: str,
+) -> None:
     """
     We cannot write to an empty code block, so raise an error.
     """
+    del document_content
     msg = (
+        f"Cannot replace empty code block in {example.path}. "
         "Replacing empty code blocks is not supported as we cannot "
         "determine the indentation."
     )
@@ -334,14 +339,14 @@ class ShellCommandEvaluator:
         self._tempfile_suffixes = tempfile_suffixes
 
         if write_to_file:
-            self.on_write_to_empty_code_block: Callable[[], None] = (
-                _raise_cannot_replace_error
-            )
+            self.on_write_to_empty_code_block: Callable[
+                [Example, str], None
+            ] = _raise_cannot_replace_error
             self.on_write_to_non_empty_code_block: Callable[
                 [Example, str], None
             ] = self._overwrite_document
         else:
-            self.on_write_to_empty_code_block = lambda: None
+            self.on_write_to_empty_code_block = _no_op_document_content_writer
             self.on_write_to_non_empty_code_block = (
                 _no_op_document_content_writer
             )
