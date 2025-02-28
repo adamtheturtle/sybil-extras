@@ -334,7 +334,9 @@ class ShellCommandEvaluator:
         self._tempfile_suffixes = tempfile_suffixes
 
         if write_to_file:
-            self.on_write_to_empty_code_block = _raise_cannot_replace_error
+            self.on_write_to_empty_code_block: Callable[[], None] = (
+                _raise_cannot_replace_error
+            )
             self.on_write_to_non_empty_code_block = self._overwrite_document
         else:
             self.on_write_to_empty_code_block = lambda: None
