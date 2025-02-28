@@ -83,6 +83,48 @@ ShellCommandEvaluator
 
     pytest_collect_file = sybil.pytest()
 
+WriteCodeBlockEvaluator
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+    """
+    Use WriteCodeBlockEvaluator to write modified code block contents
+    to the original document.
+    """
+
+    from sybil import Sybil
+    from sybil.parsers.rest.codeblock import CodeBlockParser
+
+    from sybil_extras.evaluators.multi import MultiEvaluator
+    from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
+    from sybil_extras.evaluators.write import WriteCodeBlockEvaluator
+
+    write_evaluator = WriteCodeBlockEvaluator(
+        strip_leading_newlines=True,
+        encoding="utf-8",
+    )
+    shell_evaluator = ShellCommandEvaluator(
+        args=["ruff"],
+        tempfile_suffixes=[".example", ".py"],
+        pad_file=True,
+        use_pty=True,
+        write_to_file=False,
+    )
+    evaluator = MultiEvaluator(
+        evaluators=[
+            shell_evaluator,
+            # Put the ``WriteCodeBlockEvaluator`` after the
+            # ``ShellCommandEvaluator`` # so that the code block is written to the
+            # file after running the command.
+            write_evaluator,
+        ],
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    pytest_collect_file = sybil.pytest()
+
 Parsers
 -------
 
