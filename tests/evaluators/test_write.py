@@ -222,18 +222,9 @@ def test_empty_code_block_write_to_file(
 
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
-    example.evaluate()
-
-    rst_file_content = rst_file.read_text(encoding="utf-8")
-    modified_content = textwrap.dedent(
-        text="""\
-        Not in code block
-
-        .. code-block:: python
-
-           foobar
-
-        After empty code block
-        """,
+    expected_msg = (
+        "Replacing empty code blocks is not supported as we cannot "
+        "determine the indentation."
     )
-    assert rst_file_content == modified_content
+    with pytest.raises(expected_exception=ValueError, match=expected_msg):
+        example.evaluate()

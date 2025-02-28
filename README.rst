@@ -46,7 +46,6 @@ MultiEvaluator
 
     pytest_collect_file = sybil.pytest()
 
-
 ShellCommandEvaluator
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -70,6 +69,10 @@ ShellCommandEvaluator
         # line numbers in the error messages match the
         # line numbers in the source document.
         pad_file=True,
+        # Don't write any changes back to the source document.
+        # This option is useful when running a linter or formatter
+        # which modifies the code.
+        write_to_file=False,
         # Use a pseudo-terminal for running commands.
         # This can be useful e.g. to get color output, but can also break
         # in some environments.
@@ -106,6 +109,7 @@ WriteCodeBlockEvaluator
         tempfile_suffixes=[".example", ".py"],
         pad_file=True,
         use_pty=True,
+        write_to_file=False,
     )
     evaluator = MultiEvaluator(
         evaluators=[

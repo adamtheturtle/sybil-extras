@@ -459,6 +459,7 @@ def test_with_shell_command_evaluator(tmp_path: Path) -> None:
         args=["sh", "-c", f"cat $0 > {output_document.as_posix()}"],
         pad_file=True,
         use_pty=False,
+        write_to_file=True,
     )
     group_parser = GroupedCodeBlockParser(
         directive="group",
