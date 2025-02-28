@@ -10,7 +10,7 @@ import sys
 import textwrap
 import threading
 import uuid
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from io import BytesIO
 from pathlib import Path
 from typing import IO
@@ -27,6 +27,7 @@ def _document_content_with_example_content_replaced(
     existing_file_content: str,
     pad_file: bool,
     unindented_new_example_content: str,
+    on_write_to_empty_code_block: Callable[[], None],
 ) -> str:
     """
     Get the document content with the example content replaced.
@@ -46,11 +47,9 @@ def _document_content_with_example_content_replaced(
         return existing_file_content
 
     if not example.parsed:
-        msg = (
-            "Replacing empty code blocks is not supported as we cannot "
-            "determine the indentation."
-        )
-        raise ValueError(msg)
+        on_write_to_empty_code_block()
+        return existing_file_content
+
     indent_prefix = _get_indentation(example=example)
     indented_temp_file_content = textwrap.indent(
         text=unindented_new_example_content,
@@ -314,12 +313,16 @@ class ShellCommandEvaluator:
         self._use_pty = use_pty
         self._encoding = encoding
 
-    def _on_write_to_empty_code_block(self, value_error: ValueError) -> None:
+    def _raise_cannot_replace_error(self) -> None:
         """
         We cannot write to an empty code block, so raise an error.
         """
         if self._write_to_file:
-            raise value_error
+            msg = (
+                "Replacing empty code blocks is not supported as we cannot "
+                "determine the indentation."
+            )
+            raise ValueError(msg)
 
     def _on_write_to_non_empty_code_block(
         self,
@@ -402,24 +405,19 @@ class ShellCommandEvaluator:
 
         existing_file_content = example.document.text
 
-        try:
-            modified_content = _document_content_with_example_content_replaced(
-                existing_file_content=existing_file_content,
-                example=example,
-                pad_file=self._pad_file,
-                unindented_new_example_content=temp_file_content,
-            )
-            content_changed = modified_content != existing_file_content
-        except ValueError as exc:
-            content_changed = False
-            modified_content = ""
-            self._on_write_to_empty_code_block(value_error=exc)
+        modified_content = _document_content_with_example_content_replaced(
+            existing_file_content=existing_file_content,
+            example=example,
+            pad_file=self._pad_file,
+            unindented_new_example_content=temp_file_content,
+            on_write_to_empty_code_block=self._raise_cannot_replace_error,
+        )
 
         # We avoid writing to the file if the content is the same.
         # This is because writing to the file will update the file's
         # modification time, which can cause unnecessary rebuilds, and
         # we have seen that confuse the Git index.
-        if content_changed:
+        if modified_content != existing_file_content:
             self._on_write_to_non_empty_code_block(
                 example=example,
                 document_content=modified_content,
