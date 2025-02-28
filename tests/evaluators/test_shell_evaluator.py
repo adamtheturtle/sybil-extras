@@ -727,11 +727,16 @@ def test_newline_given(
     assert includes_lf
 
 
+@pytest.mark.parametrize(
+    argnames="write_to_file_option",
+    argvalues=[True, False],
+)
 def test_empty_code_block_write_content_to_file(
     *,
     tmp_path: Path,
     rst_file: Path,
     use_pty_option: bool,
+    write_to_file_option: bool,
 ) -> None:
     """
     An error is given when trying to write content to an empty code block.
@@ -754,7 +759,7 @@ def test_empty_code_block_write_content_to_file(
     evaluator = ShellCommandEvaluator(
         args=["cp", file_with_new_content],
         pad_file=False,
-        write_to_file=True,
+        write_to_file=write_to_file_option,
         use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
@@ -762,12 +767,17 @@ def test_empty_code_block_write_content_to_file(
 
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
-    expected_msg = (
-        "Replacing empty code blocks is not supported as we cannot "
-        "determine the indentation."
-    )
-    with pytest.raises(expected_exception=ValueError, match=expected_msg):
+
+    if write_to_file_option:
+        expected_msg = (
+            "Replacing empty code blocks is not supported as we cannot "
+            "determine the indentation."
+        )
+        with pytest.raises(expected_exception=ValueError, match=expected_msg):
+            example.evaluate()
+    else:
         example.evaluate()
+        assert rst_file.read_text(encoding="utf-8") == content
 
 
 @pytest.mark.parametrize(
