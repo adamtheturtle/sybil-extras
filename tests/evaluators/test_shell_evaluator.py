@@ -770,6 +770,8 @@ def test_empty_code_block_write_content_to_file(
 
     if write_to_file_option:
         expected_msg = (
+            f"Cannot replace empty code block in {rst_file.as_posix()} "
+            "on line 3. "
             "Replacing empty code blocks is not supported as we cannot "
             "determine the indentation."
         )
