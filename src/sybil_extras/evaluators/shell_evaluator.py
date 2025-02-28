@@ -314,6 +314,27 @@ class ShellCommandEvaluator:
         self._use_pty = use_pty
         self._encoding = encoding
 
+    def _on_write_to_empty_code_block(self, value_error: ValueError) -> None:
+        """
+        We cannot write to an empty code block, so raise an error.
+        """
+        if self._write_to_file:
+            raise value_error
+
+    def _on_write_to_non_empty_code_block(
+        self,
+        example: Example,
+        document_content: str,
+    ) -> None:
+        """
+        Overwrite the file with the new content.
+        """
+        if self._write_to_file:
+            Path(example.path).write_text(
+                data=document_content,
+                encoding=self._encoding,
+            )
+
     def __call__(self, example: Example) -> None:
         """
         Run the shell command on the example file.
@@ -381,26 +402,6 @@ class ShellCommandEvaluator:
 
         existing_file_content = example.document.text
 
-        def _on_write_to_empty_code_block(value_error: ValueError) -> None:
-            """
-            We cannot write to an empty code block, so raise an error.
-            """
-            if self._write_to_file:
-                raise value_error
-
-        def _on_write_to_non_empty_code_block(
-            example: Example,
-            document_content: str,
-        ) -> None:
-            """
-            Overwrite the file with the new content.
-            """
-            if self._write_to_file:
-                Path(example.path).write_text(
-                    data=document_content,
-                    encoding=self._encoding,
-                )
-
         try:
             modified_content = _document_content_with_example_content_replaced(
                 existing_file_content=existing_file_content,
@@ -412,14 +413,14 @@ class ShellCommandEvaluator:
         except ValueError as exc:
             content_changed = False
             modified_content = ""
-            _on_write_to_empty_code_block(value_error=exc)
+            self._on_write_to_empty_code_block(value_error=exc)
 
         # We avoid writing to the file if the content is the same.
         # This is because writing to the file will update the file's
         # modification time, which can cause unnecessary rebuilds, and
         # we have seen that confuse the Git index.
         if content_changed:
-            _on_write_to_non_empty_code_block(
+            self._on_write_to_non_empty_code_block(
                 example=example,
                 document_content=modified_content,
             )
