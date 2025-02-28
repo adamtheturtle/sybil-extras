@@ -23,8 +23,7 @@ class _GroupState:
     last_action: Literal["start", "end"] | None = None
     examples: Sequence[Example] = field(default_factory=list)
 
-    @property
-    def combined_text(self) -> Lexeme:
+    def combine_text(self, *, pad_groups: bool) -> Lexeme:
         """Get the combined text.
 
         Pad the examples with newlines to ensure that line numbers in
@@ -33,9 +32,13 @@ class _GroupState:
         result = self.examples[0].parsed
         for example in self.examples[1:]:
             existing_lines = len(result.text.splitlines())
-            padding_lines = (
-                example.line - self.examples[0].line - existing_lines
-            )
+            if pad_groups:
+                padding_lines = (
+                    example.line - self.examples[0].line - existing_lines
+                )
+            else:
+                padding_lines = 1
+
             padding = "\n" * padding_lines
             result = Lexeme(
                 text=result.text + padding + example.parsed,
@@ -55,17 +58,28 @@ class _Grouper:
     Group code blocks.
     """
 
-    def __init__(self, evaluator: Evaluator, directive: str) -> None:
+    def __init__(
+        self,
+        *,
+        evaluator: Evaluator,
+        directive: str,
+        pad_groups: bool,
+    ) -> None:
         """
         Args:
             evaluator: The evaluator to use for evaluating the combined region.
             directive: The name of the directive to use for grouping.
+            pad_groups: Whether to pad groups with empty lines.
+                This is useful for error messages that reference line numbers.
+                However, this is detrimental to commands that expect the file
+                to not have a bunch of newlines in it, such as formatters.
         """
         self._document_state: dict[Document, _GroupState] = defaultdict(
             _GroupState
         )
         self._evaluator = evaluator
         self._directive = directive
+        self._pad_groups = pad_groups
 
     def _evaluate_grouper_example(self, example: Example) -> None:
         """
@@ -96,7 +110,7 @@ class _Grouper:
             region = Region(
                 start=state.examples[0].region.start,
                 end=state.examples[-1].region.end,
-                parsed=state.combined_text,
+                parsed=state.combine_text(pad_groups=self._pad_groups),
                 evaluator=self._evaluator,
                 lexemes=example.region.lexemes,
             )
@@ -151,20 +165,27 @@ class AbstractGroupedCodeBlockParser:
 
     def __init__(
         self,
+        *,
         lexers: Sequence[Lexer],
         evaluator: Evaluator,
         directive: str,
+        pad_groups: bool,
     ) -> None:
         """
         Args:
             lexers: The lexers to use to find regions.
             evaluator: The evaluator to use for evaluating the combined region.
             directive: The name of the directive to use for grouping.
+            pad_groups: Whether to pad groups with empty lines.
+                This is useful for error messages that reference line numbers.
+                However, this is detrimental to commands that expect the file
+                to not have a bunch of newlines in it, such as formatters.
         """
         self._lexers: LexerCollection = LexerCollection(lexers)
         self._grouper: _Grouper = _Grouper(
             evaluator=evaluator,
             directive=directive,
+            pad_groups=pad_groups,
         )
 
     def __call__(self, document: Document) -> Iterable[Region]:

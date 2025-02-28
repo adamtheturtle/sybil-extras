@@ -74,6 +74,7 @@ def test_group(tmp_path: Path) -> None:
     group_parser = GroupedCodeBlockParser(
         directive="group",
         evaluator=evaluator,
+        pad_groups=True,
     )
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
@@ -130,6 +131,7 @@ def test_nothing_after_group(tmp_path: Path) -> None:
     group_parser = GroupedCodeBlockParser(
         directive="group",
         evaluator=evaluator,
+        pad_groups=True,
     )
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
@@ -180,6 +182,7 @@ def test_empty_group(tmp_path: Path) -> None:
     group_parser = GroupedCodeBlockParser(
         directive="group",
         evaluator=evaluator,
+        pad_groups=True,
     )
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
@@ -240,6 +243,7 @@ def test_group_with_skip(tmp_path: Path) -> None:
     group_parser = GroupedCodeBlockParser(
         directive="group",
         evaluator=evaluator,
+        pad_groups=True,
     )
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
     skip_parser = SkipParser()
@@ -278,6 +282,7 @@ def test_no_argument(tmp_path: Path) -> None:
     group_parser = GroupedCodeBlockParser(
         directive="group",
         evaluator=evaluator,
+        pad_groups=True,
     )
 
     sybil = Sybil(parsers=[group_parser])
@@ -305,6 +310,7 @@ def test_end_only(tmp_path: Path) -> None:
     group_parser = GroupedCodeBlockParser(
         directive="group",
         evaluator=evaluator,
+        pad_groups=True,
     )
 
     sybil = Sybil(parsers=[group_parser])
@@ -327,7 +333,7 @@ def test_start_after_start(tmp_path: Path) -> None:
     <!--- group: start -->
     """
 
-    test_document = tmp_path / "test.rst"
+    test_document = tmp_path / "test.md"
     test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(_: Example) -> None:
@@ -338,6 +344,7 @@ def test_start_after_start(tmp_path: Path) -> None:
     group_parser = GroupedCodeBlockParser(
         directive="group",
         evaluator=evaluator,
+        pad_groups=True,
     )
 
     sybil = Sybil(parsers=[group_parser])
@@ -391,7 +398,7 @@ def test_directive_name_not_regex_escaped(tmp_path: Path) -> None:
     <!--- custom-group[has_square_brackets]: end -->
     """
 
-    test_document = tmp_path / "test.rst"
+    test_document = tmp_path / "test.md"
     test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(example: Example) -> None:
@@ -407,6 +414,7 @@ def test_directive_name_not_regex_escaped(tmp_path: Path) -> None:
     group_parser = GroupedCodeBlockParser(
         directive="custom-group[has_square_brackets]",
         evaluator=evaluator,
+        pad_groups=True,
     )
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
@@ -442,7 +450,7 @@ def test_with_shell_command_evaluator(tmp_path: Path) -> None:
     <!--- group: end -->
     """
 
-    test_document = tmp_path / "test.rst"
+    test_document = tmp_path / "test.md"
     test_document.write_text(data=content, encoding="utf-8")
 
     output_document = tmp_path / "output.txt"
@@ -455,6 +463,7 @@ def test_with_shell_command_evaluator(tmp_path: Path) -> None:
     group_parser = GroupedCodeBlockParser(
         directive="group",
         evaluator=shell_evaluator,
+        pad_groups=True,
     )
     code_block_parser = CodeBlockParser(language="python")
 
@@ -476,7 +485,65 @@ def test_with_shell_command_evaluator(tmp_path: Path) -> None:
         x = [*x, 2]
         """,
     )
-    assert (
-        output_document.read_text(encoding="utf-8")
-        == expected_output_document_content
+    output_document_content = output_document.read_text(encoding="utf-8")
+    assert output_document_content == expected_output_document_content
+
+
+def test_no_pad_groups(tmp_path: Path) -> None:
+    """It is possible to avoid padding the groups.
+
+    One new line is added between the code blocks.
+    """
+    content = """\
+    <!--- group: start -->
+
+    ```python
+    x = [*x, 1]
+    ```
+
+    ```python
+    x = [*x, 2]
+    ```
+
+    <!--- group: end -->
+    """
+
+    test_document = tmp_path / "test.md"
+    test_document.write_text(data=content, encoding="utf-8")
+
+    output_document = tmp_path / "output.txt"
+
+    shell_evaluator = ShellCommandEvaluator(
+        args=["sh", "-c", f"cat $0 > {output_document.as_posix()}"],
+        pad_file=True,
+        write_to_file=False,
+        use_pty=False,
     )
+    group_parser = GroupedCodeBlockParser(
+        directive="group",
+        evaluator=shell_evaluator,
+        pad_groups=False,
+    )
+    code_block_parser = CodeBlockParser(language="python")
+
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
+    document = sybil.parse(path=test_document)
+
+    for example in document.examples():
+        example.evaluate()
+
+    output_document_content = output_document.read_text(encoding="utf-8")
+    # There is a lot of whitespace in the output document content because
+    # when we use the grouper we replace the group end directive with a
+    # combined block.
+    expected_output_document_content = textwrap.dedent(
+        text="""\
+
+
+
+        x = [*x, 1]
+
+        x = [*x, 2]
+        """,
+    )
+    assert output_document_content == expected_output_document_content

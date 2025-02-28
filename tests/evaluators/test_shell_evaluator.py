@@ -18,9 +18,7 @@ from click.testing import CliRunner
 from sybil import Sybil
 from sybil.parsers.rest.codeblock import CodeBlockParser
 
-from sybil_extras.evaluators.multi import MultiEvaluator
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
-from sybil_extras.evaluators.write import WriteCodeBlockEvaluator
 
 
 @pytest.fixture(
@@ -74,6 +72,7 @@ def test_error(*, rst_file: Path, use_pty_option: bool) -> None:
     evaluator = ShellCommandEvaluator(
         args=args,
         pad_file=False,
+        write_to_file=False,
         use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
@@ -108,6 +107,7 @@ def test_output_shown(
             "echo 'Hello, Sybil!' && echo >&2 'Hello Stderr!'",
         ],
         pad_file=False,
+        write_to_file=False,
         use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
@@ -139,6 +139,7 @@ def test_rm(
     evaluator = ShellCommandEvaluator(
         args=["rm"],
         pad_file=False,
+        write_to_file=False,
         use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
@@ -170,6 +171,7 @@ def test_pass_env(
         ],
         env={"ENV_KEY": "ENV_VALUE"},
         pad_file=False,
+        write_to_file=False,
         use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
@@ -201,6 +203,7 @@ def test_global_env(
             f"echo Hello, ${env_key}! > {new_file.as_posix()}; exit 0",
         ],
         pad_file=False,
+        write_to_file=False,
         use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
@@ -232,6 +235,7 @@ def test_file_is_passed(
     evaluator = ShellCommandEvaluator(
         args=["sh", "-c", sh_function, "_", file_path],
         pad_file=False,
+        write_to_file=False,
         use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
@@ -258,6 +262,7 @@ def test_file_path(
     evaluator = ShellCommandEvaluator(
         args=["echo"],
         pad_file=False,
+        write_to_file=False,
         use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
@@ -293,6 +298,7 @@ def test_file_suffix(
     evaluator = ShellCommandEvaluator(
         args=["echo"],
         pad_file=False,
+        write_to_file=False,
         tempfile_suffixes=suffixes,
         use_pty=use_pty_option,
     )
@@ -323,6 +329,7 @@ def test_file_prefix(
     evaluator = ShellCommandEvaluator(
         args=["echo"],
         pad_file=False,
+        write_to_file=False,
         tempfile_name_prefix=prefix,
         use_pty=use_pty_option,
     )
@@ -353,6 +360,7 @@ def test_pad(*, rst_file: Path, tmp_path: Path, use_pty_option: bool) -> None:
     evaluator = ShellCommandEvaluator(
         args=["sh", "-c", sh_function, "_", file_path],
         pad_file=True,
+        write_to_file=False,
         use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
@@ -375,17 +383,18 @@ def test_pad(*, rst_file: Path, tmp_path: Path, use_pty_option: bool) -> None:
     assert given_file_content == expected_content
 
 
-@pytest.mark.parametrize(argnames="pad_file", argvalues=[True, False])
+@pytest.mark.parametrize(argnames="write_to_file", argvalues=[True, False])
 def test_write_to_file(
     tmp_path: Path,
     rst_file: Path,
     *,
+    write_to_file: bool,
     use_pty_option: bool,
-    pad_file: bool,
 ) -> None:
     """
-    Changes can be written to the original file.
+    Changes are written to the original file iff `write_to_file` is True.
     """
+    original_content = rst_file.read_text(encoding="utf-8")
     file_with_new_content = tmp_path / "new_file.txt"
     # Add multiple newlines to show that they are not included in the file.
     # No code block in reSructuredText ends with multiple newlines.
@@ -393,22 +402,18 @@ def test_write_to_file(
     file_with_new_content.write_text(data=new_content, encoding="utf-8")
     evaluator = ShellCommandEvaluator(
         args=["cp", file_with_new_content],
-        pad_file=pad_file,
+        pad_file=False,
+        write_to_file=write_to_file,
         use_pty=use_pty_option,
     )
-    write_evaluator = WriteCodeBlockEvaluator(
-        strip_leading_newlines=True,
-        encoding="utf-8",
-    )
-    multi_evaluator = MultiEvaluator(evaluators=[evaluator, write_evaluator])
-    parser = CodeBlockParser(language="python", evaluator=multi_evaluator)
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
     rst_file_content = rst_file.read_text(encoding="utf-8")
-    modified_content = textwrap.dedent(
+    expected_content = textwrap.dedent(
         text="""\
         Not in code block
 
@@ -417,7 +422,120 @@ def test_write_to_file(
            foobar
         """,
     )
-    assert rst_file_content == modified_content
+    if write_to_file:
+        assert rst_file_content == expected_content
+    else:
+        assert rst_file_content == original_content
+
+
+def test_write_to_file_multiple(*, tmp_path: Path) -> None:
+    """
+    If multiple code blocks are present with the same content, changes are
+    written to the code block which needs changing.
+    """
+    content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+           x = 2 + 2
+           assert x == 4
+
+        .. code-block:: python
+
+           x = 2 + 2
+           assert x == 4
+
+        .. code-block:: python
+
+           x = 2 + 2
+           assert x == 4
+        """
+    )
+    rst_file = tmp_path / "test_document.example.rst"
+    rst_file.write_text(data=content, encoding="utf-8")
+    file_with_new_content = tmp_path / "new_file.txt"
+    # Add multiple newlines to show that they are not included in the file.
+    # No code block in reSructuredText ends with multiple newlines.
+    new_content = "foobar\n\n"
+    file_with_new_content.write_text(data=new_content, encoding="utf-8")
+    evaluator = ShellCommandEvaluator(
+        args=["cp", file_with_new_content],
+        pad_file=False,
+        write_to_file=True,
+        use_pty=False,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (_, second_example, _) = document.examples()
+    second_example.evaluate()
+    rst_file_content = rst_file.read_text(encoding="utf-8")
+    expected_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+           x = 2 + 2
+           assert x == 4
+
+        .. code-block:: python
+
+           foobar
+
+        .. code-block:: python
+
+           x = 2 + 2
+           assert x == 4
+        """,
+    )
+    assert rst_file_content == expected_content
+
+
+def test_pad_and_write(*, rst_file: Path, use_pty_option: bool) -> None:
+    """
+    Changes are written to the original file without the added padding.
+    """
+    original_content = rst_file.read_text(encoding="utf-8")
+    rst_file.write_text(data=original_content, encoding="utf-8")
+    evaluator = ShellCommandEvaluator(
+        args=["true"],
+        pad_file=True,
+        write_to_file=True,
+        use_pty=use_pty_option,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    example.evaluate()
+    rst_file_content = rst_file.read_text(encoding="utf-8")
+    assert rst_file_content == original_content
+
+
+def test_no_changes_mtime(*, rst_file: Path, use_pty_option: bool) -> None:
+    """
+    The modification time of the file is not changed if no changes are made.
+    """
+    original_mtime = rst_file.stat().st_mtime
+    evaluator = ShellCommandEvaluator(
+        args=["true"],
+        pad_file=True,
+        write_to_file=True,
+        use_pty=use_pty_option,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    example.evaluate()
+    new_mtime = rst_file.stat().st_mtime
+    assert new_mtime == original_mtime
 
 
 def test_non_utf8_output(
@@ -439,6 +557,7 @@ def test_non_utf8_output(
     evaluator = ShellCommandEvaluator(
         args=["sh", str(object=script)],
         pad_file=False,
+        write_to_file=False,
         use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
@@ -490,6 +609,7 @@ def test_no_file_left_behind_on_interruption(
         evaluator = ShellCommandEvaluator(
             args=[sys.executable, "{sleep_python_script.as_posix()}"],
             pad_file=False,
+            write_to_file=True,
             use_pty=False,
         )
 
@@ -545,6 +665,7 @@ def test_newline_system(
     evaluator = ShellCommandEvaluator(
         args=["sh", "-c", sh_function, "_", file_path],
         pad_file=False,
+        write_to_file=False,
         use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
@@ -589,6 +710,7 @@ def test_newline_given(
     evaluator = ShellCommandEvaluator(
         args=["sh", "-c", sh_function, "_", file_path],
         pad_file=False,
+        write_to_file=False,
         newline=given_newline,
         use_pty=use_pty_option,
     )
@@ -605,6 +727,96 @@ def test_newline_given(
     assert includes_lf
 
 
+def test_empty_code_block_write_content_to_file(
+    *,
+    tmp_path: Path,
+    rst_file: Path,
+    use_pty_option: bool,
+) -> None:
+    """
+    An error is given when trying to write content to an empty code block.
+    """
+    content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+        After empty code block
+        """
+    )
+    rst_file.write_text(data=content, encoding="utf-8")
+    file_with_new_content = tmp_path / "new_file.txt"
+    # Add multiple newlines to show that they are not included in the file.
+    # No code block in reSructuredText ends with multiple newlines.
+    new_content = "foobar\n\n"
+    file_with_new_content.write_text(data=new_content, encoding="utf-8")
+    evaluator = ShellCommandEvaluator(
+        args=["cp", file_with_new_content],
+        pad_file=False,
+        write_to_file=True,
+        use_pty=use_pty_option,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    expected_msg = (
+        "Replacing empty code blocks is not supported as we cannot "
+        "determine the indentation."
+    )
+    with pytest.raises(expected_exception=ValueError, match=expected_msg):
+        example.evaluate()
+
+
+@pytest.mark.parametrize(
+    argnames="new_content",
+    argvalues=[
+        "",
+        # Code blocks in reStructuredText cannot contain just newlines.
+        # Therefore we treat this as an empty code block.
+        "\n\n",
+    ],
+)
+def test_empty_code_block_write_empty_to_file(
+    *,
+    tmp_path: Path,
+    rst_file: Path,
+    use_pty_option: bool,
+    new_content: str,
+) -> None:
+    """
+    No error is given when trying to write empty content to an empty code
+    block.
+    """
+    content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+        After empty code block
+        """
+    )
+    rst_file.write_text(data=content, encoding="utf-8")
+    file_with_new_content = tmp_path / "new_file.txt"
+    file_with_new_content.write_text(data=new_content, encoding="utf-8")
+    evaluator = ShellCommandEvaluator(
+        args=["cp", file_with_new_content],
+        pad_file=False,
+        write_to_file=True,
+        use_pty=use_pty_option,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    example.evaluate()
+    assert rst_file.read_text(encoding="utf-8") == content
+
+
 def test_bad_command_error(*, rst_file: Path, use_pty_option: bool) -> None:
     """
     A ``subprocess.CalledProcessError`` is raised if the command is invalid.
@@ -613,6 +825,7 @@ def test_bad_command_error(*, rst_file: Path, use_pty_option: bool) -> None:
     evaluator = ShellCommandEvaluator(
         args=args,
         pad_file=False,
+        write_to_file=False,
         use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
@@ -649,6 +862,7 @@ def test_click_runner(*, rst_file: Path, use_pty_option: bool) -> None:
                 "echo 'Hello, Sybil!' && echo >&2 'Hello Stderr!'",
             ],
             pad_file=False,
+            write_to_file=False,
             use_pty=use_pty_option,
         )
         parser = CodeBlockParser(language="python", evaluator=evaluator)
@@ -690,6 +904,7 @@ def test_encoding(*, rst_file: Path, use_pty_option: bool) -> None:
     evaluator = ShellCommandEvaluator(
         args=["cat"],
         pad_file=False,
+        write_to_file=True,
         use_pty=use_pty_option,
         encoding=encoding,
     )
@@ -699,4 +914,5 @@ def test_encoding(*, rst_file: Path, use_pty_option: bool) -> None:
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
-    assert document.text == content
+    given_file_content = rst_file.read_text(encoding=encoding)
+    assert given_file_content == content

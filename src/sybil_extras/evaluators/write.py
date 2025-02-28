@@ -22,13 +22,7 @@ def _get_indentation(example: Example) -> str:
     region_lines_matching_first_line = [
         line for line in region_lines if line.lstrip() == first_line.lstrip()
     ]
-    try:
-        first_region_line_matching_first_line = (
-            region_lines_matching_first_line[0]
-        )
-    except IndexError:
-        # Empty example
-        return ""
+    first_region_line_matching_first_line = region_lines_matching_first_line[0]
 
     left_padding_region_line = len(
         first_region_line_matching_first_line
@@ -87,10 +81,35 @@ def _document_content_with_example_content_replaced(
     """
     Get the document content with the example content replaced.
     """
-    indent_prefix = _get_indentation(example=example)
     unindented_new_example_content = str(object=example.parsed.text)
-    new_example_content = textwrap.indent(
+    # Some regions are given to us with a trailing newline, and
+    # some are not.  We need to remove the trailing newline from
+    # the existing region content to avoid a double newline.
+    #
+    # There is no such thing as a code block with two trailing
+    # newlines in reStructuredText, so we choose not to worry about
+    # tools which add this.
+    unindented_new_example_content = unindented_new_example_content.rstrip(
+        "\n"
+    )
+    if not unindented_new_example_content and not example.parsed:
+        return existing_file_content
+
+    if not example.parsed:
+        msg = (
+            "Replacing empty code blocks is not supported as we cannot "
+            "determine the indentation."
+        )
+        raise ValueError(msg)
+    indent_prefix = _get_indentation(example=example)
+    indented_temp_file_content = textwrap.indent(
         text=unindented_new_example_content,
+        prefix=indent_prefix,
+    )
+    replacement = indented_temp_file_content
+
+    indented_existing_region_content = textwrap.indent(
+        text=example.region.parsed,
         prefix=indent_prefix,
     )
 
@@ -99,32 +118,30 @@ def _document_content_with_example_content_replaced(
     # we assume that this is not the case, and we remove any leading
     # newlines from the replacement which were added by the padding.
     if strip_leading_newlines:
-        new_example_content = _lstrip_newlines(
-            input_string=new_example_content,
+        replacement = _lstrip_newlines(
+            input_string=replacement,
             number_of_newlines=example.line + example.parsed.line_offset,
         )
 
-    indented_existing_region_content = textwrap.indent(
-        text=example.region.parsed,
-        prefix=indent_prefix,
-    )
-
     document_start = existing_file_content[: example.region.start]
-    document_without_start = existing_file_content[example.region.start :]
 
-    if not indented_existing_region_content:
-        breakpoint()
-        raise ValueError(
-            "Replacing empty code blocks is not supported as we cannot determine the indentation."
-        )
+    document_without_start = existing_file_content[example.region.start :]
 
     document_with_replacement_and_no_start = document_without_start.replace(
         indented_existing_region_content.rstrip("\n"),
-        new_example_content,
-        count=1,
+        replacement,
+        # In Python 3.13 it became possible to use
+        # ``count`` as a keyword argument.
+        # Because we use ``mypy-strict-kwargs``, this means
+        # that in Python 3.13 we must use ``count`` as a
+        # keyword argument, or we get a ``mypy`` error.
+        #
+        # However, we also want to support Python <3.13, so we
+        # use a positional argument for ``count`` and we ignore
+        # the error.
+        1,  # type: ignore[misc,unused-ignore]
     )
 
-    breakpoint()
     return document_start + document_with_replacement_and_no_start
 
 
