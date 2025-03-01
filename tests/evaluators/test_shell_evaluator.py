@@ -751,13 +751,16 @@ def test_empty_code_block_write_content_to_file(
         """
     )
     rst_file.write_text(data=content, encoding="utf-8")
-    file_with_new_content = tmp_path / "new_file.txt"
+    file_with_new_code_block_content = tmp_path / "new_file.txt"
     # Add multiple newlines to show that they are not included in the file.
     # No code block in reSructuredText ends with multiple newlines.
-    new_content = "foobar\n\n"
-    file_with_new_content.write_text(data=new_content, encoding="utf-8")
+    new_code_block_content = "foobar\n\n"
+    file_with_new_code_block_content.write_text(
+        data=new_code_block_content,
+        encoding="utf-8",
+    )
     evaluator = ShellCommandEvaluator(
-        args=["cp", file_with_new_content],
+        args=["cp", file_with_new_code_block_content],
         pad_file=False,
         write_to_file=write_to_file_option,
         use_pty=use_pty_option,
@@ -768,18 +771,27 @@ def test_empty_code_block_write_content_to_file(
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
 
+    example.evaluate()
+
+    new_document_content = rst_file.read_text(encoding="utf-8")
+    modified_document_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+            foobar
+
+        After empty code block
+        """,
+    )
+
     if write_to_file_option:
-        expected_msg = (
-            f"Cannot replace empty code block in {rst_file.as_posix()} "
-            "on line 3. "
-            "Replacing empty code blocks is not supported as we cannot "
-            "determine the indentation."
-        )
-        with pytest.raises(expected_exception=ValueError, match=expected_msg):
-            example.evaluate()
+        expected_document_content = modified_document_content
     else:
-        example.evaluate()
-        assert rst_file.read_text(encoding="utf-8") == content
+        expected_document_content = content
+
+    assert new_document_content == expected_document_content
 
 
 @pytest.mark.parametrize(
