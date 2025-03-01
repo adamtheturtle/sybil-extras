@@ -41,6 +41,7 @@ def _document_content_with_example_content_replaced(
     try:
         indent_prefix = _get_indentation(example=example)
     except IndexError:
+        # TODO: Get the indentation of the "code-block" part.
         indent_prefix = "    "
 
     indented_temp_file_content = textwrap.indent(
@@ -64,13 +65,8 @@ def _document_content_with_example_content_replaced(
             number_of_newlines=example.line + example.parsed.line_offset,
         )
 
-    # if not example.parsed:
-    #     replacement = "\n" + replacement + "\n"
-
     document_start = existing_file_content[: example.region.start]
     document_end = existing_file_content[example.region.end :]
-    document_without_end = existing_file_content[: example.region.end]
-    document_without_start = existing_file_content[example.region.start :]
 
     region_content = existing_file_content[
         example.region.start : example.region.end
@@ -86,38 +82,9 @@ def _document_content_with_example_content_replaced(
         + region_content[code_block_end_index:]
     )
 
-    # Some regions are given to us with a trailing newline, and
-    # some are not.  We need to remove the trailing newline from
-    # the region content to avoid a double newline.
-    #
-    # There is no such thing as a code block with two trailing
-    # newlines in reStructuredText, so we choose not to worry about
-    # tools which add this.
-    # breakpoint()
-    new_region_content = new_region_content.rstrip("\n")
-
-    # new_region_content = "FOO"
-
-    # breakpoint()
     if document_end.rstrip("\n"):
         document_end = "\n" + document_end
     return document_start + new_region_content + document_end
-    document_with_replacement_and_no_start = document_without_start.replace(
-        indented_existing_code_block_content.rstrip("\n"),
-        replacement,
-        # In Python 3.13 it became possible to use
-        # ``count`` as a keyword argument.
-        # Because we use ``mypy-strict-kwargs``, this means
-        # that in Python 3.13 we must use ``count`` as a
-        # keyword argument, or we get a ``mypy`` error.
-        #
-        # However, we also want to support Python <3.13, so we
-        # use a positional argument for ``count`` and we ignore
-        # the error.
-        1,  # type: ignore[misc,unused-ignore]
-    )
-
-    return document_start + document_with_replacement_and_no_start
 
 
 @beartype
