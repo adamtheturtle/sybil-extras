@@ -470,7 +470,7 @@ def test_write_to_file_multiple(*, tmp_path: Path) -> None:
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
-    (_, second_example, _) = document.examples()
+    (_, second_example, third_example) = document.examples()
     second_example.evaluate()
     rst_file_content = rst_file.read_text(encoding="utf-8")
     expected_content = textwrap.dedent(
@@ -492,6 +492,29 @@ def test_write_to_file_multiple(*, tmp_path: Path) -> None:
            assert x == 4
         """,
     )
+    assert rst_file_content == expected_content
+
+    third_example.evaluate()
+    expected_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+           x = 2 + 2
+           assert x == 4
+
+        .. code-block:: python
+
+           foobar
+
+        .. code-block:: python
+
+           foobar
+        """,
+    )
+
+    rst_file_content = rst_file.read_text(encoding="utf-8")
     assert rst_file_content == expected_content
 
 

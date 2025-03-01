@@ -366,6 +366,7 @@ class ShellCommandEvaluator:
         """
         Overwrite the file with the new content.
         """
+        example.document.text = document_content
         Path(example.path).write_text(
             data=document_content,
             encoding=self._encoding,
