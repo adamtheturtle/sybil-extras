@@ -10,14 +10,32 @@ import sys
 import textwrap
 import threading
 import uuid
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from io import BytesIO
 from pathlib import Path
-from typing import IO
+from typing import IO, Protocol, runtime_checkable
 
 from beartype import beartype
 from sybil import Example
 from sybil.evaluators.python import pad
+
+
+@runtime_checkable
+class _DocumentContentWriter(Protocol):
+    """
+    Document content writer.
+    """
+
+    def __call__(
+        self,
+        example: Example,
+        new_document_content: str,
+        original_tempfile_content: str,
+        new_tempfile_content: str,
+    ) -> None:
+        """
+        Call the document content writer.
+        """
 
 
 @beartype
@@ -27,7 +45,7 @@ def _document_content_with_example_content_replaced(
     existing_file_content: str,
     pad_file: bool,
     unindented_new_example_content: str,
-    on_write_to_empty_code_block: Callable[[Example, str], None],
+    on_write_to_empty_code_block: _DocumentContentWriter,
 ) -> str:
     """
     Get the document content with the example content replaced.
@@ -47,7 +65,12 @@ def _document_content_with_example_content_replaced(
         return existing_file_content
 
     if not example.parsed:
-        on_write_to_empty_code_block(example, "")
+        on_write_to_empty_code_block(
+            example=example,
+            new_document_content="",
+            original_tempfile_content="",
+            new_tempfile_content="",
+        )
         return existing_file_content
 
     indent_prefix = _get_indentation(example=example)
@@ -251,12 +274,16 @@ def _get_indentation(example: Example) -> str:
 @beartype
 def _raise_cannot_replace_error(
     example: Example,
-    document_content: str,
+    new_document_content: str,
+    original_tempfile_content: str,
+    new_tempfile_content: str,
 ) -> None:
     """
     We cannot write to an empty code block, so raise an error.
     """
-    del document_content
+    del new_document_content
+    del original_tempfile_content
+    del new_tempfile_content
     msg = (
         # Use ``.as_posix()`` to avoid the Windows path separator.
         # This probably is worse, but is easier for consistent testing.
@@ -271,13 +298,17 @@ def _raise_cannot_replace_error(
 @beartype
 def _no_op_document_content_writer(
     example: Example,
-    document_content: str,
+    new_document_content: str,
+    original_tempfile_content: str,
+    new_tempfile_content: str,
 ) -> None:
     """
     Do nothing.
     """
     del example
-    del document_content
+    del new_document_content
+    del original_tempfile_content
+    del new_tempfile_content
 
 
 @beartype
@@ -342,12 +373,12 @@ class ShellCommandEvaluator:
         self._tempfile_suffixes = tempfile_suffixes
 
         if write_to_file:
-            self.on_write_to_empty_code_block: Callable[
-                [Example, str], None
-            ] = _raise_cannot_replace_error
-            self.on_write_to_non_empty_code_block: Callable[
-                [Example, str], None
-            ] = self._overwrite_document
+            self.on_write_to_empty_code_block: _DocumentContentWriter = (
+                _raise_cannot_replace_error
+            )
+            self.on_write_to_non_empty_code_block: _DocumentContentWriter = (
+                self._overwrite_document
+            )
         else:
             self.on_write_to_empty_code_block = _no_op_document_content_writer
             self.on_write_to_non_empty_code_block = (
@@ -361,13 +392,17 @@ class ShellCommandEvaluator:
     def _overwrite_document(
         self,
         example: Example,
-        document_content: str,
+        new_document_content: str,
+        original_tempfile_content: str,
+        new_tempfile_content: str,
     ) -> None:
         """
         Overwrite the file with the new content.
         """
+        del original_tempfile_content
+        del new_tempfile_content
         Path(example.path).write_text(
-            data=document_content,
+            data=new_document_content,
             encoding=self._encoding,
         )
 
@@ -449,8 +484,10 @@ class ShellCommandEvaluator:
                 on_write_to_empty_code_block=self.on_write_to_empty_code_block,
             )
             self.on_write_to_non_empty_code_block(
-                example,
-                modified_content,
+                example=example,
+                new_document_content=modified_content,
+                original_tempfile_content=source,
+                new_tempfile_content=temp_file_content,
             )
 
         if result.returncode != 0:
