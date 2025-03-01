@@ -342,15 +342,15 @@ class ShellCommandEvaluator:
         self._tempfile_suffixes = tempfile_suffixes
 
         if write_to_file:
-            self._on_write_to_empty_code_block: Callable[
+            self.on_write_to_empty_code_block: Callable[
                 [Example, str], None
             ] = _raise_cannot_replace_error
-            self._on_write_to_non_empty_code_block: Callable[
+            self.on_write_to_non_empty_code_block: Callable[
                 [Example, str], None
             ] = self._overwrite_document
         else:
-            self._on_write_to_empty_code_block = _no_op_document_content_writer
-            self._on_write_to_non_empty_code_block = (
+            self.on_write_to_empty_code_block = _no_op_document_content_writer
+            self.on_write_to_non_empty_code_block = (
                 _no_op_document_content_writer
             )
 
@@ -436,22 +436,19 @@ class ShellCommandEvaluator:
             with contextlib.suppress(FileNotFoundError):
                 temp_file.unlink()
 
-        existing_file_content = example.document.text
-
-        modified_content = _document_content_with_example_content_replaced(
-            existing_file_content=existing_file_content,
-            example=example,
-            pad_file=self._pad_file,
-            unindented_new_example_content=temp_file_content,
-            on_write_to_empty_code_block=self._on_write_to_empty_code_block,
-        )
-
         # We avoid writing to the file if the content is the same.
         # This is because writing to the file will update the file's
         # modification time, which can cause unnecessary rebuilds, and
         # we have seen that confuse the Git index.
-        if modified_content != existing_file_content:
-            self._on_write_to_non_empty_code_block(
+        if new_source != temp_file_content:
+            modified_content = _document_content_with_example_content_replaced(
+                existing_file_content=example.document.text,
+                example=example,
+                pad_file=self._pad_file,
+                unindented_new_example_content=temp_file_content,
+                on_write_to_empty_code_block=self.on_write_to_empty_code_block,
+            )
+            self.on_write_to_non_empty_code_block(
                 example,
                 modified_content,
             )
