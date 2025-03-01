@@ -731,12 +731,17 @@ def test_newline_given(
     argnames="write_to_file_option",
     argvalues=[True, False],
 )
+@pytest.mark.parametrize(
+    argnames="pad_file_option",
+    argvalues=[True, False],
+)
 def test_empty_code_block_write_content_to_file(
     *,
     tmp_path: Path,
     rst_file: Path,
     use_pty_option: bool,
     write_to_file_option: bool,
+    pad_file_option: bool,
 ) -> None:
     """
     An error is given when trying to write content to an empty code block.
@@ -761,7 +766,7 @@ def test_empty_code_block_write_content_to_file(
     )
     evaluator = ShellCommandEvaluator(
         args=["cp", file_with_new_code_block_content],
-        pad_file=False,
+        pad_file=pad_file_option,
         write_to_file=write_to_file_option,
         use_pty=use_pty_option,
     )
