@@ -366,6 +366,7 @@ class ShellCommandEvaluator:
         """
         Overwrite the file with the new content.
         """
+        example.document.text = document_content
         Path(example.path).write_text(
             data=document_content,
             encoding=self._encoding,
@@ -451,7 +452,6 @@ class ShellCommandEvaluator:
         # modification time, which can cause unnecessary rebuilds, and
         # we have seen that confuse the Git index.
         if modified_content != existing_file_content:
-            example.document.text = modified_content
             self.on_write_to_non_empty_code_block(
                 example,
                 modified_content,
