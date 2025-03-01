@@ -32,32 +32,24 @@ def _document_content_with_example_content_replaced(
     """
     Get the document content with the example content replaced.
     """
-    # Some regions are given to us with a trailing newline, and
-    # some are not.  We need to remove the trailing newline from
-    # the existing region content to avoid a double newline.
-    #
-    # There is no such thing as a code block with two trailing
-    # newlines in reStructuredText, so we choose not to worry about
-    # tools which add this.
-
     unindented_new_example_content = unindented_new_example_content.rstrip(
         "\n"
     )
     if not unindented_new_example_content and not example.parsed:
         return existing_file_content
 
-    if not example.parsed:
-        on_write_to_empty_code_block(example, "")
-        return existing_file_content
+    try:
+        indent_prefix = _get_indentation(example=example)
+    except IndexError:
+        indent_prefix = "    "
 
-    indent_prefix = _get_indentation(example=example)
     indented_temp_file_content = textwrap.indent(
         text=unindented_new_example_content,
         prefix=indent_prefix,
     )
-    replacement = indented_temp_file_content
+    new_code_block_content = indented_temp_file_content
 
-    indented_existing_region_content = textwrap.indent(
+    indented_existing_code_block_content = textwrap.indent(
         text=example.region.parsed,
         prefix=indent_prefix,
     )
@@ -67,17 +59,51 @@ def _document_content_with_example_content_replaced(
     # we assume that this is not the case, and we remove any leading
     # newlines from the replacement which were added by the padding.
     if pad_file:
-        replacement = _lstrip_newlines(
-            input_string=replacement,
+        new_code_block_content = _lstrip_newlines(
+            input_string=new_code_block_content,
             number_of_newlines=example.line + example.parsed.line_offset,
         )
 
-    document_start = existing_file_content[: example.region.start]
+    # if not example.parsed:
+    #     replacement = "\n" + replacement + "\n"
 
+    document_start = existing_file_content[: example.region.start]
+    document_end = existing_file_content[example.region.end :]
+    document_without_end = existing_file_content[: example.region.end]
     document_without_start = existing_file_content[example.region.start :]
 
+    region_content = existing_file_content[
+        example.region.start : example.region.end
+    ]
+
+    insert_index = region_content.rfind(indented_existing_code_block_content)
+    code_block_end_index = insert_index + len(
+        indented_existing_code_block_content
+    )
+    new_region_content = (
+        region_content[:insert_index]
+        + new_code_block_content
+        + region_content[code_block_end_index:]
+    )
+
+    # Some regions are given to us with a trailing newline, and
+    # some are not.  We need to remove the trailing newline from
+    # the region content to avoid a double newline.
+    #
+    # There is no such thing as a code block with two trailing
+    # newlines in reStructuredText, so we choose not to worry about
+    # tools which add this.
+    # breakpoint()
+    new_region_content = new_region_content.rstrip("\n")
+
+    # new_region_content = "FOO"
+
+    # breakpoint()
+    if document_end.rstrip("\n"):
+        document_end = "\n" + document_end
+    return document_start + new_region_content + document_end
     document_with_replacement_and_no_start = document_without_start.replace(
-        indented_existing_region_content.rstrip("\n"),
+        indented_existing_code_block_content.rstrip("\n"),
         replacement,
         # In Python 3.13 it became possible to use
         # ``count`` as a keyword argument.
