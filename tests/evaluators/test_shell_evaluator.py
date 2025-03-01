@@ -14,6 +14,7 @@ from pathlib import Path
 
 import click
 import pytest
+import sybil.parsers.markdown.codeblock
 from click.testing import CliRunner
 from sybil import Sybil
 from sybil.parsers.rest.codeblock import CodeBlockParser
@@ -786,6 +787,80 @@ def test_empty_code_block_write_content_to_file(
         .. code-block:: python
 
             foobar
+
+        After empty code block
+        """,
+    )
+
+    if write_to_file_option:
+        expected_document_content = modified_document_content
+    else:
+        expected_document_content = content
+
+    assert new_document_content == expected_document_content
+
+
+@pytest.mark.parametrize(
+    argnames="write_to_file_option",
+    argvalues=[True, False],
+)
+@pytest.mark.parametrize(
+    argnames="pad_file_option",
+    argvalues=[True, False],
+)
+def test_empty_code_block_write_content_to_file_md(
+    *,
+    tmp_path: Path,
+    rst_file: Path,
+    use_pty_option: bool,
+    write_to_file_option: bool,
+    pad_file_option: bool,
+) -> None:
+    """
+    An error is given when trying to write content to an empty code block in
+    Markdown.
+    """
+    content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        ```python
+        ```
+
+        After empty code block
+        """
+    )
+    rst_file.write_text(data=content, encoding="utf-8")
+    file_with_new_code_block_content = tmp_path / "new_file.txt"
+    new_code_block_content = "foobar\n\n"
+    file_with_new_code_block_content.write_text(
+        data=new_code_block_content,
+        encoding="utf-8",
+    )
+    evaluator = ShellCommandEvaluator(
+        args=["cp", file_with_new_code_block_content],
+        pad_file=pad_file_option,
+        write_to_file=write_to_file_option,
+        use_pty=use_pty_option,
+    )
+    parser = sybil.parsers.markdown.codeblock.CodeBlockParser(
+        language="python", evaluator=evaluator
+    )
+    sybil_obj = Sybil(parsers=[parser])
+
+    document = sybil_obj.parse(path=rst_file)
+    (example,) = document.examples()
+
+    example.evaluate()
+
+    new_document_content = rst_file.read_text(encoding="utf-8")
+    modified_document_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        ```python
+        foobar
+        ```
 
         After empty code block
         """,

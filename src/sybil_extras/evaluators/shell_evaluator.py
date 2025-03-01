@@ -38,11 +38,16 @@ def _document_content_with_example_content_replaced(
     if not unindented_new_example_content and not example.parsed:
         return existing_file_content
 
+    empty_code_block_start_lines = 2
+
     try:
         indent_prefix = _get_indentation(example=example)
     except IndexError:
         # TODO: Get the indentation of the "code-block" part.
         indent_prefix = "    "
+        start_lines = "\n" * empty_code_block_start_lines
+    else:
+        start_lines = ""
 
     indented_temp_file_content = textwrap.indent(
         text=unindented_new_example_content,
@@ -65,6 +70,7 @@ def _document_content_with_example_content_replaced(
             number_of_newlines=example.line + example.parsed.line_offset,
         )
 
+    new_code_block_content = start_lines + new_code_block_content
     document_start = existing_file_content[: example.region.start]
     document_end = existing_file_content[example.region.end :]
 
@@ -72,16 +78,26 @@ def _document_content_with_example_content_replaced(
         example.region.start : example.region.end
     ]
 
-    insert_index = region_content.rfind(indented_existing_code_block_content)
+    if indented_existing_code_block_content:
+        insert_index = region_content.rfind(
+            indented_existing_code_block_content
+        )
+    else:
+        insert_index = region_content.rfind("\n")
+
     code_block_end_index = insert_index + len(
         indented_existing_code_block_content
     )
+
+    new_code_block_content = new_code_block_content.rstrip("\n")
     new_region_content = (
         region_content[:insert_index]
         + new_code_block_content
         + region_content[code_block_end_index:]
     )
 
+    # breakpoint()
+    new_region_content = new_region_content.rstrip("\n")
     if document_end.rstrip("\n"):
         document_end = "\n" + document_end
     return document_start + new_region_content + document_end
