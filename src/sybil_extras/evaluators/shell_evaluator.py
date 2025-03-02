@@ -21,64 +21,61 @@ from sybil.evaluators.python import pad
 
 
 @beartype
-def _document_content_with_example_content_replaced(
+def _get_modified_region_text(
+    example: Example,
+    original_region_text: str,
+    new_code_block_content: str,
+    on_write_to_empty_code_block: Callable[[Example, str], None],
+) -> str:
+    """
+    Get the region text to use after the example content is replaced.
+    """
+    if not example.parsed:
+        if new_code_block_content.rstrip("\n"):
+            on_write_to_empty_code_block(example, new_code_block_content)
+        return original_region_text
+
+    # Keep the same number of newlines at the end of the code block.
+    # This, in practice, seems to match expectations.
+    num_newlines_at_end = len(example.parsed) - len(
+        example.parsed.rstrip("\n")
+    )
+    new_code_block_content = (
+        new_code_block_content.rstrip("\n") + "\n" * num_newlines_at_end
+    )
+
+    indent_prefix = _get_indentation(example=example)
+    indented_example_parsed = textwrap.indent(
+        text=example.parsed,
+        prefix=indent_prefix,
+    )
+    replacement_text = textwrap.indent(
+        text=new_code_block_content,
+        prefix=indent_prefix,
+    )
+    return original_region_text.replace(
+        indented_example_parsed,
+        replacement_text,
+    )
+
+
+@beartype
+def _document_content_with_example_replaced(
     *,
     example: Example,
+    old_region_text: str,
+    new_region_text: str,
     existing_file_content: str,
-    pad_file: bool,
-    unindented_new_example_content: str,
-    on_write_to_empty_code_block: Callable[[Example, str], None],
 ) -> str:
     """
     Get the document content with the example content replaced.
     """
-    # Some regions are given to us with a trailing newline, and
-    # some are not.  We need to remove the trailing newline from
-    # the existing region content to avoid a double newline.
-    #
-    # There is no such thing as a code block with two trailing
-    # newlines in reStructuredText, so we choose not to worry about
-    # tools which add this.
-
-    unindented_new_example_content = unindented_new_example_content.rstrip(
-        "\n"
-    )
-    if not unindented_new_example_content and not example.parsed:
-        return existing_file_content
-
-    if not example.parsed:
-        on_write_to_empty_code_block(example, "")
-        return existing_file_content
-
-    indent_prefix = _get_indentation(example=example)
-    indented_temp_file_content = textwrap.indent(
-        text=unindented_new_example_content,
-        prefix=indent_prefix,
-    )
-    replacement = indented_temp_file_content
-
-    indented_existing_region_content = textwrap.indent(
-        text=example.region.parsed,
-        prefix=indent_prefix,
-    )
-
-    # Examples are given with no leading newline.
-    # While it is possible that a formatter added leading newlines,
-    # we assume that this is not the case, and we remove any leading
-    # newlines from the replacement which were added by the padding.
-    if pad_file:
-        replacement = _lstrip_newlines(
-            input_string=replacement,
-            number_of_newlines=example.line + example.parsed.line_offset,
-        )
-
     document_start = existing_file_content[: example.region.start]
-
     document_without_start = existing_file_content[example.region.start :]
 
     document_with_replacement_and_no_start = document_without_start.replace(
-        indented_existing_region_content.rstrip("\n"),
-        replacement,
+        old_region_text,
+        new_region_text,
         # In Python 3.13 it became possible to use
         # ``count`` as a keyword argument.
         # Because we use ``mypy-strict-kwargs``, this means
@@ -437,24 +434,42 @@ class ShellCommandEvaluator:
             with contextlib.suppress(FileNotFoundError):
                 temp_file.unlink()
 
-        existing_file_content = example.document.text
+        new_region_content = temp_file_content
 
-        modified_content = _document_content_with_example_content_replaced(
-            existing_file_content=existing_file_content,
+        # Examples are given with no leading newline.
+        # While it is possible that a formatter added leading newlines,
+        # we assume that this is not the case, and we remove any leading
+        # newlines from the replacement which were added by the padding.
+        if self._pad_file:
+            new_region_content = _lstrip_newlines(
+                input_string=new_region_content,
+                number_of_newlines=example.line + example.parsed.line_offset,
+            )
+
+        original_region_text = example.document.text[
+            example.region.start : example.region.end
+        ]
+        modified_region_text = _get_modified_region_text(
+            original_region_text=original_region_text,
             example=example,
-            pad_file=self._pad_file,
-            unindented_new_example_content=temp_file_content,
+            new_code_block_content=new_region_content,
             on_write_to_empty_code_block=self.on_write_to_empty_code_block,
         )
 
-        # We avoid writing to the file if the content is the same.
-        # This is because writing to the file will update the file's
-        # modification time, which can cause unnecessary rebuilds, and
-        # we have seen that confuse the Git index.
-        if modified_content != existing_file_content:
+        existing_file_content = example.document.text
+
+        if modified_region_text != original_region_text:
+            modified_document_content = (
+                _document_content_with_example_replaced(
+                    example=example,
+                    old_region_text=original_region_text,
+                    new_region_text=modified_region_text,
+                    existing_file_content=existing_file_content,
+                )
+            )
             self.on_write_to_non_empty_code_block(
                 example,
-                modified_content,
+                modified_document_content,
             )
 
         if result.returncode != 0:
