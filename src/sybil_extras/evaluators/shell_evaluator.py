@@ -60,38 +60,6 @@ def _get_modified_region_text(
 
 
 @beartype
-def _document_content_with_example_replaced(
-    *,
-    example: Example,
-    old_region_text: str,
-    new_region_text: str,
-    existing_file_content: str,
-) -> str:
-    """
-    Get the document content with the example content replaced.
-    """
-    document_start = existing_file_content[: example.region.start]
-    document_without_start = existing_file_content[example.region.start :]
-
-    document_with_replacement_and_no_start = document_without_start.replace(
-        old_region_text,
-        new_region_text,
-        # In Python 3.13 it became possible to use
-        # ``count`` as a keyword argument.
-        # Because we use ``mypy-strict-kwargs``, this means
-        # that in Python 3.13 we must use ``count`` as a
-        # keyword argument, or we get a ``mypy`` error.
-        #
-        # However, we also want to support Python <3.13, so we
-        # use a positional argument for ``count`` and we ignore
-        # the error.
-        1,  # type: ignore[misc,unused-ignore]
-    )
-
-    return document_start + document_with_replacement_and_no_start
-
-
-@beartype
 def _run_command(
     *,
     command: list[str | Path],
@@ -460,12 +428,9 @@ class ShellCommandEvaluator:
 
         if modified_region_text != original_region_text:
             modified_document_content = (
-                _document_content_with_example_replaced(
-                    example=example,
-                    old_region_text=original_region_text,
-                    new_region_text=modified_region_text,
-                    existing_file_content=existing_file_content,
-                )
+                existing_file_content[: example.region.start]
+                + modified_region_text
+                + existing_file_content[example.region.end :]
             )
             self.on_write_to_non_empty_code_block(
                 example,
