@@ -16,6 +16,10 @@ import click
 import pytest
 from click.testing import CliRunner
 from sybil import Sybil
+from sybil.parsers.markdown.codeblock import (
+    CodeBlockParser as MarkdownCodeBlockParser,
+)
+from sybil.parsers.myst.codeblock import CodeBlockParser as MySTCodeBlockParser
 from sybil.parsers.rest.codeblock import CodeBlockParser
 
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
@@ -754,26 +758,58 @@ def test_newline_given(
     argnames="write_to_file_option",
     argvalues=[True, False],
 )
+@pytest.mark.parametrize(
+    argnames="markup_language",
+    argvalues=["reStructuredText", "Markdown", "MyST"],
+)
 def test_empty_code_block_write_content_to_file(
     *,
     tmp_path: Path,
-    rst_file: Path,
     use_pty_option: bool,
     write_to_file_option: bool,
+    markup_language: str,
 ) -> None:
     """
     An error is given when trying to write content to an empty code block.
     """
-    content = textwrap.dedent(
+    rst_content = textwrap.dedent(
         text="""\
         Not in code block
 
         .. code-block:: python
 
         After empty code block
-        """
+        """,
     )
-    rst_file.write_text(data=content, encoding="utf-8")
+    markdown_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        ```python
+        ```
+
+        After empty code block
+        """,
+    )
+
+    myst_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        ```{code} python
+        ```
+
+        After empty code block
+        """,
+    )
+
+    content = {
+        "reStructuredText": rst_content,
+        "Markdown": markdown_content,
+        "MyST": myst_content,
+    }[markup_language]
+    source_file = tmp_path / "source_file.txt"
+    source_file.write_text(data=content, encoding="utf-8")
     file_with_new_content = tmp_path / "new_file.txt"
     # Add multiple newlines to show that they are not included in the file.
     # No code block in reSructuredText ends with multiple newlines.
@@ -785,15 +821,20 @@ def test_empty_code_block_write_content_to_file(
         write_to_file=write_to_file_option,
         use_pty=use_pty_option,
     )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    parser_cls = {
+        "reStructuredText": CodeBlockParser,
+        "Markdown": MarkdownCodeBlockParser,
+        "MyST": MySTCodeBlockParser,
+    }[markup_language]
+    parser = parser_cls(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
 
-    document = sybil.parse(path=rst_file)
+    document = sybil.parse(path=source_file)
     (example,) = document.examples()
 
     if write_to_file_option:
         expected_msg = (
-            f"Cannot replace empty code block in {rst_file.as_posix()} "
+            f"Cannot replace empty code block in {source_file.as_posix()} "
             "on line 3. "
             "Replacing empty code blocks is not supported as we cannot "
             "determine the indentation."
@@ -802,7 +843,7 @@ def test_empty_code_block_write_content_to_file(
             example.evaluate()
     else:
         example.evaluate()
-        assert rst_file.read_text(encoding="utf-8") == content
+        assert source_file.read_text(encoding="utf-8") == content
 
 
 @pytest.mark.parametrize(
