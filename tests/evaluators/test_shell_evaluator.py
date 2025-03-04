@@ -68,6 +68,17 @@ def fixture_rst_file(tmp_path: Path) -> Path:
     return test_document
 
 
+@pytest.fixture(
+    name="markup_language",
+    params=["reStructuredText", "Markdown", "MyST"],
+)
+def fixture_markup_language(request: pytest.FixtureRequest) -> str:
+    """
+    Fixture to parametrize over the supported markup languages.
+    """
+    return str(object=request.param)
+
+
 def test_error(*, rst_file: Path, use_pty_option: bool) -> None:
     """
     A ``subprocess.CalledProcessError`` is raised if the command fails.
@@ -757,10 +768,6 @@ def test_newline_given(
 @pytest.mark.parametrize(
     argnames="write_to_file_option",
     argvalues=[True, False],
-)
-@pytest.mark.parametrize(
-    argnames="markup_language",
-    argvalues=["reStructuredText", "Markdown", "MyST"],
 )
 def test_empty_code_block_write_content_to_file(
     *,
