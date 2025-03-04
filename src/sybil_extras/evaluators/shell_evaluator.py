@@ -23,12 +23,19 @@ from sybil.evaluators.python import pad
 @beartype
 @runtime_checkable
 class _ExampleModified(Protocol):
+    """
+    A protocol for a callback to run when an example is modified.
+    """
+
     def __call__(
         self,
         *,
         example: Example,
         modified_example_content: str,
     ) -> None:
+        """
+        This function is called when an example is modified.
+        """
         # We disable a pylint warning here because the ellipsis is required
         # for pyright to recognize this as a protocol.
         ...  # pylint: disable=unnecessary-ellipsis
@@ -288,6 +295,8 @@ class ShellCommandEvaluator:
             encoding: The encoding to use reading documents which include a
                 given example, and for the temporary file. If ``None``,
                 use the system default.
+            on_modify: A callback to run when the example is modified by the
+                evaluator.
 
         Raises:
             ValueError: If pseudo-terminal is requested on Windows.
