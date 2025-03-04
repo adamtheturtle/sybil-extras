@@ -983,7 +983,6 @@ def test_empty_code_block_write_content_to_file(
         assert new_content == content
 
 
-# TODO: Make multi-language
 @pytest.mark.parametrize(
     argnames="new_content",
     argvalues=[
