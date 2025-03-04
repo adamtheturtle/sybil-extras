@@ -10,6 +10,8 @@ import subprocess
 import sys
 import textwrap
 import time
+from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
 
 import click
@@ -68,15 +70,47 @@ def fixture_rst_file(tmp_path: Path) -> Path:
     return test_document
 
 
+@dataclass(frozen=True)
+class _MarkupLanguageValue:
+    """
+    Associated values for the supported markup languages.
+    """
+
+    name: str
+    code_block_parser_cls: type
+
+
+class _MarkupLanguage(Enum):
+    """
+    Supported markup languages.
+    """
+
+    RESTRUCTUREDTEXT = _MarkupLanguageValue(
+        name="reStructuredText",
+        code_block_parser_cls=CodeBlockParser,
+    )
+    MARKDOWN = _MarkupLanguageValue(
+        name="Markdown",
+        code_block_parser_cls=MarkdownCodeBlockParser,
+    )
+    MYST = _MarkupLanguageValue(
+        name="MyST",
+        code_block_parser_cls=MySTCodeBlockParser,
+    )
+
+
 @pytest.fixture(
     name="markup_language",
-    params=["reStructuredText", "Markdown", "MyST"],
+    params=_MarkupLanguage,
 )
-def fixture_markup_language(request: pytest.FixtureRequest) -> str:
+def fixture_markup_language(
+    request: pytest.FixtureRequest,
+) -> _MarkupLanguage:
     """
     Fixture to parametrize over the supported markup languages.
     """
-    return str(object=request.param)
+    assert isinstance(request.param, _MarkupLanguage)
+    return request.param
 
 
 def test_error(*, rst_file: Path, use_pty_option: bool) -> None:
@@ -774,7 +808,7 @@ def test_empty_code_block_write_content_to_file(
     tmp_path: Path,
     use_pty_option: bool,
     write_to_file_option: bool,
-    markup_language: str,
+    markup_language: _MarkupLanguage,
 ) -> None:
     """
     An error is given when trying to write content to an empty code block.
@@ -811,9 +845,9 @@ def test_empty_code_block_write_content_to_file(
     )
 
     content = {
-        "reStructuredText": rst_content,
-        "Markdown": markdown_content,
-        "MyST": myst_content,
+        _MarkupLanguage.RESTRUCTUREDTEXT: rst_content,
+        _MarkupLanguage.MARKDOWN: markdown_content,
+        _MarkupLanguage.MYST: myst_content,
     }[markup_language]
     source_file = tmp_path / "source_file.txt"
     source_file.write_text(data=content, encoding="utf-8")
@@ -828,12 +862,11 @@ def test_empty_code_block_write_content_to_file(
         write_to_file=write_to_file_option,
         use_pty=use_pty_option,
     )
-    parser_cls = {
-        "reStructuredText": CodeBlockParser,
-        "Markdown": MarkdownCodeBlockParser,
-        "MyST": MySTCodeBlockParser,
-    }[markup_language]
-    parser = parser_cls(language="python", evaluator=evaluator)
+
+    parser = markup_language.value.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=source_file)
