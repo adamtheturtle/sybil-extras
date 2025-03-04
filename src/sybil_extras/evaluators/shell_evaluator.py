@@ -25,19 +25,29 @@ def _get_modified_region_text(
     example: Example,
     original_region_text: str,
     new_code_block_content: str,
-    on_write_to_empty_code_block: Callable[[Example, str], None],
 ) -> str:
     """
     Get the region text to use after the example content is replaced.
     """
-    if not example.parsed:
-        if new_code_block_content.rstrip("\n"):
-            on_write_to_empty_code_block(example, new_code_block_content)
-        return original_region_text
+    if example.parsed:
+        indent_prefix = _get_indentation(example=example)
+        replace_old_not_indented = example.parsed
+        replace_new_prefix = ""
+    # This is a break of the abstraction, - we really should not have
+    # to know about markup language specifics here.
+    elif original_region_text.endswith("```"):
+        # Markdown or MyST
+        indent_prefix = ""
+        replace_old_not_indented = "\n"
+        replace_new_prefix = "\n"
+    else:
+        # reStructuredText
+        indent_prefix = "   "
+        replace_old_not_indented = "\n"
+        replace_new_prefix = "\n\n"
 
-    indent_prefix = _get_indentation(example=example)
     indented_example_parsed = textwrap.indent(
-        text=example.parsed,
+        text=replace_old_not_indented,
         prefix=indent_prefix,
     )
     replacement_text = textwrap.indent(
@@ -46,10 +56,10 @@ def _get_modified_region_text(
     )
     region_with_replaced_text = original_region_text.replace(
         indented_example_parsed,
-        replacement_text,
+        replace_new_prefix + replacement_text,
     )
 
-    stripped_of_newlines_region = region_with_replaced_text.strip("\n")
+    stripped_of_newlines_region = region_with_replaced_text.rstrip("\n")
     # Keep the same number of newlines at the end of the region.
     num_newlines_at_end = len(original_region_text) - len(
         original_region_text.rstrip("\n")
@@ -213,26 +223,6 @@ def _get_indentation(example: Example) -> str:
 
 
 @beartype
-def _raise_cannot_replace_error(
-    example: Example,
-    document_content: str,
-) -> None:
-    """
-    We cannot write to an empty code block, so raise an error.
-    """
-    del document_content
-    msg = (
-        # Use ``.as_posix()`` to avoid the Windows path separator.
-        # This probably is worse, but is easier for consistent testing.
-        f"Cannot replace empty code block in {Path(example.path).as_posix()} "
-        f"on line {example.line}. "
-        "Replacing empty code blocks is not supported as we cannot "
-        "determine the indentation."
-    )
-    raise ValueError(msg)
-
-
-@beartype
 def _no_op_document_content_writer(
     example: Example,
     document_content: str,
@@ -306,14 +296,10 @@ class ShellCommandEvaluator:
         self._tempfile_suffixes = tempfile_suffixes
 
         if write_to_file:
-            self.on_write_to_empty_code_block: Callable[
-                [Example, str], None
-            ] = _raise_cannot_replace_error
             self.on_write_to_non_empty_code_block: Callable[
                 [Example, str], None
             ] = self._overwrite_document
         else:
-            self.on_write_to_empty_code_block = _no_op_document_content_writer
             self.on_write_to_non_empty_code_block = (
                 _no_op_document_content_writer
             )
@@ -420,7 +406,6 @@ class ShellCommandEvaluator:
             original_region_text=original_region_text,
             example=example,
             new_code_block_content=new_region_content,
-            on_write_to_empty_code_block=self.on_write_to_empty_code_block,
         )
 
         existing_file_content = example.document.text
