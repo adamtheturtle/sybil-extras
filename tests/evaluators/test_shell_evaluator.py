@@ -44,32 +44,6 @@ def fixture_use_pty_option(
     return use_pty
 
 
-@pytest.fixture(name="rst_file")
-def fixture_rst_file(tmp_path: Path) -> Path:
-    """
-    Fixture to create a temporary RST file with code blocks.
-    """
-    # Relied upon features:
-    #
-    # * Includes exactly one code block
-    # * Contents of the code block match those in tests
-    # * The code block is the last element in the file
-    # * There is text outside the code block
-    content = textwrap.dedent(
-        text="""\
-        Not in code block
-
-        .. code-block:: python
-
-           x = 2 + 2
-           assert x == 4
-        """
-    )
-    test_document = tmp_path / "test_document.example.rst"
-    test_document.write_text(data=content, encoding="utf-8")
-    return test_document
-
-
 @dataclass(frozen=True)
 class _MarkupLanguageValue:
     """
@@ -113,7 +87,66 @@ def fixture_markup_language(
     return request.param
 
 
-def test_error(*, rst_file: Path, use_pty_option: bool) -> None:
+@pytest.fixture(name="rst_file", params=_MarkupLanguage)
+def fixture_rst_file(tmp_path: Path, request: pytest.FixtureRequest) -> Path:
+    """
+    Fixture to create a temporary RST file with code blocks.
+    """
+    # Relied upon features:
+    #
+    # * Includes exactly one code block
+    # * Contents of the code block match those in tests
+    # * The code block is the last element in the file
+    # * There is text outside the code block
+    rst_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+           x = 2 + 2
+           assert x == 4
+        """,
+    )
+
+    markdown_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        ```python
+        x = 2 + 2
+        assert x == 4
+        ```
+        """,
+    )
+
+    myst_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        ```{code} python
+        x = 2 + 2
+        assert x == 4
+        ```
+        """,
+    )
+
+    content = {
+        _MarkupLanguage.RESTRUCTUREDTEXT: rst_content,
+        _MarkupLanguage.MARKDOWN: markdown_content,
+        _MarkupLanguage.MYST: myst_content,
+    }[request.param]
+    test_document = tmp_path / "test_document.example.rst"
+    test_document.write_text(data=content, encoding="utf-8")
+    return test_document
+
+
+def test_error(
+    *,
+    rst_file: Path,
+    markup_language: _MarkupLanguage,
+    use_pty_option: bool,
+) -> None:
     """
     A ``subprocess.CalledProcessError`` is raised if the command fails.
     """
@@ -124,7 +157,10 @@ def test_error(*, rst_file: Path, use_pty_option: bool) -> None:
         write_to_file=False,
         use_pty=use_pty_option,
     )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    parser = markup_language.value.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
@@ -143,6 +179,7 @@ def test_error(*, rst_file: Path, use_pty_option: bool) -> None:
 def test_output_shown(
     *,
     rst_file: Path,
+    markup_language: _MarkupLanguage,
     capsys: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
@@ -159,7 +196,10 @@ def test_output_shown(
         write_to_file=False,
         use_pty=use_pty_option,
     )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    parser = markup_language.value.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
@@ -179,6 +219,7 @@ def test_output_shown(
 def test_rm(
     *,
     rst_file: Path,
+    markup_language: _MarkupLanguage,
     capsys: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
@@ -191,7 +232,10 @@ def test_rm(
         write_to_file=False,
         use_pty=use_pty_option,
     )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    parser = markup_language.value.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
@@ -205,6 +249,7 @@ def test_rm(
 def test_pass_env(
     *,
     rst_file: Path,
+    markup_language: _MarkupLanguage,
     tmp_path: Path,
     use_pty_option: bool,
 ) -> None:
@@ -223,7 +268,10 @@ def test_pass_env(
         write_to_file=False,
         use_pty=use_pty_option,
     )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    parser = markup_language.value.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
@@ -236,6 +284,7 @@ def test_pass_env(
 def test_global_env(
     *,
     rst_file: Path,
+    markup_language: _MarkupLanguage,
     tmp_path: Path,
     use_pty_option: bool,
 ) -> None:
@@ -255,7 +304,10 @@ def test_global_env(
         write_to_file=False,
         use_pty=use_pty_option,
     )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    parser = markup_language.value.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
@@ -269,6 +321,7 @@ def test_global_env(
 def test_file_is_passed(
     *,
     rst_file: Path,
+    markup_language: _MarkupLanguage,
     tmp_path: Path,
     use_pty_option: bool,
 ) -> None:
@@ -287,7 +340,10 @@ def test_file_is_passed(
         write_to_file=False,
         use_pty=use_pty_option,
     )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    parser = markup_language.value.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
@@ -300,6 +356,7 @@ def test_file_is_passed(
 def test_file_path(
     *,
     rst_file: Path,
+    markup_language: _MarkupLanguage,
     capsys: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
@@ -314,7 +371,10 @@ def test_file_path(
         write_to_file=False,
         use_pty=use_pty_option,
     )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    parser = markup_language.value.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
@@ -337,6 +397,7 @@ def test_file_path(
 def test_file_suffix(
     *,
     rst_file: Path,
+    markup_language: _MarkupLanguage,
     capsys: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
@@ -351,7 +412,10 @@ def test_file_suffix(
         tempfile_suffixes=suffixes,
         use_pty=use_pty_option,
     )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    parser = markup_language.value.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
@@ -368,6 +432,7 @@ def test_file_suffix(
 def test_file_prefix(
     *,
     rst_file: Path,
+    markup_language: _MarkupLanguage,
     capsys: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
@@ -382,7 +447,10 @@ def test_file_prefix(
         tempfile_name_prefix=prefix,
         use_pty=use_pty_option,
     )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    parser = markup_language.value.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
@@ -395,7 +463,13 @@ def test_file_prefix(
     assert given_file_path.name.startswith("custom_prefix_")
 
 
-def test_pad(*, rst_file: Path, tmp_path: Path, use_pty_option: bool) -> None:
+def test_pad(
+    *,
+    rst_file: Path,
+    markup_language: _MarkupLanguage,
+    tmp_path: Path,
+    use_pty_option: bool,
+) -> None:
     """If pad is True, the file content is padded.
 
     This test relies heavily on the exact formatting of the
@@ -412,7 +486,10 @@ def test_pad(*, rst_file: Path, tmp_path: Path, use_pty_option: bool) -> None:
         write_to_file=False,
         use_pty=use_pty_option,
     )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    parser = markup_language.value.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
@@ -436,6 +513,7 @@ def test_pad(*, rst_file: Path, tmp_path: Path, use_pty_option: bool) -> None:
 def test_write_to_file(
     tmp_path: Path,
     rst_file: Path,
+    markup_language: _MarkupLanguage,
     *,
     write_to_file: bool,
     use_pty_option: bool,
@@ -455,7 +533,10 @@ def test_write_to_file(
         write_to_file=write_to_file,
         use_pty=use_pty_option,
     )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    parser = markup_language.value.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
@@ -477,7 +558,11 @@ def test_write_to_file(
         assert rst_file_content == original_content
 
 
-def test_write_to_file_multiple(*, tmp_path: Path) -> None:
+def test_write_to_file_multiple(
+    *,
+    tmp_path: Path,
+    markup_language: _MarkupLanguage,
+) -> None:
     """
     If multiple code blocks are present with the same content, changes are
     written to the code block which needs changing.
@@ -515,7 +600,10 @@ def test_write_to_file_multiple(*, tmp_path: Path) -> None:
         write_to_file=True,
         use_pty=False,
     )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    parser = markup_language.value.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
@@ -567,7 +655,12 @@ def test_write_to_file_multiple(*, tmp_path: Path) -> None:
     assert rst_file_content == expected_content
 
 
-def test_pad_and_write(*, rst_file: Path, use_pty_option: bool) -> None:
+def test_pad_and_write(
+    *,
+    rst_file: Path,
+    use_pty_option: bool,
+    markup_language: _MarkupLanguage,
+) -> None:
     """
     Changes are written to the original file without the added padding.
     """
@@ -579,7 +672,10 @@ def test_pad_and_write(*, rst_file: Path, use_pty_option: bool) -> None:
         write_to_file=True,
         use_pty=use_pty_option,
     )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    parser = markup_language.value.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
@@ -589,7 +685,12 @@ def test_pad_and_write(*, rst_file: Path, use_pty_option: bool) -> None:
     assert rst_file_content == original_content
 
 
-def test_no_changes_mtime(*, rst_file: Path, use_pty_option: bool) -> None:
+def test_no_changes_mtime(
+    *,
+    rst_file: Path,
+    use_pty_option: bool,
+    markup_language: _MarkupLanguage,
+) -> None:
     """
     The modification time of the file is not changed if no changes are made.
     """
@@ -600,7 +701,10 @@ def test_no_changes_mtime(*, rst_file: Path, use_pty_option: bool) -> None:
         write_to_file=True,
         use_pty=use_pty_option,
     )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    parser = markup_language.value.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
@@ -613,6 +717,7 @@ def test_no_changes_mtime(*, rst_file: Path, use_pty_option: bool) -> None:
 def test_non_utf8_output(
     *,
     rst_file: Path,
+    markup_language: _MarkupLanguage,
     capsysbinary: pytest.CaptureFixture[bytes],
     tmp_path: Path,
     use_pty_option: bool,
@@ -632,7 +737,10 @@ def test_non_utf8_output(
         write_to_file=False,
         use_pty=use_pty_option,
     )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    parser = markup_language.value.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
@@ -720,6 +828,7 @@ def test_no_file_left_behind_on_interruption(
 def test_newline_system(
     *,
     rst_file: Path,
+    markup_language: _MarkupLanguage,
     tmp_path: Path,
     source_newline: str,
     use_pty_option: bool,
@@ -740,7 +849,10 @@ def test_newline_system(
         write_to_file=False,
         use_pty=use_pty_option,
     )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    parser = markup_language.value.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
@@ -763,6 +875,7 @@ def test_newline_system(
 def test_newline_given(
     *,
     rst_file: Path,
+    markup_language: _MarkupLanguage,
     tmp_path: Path,
     source_newline: str,
     given_newline: str,
@@ -786,7 +899,10 @@ def test_newline_given(
         newline=given_newline,
         use_pty=use_pty_option,
     )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    parser = markup_language.value.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
@@ -899,6 +1015,7 @@ def test_empty_code_block_write_empty_to_file(
     *,
     tmp_path: Path,
     rst_file: Path,
+    markup_language: _MarkupLanguage,
     use_pty_option: bool,
     new_content: str,
 ) -> None:
@@ -924,7 +1041,10 @@ def test_empty_code_block_write_empty_to_file(
         write_to_file=True,
         use_pty=use_pty_option,
     )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    parser = markup_language.value.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
@@ -933,7 +1053,12 @@ def test_empty_code_block_write_empty_to_file(
     assert rst_file.read_text(encoding="utf-8") == content
 
 
-def test_bad_command_error(*, rst_file: Path, use_pty_option: bool) -> None:
+def test_bad_command_error(
+    *,
+    rst_file: Path,
+    use_pty_option: bool,
+    markup_language: _MarkupLanguage,
+) -> None:
     """
     A ``subprocess.CalledProcessError`` is raised if the command is invalid.
     """
@@ -944,7 +1069,10 @@ def test_bad_command_error(*, rst_file: Path, use_pty_option: bool) -> None:
         write_to_file=False,
         use_pty=use_pty_option,
     )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    parser = markup_language.value.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
@@ -961,7 +1089,12 @@ def test_bad_command_error(*, rst_file: Path, use_pty_option: bool) -> None:
     assert exc.value.cmd[:-1] == args
 
 
-def test_click_runner(*, rst_file: Path, use_pty_option: bool) -> None:
+def test_click_runner(
+    *,
+    rst_file: Path,
+    use_pty_option: bool,
+    markup_language: _MarkupLanguage,
+) -> None:
     """
     The click runner can pick up the command output.
     """
@@ -981,7 +1114,9 @@ def test_click_runner(*, rst_file: Path, use_pty_option: bool) -> None:
             write_to_file=False,
             use_pty=use_pty_option,
         )
-        parser = CodeBlockParser(language="python", evaluator=evaluator)
+        parser = markup_language.value.code_block_parser_cls(
+            language="python", evaluator=evaluator
+        )
         sybil = Sybil(parsers=[parser])
 
         document = sybil.parse(path=rst_file)
@@ -1001,7 +1136,12 @@ def test_click_runner(*, rst_file: Path, use_pty_option: bool) -> None:
     assert result.stderr == expected_stderr
 
 
-def test_encoding(*, rst_file: Path, use_pty_option: bool) -> None:
+def test_encoding(
+    *,
+    rst_file: Path,
+    use_pty_option: bool,
+    markup_language: _MarkupLanguage,
+) -> None:
     """
     The given encoding is used.
     """
@@ -1024,7 +1164,10 @@ def test_encoding(*, rst_file: Path, use_pty_option: bool) -> None:
         use_pty=use_pty_option,
         encoding=encoding,
     )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    parser = markup_language.value.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
     sybil = Sybil(parsers=[parser], encoding=encoding)
 
     document = sybil.parse(path=rst_file)
