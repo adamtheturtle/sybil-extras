@@ -53,6 +53,7 @@ class _MarkupLanguageValue:
 
     name: str
     code_block_parser_cls: type
+    content_with_emoji: str
 
 
 class _MarkupLanguage(Enum):
@@ -63,14 +64,41 @@ class _MarkupLanguage(Enum):
     RESTRUCTUREDTEXT = _MarkupLanguageValue(
         name="reStructuredText",
         code_block_parser_cls=CodeBlockParser,
+        content_with_emoji=textwrap.dedent(
+            text="""\
+            Not in code block
+
+            .. code-block:: python
+
+               Hello 🌍
+            """,
+        ),
     )
     MARKDOWN = _MarkupLanguageValue(
         name="Markdown",
         code_block_parser_cls=MarkdownCodeBlockParser,
+        content_with_emoji=textwrap.dedent(
+            text="""\
+            Not in code block
+
+            ```python
+            Hello 🌍
+            ```
+            """,
+        ),
     )
     MYST = _MarkupLanguageValue(
         name="MyST",
         code_block_parser_cls=MySTCodeBlockParser,
+        content_with_emoji=textwrap.dedent(
+            text="""\
+            Not in code block
+
+            ```{code} python
+            Hello 🌍
+            ```
+            """,
+        ),
     )
 
 
@@ -1157,15 +1185,7 @@ def test_encoding(
     """
 
     file_path = tmp_path / "file.txt"
-    content = textwrap.dedent(
-        text="""\
-        Not in code block
-
-        .. code-block:: python
-
-           😀
-        """
-    )
+    content = markup_language.value.content_with_emoji
     rst_file.write_text(data=content, encoding=encoding)
     evaluator = ShellCommandEvaluator(
         args=["sh", "-c", sh_function, "_", file_path],
