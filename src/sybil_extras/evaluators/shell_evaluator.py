@@ -28,7 +28,10 @@ class _ExampleModified(Protocol):
         *,
         example: Example,
         modified_example_content: str,
-    ) -> None: ...
+    ) -> None:
+        # We disable a pylint warning here because the ellipsis is required
+        # for pyright to recognize this as a protocol.
+        ...  # pylint: disable=unnecessary-ellipsis
 
 
 @beartype

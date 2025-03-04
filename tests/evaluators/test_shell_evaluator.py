@@ -1148,3 +1148,19 @@ def test_encoding(
     best_guess = normalizer_guesses.best()
     assert best_guess is not None
     assert best_guess.encoding == encoding
+
+
+def test_custom_on_modify_no_modification(
+    *,
+    rst_file: Path,
+    use_pty_option: bool,
+) -> None:
+    pass
+
+
+def test_custom_on_modify_with_modification(
+    *,
+    rst_file: Path,
+    use_pty_option: bool,
+) -> None:
+    pass
