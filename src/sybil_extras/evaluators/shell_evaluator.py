@@ -30,10 +30,11 @@ def _get_modified_region_text(
     """
     Get the region text to use after the example content is replaced.
     """
-    if not example.parsed:
-        if new_code_block_content.rstrip("\n"):
-            on_write_to_empty_code_block(example, new_code_block_content)
+    if not example.parsed and not new_code_block_content.rstrip("\n"):
         return original_region_text
+
+    if not example.parsed:
+        pass
 
     indent_prefix = _get_indentation(example=example)
     indented_example_parsed = textwrap.indent(

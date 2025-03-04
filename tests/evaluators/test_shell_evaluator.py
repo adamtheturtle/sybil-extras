@@ -934,18 +934,47 @@ def test_empty_code_block_write_content_to_file(
     document = sybil.parse(path=source_file)
     (example,) = document.examples()
 
+    expected_modified_content = {
+        # There is no code block in reStructuredText that ends with multiple
+        # newlines.
+        _MarkupLanguage.RESTRUCTUREDTEXT: textwrap.dedent(
+            text="""\
+            Not in code block
+
+            .. code-block:: python
+
+               foobar
+            """
+        ),
+        _MarkupLanguage.MARKDOWN: textwrap.dedent(
+            text="""\
+            Not in code block
+
+            ```python
+            foobar
+
+            ```
+            """
+        ),
+        _MarkupLanguage.MYST: textwrap.dedent(
+            text="""\
+            Not in code block
+
+            ```{code} python
+            foobar
+
+            ```
+            """
+        ),
+    }[markup_language]
+
+    example.evaluate()
+    new_content = source_file.read_text(encoding="utf-8")
+
     if write_to_file_option:
-        expected_msg = (
-            f"Cannot replace empty code block in {source_file.as_posix()} "
-            "on line 3. "
-            "Replacing empty code blocks is not supported as we cannot "
-            "determine the indentation."
-        )
-        with pytest.raises(expected_exception=ValueError, match=expected_msg):
-            example.evaluate()
+        assert new_content == expected_modified_content
     else:
-        example.evaluate()
-        assert source_file.read_text(encoding="utf-8") == content
+        assert new_content == content
 
 
 @pytest.mark.parametrize(
