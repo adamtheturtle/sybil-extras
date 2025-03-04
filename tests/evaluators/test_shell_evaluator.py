@@ -501,6 +501,8 @@ def test_write_to_file(
     source_file_content = source_file.read_text(encoding="utf-8")
 
     expected_content = {
+        # There is no code block in reStructuredText that ends with multiple
+        # newlines.
         _MarkupLanguage.RESTRUCTUREDTEXT: textwrap.dedent(
             text="""\
             Not in code block
@@ -517,7 +519,6 @@ def test_write_to_file(
             ```python
             foobar
 
-
             ```
             """
         ),
@@ -527,7 +528,6 @@ def test_write_to_file(
 
             ```{code} python
             foobar
-
 
             ```
             """
