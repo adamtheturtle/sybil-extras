@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
+import charset_normalizer
 import click
 import pytest
 from click.testing import CliRunner
@@ -1001,34 +1002,53 @@ def test_click_runner(*, rst_file: Path, use_pty_option: bool) -> None:
     assert result.stderr == expected_stderr
 
 
-def test_encoding(*, rst_file: Path, use_pty_option: bool) -> None:
+@pytest.mark.parametrize(
+    argnames="encoding",
+    argvalues=["utf_8", "utf_16"],
+)
+def test_encoding(
+    *,
+    tmp_path: Path,
+    rst_file: Path,
+    use_pty_option: bool,
+    encoding: str,
+) -> None:
     """
     The given encoding is used.
     """
-    encoding = "utf-16"
+    sh_function = """
+    cp "$2" "$1"
+    """
+
+    file_path = tmp_path / "file.txt"
     content = textwrap.dedent(
         text="""\
         Not in code block
 
         .. code-block:: python
 
-           x = 2 + 2
-           assert x == 4
+           😀
         """
     )
     rst_file.write_text(data=content, encoding=encoding)
     evaluator = ShellCommandEvaluator(
-        args=["cat"],
+        args=["sh", "-c", sh_function, "_", file_path],
         pad_file=False,
         write_to_file=True,
         use_pty=use_pty_option,
         encoding=encoding,
     )
+
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser], encoding=encoding)
 
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
-    given_file_content = rst_file.read_text(encoding=encoding)
-    assert given_file_content == content
+
+    normalizer_guesses = charset_normalizer.from_bytes(
+        sequences=file_path.read_bytes(),
+    )
+    best_guess = normalizer_guesses.best()
+    assert best_guess is not None
+    assert best_guess.encoding == encoding
