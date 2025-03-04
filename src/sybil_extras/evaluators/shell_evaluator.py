@@ -223,26 +223,6 @@ def _get_indentation(example: Example) -> str:
 
 
 @beartype
-def _raise_cannot_replace_error(
-    example: Example,
-    document_content: str,
-) -> None:
-    """
-    We cannot write to an empty code block, so raise an error.
-    """
-    del document_content
-    msg = (
-        # Use ``.as_posix()`` to avoid the Windows path separator.
-        # This probably is worse, but is easier for consistent testing.
-        f"Cannot replace empty code block in {Path(example.path).as_posix()} "
-        f"on line {example.line}. "
-        "Replacing empty code blocks is not supported as we cannot "
-        "determine the indentation."
-    )
-    raise ValueError(msg)
-
-
-@beartype
 def _no_op_document_content_writer(
     example: Example,
     document_content: str,
