@@ -13,11 +13,22 @@ import uuid
 from collections.abc import Mapping, Sequence
 from io import BytesIO
 from pathlib import Path
-from typing import IO
+from typing import IO, Protocol, runtime_checkable
 
 from beartype import beartype
 from sybil import Example
 from sybil.evaluators.python import pad
+
+
+@beartype
+@runtime_checkable
+class _ExampleModified(Protocol):
+    def __call__(
+        self,
+        *,
+        example: Example,
+        modified_example_content: str,
+    ) -> None: ...
 
 
 @beartype
@@ -244,6 +255,7 @@ class ShellCommandEvaluator:
         write_to_file: bool,
         use_pty: bool,
         encoding: str | None = None,
+        on_modify: _ExampleModified | None = None,
     ) -> None:
         """Initialize the evaluator.
 
@@ -286,6 +298,7 @@ class ShellCommandEvaluator:
         self._newline = newline
         self._use_pty = use_pty
         self._encoding = encoding
+        self._on_modify = on_modify
 
     def __call__(self, example: Example) -> None:
         """
@@ -353,6 +366,12 @@ class ShellCommandEvaluator:
                 temp_file.unlink()
 
         new_region_content = temp_file_content
+
+        if new_source != new_region_content and self._on_modify is not None:
+            self._on_modify(
+                example=example,
+                modified_example_content=new_region_content,
+            )
 
         # Examples are given with no leading newline.
         # While it is possible that a formatter added leading newlines,
