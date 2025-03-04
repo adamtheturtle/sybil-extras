@@ -944,6 +944,8 @@ def test_empty_code_block_write_content_to_file(
             .. code-block:: python
 
                foobar
+
+            After empty code block
             """
         ),
         _MarkupLanguage.MARKDOWN: textwrap.dedent(
@@ -954,6 +956,8 @@ def test_empty_code_block_write_content_to_file(
             foobar
 
             ```
+
+            After empty code block
             """
         ),
         _MarkupLanguage.MYST: textwrap.dedent(
@@ -964,6 +968,8 @@ def test_empty_code_block_write_content_to_file(
             foobar
 
             ```
+
+            After empty code block
             """
         ),
     }[markup_language]
@@ -977,6 +983,7 @@ def test_empty_code_block_write_content_to_file(
         assert new_content == content
 
 
+# TODO: Make multi-language
 @pytest.mark.parametrize(
     argnames="new_content",
     argvalues=[
