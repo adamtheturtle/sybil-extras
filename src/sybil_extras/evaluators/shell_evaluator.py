@@ -29,9 +29,6 @@ def _get_modified_region_text(
     """
     Get the region text to use after the example content is replaced.
     """
-    if not example.parsed and not new_code_block_content.rstrip("\n"):
-        return original_region_text
-
     if example.parsed:
         indent_prefix = _get_indentation(example=example)
         replace_old_not_indented = example.parsed
