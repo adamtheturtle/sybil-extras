@@ -10,7 +10,7 @@ import sys
 import textwrap
 import threading
 import uuid
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from io import BytesIO
 from pathlib import Path
 from typing import IO
@@ -223,18 +223,6 @@ def _get_indentation(example: Example) -> str:
 
 
 @beartype
-def _no_op_document_content_writer(
-    example: Example,
-    document_content: str,
-) -> None:
-    """
-    Do nothing.
-    """
-    del example
-    del document_content
-
-
-@beartype
 class ShellCommandEvaluator:
     """
     Run a shell command on the example file.
@@ -294,33 +282,10 @@ class ShellCommandEvaluator:
         self._pad_file = pad_file
         self._tempfile_name_prefix = tempfile_name_prefix
         self._tempfile_suffixes = tempfile_suffixes
-
-        if write_to_file:
-            self.on_write_to_non_empty_code_block: Callable[
-                [Example, str], None
-            ] = self._overwrite_document
-        else:
-            self.on_write_to_non_empty_code_block = (
-                _no_op_document_content_writer
-            )
-
+        self._write_to_file = write_to_file
         self._newline = newline
         self._use_pty = use_pty
         self._encoding = encoding
-
-    def _overwrite_document(
-        self,
-        example: Example,
-        document_content: str,
-    ) -> None:
-        """
-        Overwrite the file with the new content.
-        """
-        example.document.text = document_content
-        Path(example.path).write_text(
-            data=document_content,
-            encoding=self._encoding,
-        )
 
     def __call__(self, example: Example) -> None:
         """
@@ -416,10 +381,12 @@ class ShellCommandEvaluator:
                 + modified_region_text
                 + existing_file_content[example.region.end :]
             )
-            self.on_write_to_non_empty_code_block(
-                example,
-                modified_document_content,
-            )
+            if self._write_to_file:
+                example.document.text = modified_document_content
+                Path(example.path).write_text(
+                    data=modified_document_content,
+                    encoding=self._encoding,
+                )
 
         if result.returncode != 0:
             raise subprocess.CalledProcessError(
