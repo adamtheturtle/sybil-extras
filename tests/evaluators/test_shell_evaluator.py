@@ -436,15 +436,48 @@ def test_pad(*, rst_file: Path, tmp_path: Path, use_pty_option: bool) -> None:
 @pytest.mark.parametrize(argnames="write_to_file", argvalues=[True, False])
 def test_write_to_file(
     tmp_path: Path,
-    rst_file: Path,
     *,
     write_to_file: bool,
     use_pty_option: bool,
+    markup_language: _MarkupLanguage,
 ) -> None:
     """
     Changes are written to the original file iff `write_to_file` is True.
     """
-    original_content = rst_file.read_text(encoding="utf-8")
+    original_content = {
+        _MarkupLanguage.RESTRUCTUREDTEXT: textwrap.dedent(
+            text="""\
+            Not in code block
+
+            .. code-block:: python
+
+               x = 2 + 2
+               assert x == 4
+            """
+        ),
+        _MarkupLanguage.MARKDOWN: textwrap.dedent(
+            text="""\
+            Not in code block
+
+            ```python
+            x = 2 + 2
+            assert x == 4
+            ```
+            """
+        ),
+        _MarkupLanguage.MYST: textwrap.dedent(
+            text="""\
+            Not in code block
+
+            ```{code} python
+            x = 2 + 2
+            assert x == 4
+            ```
+            """
+        ),
+    }[markup_language]
+    source_file = tmp_path / "source_file.txt"
+    source_file.write_text(data=original_content, encoding="utf-8")
     file_with_new_content = tmp_path / "new_file.txt"
     # Add multiple newlines to show that they are not included in the file.
     # No code block in reSructuredText ends with multiple newlines.
@@ -456,26 +489,54 @@ def test_write_to_file(
         write_to_file=write_to_file,
         use_pty=use_pty_option,
     )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    parser = markup_language.value.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
     sybil = Sybil(parsers=[parser])
 
-    document = sybil.parse(path=rst_file)
+    document = sybil.parse(path=source_file)
     (example,) = document.examples()
     example.evaluate()
-    rst_file_content = rst_file.read_text(encoding="utf-8")
-    expected_content = textwrap.dedent(
-        text="""\
-        Not in code block
+    source_file_content = source_file.read_text(encoding="utf-8")
 
-        .. code-block:: python
+    expected_content = {
+        # There is no code block in reStructuredText that ends with multiple
+        # newlines.
+        _MarkupLanguage.RESTRUCTUREDTEXT: textwrap.dedent(
+            text="""\
+            Not in code block
 
-           foobar
-        """,
-    )
+            .. code-block:: python
+
+               foobar
+            """
+        ),
+        _MarkupLanguage.MARKDOWN: textwrap.dedent(
+            text="""\
+            Not in code block
+
+            ```python
+            foobar
+
+            ```
+            """
+        ),
+        _MarkupLanguage.MYST: textwrap.dedent(
+            text="""\
+            Not in code block
+
+            ```{code} python
+            foobar
+
+            ```
+            """
+        ),
+    }[markup_language]
     if write_to_file:
-        assert rst_file_content == expected_content
+        assert source_file_content == expected_content
     else:
-        assert rst_file_content == original_content
+        assert source_file_content == original_content
 
 
 def test_write_to_file_multiple(*, tmp_path: Path) -> None:

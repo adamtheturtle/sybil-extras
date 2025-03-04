@@ -35,15 +35,6 @@ def _get_modified_region_text(
             on_write_to_empty_code_block(example, new_code_block_content)
         return original_region_text
 
-    # Keep the same number of newlines at the end of the code block.
-    # This, in practice, seems to match expectations.
-    num_newlines_at_end = len(example.parsed) - len(
-        example.parsed.rstrip("\n")
-    )
-    new_code_block_content = (
-        new_code_block_content.rstrip("\n") + "\n" * num_newlines_at_end
-    )
-
     indent_prefix = _get_indentation(example=example)
     indented_example_parsed = textwrap.indent(
         text=example.parsed,
@@ -53,10 +44,18 @@ def _get_modified_region_text(
         text=new_code_block_content,
         prefix=indent_prefix,
     )
-    return original_region_text.replace(
+    region_with_replaced_text = original_region_text.replace(
         indented_example_parsed,
         replacement_text,
     )
+
+    stripped_of_newlines_region = region_with_replaced_text.strip("\n")
+    # Keep the same number of newlines at the end of the region.
+    num_newlines_at_end = len(original_region_text) - len(
+        original_region_text.rstrip("\n")
+    )
+    newlines_at_end = "\n" * num_newlines_at_end
+    return stripped_of_newlines_region + newlines_at_end
 
 
 @beartype
