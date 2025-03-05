@@ -75,6 +75,10 @@ def _get_modified_region_text(
         text=new_code_block_content,
         prefix=indent_prefix,
     )
+
+    if not replacement_text.endswith("\n"):
+        replacement_text += "\n"
+
     region_with_replaced_text = original_region_text.replace(
         indented_example_parsed,
         replace_new_prefix + replacement_text,
