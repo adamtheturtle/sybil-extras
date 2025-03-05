@@ -1090,6 +1090,103 @@ def test_empty_code_block_write_content_to_file(
         assert new_content == content
 
 
+def test_empty_code_block_write_content_to_file_with_options(
+    *,
+    tmp_path: Path,
+    use_pty_option: bool,
+    markup_language: _MarkupLanguage,
+) -> None:
+    """
+    It is possible to write content to an empty code block even if that code
+    block has options.
+    """
+    if markup_language == _MarkupLanguage.MARKDOWN:
+        # Markdown does not support code block options.
+        return
+
+    rst_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+           :emphasize-lines: 2,3
+
+        After empty code block
+        """,
+    )
+
+    myst_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        ```{code} python
+        :emphasize-lines: 2,3
+        ```
+
+        After empty code block
+        """,
+    )
+
+    content = {
+        _MarkupLanguage.RESTRUCTUREDTEXT: rst_content,
+        _MarkupLanguage.MYST: myst_content,
+    }[markup_language]
+    source_file = tmp_path / "source_file.txt"
+    source_file.write_text(data=content, encoding="utf-8")
+    file_with_new_content = tmp_path / "new_file.txt"
+    new_content = "foobar"
+    file_with_new_content.write_text(data=new_content, encoding="utf-8")
+    evaluator = ShellCommandEvaluator(
+        args=["cp", file_with_new_content],
+        pad_file=False,
+        write_to_file=True,
+        use_pty=use_pty_option,
+    )
+
+    parser = markup_language.value.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=source_file)
+    (example,) = document.examples()
+
+    expected_modified_content = {
+        # There is no code block in reStructuredText that ends with multiple
+        # newlines.
+        _MarkupLanguage.RESTRUCTUREDTEXT: textwrap.dedent(
+            text="""\
+            Not in code block
+
+            .. code-block:: python
+               :emphasize-lines: 2,3
+
+               foobar
+
+            After empty code block
+            """
+        ),
+        _MarkupLanguage.MYST: textwrap.dedent(
+            text="""\
+            Not in code block
+
+            ```{code} python
+            :emphasize-lines: 2,3
+            foobar
+            ```
+
+            After empty code block
+            """
+        ),
+    }[markup_language]
+
+    example.evaluate()
+    new_content = source_file.read_text(encoding="utf-8")
+
+    assert new_content == expected_modified_content
+
+
 @pytest.mark.parametrize(
     argnames="new_content",
     argvalues=[
