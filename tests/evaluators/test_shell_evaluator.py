@@ -1185,6 +1185,14 @@ def test_custom_on_modify_no_modification(
     # called.
     example.evaluate()
 
+    # Call the function directly to ensure it raises an error, and for
+    # coverage.
+    with pytest.raises(
+        expected_exception=ValueError,
+        match="This should not be called.",
+    ):
+        on_modify(example=example, modified_example_content="")
+
 
 def test_custom_on_modify_with_modification(
     *,

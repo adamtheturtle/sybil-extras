@@ -307,8 +307,10 @@ log_cli = true
 branch = true
 
 [tool.coverage.report]
+
 exclude_also = [
     "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
 ]
 
 [tool.mypy]
