@@ -1101,9 +1101,9 @@ def test_empty_code_block_write_content_to_file_with_options(
     block has options.
     """
     if markup_language == _MarkupLanguage.MARKDOWN:
-        raise pytest.skip(
-            reason="Markdown does not support code block options."
-        )
+        # Markdown does not support code block options.
+        return
+
     rst_content = textwrap.dedent(
         text="""\
         Not in code block
