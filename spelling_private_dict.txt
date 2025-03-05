@@ -1,3 +1,4 @@
+Pyright
 args
 beartype
 env

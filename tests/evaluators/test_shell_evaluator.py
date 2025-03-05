@@ -19,6 +19,7 @@ import click
 import pytest
 from click.testing import CliRunner
 from sybil import Sybil
+from sybil.example import Example
 from sybil.parsers.markdown.codeblock import (
     CodeBlockParser as MarkdownCodeBlockParser,
 )
@@ -1148,3 +1149,81 @@ def test_encoding(
     best_guess = normalizer_guesses.best()
     assert best_guess is not None
     assert best_guess.encoding == encoding
+
+
+def test_custom_on_modify_no_modification(
+    *,
+    rst_file: Path,
+    use_pty_option: bool,
+) -> None:
+    """
+    The custom `on_modify` function is not called when there is a modification.
+    """
+
+    def on_modify(example: Example, modified_example_content: str) -> None:
+        """
+        Raise an error if this function is called.
+        """
+        del example
+        del modified_example_content
+        msg = "This should not be called."
+        raise ValueError(msg)
+
+    evaluator = ShellCommandEvaluator(
+        args=["true"],
+        pad_file=True,
+        write_to_file=True,
+        use_pty=use_pty_option,
+        on_modify=on_modify,
+    )
+
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    # This does not raise an error, so the custom `on_modify` function is not
+    # called.
+    example.evaluate()
+
+    # Call the function directly to ensure it raises an error, and for
+    # coverage.
+    with pytest.raises(
+        expected_exception=ValueError,
+        match="This should not be called.",
+    ):
+        on_modify(example=example, modified_example_content="")
+
+
+def test_custom_on_modify_with_modification(
+    *,
+    rst_file: Path,
+    use_pty_option: bool,
+    tmp_path: Path,
+) -> None:
+    """
+    The custom `on_modify` function is called when there is a modification.
+    """
+
+    def on_modify(example: Example, modified_example_content: str) -> None:
+        """
+        Check that the given content is as expected.
+        """
+        assert modified_example_content == "foobar"
+        assert example.path == str(object=rst_file)
+
+    file_with_new_content = tmp_path / "new_file.txt"
+    new_content = "foobar"
+    file_with_new_content.write_text(data=new_content, encoding="utf-8")
+    evaluator = ShellCommandEvaluator(
+        args=["cp", file_with_new_content],
+        pad_file=False,
+        write_to_file=True,
+        use_pty=use_pty_option,
+        on_modify=on_modify,
+    )
+
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    example.evaluate()
