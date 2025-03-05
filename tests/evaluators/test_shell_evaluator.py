@@ -1109,6 +1109,7 @@ def test_empty_code_block_write_content_to_file_with_options(
         Not in code block
 
         .. code-block:: python
+           :emphasize-lines: 2,3
 
         After empty code block
         """,
@@ -1119,6 +1120,7 @@ def test_empty_code_block_write_content_to_file_with_options(
         Not in code block
 
         ```{code} python
+        :emphasize-lines: 2,3
         ```
 
         After empty code block
