@@ -37,7 +37,7 @@ class _ExampleModified(Protocol):
         This function is called when an example is modified.
         """
         # We disable a pylint warning here because the ellipsis is required
-        # for pyright to recognize this as a protocol.
+        # for Pyright to recognize this as a protocol.
         ...  # pylint: disable=unnecessary-ellipsis
 
 
