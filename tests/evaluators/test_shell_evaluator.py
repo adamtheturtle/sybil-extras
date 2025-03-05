@@ -1066,7 +1066,6 @@ def test_empty_code_block_write_content_to_file_with_options(
             ```{code} python
             :emphasize-lines: 2,3
             foobar
-
             ```
 
             After empty code block
