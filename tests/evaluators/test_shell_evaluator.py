@@ -662,8 +662,8 @@ def test_write_to_file_indented_existing_block(
 
                 .. code-block:: python
 
-                x = 2 + 2
-                assert x == 4
+                   x = 2 + 2
+                   assert x == 4
             """
         ),
         _MarkupLanguage.MARKDOWN: textwrap.dedent(
