@@ -757,7 +757,7 @@ def test_write_to_file_indented_empty_existing_block(
             text="""\
             Not in code block
 
-                .. code-block:: python
+                    .. code-block:: python
 
             After code block
             """
@@ -766,8 +766,8 @@ def test_write_to_file_indented_empty_existing_block(
             text="""\
             Not in code block
 
-                ```python
-                ```
+                    ```python
+                    ```
 
             After code block
             """
@@ -776,8 +776,8 @@ def test_write_to_file_indented_empty_existing_block(
             text="""\
             Not in code block
 
-                ```{code} python
-                ```
+                    ```{code} python
+                    ```
 
             After code block
             """
@@ -812,9 +812,9 @@ def test_write_to_file_indented_empty_existing_block(
             text="""\
             Not in code block
 
-                .. code-block:: python
+                    .. code-block:: python
 
-                   foobar
+                       foobar
 
             After code block
             """
@@ -823,9 +823,9 @@ def test_write_to_file_indented_empty_existing_block(
             text="""\
             Not in code block
 
-                ```python
-                foobar
-                ```
+                    ```python
+                    foobar
+                    ```
 
             After code block
             """
@@ -834,9 +834,9 @@ def test_write_to_file_indented_empty_existing_block(
             text="""\
             Not in code block
 
-                ```{code} python
-                foobar
-                ```
+                    ```{code} python
+                    foobar
+                    ```
 
             After code block
             """
