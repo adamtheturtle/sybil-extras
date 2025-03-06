@@ -50,30 +50,37 @@ def _get_modified_region_text(
     """
     Get the region text to use after the example content is replaced.
     """
+    first_line = original_region_text.split(sep="\n")[0]
+    code_block_indent_prefix = first_line[
+        : len(first_line) - len(first_line.lstrip())
+    ]
+
     if example.parsed:
-        indent_prefix = _get_indentation(example=example)
+        within_code_block_indent_prefix = (
+            _get_within_code_block_indentation_prefix(example=example)
+        )
         replace_old_not_indented = example.parsed
         replace_new_prefix = ""
     # This is a break of the abstraction, - we really should not have
     # to know about markup language specifics here.
     elif original_region_text.endswith("```"):
         # Markdown or MyST
-        indent_prefix = ""
+        within_code_block_indent_prefix = code_block_indent_prefix
         replace_old_not_indented = "\n"
         replace_new_prefix = "\n"
     else:
         # reStructuredText
-        indent_prefix = "   "
+        within_code_block_indent_prefix = code_block_indent_prefix + "   "
         replace_old_not_indented = "\n"
         replace_new_prefix = "\n\n"
 
     indented_example_parsed = textwrap.indent(
         text=replace_old_not_indented,
-        prefix=indent_prefix,
+        prefix=within_code_block_indent_prefix,
     )
     replacement_text = textwrap.indent(
         text=new_code_block_content,
-        prefix=indent_prefix,
+        prefix=within_code_block_indent_prefix,
     )
 
     if not replacement_text.endswith("\n"):
@@ -230,7 +237,7 @@ def _lstrip_newlines(input_string: str, number_of_newlines: int) -> str:
 
 
 @beartype
-def _get_indentation(example: Example) -> str:
+def _get_within_code_block_indentation_prefix(example: Example) -> str:
     """
     Get the indentation of the parsed code in the example.
     """
