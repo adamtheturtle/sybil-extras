@@ -7,6 +7,8 @@ from pathlib import Path
 from sybil import Sybil
 from sybil.example import Example
 
+from sybil_extras.parsers.rest.sphinx_jinja2 import SphinxJinja2Parser
+
 
 def test_sphinx_jinja2(*, tmp_path: Path) -> None:
     """
@@ -32,7 +34,6 @@ def test_sphinx_jinja2(*, tmp_path: Path) -> None:
 
     parser = SphinxJinja2Parser(evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
-    document
 
 
 def test_write_with_shell_evaluator(*, tmp_path: Path) -> None:
