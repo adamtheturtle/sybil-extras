@@ -1,3 +1,7 @@
+"""
+A parser for Sphinx jinja2 blocks in reST.
+"""
+
 import re
 
 from sybil.parsers.abstract.codeblock import AbstractCodeBlockParser
@@ -28,6 +32,6 @@ class SphinxJinja2Parser(AbstractCodeBlockParser):
         lexers = [
             DirectiveInCommentLexer(directive=re.escape(pattern=directive)),
         ]
-        self.lexers = LexerCollection(lexers)
+        self.lexers: LexerCollection = LexerCollection(lexers)
         self.language = ""
         self._evaluator = evaluator
