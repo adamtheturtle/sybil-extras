@@ -30,10 +30,14 @@ def test_sphinx_jinja2(*, tmp_path: Path) -> None:
     test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(example: Example) -> None:
-        pass
+        breakpoint()
 
     parser = SphinxJinja2Parser(evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_document)
+
+    for example in document.examples():
+        example.evaluate()
 
 
 def test_write_with_shell_evaluator(*, tmp_path: Path) -> None:
