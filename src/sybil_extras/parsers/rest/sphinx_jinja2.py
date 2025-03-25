@@ -24,21 +24,16 @@ class SphinxJinja2Parser:
         """
         Args:
             evaluator: The evaluator to use for evaluating the combined region.
-            pad_groups: Whether to pad groups with empty lines.
-                This is useful for error messages that reference line numbers.
-                However, this is detrimental to commands that expect the file
-                to not have a bunch of newlines in it, such as formatters.
         """
         directive = "jinja"
         lexers = [
             DirectiveInCommentLexer(directive=re.escape(pattern=directive)),
         ]
-        self.lexers: LexerCollection = LexerCollection(lexers)
-        self.language = ""
+        self._lexers: LexerCollection = LexerCollection(lexers)
         self._evaluator = evaluator
 
     def __call__(self, document: Document) -> Iterable[Region]:
-        for region in self.lexers(document):
+        for region in self._lexers(document):
             region.parsed = region.lexemes["source"]
             region.evaluator = self._evaluator
             yield region
