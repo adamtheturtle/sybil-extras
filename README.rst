@@ -132,9 +132,9 @@ GroupedSourceParser
     from sybil.parsers.rest.codeblock import PythonCodeBlockParser
 
     # Similar parsers are available at
-    # sybil_extras.parsers.markdown.grouped_code_block and
-    # sybil_extras.parsers.myst.grouped_code_block.
-    from sybil_extras.parsers.rest.grouped_code_block import GroupedSourceParser
+    # sybil_extras.parsers.markdown.grouped_source and
+    # sybil_extras.parsers.myst.grouped_source.
+    from sybil_extras.parsers.rest.grouped_source import GroupedSourceParser
 
 
     def evaluator(example: Example) -> None:

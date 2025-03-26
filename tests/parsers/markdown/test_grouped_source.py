@@ -1,5 +1,5 @@
 """
-Tests for the group parser for MyST.
+Tests for the group parser for Markdown.
 """
 
 import textwrap
@@ -8,11 +8,15 @@ from pathlib import Path
 import pytest
 from sybil import Sybil
 from sybil.example import Example
-from sybil.parsers.myst.codeblock import CodeBlockParser
-from sybil.parsers.myst.skip import SkipParser
+from sybil.parsers.markdown.codeblock import (
+    CodeBlockParser,
+)
+from sybil.parsers.markdown.skip import SkipParser
 
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
-from sybil_extras.parsers.myst.grouped_code_block import GroupedSourceParser
+from sybil_extras.parsers.markdown.grouped_source import (
+    GroupedSourceParser,
+)
 
 
 def test_group(tmp_path: Path) -> None:
@@ -41,6 +45,17 @@ def test_group(tmp_path: Path) -> None:
      x = [*x, 3]
     ```
 
+    <!--- group: start -->
+
+    ```python
+    x = [*x, 4]
+    ```
+
+    ```python
+     x = [*x, 5]
+    ```
+
+    <!--- group: end -->
     """
 
     test_document = tmp_path / "test.md"
@@ -73,6 +88,7 @@ def test_group(tmp_path: Path) -> None:
         "x = []\n",
         "x = [*x, 1]\n\n\n\nx = [*x, 2]\n",
         "x = [*x, 3]\n",
+        "x = [*x, 4]\n\n\n\nx = [*x, 5]\n",
     ]
 
 

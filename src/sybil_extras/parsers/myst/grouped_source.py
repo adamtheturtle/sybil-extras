@@ -1,20 +1,23 @@
 """
-A group parser for Markdown.
+A group parser for MyST.
 """
 
 import re
 
 from sybil.parsers.markdown.lexers import DirectiveInHTMLCommentLexer
+from sybil.parsers.myst.lexers import (
+    DirectiveInPercentCommentLexer,
+)
 from sybil.typing import Evaluator
 
-from sybil_extras.parsers.abstract.grouped_code_block import (
+from sybil_extras.parsers.abstract.grouped_source import (
     AbstractGroupedSourceParser,
 )
 
 
 class GroupedSourceParser(AbstractGroupedSourceParser):
     """
-    A code block group parser for Markdown.
+    A code block group parser for MyST.
     """
 
     def __init__(
@@ -34,6 +37,9 @@ class GroupedSourceParser(AbstractGroupedSourceParser):
                 to not have a bunch of newlines in it, such as formatters.
         """
         lexers = [
+            DirectiveInPercentCommentLexer(
+                directive=re.escape(pattern=directive),
+            ),
             DirectiveInHTMLCommentLexer(
                 directive=re.escape(pattern=directive),
             ),
