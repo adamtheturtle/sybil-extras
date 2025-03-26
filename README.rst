@@ -221,13 +221,21 @@ This extracts the source, arguments and options from ``.. jinja::`` directive bl
     from pathlib import Path
 
     from sybil import Sybil
+    from sybil.example import Example
 
     # A similar parser is available at sybil_extras.parsers.myst.sphinx_jinja2.
     # There is no Markdown parser as Sphinx is not used with Markdown without MyST.
     from sybil_extras.parsers.rest.sphinx_jinja2 import SphinxJinja2Parser
 
+
+    def _evaluator(example: Example) -> None:
+        """Check that the example is long enough."""
+        minimum_length = 50
+        assert len(example.parsed) >= minimum_length
+
+
     parser = SphinxJinja2Parser()
-    sybil = Sybil(parsers=[parser])
+    sybil = Sybil(parsers=[parser], evaluator=_evaluator)
     document = sybil.parse(path=Path("CHANGELOG.rst"))
     for item in document.examples():
         item.evaluate()
