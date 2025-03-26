@@ -207,6 +207,39 @@ A reStructuredText example:
 
    .. group: end
 
+SphinxJinja2Parser
+^^^^^^^^^^^^^^^^^^
+
+Use the ``SphinxJinja2Parser`` to parse `sphinx-jinja2 <https://sphinx-jinja2.readthedocs.io/en/latest/>`_ templates in Sphinx documentation.
+
+This extracts the source, arguments and options from ``.. jinja::`` directive blocks in reStructuredText documents or ``\`\`\`{jinja}`` blocks in MyST documents.
+
+.. code-block:: python
+
+    """Use SphinxJinja2Parser to extract Jinja templates."""
+
+    from pathlib import Path
+
+    from sybil import Sybil
+    from sybil.example import Example
+
+    # A similar parser is available at sybil_extras.parsers.myst.sphinx_jinja2.
+    # There is no Markdown parser as Sphinx is not used with Markdown without MyST.
+    from sybil_extras.parsers.rest.sphinx_jinja2 import SphinxJinja2Parser
+
+
+    def _evaluator(example: Example) -> None:
+        """Check that the example is long enough."""
+        minimum_length = 50
+        assert len(example.parsed) >= minimum_length
+
+
+    parser = SphinxJinja2Parser(evaluator=_evaluator)
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=Path("CHANGELOG.rst"))
+    for item in document.examples():
+        item.evaluate()
+
 .. |Build Status| image:: https://github.com/adamtheturtle/sybil-extras/actions/workflows/ci.yml/badge.svg?branch=main
    :target: https://github.com/adamtheturtle/sybil-extras/actions
 .. |codecov| image:: https://codecov.io/gh/adamtheturtle/sybil-extras/branch/main/graph/badge.svg
