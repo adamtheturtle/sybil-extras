@@ -42,7 +42,7 @@ def test_sphinx_jinja2(*, tmp_path: Path) -> None:
     assert first_example.parsed == "Hallo {{ name }}!\n"
     assert first_example.region.lexemes == {
         "directive": "jinja",
-        "arguments": ":",
+        "arguments": None,
         "source": "Hallo {{ name }}!\n",
         "options": {"ctx": '{"name": "World"}'},
     }
@@ -51,7 +51,7 @@ def test_sphinx_jinja2(*, tmp_path: Path) -> None:
     assert second_example.parsed == ""
     assert second_example.region.lexemes == {
         "directive": "jinja",
-        "arguments": ":",
+        "arguments": None,
         "source": "",
         "options": {
             "file": "templates/example1.jinja",

@@ -7,7 +7,7 @@ from collections.abc import Iterable
 
 from sybil import Document, Region
 from sybil.parsers.abstract.lexers import LexerCollection
-from sybil.parsers.rest.lexers import DirectiveInCommentLexer
+from sybil.parsers.myst.lexers import DirectiveLexer
 from sybil.typing import Evaluator
 
 
@@ -27,7 +27,7 @@ class SphinxJinja2Parser:
         """
         directive = "jinja"
         lexers = [
-            DirectiveInCommentLexer(directive=re.escape(pattern=directive)),
+            DirectiveLexer(directive=re.escape(pattern=directive)),
         ]
         self._lexers: LexerCollection = LexerCollection(lexers)
         self._evaluator = evaluator
