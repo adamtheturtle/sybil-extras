@@ -12,7 +12,7 @@ from sybil.parsers.myst.codeblock import CodeBlockParser
 from sybil.parsers.myst.skip import SkipParser
 
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
-from sybil_extras.parsers.myst.grouped_code_block import GroupedCodeBlockParser
+from sybil_extras.parsers.myst.grouped_code_block import GroupedSourceParser
 
 
 def test_group(tmp_path: Path) -> None:
@@ -56,7 +56,7 @@ def test_group(tmp_path: Path) -> None:
             example.parsed,
         ]
 
-    group_parser = GroupedCodeBlockParser(
+    group_parser = GroupedSourceParser(
         directive="group",
         evaluator=evaluator,
         pad_groups=True,
@@ -112,7 +112,7 @@ def test_nothing_after_group(tmp_path: Path) -> None:
             example.parsed,
         ]
 
-    group_parser = GroupedCodeBlockParser(
+    group_parser = GroupedSourceParser(
         directive="group",
         evaluator=evaluator,
         pad_groups=True,
@@ -163,7 +163,7 @@ def test_empty_group(tmp_path: Path) -> None:
             example.parsed,
         ]
 
-    group_parser = GroupedCodeBlockParser(
+    group_parser = GroupedSourceParser(
         directive="group",
         evaluator=evaluator,
         pad_groups=True,
@@ -224,7 +224,7 @@ def test_group_with_skip(tmp_path: Path) -> None:
             example.parsed,
         ]
 
-    group_parser = GroupedCodeBlockParser(
+    group_parser = GroupedSourceParser(
         directive="group",
         evaluator=evaluator,
         pad_groups=True,
@@ -263,7 +263,7 @@ def test_no_argument(tmp_path: Path) -> None:
         No-op evaluator.
         """
 
-    group_parser = GroupedCodeBlockParser(
+    group_parser = GroupedSourceParser(
         directive="group",
         evaluator=evaluator,
         pad_groups=True,
@@ -291,7 +291,7 @@ def test_end_only(tmp_path: Path) -> None:
         No-op evaluator.
         """
 
-    group_parser = GroupedCodeBlockParser(
+    group_parser = GroupedSourceParser(
         directive="group",
         evaluator=evaluator,
         pad_groups=True,
@@ -325,7 +325,7 @@ def test_start_after_start(tmp_path: Path) -> None:
         No-op evaluator.
         """
 
-    group_parser = GroupedCodeBlockParser(
+    group_parser = GroupedSourceParser(
         directive="group",
         evaluator=evaluator,
         pad_groups=True,
@@ -395,7 +395,7 @@ def test_directive_name_not_regex_escaped(tmp_path: Path) -> None:
             example.parsed,
         ]
 
-    group_parser = GroupedCodeBlockParser(
+    group_parser = GroupedSourceParser(
         directive="custom-group[has_square_brackets]",
         evaluator=evaluator,
         pad_groups=True,
@@ -445,7 +445,7 @@ def test_with_shell_command_evaluator(tmp_path: Path) -> None:
         write_to_file=False,
         use_pty=False,
     )
-    group_parser = GroupedCodeBlockParser(
+    group_parser = GroupedSourceParser(
         directive="group",
         evaluator=shell_evaluator,
         pad_groups=True,
@@ -504,7 +504,7 @@ def test_no_pad_groups(tmp_path: Path) -> None:
         write_to_file=False,
         use_pty=False,
     )
-    group_parser = GroupedCodeBlockParser(
+    group_parser = GroupedSourceParser(
         directive="group",
         evaluator=shell_evaluator,
         pad_groups=False,

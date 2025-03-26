@@ -117,12 +117,12 @@ the Sybil documentation for skipping examples in
 and `MyST <https://sybil.readthedocs.io/en/latest/myst.html#skipping-examples>`_ files,
 but with custom text, e.g. ``custom-marker-skip`` replacing the word ``skip``.
 
-GroupedCodeBlockParser
-^^^^^^^^^^^^^^^^^^^^^^
+GroupedSourceParser
+^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
-    """Use GroupedCodeBlockParser to group code blocks by a custom directive."""
+    """Use GroupedSourceParser to group code blocks by a custom directive."""
 
     import sys
     from pathlib import Path
@@ -134,7 +134,7 @@ GroupedCodeBlockParser
     # Similar parsers are available at
     # sybil_extras.parsers.markdown.grouped_code_block and
     # sybil_extras.parsers.myst.grouped_code_block.
-    from sybil_extras.parsers.rest.grouped_code_block import GroupedCodeBlockParser
+    from sybil_extras.parsers.rest.grouped_code_block import GroupedSourceParser
 
 
     def evaluator(example: Example) -> None:
@@ -142,7 +142,7 @@ GroupedCodeBlockParser
         sys.stdout.write(example.parsed)
 
 
-    group_parser = GroupedCodeBlockParser(
+    group_parser = GroupedSourceParser(
         directive="group",
         evaluator=evaluator,
         # Pad the groups with newlines so that the
@@ -165,7 +165,7 @@ GroupedCodeBlockParser
         item.evaluate()
 
 This makes Sybil act as though all of the code blocks within a group are a single code block,
-to be evaluated with the ``evaluator`` given to ``GroupedCodeBlockParser``.
+to be evaluated with the ``evaluator`` given to ``GroupedSourceParser``.
 
 Only code blocks parsed by another parser in the same Sybil instance will be grouped.
 

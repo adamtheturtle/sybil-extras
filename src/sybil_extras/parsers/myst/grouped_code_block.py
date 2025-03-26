@@ -11,11 +11,11 @@ from sybil.parsers.myst.lexers import (
 from sybil.typing import Evaluator
 
 from sybil_extras.parsers.abstract.grouped_code_block import (
-    AbstractGroupedCodeBlockParser,
+    AbstractGroupedSourceParser,
 )
 
 
-class GroupedCodeBlockParser(AbstractGroupedCodeBlockParser):
+class GroupedSourceParser(AbstractGroupedSourceParser):
     """
     A code block group parser for MyST.
     """
