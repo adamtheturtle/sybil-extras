@@ -234,8 +234,8 @@ This extracts the source, arguments and options from ``.. jinja::`` directive bl
         assert len(example.parsed) >= minimum_length
 
 
-    parser = SphinxJinja2Parser()
-    sybil = Sybil(parsers=[parser], evaluator=_evaluator)
+    parser = SphinxJinja2Parser(evaluator=_evaluator)
+    sybil = Sybil(parsers=[parser])
     document = sybil.parse(path=Path("CHANGELOG.rst"))
     for item in document.examples():
         item.evaluate()
