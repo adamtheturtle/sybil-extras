@@ -1,5 +1,5 @@
 """
-A parser for Sphinx jinja2 blocks in reST.
+A parser for sphinx-jinja2 blocks in MyST.
 """
 
 import re
@@ -13,7 +13,7 @@ from sybil.typing import Evaluator
 
 class SphinxJinja2Parser:
     """
-    A parser for Sphinx jinja2 blocks in reST.
+    A parser for sphinx-jinja2 blocks in MyST.
     """
 
     def __init__(
