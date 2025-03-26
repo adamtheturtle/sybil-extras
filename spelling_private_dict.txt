@@ -9,9 +9,11 @@ iff
 linter
 namespace
 ons
+parametrize
 parsers
 pragma
 pytest
 rst
 stderr
 stdout
+whitespace

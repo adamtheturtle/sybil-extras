@@ -12,7 +12,7 @@ from sybil_extras.parsers.myst.sphinx_jinja2 import SphinxJinja2Parser
 
 def test_sphinx_jinja2(*, tmp_path: Path) -> None:
     """
-    The sphinx-jinja2 parser extracts information from jinja blocks.
+    The ``SphinxJinja2Parser`` extracts information from sphinx-jinja2 blocks.
     """
     # These examples are taken from the sphinx-jinja2 documentation.
     content = """\
