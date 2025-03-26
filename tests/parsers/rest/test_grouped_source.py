@@ -1,5 +1,5 @@
 """
-Tests for the group parser for Markdown.
+Tests for the group parser for reST.
 """
 
 import textwrap
@@ -8,15 +8,11 @@ from pathlib import Path
 import pytest
 from sybil import Sybil
 from sybil.example import Example
-from sybil.parsers.markdown.codeblock import (
-    CodeBlockParser,
-)
-from sybil.parsers.markdown.skip import SkipParser
+from sybil.parsers.rest.codeblock import CodeBlockParser
+from sybil.parsers.rest.skip import SkipParser
 
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
-from sybil_extras.parsers.markdown.grouped_code_block import (
-    GroupedCodeBlockParser,
-)
+from sybil_extras.parsers.rest.grouped_source import GroupedSourceParser
 
 
 def test_group(tmp_path: Path) -> None:
@@ -24,41 +20,40 @@ def test_group(tmp_path: Path) -> None:
     The group parser groups examples.
     """
     content = """\
+    .. code-block:: python
 
-    ```python
-    x = []
-    ```
+        x = []
 
-    <!--- group: start -->
+    .. group: start
 
-    ```python
-    x = [*x, 1]
-    ```
+    .. code-block:: python
 
-    ```python
-     x = [*x, 2]
-    ```
+        x = [*x, 1]
 
-    <!--- group: end -->
+    .. code-block:: python
 
-    ```python
-     x = [*x, 3]
-    ```
+        x = [*x, 2]
 
-    <!--- group: start -->
+    .. group: end
 
-    ```python
-    x = [*x, 4]
-    ```
+    .. code-block:: python
 
-    ```python
-     x = [*x, 5]
-    ```
+        x = [*x, 3]
 
-    <!--- group: end -->
+    .. group: start
+
+    .. code-block:: python
+
+        x = [*x, 4]
+
+    .. code-block:: python
+
+        x = [*x, 5]
+
+    .. group: end
     """
 
-    test_document = tmp_path / "test.md"
+    test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(example: Example) -> None:
@@ -71,7 +66,7 @@ def test_group(tmp_path: Path) -> None:
             example.parsed,
         ]
 
-    group_parser = GroupedCodeBlockParser(
+    group_parser = GroupedSourceParser(
         directive="group",
         evaluator=evaluator,
         pad_groups=True,
@@ -98,24 +93,24 @@ def test_nothing_after_group(tmp_path: Path) -> None:
     """
     content = """\
 
-    ```python
-     x = []
-    ```
+    .. code-block:: python
 
-    <!--- group: start -->
+        x = []
 
-    ```python
-     x = [*x, 1]
-    ```
+    .. group: start
 
-    ```python
-     x = [*x, 2]
-    ```
+    .. code-block:: python
 
-    <!--- group: end -->
+        x = [*x, 1]
+
+    .. code-block:: python
+
+        x = [*x, 2]
+
+    .. group: end
     """
 
-    test_document = tmp_path / "test.md"
+    test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(example: Example) -> None:
@@ -128,7 +123,7 @@ def test_nothing_after_group(tmp_path: Path) -> None:
             example.parsed,
         ]
 
-    group_parser = GroupedCodeBlockParser(
+    group_parser = GroupedSourceParser(
         directive="group",
         evaluator=evaluator,
         pad_groups=True,
@@ -153,20 +148,20 @@ def test_empty_group(tmp_path: Path) -> None:
     """
     content = """\
 
-    ```python
-     x = []
-    ```
+    .. code-block:: python
 
-    <!--- group: start -->
+        x = []
 
-    <!--- group: end -->
+    .. group: start
 
-    ```python
-     x = [*x, 3]
-    ```
+    .. group: end
+
+    .. code-block:: python
+
+        x = [*x, 3]
     """
 
-    test_document = tmp_path / "test.md"
+    test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(example: Example) -> None:
@@ -179,7 +174,7 @@ def test_empty_group(tmp_path: Path) -> None:
             example.parsed,
         ]
 
-    group_parser = GroupedCodeBlockParser(
+    group_parser = GroupedSourceParser(
         directive="group",
         evaluator=evaluator,
         pad_groups=True,
@@ -194,7 +189,7 @@ def test_empty_group(tmp_path: Path) -> None:
 
     assert document.namespace["blocks"] == [
         "x = []\n",
-        "x = [*x, 3]\n",
+        "x = [*x, 3]",
     ]
 
 
@@ -204,30 +199,30 @@ def test_group_with_skip(tmp_path: Path) -> None:
     """
     content = """\
 
-    ```python
-     x = []
-    ```
+    .. code-block:: python
 
-    <!--- group: start -->
+        x = []
 
-    ```python
-     x = [*x, 1]
-    ```
+    .. group: start
 
-    <!--- skip: next -->
+    .. code-block:: python
 
-    ```python
-     x = [*x, 2]
-    ```
+        x = [*x, 1]
 
-    <!--- group: end -->
+    .. skip: next
 
-    ```python
-     x = [*x, 3]
-    ```
+    .. code-block:: python
+
+        x = [*x, 2]
+
+    .. group: end
+
+    .. code-block:: python
+
+        x = [*x, 3]
     """
 
-    test_document = tmp_path / "test.md"
+    test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(example: Example) -> None:
@@ -240,7 +235,7 @@ def test_group_with_skip(tmp_path: Path) -> None:
             example.parsed,
         ]
 
-    group_parser = GroupedCodeBlockParser(
+    group_parser = GroupedSourceParser(
         directive="group",
         evaluator=evaluator,
         pad_groups=True,
@@ -257,7 +252,7 @@ def test_group_with_skip(tmp_path: Path) -> None:
     assert document.namespace["blocks"] == [
         "x = []\n",
         "x = [*x, 1]\n",
-        "x = [*x, 3]\n",
+        "x = [*x, 3]",
     ]
 
 
@@ -266,12 +261,12 @@ def test_no_argument(tmp_path: Path) -> None:
     An error is raised when a group directive has no arguments.
     """
     content = """\
-    <!--- group -->
+    .. group:
 
-    <!--- group: end -->
+    .. group: end
     """
 
-    test_document = tmp_path / "test.md"
+    test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(_: Example) -> None:
@@ -279,7 +274,7 @@ def test_no_argument(tmp_path: Path) -> None:
         No-op evaluator.
         """
 
-    group_parser = GroupedCodeBlockParser(
+    group_parser = GroupedSourceParser(
         directive="group",
         evaluator=evaluator,
         pad_groups=True,
@@ -291,15 +286,17 @@ def test_no_argument(tmp_path: Path) -> None:
         sybil.parse(path=test_document)
 
 
-def test_end_only(tmp_path: Path) -> None:
+def test_malformed_argument(tmp_path: Path) -> None:
     """
-    An error is raised when a group end directive is given with no start.
+    An error is raised when a group directive has no arguments.
     """
     content = """\
-    <!--- group: end -->
+    .. group: not_start_or_end
+
+    .. group: end
     """
 
-    test_document = tmp_path / "test.md"
+    test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(_: Example) -> None:
@@ -307,7 +304,35 @@ def test_end_only(tmp_path: Path) -> None:
         No-op evaluator.
         """
 
-    group_parser = GroupedCodeBlockParser(
+    group_parser = GroupedSourceParser(
+        directive="group",
+        evaluator=evaluator,
+        pad_groups=True,
+    )
+
+    sybil = Sybil(parsers=[group_parser])
+    expected_error = r"malformed arguments to group: 'not_start_or_end'"
+    with pytest.raises(expected_exception=ValueError, match=expected_error):
+        sybil.parse(path=test_document)
+
+
+def test_end_only(tmp_path: Path) -> None:
+    """
+    An error is raised when a group end directive is given with no start.
+    """
+    content = """\
+    .. group: end
+    """
+
+    test_document = tmp_path / "test.rst"
+    test_document.write_text(data=content, encoding="utf-8")
+
+    def evaluator(_: Example) -> None:
+        """
+        No-op evaluator.
+        """
+
+    group_parser = GroupedSourceParser(
         directive="group",
         evaluator=evaluator,
         pad_groups=True,
@@ -328,12 +353,12 @@ def test_start_after_start(tmp_path: Path) -> None:
     start.
     """
     content = """\
-    <!--- group: start -->
+    .. group: start
 
-    <!--- group: start -->
+    .. group: start
     """
 
-    test_document = tmp_path / "test.md"
+    test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(_: Example) -> None:
@@ -341,7 +366,7 @@ def test_start_after_start(tmp_path: Path) -> None:
         No-op evaluator.
         """
 
-    group_parser = GroupedCodeBlockParser(
+    group_parser = GroupedSourceParser(
         directive="group",
         evaluator=evaluator,
         pad_groups=True,
@@ -364,41 +389,40 @@ def test_directive_name_not_regex_escaped(tmp_path: Path) -> None:
     If the directive name is not regex-escaped, it is still matched.
     """
     content = """\
+    .. code-block:: python
 
-    ```python
-    x = []
-    ```
+        x = []
 
-    <!--- custom-group[has_square_brackets]: start -->
+    .. custom-group[has_square_brackets]: start
 
-    ```python
-    x = [*x, 1]
-    ```
+    .. code-block:: python
 
-    ```python
-     x = [*x, 2]
-    ```
+        x = [*x, 1]
 
-    <!--- custom-group[has_square_brackets]: end -->
+    .. code-block:: python
 
-    ```python
-     x = [*x, 3]
-    ```
+        x = [*x, 2]
 
-    <!--- custom-group[has_square_brackets]: start -->
+    .. custom-group[has_square_brackets]: end
 
-    ```python
-    x = [*x, 4]
-    ```
+    .. code-block:: python
 
-    ```python
-     x = [*x, 5]
-    ```
+        x = [*x, 3]
 
-    <!--- custom-group[has_square_brackets]: end -->
+    .. custom-group[has_square_brackets]: start
+
+    .. code-block:: python
+
+        x = [*x, 4]
+
+    .. code-block:: python
+
+        x = [*x, 5]
+
+    .. custom-group[has_square_brackets]: end
     """
 
-    test_document = tmp_path / "test.md"
+    test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(example: Example) -> None:
@@ -411,7 +435,7 @@ def test_directive_name_not_regex_escaped(tmp_path: Path) -> None:
             example.parsed,
         ]
 
-    group_parser = GroupedCodeBlockParser(
+    group_parser = GroupedSourceParser(
         directive="custom-group[has_square_brackets]",
         evaluator=evaluator,
         pad_groups=True,
@@ -437,20 +461,20 @@ def test_with_shell_command_evaluator(tmp_path: Path) -> None:
     The group parser groups examples.
     """
     content = """\
-    <!--- group: start -->
+    .. group: start
 
-    ```python
+    .. code-block:: python
+
         x = [*x, 1]
-    ```
 
-    ```python
+    .. code-block:: python
+
         x = [*x, 2]
-    ```
 
-    <!--- group: end -->
+    .. group: end
     """
 
-    test_document = tmp_path / "test.md"
+    test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
     output_document = tmp_path / "output.txt"
@@ -461,7 +485,7 @@ def test_with_shell_command_evaluator(tmp_path: Path) -> None:
         write_to_file=False,
         use_pty=False,
     )
-    group_parser = GroupedCodeBlockParser(
+    group_parser = GroupedSourceParser(
         directive="group",
         evaluator=shell_evaluator,
         pad_groups=True,
@@ -475,8 +499,12 @@ def test_with_shell_command_evaluator(tmp_path: Path) -> None:
         example.evaluate()
 
     output_document_content = output_document.read_text(encoding="utf-8")
+    # There is a lot of whitespace in the output document content because
+    # when we use the grouper we replace the group end directive with a
+    # combined block.
     expected_output_document_content = textwrap.dedent(
         text="""\
+
 
 
 
@@ -496,20 +524,20 @@ def test_no_pad_groups(tmp_path: Path) -> None:
     One new line is added between the code blocks.
     """
     content = """\
-    <!--- group: start -->
+    .. group: start
 
-    ```python
-    x = [*x, 1]
-    ```
+    .. code-block:: python
 
-    ```python
-    x = [*x, 2]
-    ```
+        x = [*x, 1]
 
-    <!--- group: end -->
+    .. code-block:: python
+
+        x = [*x, 2]
+
+    .. group: end
     """
 
-    test_document = tmp_path / "test.md"
+    test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
     output_document = tmp_path / "output.txt"
@@ -520,7 +548,7 @@ def test_no_pad_groups(tmp_path: Path) -> None:
         write_to_file=False,
         use_pty=False,
     )
-    group_parser = GroupedCodeBlockParser(
+    group_parser = GroupedSourceParser(
         directive="group",
         evaluator=shell_evaluator,
         pad_groups=False,
@@ -539,6 +567,7 @@ def test_no_pad_groups(tmp_path: Path) -> None:
     # combined block.
     expected_output_document_content = textwrap.dedent(
         text="""\
+
 
 
 

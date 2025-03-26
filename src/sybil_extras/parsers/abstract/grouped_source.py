@@ -55,7 +55,7 @@ class _GroupState:
 
 class _Grouper:
     """
-    Group code blocks.
+    Group blocks of source code.
     """
 
     def __init__(
@@ -133,9 +133,9 @@ class _Grouper:
         """
         state = self._document_state[example.document]
 
-        is_code_block = "source" in example.region.lexemes
+        has_source = "source" in example.region.lexemes
 
-        if is_code_block:
+        if has_source:
             state.examples = [*state.examples, example]
             return
 
@@ -158,9 +158,9 @@ class _Grouper:
     _caller = __call__
 
 
-class AbstractGroupedCodeBlockParser:
+class AbstractGroupedSourceParser:
     """
-    An abstract parser for grouping code blocks.
+    An abstract parser for grouping blocks of source code.
     """
 
     def __init__(

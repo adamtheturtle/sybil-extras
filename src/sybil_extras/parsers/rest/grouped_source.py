@@ -1,20 +1,20 @@
 """
-A group parser for Markdown.
+A group parser for reST.
 """
 
 import re
 
-from sybil.parsers.markdown.lexers import DirectiveInHTMLCommentLexer
+from sybil.parsers.rest.lexers import DirectiveInCommentLexer
 from sybil.typing import Evaluator
 
-from sybil_extras.parsers.abstract.grouped_code_block import (
-    AbstractGroupedCodeBlockParser,
+from sybil_extras.parsers.abstract.grouped_source import (
+    AbstractGroupedSourceParser,
 )
 
 
-class GroupedCodeBlockParser(AbstractGroupedCodeBlockParser):
+class GroupedSourceParser(AbstractGroupedSourceParser):
     """
-    A code block group parser for Markdown.
+    A code block group parser for reST.
     """
 
     def __init__(
@@ -34,9 +34,7 @@ class GroupedCodeBlockParser(AbstractGroupedCodeBlockParser):
                 to not have a bunch of newlines in it, such as formatters.
         """
         lexers = [
-            DirectiveInHTMLCommentLexer(
-                directive=re.escape(pattern=directive),
-            ),
+            DirectiveInCommentLexer(directive=re.escape(pattern=directive)),
         ]
         super().__init__(
             lexers=lexers,
