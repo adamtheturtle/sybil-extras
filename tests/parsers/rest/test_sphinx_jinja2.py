@@ -29,18 +29,32 @@ def test_sphinx_jinja2(*, tmp_path: Path) -> None:
     test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
-    def evaluator(example: Example) -> None:
-        breakpoint()
+    def evaluator(_: Example) -> None:
+        """
+        No-op evaluator.
+        """
 
     parser = SphinxJinja2Parser(evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
     document = sybil.parse(path=test_document)
 
-    for example in document.examples():
-        example.evaluate()
+    first_example, second_example = document.examples()
+    assert first_example.parsed == "Hallo {{ name }}!\n"
+    assert first_example.region.lexemes == {
+        "directive": "jinja",
+        "arguments": ":",
+        "source": "Hallo {{ name }}!\n",
+        "options": {"ctx": '{"name": "World"}'},
+    }
+    first_example.evaluate()
 
-
-def test_write_with_shell_evaluator(*, tmp_path: Path) -> None:
-    """
-    It is possible to write to empty and non-empty jinja blocks.
-    """
+    assert second_example.parsed == ""
+    assert second_example.region.lexemes == {
+        "directive": "jinja",
+        "arguments": ":",
+        "source": "",
+        "options": {
+            "file": "templates/example1.jinja",
+            "ctx": '{"name": "World"}',
+        },
+    }
