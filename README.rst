@@ -117,12 +117,12 @@ the Sybil documentation for skipping examples in
 and `MyST <https://sybil.readthedocs.io/en/latest/myst.html#skipping-examples>`_ files,
 but with custom text, e.g. ``custom-marker-skip`` replacing the word ``skip``.
 
-GroupedCodeBlockParser
-^^^^^^^^^^^^^^^^^^^^^^
+GroupedSourceParser
+^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
-    """Use GroupedCodeBlockParser to group code blocks by a custom directive."""
+    """Use GroupedSourceParser to group code blocks by a custom directive."""
 
     import sys
     from pathlib import Path
@@ -132,9 +132,9 @@ GroupedCodeBlockParser
     from sybil.parsers.rest.codeblock import PythonCodeBlockParser
 
     # Similar parsers are available at
-    # sybil_extras.parsers.markdown.grouped_code_block and
-    # sybil_extras.parsers.myst.grouped_code_block.
-    from sybil_extras.parsers.rest.grouped_code_block import GroupedCodeBlockParser
+    # sybil_extras.parsers.markdown.grouped_source and
+    # sybil_extras.parsers.myst.grouped_source.
+    from sybil_extras.parsers.rest.grouped_source import GroupedSourceParser
 
 
     def evaluator(example: Example) -> None:
@@ -142,7 +142,7 @@ GroupedCodeBlockParser
         sys.stdout.write(example.parsed)
 
 
-    group_parser = GroupedCodeBlockParser(
+    group_parser = GroupedSourceParser(
         directive="group",
         evaluator=evaluator,
         # Pad the groups with newlines so that the
@@ -165,7 +165,7 @@ GroupedCodeBlockParser
         item.evaluate()
 
 This makes Sybil act as though all of the code blocks within a group are a single code block,
-to be evaluated with the ``evaluator`` given to ``GroupedCodeBlockParser``.
+to be evaluated with the ``evaluator`` given to ``GroupedSourceParser``.
 
 Only code blocks parsed by another parser in the same Sybil instance will be grouped.
 
@@ -206,6 +206,39 @@ A reStructuredText example:
        # We don't run ``hello()`` yet - ``doccmd`` does not support groups
 
    .. group: end
+
+SphinxJinja2Parser
+^^^^^^^^^^^^^^^^^^
+
+Use the ``SphinxJinja2Parser`` to parse `sphinx-jinja2 <https://sphinx-jinja2.readthedocs.io/en/latest/>`_ templates in Sphinx documentation.
+
+This extracts the source, arguments and options from ``.. jinja::`` directive blocks in reStructuredText documents or ``\`\`\`{jinja}`` blocks in MyST documents.
+
+.. code-block:: python
+
+    """Use SphinxJinja2Parser to extract Jinja templates."""
+
+    from pathlib import Path
+
+    from sybil import Sybil
+    from sybil.example import Example
+
+    # A similar parser is available at sybil_extras.parsers.myst.sphinx_jinja2.
+    # There is no Markdown parser as Sphinx is not used with Markdown without MyST.
+    from sybil_extras.parsers.rest.sphinx_jinja2 import SphinxJinja2Parser
+
+
+    def _evaluator(example: Example) -> None:
+        """Check that the example is long enough."""
+        minimum_length = 50
+        assert len(example.parsed) >= minimum_length
+
+
+    parser = SphinxJinja2Parser(evaluator=_evaluator)
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=Path("CHANGELOG.rst"))
+    for item in document.examples():
+        item.evaluate()
 
 .. |Build Status| image:: https://github.com/adamtheturtle/sybil-extras/actions/workflows/ci.yml/badge.svg?branch=main
    :target: https://github.com/adamtheturtle/sybil-extras/actions
