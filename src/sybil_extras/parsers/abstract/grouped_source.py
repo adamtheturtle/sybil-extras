@@ -4,7 +4,6 @@ A group parser for reST.
 
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
-from dataclasses import dataclass, field
 from typing import Literal
 
 from sybil import Document, Example, Region
@@ -14,14 +13,17 @@ from sybil.region import Lexeme
 from sybil.typing import Evaluator, Lexer
 
 
-@dataclass
 class _GroupState:
     """
     Group state.
     """
 
-    last_action: Literal["start", "end"] | None = None
-    examples: Sequence[Example] = field(default_factory=list)
+    def __init__(self) -> None:
+        """
+        Initialize the group state.
+        """
+        self.last_action: Literal["start", "end"] | None = None
+        self.examples: Sequence[Example] = []
 
     def combine_text(self, *, pad_groups: bool) -> Lexeme:
         """Get the combined text.
