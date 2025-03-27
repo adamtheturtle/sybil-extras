@@ -4,6 +4,9 @@ Changelog
 Next
 ----
 
+2025.03.27
+----------
+
 * Rename ``GroupedCodeBlockParser`` to ``GroupedSourceParser``.
 
 2025.02.27.1
