@@ -13,6 +13,7 @@ from sybil.parsers.markdown.codeblock import (
 )
 from sybil.parsers.markdown.skip import SkipParser
 
+from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 from sybil_extras.parsers.markdown.grouped_source import (
     GroupedSourceParser,
@@ -274,14 +275,9 @@ def test_no_argument(tmp_path: Path) -> None:
     test_document = tmp_path / "test.md"
     test_document.write_text(data=content, encoding="utf-8")
 
-    def evaluator(_: Example) -> None:
-        """
-        No-op evaluator.
-        """
-
     group_parser = GroupedSourceParser(
         directive="group",
-        evaluator=evaluator,
+        evaluator=NoOpEvaluator(),
         pad_groups=True,
     )
 
@@ -302,14 +298,9 @@ def test_end_only(tmp_path: Path) -> None:
     test_document = tmp_path / "test.md"
     test_document.write_text(data=content, encoding="utf-8")
 
-    def evaluator(_: Example) -> None:
-        """
-        No-op evaluator.
-        """
-
     group_parser = GroupedSourceParser(
         directive="group",
-        evaluator=evaluator,
+        evaluator=NoOpEvaluator(),
         pad_groups=True,
     )
 
@@ -336,14 +327,9 @@ def test_start_after_start(tmp_path: Path) -> None:
     test_document = tmp_path / "test.md"
     test_document.write_text(data=content, encoding="utf-8")
 
-    def evaluator(_: Example) -> None:
-        """
-        No-op evaluator.
-        """
-
     group_parser = GroupedSourceParser(
         directive="group",
-        evaluator=evaluator,
+        evaluator=NoOpEvaluator(),
         pad_groups=True,
     )
 

@@ -5,8 +5,8 @@ Tests for the sphinx-jinja2 parser for MyST.
 from pathlib import Path
 
 from sybil import Sybil
-from sybil.example import Example
 
+from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.parsers.myst.sphinx_jinja2 import SphinxJinja2Parser
 
 
@@ -31,12 +31,7 @@ def test_sphinx_jinja2(*, tmp_path: Path) -> None:
     test_document = tmp_path / "test.md"
     test_document.write_text(data=content, encoding="utf-8")
 
-    def evaluator(_: Example) -> None:
-        """
-        No-op evaluator.
-        """
-
-    parser = SphinxJinja2Parser(evaluator=evaluator)
+    parser = SphinxJinja2Parser(evaluator=NoOpEvaluator())
     sybil = Sybil(parsers=[parser])
     document = sybil.parse(path=test_document)
 
