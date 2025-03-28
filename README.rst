@@ -83,6 +83,26 @@ ShellCommandEvaluator
 
     pytest_collect_file = sybil.pytest()
 
+NoOpEvaluator
+^^^^^^^^^^^^^
+
+The ``NoOpEvaluator`` is an evaluator which does nothing.
+It is useful for testing and debugging parsers.
+
+.. code-block:: python
+
+    """Use NoOpEvaluator to do nothing."""
+
+    from sybil import Sybil
+    from sybil.parsers.rest.codeblock import CodeBlockParser
+
+    from sybil_extras.evaluators.no_op import NoOpEvaluator
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+
+    pytest_collect_file = sybil.pytest()
+
 Parsers
 -------
 

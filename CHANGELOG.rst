@@ -4,6 +4,8 @@ Changelog
 Next
 ----
 
+* Add ``NoOpEvaluator``.
+
 2025.03.27
 ----------
 
