@@ -21,7 +21,7 @@ license = { file = "LICENSE" }
 authors = [
     { name = "Adam Dangoor", email = "adamdangoor@gmail.com" },
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Web Environment",
@@ -29,7 +29,6 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -51,7 +50,7 @@ optional-dependencies.dev = [
     "docformatter==1.7.5",
     "interrogate==1.7.0",
     "mypy[faster-cache]==1.15.0",
-    "mypy-strict-kwargs==2025.3.28; python_version>='3.11'",
+    "mypy-strict-kwargs==2025.3.28",
     "pre-commit==4.2.0",
     "pydocstyle==6.3",
     "pyenchant==3.3.0rc1",
