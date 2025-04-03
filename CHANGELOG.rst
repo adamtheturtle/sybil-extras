@@ -5,6 +5,7 @@ Next
 ----
 
 * Add ``NoOpEvaluator``.
+* Add support for Python 3.10.
 
 2025.03.27
 ----------
