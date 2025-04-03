@@ -4,6 +4,9 @@ Changelog
 Next
 ----
 
+2025.04.03
+----------
+
 * Add ``NoOpEvaluator``.
 * Support Python 3.10.
 
