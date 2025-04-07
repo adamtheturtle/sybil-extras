@@ -433,10 +433,14 @@ class ShellCommandEvaluator:
             )
             example.document.text = modified_document_content
             offset = len(modified_region_text) - len(original_region_text)
-            for _, region in example.document.regions:
-                if region.start > example.region.start:
-                    region.start += offset
-                    region.end += offset
+            subsequent_regions = [
+                region
+                for _, region in example.document.regions
+                if region.start >= example.region.end
+            ]
+            for region in subsequent_regions:
+                region.start += offset
+                region.end += offset
             Path(example.path).write_text(
                 data=modified_document_content,
                 encoding=self._encoding,
