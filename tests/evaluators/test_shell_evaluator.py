@@ -935,6 +935,61 @@ def test_write_to_file_multiple(*, tmp_path: Path) -> None:
     assert rst_file_content == expected_content
 
 
+def test_write_to_file_changes_lines(*, tmp_path: Path) -> None:
+    """If writing to a file changes the number of lines in the file, that does
+    not affect the next code block.
+
+    This test case is a narrow version of
+    https://github.com/adamtheturtle/doccmd/issues/451.
+    """
+    content = textwrap.dedent(
+        text="""\
+        .. code-block:: python
+
+           x = 1
+           x = 1
+           x = 1
+           x = 1
+
+        .. code-block:: python
+
+           x = 1
+        """
+    )
+    rst_file = tmp_path / "test_document.example.rst"
+    rst_file.write_text(data=content, encoding="utf-8")
+    file_with_new_content = tmp_path / "new_file.txt"
+    new_content = "pass"
+    file_with_new_content.write_text(data=new_content, encoding="utf-8")
+    evaluator = ShellCommandEvaluator(
+        args=["cp", file_with_new_content],
+        pad_file=False,
+        write_to_file=True,
+        use_pty=False,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (first_example, second_example) = document.examples()
+    first_example.evaluate()
+    second_example.evaluate()
+    expected_content = textwrap.dedent(
+        text="""\
+        .. code-block:: python
+
+           pass
+
+        .. code-block:: python
+
+           pass
+        """,
+    )
+
+    rst_file_content = rst_file.read_text(encoding="utf-8")
+    assert rst_file_content == expected_content
+
+
 def test_pad_and_write(*, rst_file: Path, use_pty_option: bool) -> None:
     """
     Changes are written to the original file without the added padding.
