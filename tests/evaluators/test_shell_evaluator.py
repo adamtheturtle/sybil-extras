@@ -947,9 +947,6 @@ def test_write_to_file_changes_lines(*, tmp_path: Path) -> None:
             x = 1
             x = 1
             x = 1
-            x = 1
-            x = 1
-            x = 1
 
         .. code-block:: python
 
