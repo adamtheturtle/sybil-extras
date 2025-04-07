@@ -950,7 +950,7 @@ def test_write_to_file_changes_lines(*, tmp_path: Path) -> None:
 
         .. code-block:: python
 
-           pass
+           x = 1
         """
     )
     rst_file = tmp_path / "test_document.example.rst"
