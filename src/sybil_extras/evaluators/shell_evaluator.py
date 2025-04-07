@@ -421,12 +421,11 @@ class ShellCommandEvaluator:
             new_code_block_content=new_region_content,
         )
 
-        existing_file_content = example.document.text
-
         if (
             modified_region_text != original_region_text
             and self._write_to_file
         ):
+            existing_file_content = example.document.text
             modified_document_content = (
                 existing_file_content[: example.region.start]
                 + modified_region_text
