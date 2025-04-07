@@ -941,21 +941,21 @@ def test_write_to_file_changes_lines(*, tmp_path: Path) -> None:
     """
     content = textwrap.dedent(
         text="""\
-        ```python
-        def say_hello(
-            auth: Annotated[
-                AuthContext,
-            ],
-        ):
-            pass
-        ```
+        .. code-block:: python
 
-        ```python
-        pass
-        ```
+            def say_hello(
+                auth: Annotated[
+                    AuthContext,
+                ],
+            ):
+                pass
+
+        .. code-block:: python
+
+            pass
         """
     )
-    rst_file = tmp_path / "test_document.example.md"
+    rst_file = tmp_path / "test_document.example.rst"
     rst_file.write_text(data=content, encoding="utf-8")
     file_with_new_content = tmp_path / "new_file.txt"
     new_content = "pass"
@@ -966,7 +966,7 @@ def test_write_to_file_changes_lines(*, tmp_path: Path) -> None:
         write_to_file=True,
         use_pty=False,
     )
-    parser = MySTCodeBlockParser(language="python", evaluator=evaluator)
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
 
     document = sybil.parse(path=rst_file)
