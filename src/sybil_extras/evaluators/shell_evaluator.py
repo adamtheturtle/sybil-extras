@@ -423,23 +423,25 @@ class ShellCommandEvaluator:
 
         existing_file_content = example.document.text
 
-        if modified_region_text != original_region_text:
+        if (
+            modified_region_text != original_region_text
+            and self._write_to_file
+        ):
             modified_document_content = (
                 existing_file_content[: example.region.start]
                 + modified_region_text
                 + existing_file_content[example.region.end :]
             )
-            if self._write_to_file:
-                example.document.text = modified_document_content
-                offset = len(modified_region_text) - len(original_region_text)
-                for _, region in example.document.regions:
-                    if region.start > example.region.start:
-                        region.start += offset
-                        region.end += offset
-                Path(example.path).write_text(
-                    data=modified_document_content,
-                    encoding=self._encoding,
-                )
+            example.document.text = modified_document_content
+            offset = len(modified_region_text) - len(original_region_text)
+            for _, region in example.document.regions:
+                if region.start > example.region.start:
+                    region.start += offset
+                    region.end += offset
+            Path(example.path).write_text(
+                data=modified_document_content,
+                encoding=self._encoding,
+            )
 
         if result.returncode != 0:
             raise subprocess.CalledProcessError(
