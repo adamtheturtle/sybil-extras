@@ -943,12 +943,13 @@ def test_write_to_file_changes_lines(*, tmp_path: Path) -> None:
         text="""\
         .. code-block:: python
 
-            def say_hello(
-                auth: Annotated[
-                    AuthContext,
-                ],
-            ):
-                pass
+            x = 1
+            x = 1
+            x = 1
+            x = 1
+            x = 1
+            x = 1
+            x = 1
 
         .. code-block:: python
 
