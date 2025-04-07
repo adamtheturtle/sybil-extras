@@ -936,8 +936,11 @@ def test_write_to_file_multiple(*, tmp_path: Path) -> None:
 
 
 def test_write_to_file_changes_lines(*, tmp_path: Path) -> None:
-    """
-    Todo: X
+    """If writing to a file changes the number of lines in the file, that does
+    not affect the next code block.
+
+    This test case is a narrow version of
+    https://github.com/adamtheturtle/doccmd/issues/451.
     """
     content = textwrap.dedent(
         text="""\
