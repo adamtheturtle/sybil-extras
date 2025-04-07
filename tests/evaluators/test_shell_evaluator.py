@@ -943,14 +943,14 @@ def test_write_to_file_changes_lines(*, tmp_path: Path) -> None:
         text="""\
         .. code-block:: python
 
-            x = 1
-            x = 1
-            x = 1
-            x = 1
+           x = 1
+           x = 1
+           x = 1
+           x = 1
 
         .. code-block:: python
 
-            pass
+           pass
         """
     )
     rst_file = tmp_path / "test_document.example.rst"
@@ -973,20 +973,13 @@ def test_write_to_file_changes_lines(*, tmp_path: Path) -> None:
     second_example.evaluate()
     expected_content = textwrap.dedent(
         text="""\
-        Not in code block
+        .. code-block:: python
+
+           pass
 
         .. code-block:: python
 
-           x = 2 + 2
-           assert x == 4
-
-        .. code-block:: python
-
-           foobar
-
-        .. code-block:: python
-
-           foobar
+           pass
         """,
     )
 
