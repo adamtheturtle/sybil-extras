@@ -1543,7 +1543,7 @@ def test_click_runner(*, rst_file: Path, use_pty_option: bool) -> None:
         (example,) = document.examples()
         example.evaluate()
 
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(cli=_main)
     assert result.exit_code == 0, (result.stdout, result.stderr)
     expected_output = "Hello, Sybil!\n"
