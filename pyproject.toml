@@ -45,7 +45,7 @@ optional-dependencies.dev = [
     "charset-normalizer==3.4.2",
     "check-manifest==0.50",
     "click==8.2.1",
-    "deptry==0.23.0",
+    "deptry==0.23.1",
     "doc8==2.0.0",
     "docformatter==1.7.7",
     "interrogate==1.7.0",
