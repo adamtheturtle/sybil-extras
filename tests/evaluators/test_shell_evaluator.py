@@ -1646,7 +1646,7 @@ def test_custom_on_modify_no_modification(
     # coverage.
     with pytest.raises(
         expected_exception=ValueError,
-        match="This should not be called.",
+        match=r"This should not be called\.",
     ):
         on_modify(example=example, modified_example_content="")
 
