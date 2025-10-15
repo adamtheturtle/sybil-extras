@@ -52,7 +52,7 @@ optional-dependencies.dev = [
     "mypy-strict-kwargs==2025.4.3",
     "pre-commit==4.3.0",
     "pydocstyle==6.3",
-    "pylint[spelling]==4.0.0",
+    "pylint[spelling]==4.0.1",
     "pylint-per-file-ignores==3.1.0",
     "pyproject-fmt==2.11.0",
     "pyright==1.1.406",
