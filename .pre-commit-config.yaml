@@ -92,7 +92,7 @@ repos:
         language: python
         pass_filenames: false
         types_or: [yaml]
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
         stages: [pre-commit]
 
       - id: docformatter
@@ -100,7 +100,7 @@ repos:
         entry: uv run --extra=dev -m docformatter --in-place
         language: python
         types_or: [python]
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
         stages: [pre-commit]
 
       - id: shellcheck
@@ -108,7 +108,7 @@ repos:
         entry: uv run --extra=dev shellcheck --shell=bash
         language: python
         types_or: [shell]
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
         stages: [pre-commit]
 
       - id: shellcheck-docs
@@ -117,7 +117,7 @@ repos:
           --shell=bash"
         language: python
         types_or: [markdown, rst]
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
         stages: [pre-commit]
 
       - id: shfmt
@@ -125,7 +125,7 @@ repos:
         entry: uv run --extra=dev shfmt --write --space-redirects --indent=4
         language: python
         types_or: [shell]
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
         stages: [pre-commit]
 
       - id: shfmt-docs
@@ -134,7 +134,7 @@ repos:
           --no-pad-file --command="shfmt --write --space-redirects --indent=4"
         language: python
         types_or: [markdown, rst]
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
         stages: [pre-commit]
 
       - id: mypy
@@ -144,7 +144,7 @@ repos:
         language: python
         types_or: [python, toml]
         pass_filenames: false
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
 
       - id: mypy-docs
         name: mypy-docs
@@ -152,7 +152,7 @@ repos:
         entry: uvx --python=3.13 doccmd --language=python --command="mypy"
         language: python
         types_or: [markdown, rst]
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
 
       - id: check-manifest
         name: check-manifest
@@ -160,7 +160,7 @@ repos:
         entry: uv run --extra=dev -m check_manifest
         language: python
         pass_filenames: false
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
 
       - id: pyright
         name: pyright
@@ -169,7 +169,7 @@ repos:
         language: python
         types_or: [python, toml]
         pass_filenames: false
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
 
       - id: pyright-docs
         name: pyright-docs
@@ -177,7 +177,7 @@ repos:
         entry: uvx --python=3.13 doccmd --language=python --command="pyright"
         language: python
         types_or: [markdown, rst]
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
 
       - id: vulture
         name: vulture
@@ -185,7 +185,7 @@ repos:
         language: python
         types_or: [python]
         pass_filenames: false
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
         stages: [pre-commit]
 
       - id: vulture-docs
@@ -193,7 +193,7 @@ repos:
         entry: uvx --python=3.13 doccmd --language=python --command="vulture"
         language: python
         types_or: [markdown, rst]
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
         stages: [pre-commit]
 
       - id: pyroma
@@ -202,7 +202,7 @@ repos:
         language: python
         pass_filenames: false
         types_or: [toml]
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
         stages: [pre-commit]
 
       - id: deptry
@@ -210,7 +210,7 @@ repos:
         entry: uv run --extra=dev -m deptry src/
         language: python
         pass_filenames: false
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
         stages: [pre-commit]
 
       - id: pylint
@@ -219,7 +219,7 @@ repos:
         language: python
         stages: [manual]
         pass_filenames: false
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
 
       - id: pylint-docs
         name: pylint-docs
@@ -227,7 +227,7 @@ repos:
         language: python
         stages: [manual]
         types_or: [markdown, rst]
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
 
       - id: pyright-verifytypes
         name: pyright-verifytypes
@@ -236,14 +236,14 @@ repos:
         language: python
         pass_filenames: false
         types_or: [python]
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
 
       - id: ruff-check-fix
         name: Ruff check fix
         entry: uv run --extra=dev -m ruff check --fix
         language: python
         types_or: [python]
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
         stages: [pre-commit]
 
       - id: ruff-check-fix-docs
@@ -251,7 +251,7 @@ repos:
         entry: uvx --python=3.13 doccmd --language=python --command="ruff check --fix"
         language: python
         types_or: [markdown, rst]
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
         stages: [pre-commit]
 
       - id: ruff-format-fix
@@ -259,7 +259,7 @@ repos:
         entry: uv run --extra=dev -m ruff format
         language: python
         types_or: [python]
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
         stages: [pre-commit]
 
       - id: ruff-format-fix-docs
@@ -268,7 +268,7 @@ repos:
           format"
         language: python
         types_or: [markdown, rst]
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
         stages: [pre-commit]
 
       - id: doc8
@@ -276,7 +276,7 @@ repos:
         entry: uv run --extra=dev -m doc8
         language: python
         types_or: [rst]
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
         stages: [pre-commit]
 
       - id: interrogate
@@ -284,7 +284,7 @@ repos:
         entry: uv run --extra=dev -m interrogate
         language: python
         types_or: [python]
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
         stages: [pre-commit]
 
       - id: interrogate-docs
@@ -292,7 +292,7 @@ repos:
         entry: uvx --python=3.13 doccmd --language=python --command="interrogate"
         language: python
         types_or: [markdown, rst]
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
         stages: [pre-commit]
 
       - id: pyproject-fmt-fix
@@ -301,7 +301,7 @@ repos:
         language: python
         types_or: [toml]
         files: pyproject.toml
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
         stages: [pre-commit]
 
       - id: yamlfix
@@ -309,7 +309,7 @@ repos:
         entry: uv run --extra=dev yamlfix
         language: python
         types_or: [yaml]
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
         stages: [pre-commit]
 
       - id: sphinx-lint
@@ -317,5 +317,5 @@ repos:
         entry: uv run --extra=dev sphinx-lint --enable=all --disable=line-too-long
         language: python
         types_or: [rst]
-        additional_dependencies: [uv==0.6.3]
+        additional_dependencies: [uv==0.9.5]
         stages: [pre-commit]
