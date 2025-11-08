@@ -465,6 +465,10 @@ class ShellCommandEvaluator:
             )
 
         if self._write_to_file:
+            # Examples are given with no leading newline.
+            # While it is possible that a formatter added leading newlines,
+            # we assume that this is not the case, and we remove any leading
+            # newlines from the replacement which were added by the padding.
             new_region_content = _lstrip_newlines(
                 input_string=temp_file_content,
                 number_of_newlines=padding_line,
