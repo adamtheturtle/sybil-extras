@@ -261,21 +261,6 @@ def _get_within_code_block_indentation_prefix(example: Example) -> str:
 
 
 @beartype
-def _get_padded_or_original_source(*, example: Example, pad_file: bool) -> str:
-    """Get the source code, optionally padded with leading newlines.
-
-    Padding is useful when error messages should report the correct line
-    number in the original file.
-    """
-    if pad_file:
-        return pad(
-            source=example.parsed,
-            line=example.line + example.parsed.line_offset,
-        )
-    return str(object=example.parsed)
-
-
-@beartype
 def _create_temp_file_path_for_example(
     *,
     example: Example,
@@ -431,9 +416,12 @@ class ShellCommandEvaluator:
             msg = "Pseudo-terminal not supported on Windows."
             raise ValueError(msg)
 
-        source = _get_padded_or_original_source(
-            example=example,
-            pad_file=self._pad_file,
+        padding_line = (
+            example.line + example.parsed.line_offset if self._pad_file else 0
+        )
+        source = pad(
+            source=example.parsed,
+            line=padding_line,
         )
         temp_file = _create_temp_file_path_for_example(
             example=example,
@@ -477,14 +465,9 @@ class ShellCommandEvaluator:
             )
 
         if self._write_to_file:
-            new_region_content = (
-                _lstrip_newlines(
-                    input_string=temp_file_content,
-                    number_of_newlines=example.line
-                    + example.parsed.line_offset,
-                )
-                if self._pad_file
-                else temp_file_content
+            new_region_content = _lstrip_newlines(
+                input_string=temp_file_content,
+                number_of_newlines=padding_line,
             )
             _overwrite_example_content(
                 example=example,
