@@ -309,33 +309,10 @@ def _create_temp_file_path_for_example(
 
 
 @beartype
-def _strip_padding_from_modified_content(
-    *,
-    modified_content: str,
-    example: Example,
-    pad_file: bool,
-) -> str:
-    """Remove padding newlines from modified example content.
-
-    Examples are given with no leading newline. While it is possible
-    that a formatter added leading newlines, we assume that this is not
-    the case, and we remove any leading newlines that were added by the
-    padding.
-    """
-    if not pad_file:
-        return modified_content
-
-    return _lstrip_newlines(
-        input_string=modified_content,
-        number_of_newlines=example.line + example.parsed.line_offset,
-    )
-
-
-@beartype
-def _write_modified_content_to_document(
+def _overwrite_example_content(
     *,
     example: Example,
-    new_region_content: str,
+    new_content: str,
     encoding: str | None,
 ) -> None:
     """Update the source document and file with modified example content.
@@ -349,7 +326,7 @@ def _write_modified_content_to_document(
     modified_region_text = _get_modified_region_text(
         original_region_text=original_region_text,
         example=example,
-        new_code_block_content=new_region_content,
+        new_code_block_content=new_content,
     )
 
     if modified_region_text != original_region_text:
@@ -500,14 +477,18 @@ class ShellCommandEvaluator:
             )
 
         if self._write_to_file:
-            new_region_content = _strip_padding_from_modified_content(
-                modified_content=temp_file_content,
-                example=example,
-                pad_file=self._pad_file,
+            new_region_content = (
+                _lstrip_newlines(
+                    input_string=temp_file_content,
+                    number_of_newlines=example.line
+                    + example.parsed.line_offset,
+                )
+                if self._pad_file
+                else temp_file_content
             )
-            _write_modified_content_to_document(
+            _overwrite_example_content(
                 example=example,
-                new_region_content=new_region_content,
+                new_content=new_region_content,
                 encoding=self._encoding,
             )
 
