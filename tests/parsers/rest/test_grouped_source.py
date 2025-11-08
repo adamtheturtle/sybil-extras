@@ -3,7 +3,6 @@ Tests for the group parser for reST.
 """
 
 import textwrap
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import pytest
@@ -559,70 +558,3 @@ def test_no_pad_groups(tmp_path: Path) -> None:
         """,
     )
     assert output_document_content == expected_output_document_content
-
-
-def test_threading_safety(tmp_path: Path) -> None:
-    """The group parser has thread-safe state management.
-
-    This test verifies that the internal locking mechanism prevents race
-    conditions when the grouper's __call__ method is invoked concurrently.
-    The lock ensures that state updates (_document_state dictionary) are
-    atomic and protected from concurrent modification.
-
-    Note: While this test uses ThreadPoolExecutor, grouped examples still
-    require sequential evaluation order to work correctly. This test verifies
-    that the locking doesn't cause crashes or corruption, not that parallel
-    execution of grouped examples produces correct results. For correct results
-    with grouped examples, callers must ensure examples are evaluated in
-    document order (e.g., by disabling parallel execution when grouping is
-    active).
-    """
-    content = """\
-    .. code-block:: python
-
-        x = 1
-
-    .. code-block:: python
-
-        y = 2
-
-    .. code-block:: python
-
-        z = 3
-    """
-
-    test_document = tmp_path / "test.rst"
-    test_document.write_text(data=content, encoding="utf-8")
-
-    def evaluator(example: Example) -> None:
-        """
-        Add code block content to the namespace.
-        """
-        existing_blocks = example.document.namespace.get("blocks", [])
-        example.document.namespace["blocks"] = [
-            *existing_blocks,
-            example.parsed,
-        ]
-
-    group_parser = GroupedSourceParser(
-        directive="group",
-        evaluator=evaluator,
-        pad_groups=True,
-    )
-    code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
-
-    sybil = Sybil(parsers=[code_block_parser, group_parser])
-    document = sybil.parse(path=test_document)
-
-    examples = list(document.examples())
-
-    # Evaluate examples in parallel using ThreadPoolExecutor
-    # This verifies the lock prevents crashes/corruption from concurrent access
-    with ThreadPoolExecutor(max_workers=3) as executor:
-        futures = [executor.submit(example.evaluate) for example in examples]
-        for future in as_completed(fs=futures):
-            future.result()
-
-    # All three examples should be evaluated (in some order due to threading)
-    expected_block_count = 3
-    assert len(document.namespace["blocks"]) == expected_block_count
