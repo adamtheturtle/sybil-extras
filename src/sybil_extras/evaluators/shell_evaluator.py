@@ -261,6 +261,133 @@ def _get_within_code_block_indentation_prefix(example: Example) -> str:
 
 
 @beartype
+def _get_padded_or_original_source(*, example: Example, pad_file: bool) -> str:
+    """Get the source code, optionally padded with leading newlines.
+
+    Padding is useful when error messages should report the correct line
+    number in the original file.
+    """
+    if pad_file:
+        return pad(
+            source=example.parsed,
+            line=example.line + example.parsed.line_offset,
+        )
+    return str(object=example.parsed)
+
+
+@beartype
+def _create_temp_file_path_for_example(
+    *,
+    example: Example,
+    tempfile_name_prefix: str,
+    tempfile_suffixes: Sequence[str],
+) -> Path:
+    """Create a temporary file path for an example code block.
+
+    The temporary file is created in the same directory as the source
+    file and includes the source filename and line number in its name
+    for easier identification in error messages.
+    """
+    path_name = Path(example.path).name
+    # Replace characters that are not allowed in file names for Python
+    # modules.
+    sanitized_path_name = path_name.replace(".", "_").replace("-", "_")
+    line_number_specifier = f"l{example.line}"
+    prefix = f"{sanitized_path_name}_{line_number_specifier}_"
+
+    if tempfile_name_prefix:
+        prefix = f"{tempfile_name_prefix}_{prefix}"
+
+    suffix = "".join(tempfile_suffixes)
+
+    # Create a sibling file in the same directory as the example file.
+    # The name also looks like the example file name.
+    # This is so that output reflects the actual file path.
+    # This is useful for error messages, and for ignores.
+    parent = Path(example.path).parent
+    return parent / f"{prefix}_{uuid.uuid4().hex[:4]}_{suffix}"
+
+
+@beartype
+def _strip_padding_from_modified_content(
+    *,
+    temp_file_content: str,
+    new_source: str,
+    example: Example,
+    pad_file: bool,
+    on_modify: _ExampleModified | None,
+) -> str:
+    """Remove padding and invoke modification callback if content changed.
+
+    Returns the modified example content with any padding newlines
+    removed.
+    """
+    new_region_content = temp_file_content
+
+    if new_source != new_region_content and on_modify is not None:
+        on_modify(
+            example=example,
+            modified_example_content=new_region_content,
+        )
+
+    # Examples are given with no leading newline.
+    # While it is possible that a formatter added leading newlines,
+    # we assume that this is not the case, and we remove any leading
+    # newlines from the replacement which were added by the padding.
+    if pad_file:
+        new_region_content = _lstrip_newlines(
+            input_string=new_region_content,
+            number_of_newlines=example.line + example.parsed.line_offset,
+        )
+
+    return new_region_content
+
+
+@beartype
+def _write_modified_content_to_document(
+    *,
+    example: Example,
+    new_region_content: str,
+    encoding: str | None,
+) -> None:
+    """Update the source document and file with modified example content.
+
+    This updates both the in-memory document and writes changes to disk.
+    It also adjusts the positions of subsequent regions in the document.
+    """
+    original_region_text = example.document.text[
+        example.region.start : example.region.end
+    ]
+    modified_region_text = _get_modified_region_text(
+        original_region_text=original_region_text,
+        example=example,
+        new_code_block_content=new_region_content,
+    )
+
+    if modified_region_text != original_region_text:
+        existing_file_content = example.document.text
+        modified_document_content = (
+            existing_file_content[: example.region.start]
+            + modified_region_text
+            + existing_file_content[example.region.end :]
+        )
+        example.document.text = modified_document_content
+        offset = len(modified_region_text) - len(original_region_text)
+        subsequent_regions = [
+            region
+            for _, region in example.document.regions
+            if region.start >= example.region.end
+        ]
+        for region in subsequent_regions:
+            region.start += offset
+            region.end += offset
+        Path(example.path).write_text(
+            data=modified_document_content,
+            encoding=encoding,
+        )
+
+
+@beartype
 class ShellCommandEvaluator:
     """
     Run a shell command on the example file.
@@ -329,112 +456,6 @@ class ShellCommandEvaluator:
         self._encoding = encoding
         self._on_modify = on_modify
 
-    @beartype
-    def _prepare_source(self, example: Example) -> str:
-        """
-        Prepare the source code for the example.
-        """
-        if self._pad_file:
-            return pad(
-                source=example.parsed,
-                line=example.line + example.parsed.line_offset,
-            )
-        return str(object=example.parsed)
-
-    @beartype
-    def _create_temp_file_path(self, example: Example) -> Path:
-        """
-        Create a temporary file path based on the example.
-        """
-        path_name = Path(example.path).name
-        # Replace characters that are not allowed in file names for Python
-        # modules.
-        sanitized_path_name = path_name.replace(".", "_").replace("-", "_")
-        line_number_specifier = f"l{example.line}"
-        prefix = f"{sanitized_path_name}_{line_number_specifier}_"
-
-        if self._tempfile_name_prefix:
-            prefix = f"{self._tempfile_name_prefix}_{prefix}"
-
-        suffix = "".join(self._tempfile_suffixes)
-
-        # Create a sibling file in the same directory as the example file.
-        # The name also looks like the example file name.
-        # This is so that output reflects the actual file path.
-        # This is useful for error messages, and for ignores.
-        parent = Path(example.path).parent
-        return parent / f"{prefix}_{uuid.uuid4().hex[:4]}_{suffix}"
-
-    @beartype
-    def _process_temp_file_content(
-        self,
-        temp_file_content: str,
-        new_source: str,
-        example: Example,
-    ) -> str:
-        """
-        Process the temporary file content after command execution.
-        """
-        new_region_content = temp_file_content
-
-        if new_source != new_region_content and self._on_modify is not None:
-            self._on_modify(
-                example=example,
-                modified_example_content=new_region_content,
-            )
-
-        # Examples are given with no leading newline.
-        # While it is possible that a formatter added leading newlines,
-        # we assume that this is not the case, and we remove any leading
-        # newlines from the replacement which were added by the padding.
-        if self._pad_file:
-            new_region_content = _lstrip_newlines(
-                input_string=new_region_content,
-                number_of_newlines=example.line + example.parsed.line_offset,
-            )
-
-        return new_region_content
-
-    @beartype
-    def _update_document(
-        self,
-        example: Example,
-        new_region_content: str,
-    ) -> None:
-        """
-        Update the document with the new region content.
-        """
-        original_region_text = example.document.text[
-            example.region.start : example.region.end
-        ]
-        modified_region_text = _get_modified_region_text(
-            original_region_text=original_region_text,
-            example=example,
-            new_code_block_content=new_region_content,
-        )
-
-        if modified_region_text != original_region_text:
-            existing_file_content = example.document.text
-            modified_document_content = (
-                existing_file_content[: example.region.start]
-                + modified_region_text
-                + existing_file_content[example.region.end :]
-            )
-            example.document.text = modified_document_content
-            offset = len(modified_region_text) - len(original_region_text)
-            subsequent_regions = [
-                region
-                for _, region in example.document.regions
-                if region.start >= example.region.end
-            ]
-            for region in subsequent_regions:
-                region.start += offset
-                region.end += offset
-            Path(example.path).write_text(
-                data=modified_document_content,
-                encoding=self._encoding,
-            )
-
     def __call__(self, example: Example) -> None:
         """
         Run the shell command on the example file.
@@ -445,8 +466,15 @@ class ShellCommandEvaluator:
             msg = "Pseudo-terminal not supported on Windows."
             raise ValueError(msg)
 
-        source = self._prepare_source(example=example)
-        temp_file = self._create_temp_file_path(example=example)
+        source = _get_padded_or_original_source(
+            example=example,
+            pad_file=self._pad_file,
+        )
+        temp_file = _create_temp_file_path_for_example(
+            example=example,
+            tempfile_name_prefix=self._tempfile_name_prefix,
+            tempfile_suffixes=self._tempfile_suffixes,
+        )
 
         # The parsed code block at the end of a file is given without a
         # trailing newline.  Some tools expect that a file has a trailing
@@ -477,16 +505,19 @@ class ShellCommandEvaluator:
             with contextlib.suppress(FileNotFoundError):
                 temp_file.unlink()
 
-        new_region_content = self._process_temp_file_content(
+        new_region_content = _strip_padding_from_modified_content(
             temp_file_content=temp_file_content,
             new_source=new_source,
             example=example,
+            pad_file=self._pad_file,
+            on_modify=self._on_modify,
         )
 
         if self._write_to_file:
-            self._update_document(
+            _write_modified_content_to_document(
                 example=example,
                 new_region_content=new_region_content,
+                encoding=self._encoding,
             )
 
         if result.returncode != 0:
