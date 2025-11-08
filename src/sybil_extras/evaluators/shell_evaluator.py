@@ -499,13 +499,12 @@ class ShellCommandEvaluator:
                 modified_example_content=temp_file_content,
             )
 
-        new_region_content = _strip_padding_from_modified_content(
-            modified_content=temp_file_content,
-            example=example,
-            pad_file=self._pad_file,
-        )
-
         if self._write_to_file:
+            new_region_content = _strip_padding_from_modified_content(
+                modified_content=temp_file_content,
+                example=example,
+                pad_file=self._pad_file,
+            )
             _write_modified_content_to_document(
                 example=example,
                 new_region_content=new_region_content,
