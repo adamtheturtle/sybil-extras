@@ -422,30 +422,27 @@ class ShellCommandEvaluator:
                 new_code_block_content=new_region_content,
             )
 
-        if (
-            self._write_to_file
-            and modified_region_text != original_region_text
-        ):
-            existing_file_content = example.document.text
-            modified_document_content = (
-                existing_file_content[: example.region.start]
-                + modified_region_text
-                + existing_file_content[example.region.end :]
-            )
-            example.document.text = modified_document_content
-            offset = len(modified_region_text) - len(original_region_text)
-            subsequent_regions = [
-                region
-                for _, region in example.document.regions
-                if region.start >= example.region.end
-            ]
-            for region in subsequent_regions:
-                region.start += offset
-                region.end += offset
-            Path(example.path).write_text(
-                data=modified_document_content,
-                encoding=self._encoding,
-            )
+            if modified_region_text != original_region_text:
+                existing_file_content = example.document.text
+                modified_document_content = (
+                    existing_file_content[: example.region.start]
+                    + modified_region_text
+                    + existing_file_content[example.region.end :]
+                )
+                example.document.text = modified_document_content
+                offset = len(modified_region_text) - len(original_region_text)
+                subsequent_regions = [
+                    region
+                    for _, region in example.document.regions
+                    if region.start >= example.region.end
+                ]
+                for region in subsequent_regions:
+                    region.start += offset
+                    region.end += offset
+                Path(example.path).write_text(
+                    data=modified_document_content,
+                    encoding=self._encoding,
+                )
 
         if result.returncode != 0:
             raise subprocess.CalledProcessError(
