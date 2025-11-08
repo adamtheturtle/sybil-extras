@@ -339,7 +339,7 @@ class ShellCommandEvaluator:
                 source=example.parsed,
                 line=example.line + example.parsed.line_offset,
             )
-        return example.parsed
+        return str(object=example.parsed)
 
     @beartype
     def _create_temp_file_path(self, example: Example) -> Path:
