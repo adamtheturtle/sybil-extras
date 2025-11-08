@@ -412,18 +412,19 @@ class ShellCommandEvaluator:
                 number_of_newlines=example.line + example.parsed.line_offset,
             )
 
-        original_region_text = example.document.text[
-            example.region.start : example.region.end
-        ]
-        modified_region_text = _get_modified_region_text(
-            original_region_text=original_region_text,
-            example=example,
-            new_code_block_content=new_region_content,
-        )
+        if self._write_to_file:
+            original_region_text = example.document.text[
+                example.region.start : example.region.end
+            ]
+            modified_region_text = _get_modified_region_text(
+                original_region_text=original_region_text,
+                example=example,
+                new_code_block_content=new_region_content,
+            )
 
         if (
-            modified_region_text != original_region_text
-            and self._write_to_file
+            self._write_to_file
+            and modified_region_text != original_region_text
         ):
             existing_file_content = example.document.text
             modified_document_content = (

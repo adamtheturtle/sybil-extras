@@ -2,6 +2,7 @@
 A group parser for reST.
 """
 
+import threading
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from typing import Literal
@@ -79,6 +80,7 @@ class _Grouper:
         self._document_state: dict[Document, _GroupState] = defaultdict(
             _GroupState
         )
+        self._lock = threading.Lock()
         self._evaluator = evaluator
         self._directive = directive
         self._pad_groups = pad_groups
@@ -147,14 +149,15 @@ class _Grouper:
         """
         Call the evaluator.
         """
-        # We use ``id`` equivalence rather than ``is`` to avoid a
-        # ``pyright`` error:
-        # https://github.com/microsoft/pyright/issues/9932
-        if id(example.region.evaluator) == id(self):
-            self._evaluate_grouper_example(example=example)
-            return
+        with self._lock:
+            # We use ``id`` equivalence rather than ``is`` to avoid a
+            # ``pyright`` error:
+            # https://github.com/microsoft/pyright/issues/9932
+            if id(example.region.evaluator) == id(self):
+                self._evaluate_grouper_example(example=example)
+                return
 
-        self._evaluate_other_example(example=example)
+            self._evaluate_other_example(example=example)
 
     # Satisfy vulture.
     _caller = __call__
