@@ -311,36 +311,24 @@ def _create_temp_file_path_for_example(
 @beartype
 def _strip_padding_from_modified_content(
     *,
-    temp_file_content: str,
-    new_source: str,
+    modified_content: str,
     example: Example,
     pad_file: bool,
-    on_modify: _ExampleModified | None,
 ) -> str:
-    """Remove padding and invoke modification callback if content changed.
+    """Remove padding newlines from modified example content.
 
-    Returns the modified example content with any padding newlines
-    removed.
+    Examples are given with no leading newline. While it is possible
+    that a formatter added leading newlines, we assume that this is not
+    the case, and we remove any leading newlines that were added by the
+    padding.
     """
-    new_region_content = temp_file_content
+    if not pad_file:
+        return modified_content
 
-    if new_source != new_region_content and on_modify is not None:
-        on_modify(
-            example=example,
-            modified_example_content=new_region_content,
-        )
-
-    # Examples are given with no leading newline.
-    # While it is possible that a formatter added leading newlines,
-    # we assume that this is not the case, and we remove any leading
-    # newlines from the replacement which were added by the padding.
-    if pad_file:
-        new_region_content = _lstrip_newlines(
-            input_string=new_region_content,
-            number_of_newlines=example.line + example.parsed.line_offset,
-        )
-
-    return new_region_content
+    return _lstrip_newlines(
+        input_string=modified_content,
+        number_of_newlines=example.line + example.parsed.line_offset,
+    )
 
 
 @beartype
@@ -505,12 +493,16 @@ class ShellCommandEvaluator:
             with contextlib.suppress(FileNotFoundError):
                 temp_file.unlink()
 
+        if new_source != temp_file_content and self._on_modify is not None:
+            self._on_modify(
+                example=example,
+                modified_example_content=temp_file_content,
+            )
+
         new_region_content = _strip_padding_from_modified_content(
-            temp_file_content=temp_file_content,
-            new_source=new_source,
+            modified_content=temp_file_content,
             example=example,
             pad_file=self._pad_file,
-            on_modify=self._on_modify,
         )
 
         if self._write_to_file:
