@@ -227,6 +227,60 @@ A reStructuredText example:
 
    .. group: end
 
+GroupAllParser
+^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+    """Use GroupAllParser to group all code blocks in a document."""
+
+    import sys
+    from pathlib import Path
+
+    from sybil import Sybil
+    from sybil.example import Example
+    from sybil.parsers.rest.codeblock import PythonCodeBlockParser
+
+    # Similar parsers are available at
+    # sybil_extras.parsers.markdown.group_all and
+    # sybil_extras.parsers.myst.group_all.
+    from sybil_extras.parsers.rest.group_all import GroupAllParser
+
+
+    def evaluator(example: Example) -> None:
+        """Evaluate the code block by printing it."""
+        sys.stdout.write(example.parsed)
+
+
+    group_all_parser = GroupAllParser(
+        evaluator=evaluator,
+        # Pad the groups with newlines so that the
+        # line number differences between blocks in the output match the
+        # line number differences in the source document.
+        # This is useful for error messages that reference line numbers.
+        # However, this is detrimental to commands that expect the file
+        # to not have a bunch of newlines in it, such as formatters.
+        pad_groups=True,
+    )
+    code_block_parser = PythonCodeBlockParser()
+
+    sybil = Sybil(parsers=[code_block_parser, group_all_parser])
+
+    document = sybil.parse(path=Path("CHANGELOG.rst"))
+
+    for item in document.examples():
+        # One evaluate call will evaluate a code block with the contents of all
+        # code blocks in the document.
+        item.evaluate()
+
+This makes Sybil act as though all of the code blocks in a document are a single code block,
+to be evaluated with the ``evaluator`` given to ``GroupAllParser``.
+
+Unlike ``GroupedSourceParser``, this parser does not require any special markup directives like ``group: start`` and ``group: end``.
+All code blocks in the document are automatically grouped together.
+
+Only code blocks parsed by another parser in the same Sybil instance will be grouped.
+
 SphinxJinja2Parser
 ^^^^^^^^^^^^^^^^^^
 
