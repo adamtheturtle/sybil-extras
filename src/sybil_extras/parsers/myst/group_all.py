@@ -117,6 +117,8 @@ class _GroupAllEvaluator:
         self._evaluator(new_example)
 
         example.document.pop_evaluator(evaluator=self)
+        # Clean up document state to prevent memory leaks when reusing
+        # parser instances across multiple documents.
         del self._document_state[example.document]
 
     def __call__(self, example: Example) -> None:
