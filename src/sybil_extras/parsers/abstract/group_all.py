@@ -77,7 +77,7 @@ class _GroupAllEvaluator:
             start=state.examples[0].region.start,
             end=state.examples[-1].region.end,
             parsed=combine_examples_text(
-                state.examples,
+                examples=state.examples,
                 pad_groups=self._pad_groups,
             ),
             evaluator=self._evaluator,
