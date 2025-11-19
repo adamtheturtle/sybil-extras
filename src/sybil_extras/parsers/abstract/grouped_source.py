@@ -9,8 +9,9 @@ from typing import Literal
 from sybil import Document, Example, Region
 from sybil.example import NotEvaluated
 from sybil.parsers.abstract.lexers import LexerCollection
-from sybil.region import Lexeme
 from sybil.typing import Evaluator, Lexer
+
+from ._grouping_utils import combine_examples_text
 
 
 class _GroupState:
@@ -24,35 +25,6 @@ class _GroupState:
         """
         self.last_action: Literal["start", "end"] | None = None
         self.examples: Sequence[Example] = []
-
-    def combine_text(self, *, pad_groups: bool) -> Lexeme:
-        """Get the combined text.
-
-        Pad the examples with newlines to ensure that line numbers in
-        error messages match the line numbers in the source.
-        """
-        result = self.examples[0].parsed
-        for example in self.examples[1:]:
-            existing_lines = len(result.text.splitlines())
-            if pad_groups:
-                padding_lines = (
-                    example.line - self.examples[0].line - existing_lines
-                )
-            else:
-                padding_lines = 1
-
-            padding = "\n" * padding_lines
-            result = Lexeme(
-                text=result.text + padding + example.parsed,
-                offset=result.offset,
-                line_offset=result.line_offset,
-            )
-
-        return Lexeme(
-            text=result.text,
-            offset=result.offset,
-            line_offset=result.line_offset,
-        )
 
 
 class _Grouper:
@@ -112,7 +84,10 @@ class _Grouper:
             region = Region(
                 start=state.examples[0].region.start,
                 end=state.examples[-1].region.end,
-                parsed=state.combine_text(pad_groups=self._pad_groups),
+                parsed=combine_examples_text(
+                    state.examples,
+                    pad_groups=self._pad_groups,
+                ),
                 evaluator=self._evaluator,
                 lexemes=example.region.lexemes,
             )
