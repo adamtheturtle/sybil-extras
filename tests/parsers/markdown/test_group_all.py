@@ -128,7 +128,6 @@ def test_group_all_empty_document(tmp_path: Path) -> None:
     sybil = Sybil(parsers=[code_block_parser, group_all_parser])
     document = sybil.parse(path=test_document)
 
-    # Should have only the finalizer example from GroupAllParser
     examples = list(document.examples())
     assert len(examples) == 1
 
