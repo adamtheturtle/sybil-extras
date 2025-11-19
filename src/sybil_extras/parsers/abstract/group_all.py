@@ -9,7 +9,11 @@ from sybil import Document, Example, Region
 from sybil.example import NotEvaluated
 from sybil.typing import Evaluator
 
-from ._grouping_utils import combine_examples_text
+from ._grouping_utils import (
+    create_combined_example,
+    create_combined_region,
+    has_source,
+)
 
 
 class _GroupAllState:
@@ -54,8 +58,7 @@ class _GroupAllEvaluator:
         Collect an example to be grouped.
         """
         state = self._document_state[example.document]
-        has_source = "source" in example.region.lexemes
-        if has_source:
+        if has_source(example=example):
             state.examples.append(example)
             return
 
@@ -73,22 +76,14 @@ class _GroupAllEvaluator:
             del self._document_state[example.document]
             return
 
-        region = Region(
-            start=state.examples[0].region.start,
-            end=state.examples[-1].region.end,
-            parsed=combine_examples_text(
-                examples=state.examples,
-                pad_groups=self._pad_groups,
-            ),
+        region = create_combined_region(
+            examples=state.examples,
             evaluator=self._evaluator,
-            lexemes=example.region.lexemes,
+            pad_groups=self._pad_groups,
         )
-        new_example = Example(
-            document=example.document,
-            line=state.examples[0].line,
-            column=state.examples[0].column,
+        new_example = create_combined_example(
+            examples=state.examples,
             region=region,
-            namespace=example.namespace,
         )
         self._evaluator(new_example)
 

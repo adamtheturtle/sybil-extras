@@ -6,6 +6,7 @@ formatter
 formatters
 hardcode
 iff
+lexeme
 linter
 namespace
 ons
