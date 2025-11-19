@@ -61,7 +61,6 @@ def test_group_all(tmp_path: Path) -> None:
         "x = []\n\n\n\nx = [*x, 1]\n\n\n\nx = [*x, 2]",
     ]
     assert len(document.evaluators) == 0
-    assert len(group_all_parser._evaluator._document_state) == 0  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
 
 
 def test_group_all_single_block(tmp_path: Path) -> None:
@@ -184,6 +183,63 @@ def test_group_all_no_pad(tmp_path: Path) -> None:
     assert document.namespace["blocks"] == [
         "x = []\n\nx = [*x, 1]\n\nx = [*x, 2]",
     ]
+
+
+def test_group_all_parser_reuse(tmp_path: Path) -> None:
+    """The parser can be reused across multiple documents.
+
+    This test verifies that document state is properly cleaned up,
+    preventing state accumulation when the same parser instance
+    processes multiple documents.
+    """
+    content1 = """\
+
+.. code-block:: python
+
+    x = 1
+"""
+
+    content2 = """\
+
+.. code-block:: python
+
+    y = 2
+"""
+
+    test_document1 = tmp_path / "test1.rst"
+    test_document1.write_text(data=content1, encoding="utf-8")
+
+    test_document2 = tmp_path / "test2.rst"
+    test_document2.write_text(data=content2, encoding="utf-8")
+
+    def evaluator(example: Example) -> None:
+        """
+        Add code block content to the namespace.
+        """
+        existing_blocks = example.document.namespace.get("blocks", [])
+        example.document.namespace["blocks"] = [
+            *existing_blocks,
+            example.parsed,
+        ]
+
+    group_all_parser = GroupAllParser(
+        evaluator=evaluator,
+        pad_groups=True,
+    )
+    code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
+
+    sybil = Sybil(parsers=[code_block_parser, group_all_parser])
+
+    document1 = sybil.parse(path=test_document1)
+    for example in document1.examples():
+        example.evaluate()
+
+    document2 = sybil.parse(path=test_document2)
+    for example in document2.examples():
+        example.evaluate()
+
+    assert document1.namespace["blocks"] == ["x = 1"]
+    assert document2.namespace["blocks"] == ["y = 2"]
 
 
 def test_group_all_with_skip(tmp_path: Path) -> None:
