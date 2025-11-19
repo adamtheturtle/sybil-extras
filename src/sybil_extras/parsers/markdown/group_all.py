@@ -28,9 +28,6 @@ class _GroupAllState:
         Pad the examples with newlines to ensure that line numbers in
         error messages match the line numbers in the source.
         """
-        if not self.examples:
-            return Lexeme(text="", offset=0, line_offset=0)
-
         result = self.examples[0].parsed
         for example in self.examples[1:]:
             existing_lines = len(result.text.splitlines())

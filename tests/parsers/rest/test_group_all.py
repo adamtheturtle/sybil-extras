@@ -1,18 +1,16 @@
 """
-Tests for the group all parser for Markdown.
+Tests for the group all parser for reStructuredText.
 """
 
 from pathlib import Path
 
 from sybil import Sybil
 from sybil.example import Example
-from sybil.parsers.markdown.codeblock import (
-    CodeBlockParser,
-)
-from sybil.parsers.markdown.skip import SkipParser
+from sybil.parsers.rest.codeblock import CodeBlockParser
+from sybil.parsers.rest.skip import SkipParser
 
 from sybil_extras.evaluators.no_op import NoOpEvaluator
-from sybil_extras.parsers.markdown.group_all import GroupAllParser
+from sybil_extras.parsers.rest.group_all import GroupAllParser
 
 
 def test_group_all(tmp_path: Path) -> None:
@@ -21,20 +19,20 @@ def test_group_all(tmp_path: Path) -> None:
     """
     content = """\
 
-    ```python
+.. code-block:: python
+
     x = []
-    ```
 
-    ```python
+.. code-block:: python
+
     x = [*x, 1]
-    ```
 
-    ```python
+.. code-block:: python
+
     x = [*x, 2]
-    ```
-    """
+"""
 
-    test_document = tmp_path / "test.md"
+    test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(example: Example) -> None:
@@ -61,7 +59,7 @@ def test_group_all(tmp_path: Path) -> None:
 
     # Should have one combined block with all three code blocks
     assert document.namespace["blocks"] == [
-        "x = []\n\n\n\nx = [*x, 1]\n\n\n\nx = [*x, 2]\n",
+        "x = []\n\n\n\nx = [*x, 1]\n\n\n\nx = [*x, 2]",
     ]
 
 
@@ -71,12 +69,12 @@ def test_group_all_single_block(tmp_path: Path) -> None:
     """
     content = """\
 
-    ```python
-    x = []
-    ```
-    """
+.. code-block:: python
 
-    test_document = tmp_path / "test.md"
+    x = []
+"""
+
+    test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(example: Example) -> None:
@@ -102,7 +100,7 @@ def test_group_all_single_block(tmp_path: Path) -> None:
         example.evaluate()
 
     assert document.namespace["blocks"] == [
-        "x = []\n",
+        "x = []",
     ]
 
 
@@ -111,12 +109,13 @@ def test_group_all_empty_document(tmp_path: Path) -> None:
     The group all parser handles an empty document gracefully.
     """
     content = """\
-    # Empty document
+Empty document
+==============
 
-    No code blocks here.
-    """
+No code blocks here.
+"""
 
-    test_document = tmp_path / "test.md"
+    test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
     group_all_parser = GroupAllParser(
@@ -143,20 +142,20 @@ def test_group_all_no_pad(tmp_path: Path) -> None:
     """
     content = """\
 
-    ```python
+.. code-block:: python
+
     x = []
-    ```
 
-    ```python
+.. code-block:: python
+
     x = [*x, 1]
-    ```
 
-    ```python
+.. code-block:: python
+
     x = [*x, 2]
-    ```
-    """
+"""
 
-    test_document = tmp_path / "test.md"
+    test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(example: Example) -> None:
@@ -183,7 +182,7 @@ def test_group_all_no_pad(tmp_path: Path) -> None:
 
     # Should have one combined block with only one newline between blocks
     assert document.namespace["blocks"] == [
-        "x = []\n\nx = [*x, 1]\n\nx = [*x, 2]\n",
+        "x = []\n\nx = [*x, 1]\n\nx = [*x, 2]",
     ]
 
 
@@ -195,22 +194,22 @@ def test_group_all_with_skip(tmp_path: Path) -> None:
     """
     content = """\
 
-    ```python
+.. code-block:: python
+
     x = []
-    ```
 
-    <!--- skip: next -->
+.. skip: next
 
-    ```python
+.. code-block:: python
+
     x = [*x, 1]
-    ```
 
-    ```python
+.. code-block:: python
+
     x = [*x, 2]
-    ```
-    """
+"""
 
-    test_document = tmp_path / "test.md"
+    test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(example: Example) -> None:
@@ -240,5 +239,5 @@ def test_group_all_with_skip(tmp_path: Path) -> None:
     # but still group the first and third blocks
     # Note: padding preserves line numbers, so the skipped lines are included
     assert document.namespace["blocks"] == [
-        "x = []\n\n\n\n\n\n\n\n\n\nx = [*x, 2]\n",
+        "x = []\n\n\n\n\n\n\n\n\n\nx = [*x, 2]",
     ]

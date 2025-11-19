@@ -1,18 +1,16 @@
 """
-Tests for the group all parser for Markdown.
+Tests for the group all parser for MyST.
 """
 
 from pathlib import Path
 
 from sybil import Sybil
 from sybil.example import Example
-from sybil.parsers.markdown.codeblock import (
-    CodeBlockParser,
-)
-from sybil.parsers.markdown.skip import SkipParser
+from sybil.parsers.myst.codeblock import CodeBlockParser
+from sybil.parsers.myst.skip import SkipParser
 
 from sybil_extras.evaluators.no_op import NoOpEvaluator
-from sybil_extras.parsers.markdown.group_all import GroupAllParser
+from sybil_extras.parsers.myst.group_all import GroupAllParser
 
 
 def test_group_all(tmp_path: Path) -> None:
@@ -21,18 +19,18 @@ def test_group_all(tmp_path: Path) -> None:
     """
     content = """\
 
-    ```python
-    x = []
-    ```
+```python
+x = []
+```
 
-    ```python
-    x = [*x, 1]
-    ```
+```python
+x = [*x, 1]
+```
 
-    ```python
-    x = [*x, 2]
-    ```
-    """
+```python
+x = [*x, 2]
+```
+"""
 
     test_document = tmp_path / "test.md"
     test_document.write_text(data=content, encoding="utf-8")
@@ -71,10 +69,10 @@ def test_group_all_single_block(tmp_path: Path) -> None:
     """
     content = """\
 
-    ```python
-    x = []
-    ```
-    """
+```python
+x = []
+```
+"""
 
     test_document = tmp_path / "test.md"
     test_document.write_text(data=content, encoding="utf-8")
@@ -111,10 +109,10 @@ def test_group_all_empty_document(tmp_path: Path) -> None:
     The group all parser handles an empty document gracefully.
     """
     content = """\
-    # Empty document
+# Empty document
 
-    No code blocks here.
-    """
+No code blocks here.
+"""
 
     test_document = tmp_path / "test.md"
     test_document.write_text(data=content, encoding="utf-8")
@@ -143,18 +141,18 @@ def test_group_all_no_pad(tmp_path: Path) -> None:
     """
     content = """\
 
-    ```python
-    x = []
-    ```
+```python
+x = []
+```
 
-    ```python
-    x = [*x, 1]
-    ```
+```python
+x = [*x, 1]
+```
 
-    ```python
-    x = [*x, 2]
-    ```
-    """
+```python
+x = [*x, 2]
+```
+"""
 
     test_document = tmp_path / "test.md"
     test_document.write_text(data=content, encoding="utf-8")
@@ -195,20 +193,20 @@ def test_group_all_with_skip(tmp_path: Path) -> None:
     """
     content = """\
 
-    ```python
-    x = []
-    ```
+```python
+x = []
+```
 
-    <!--- skip: next -->
+<!--- skip: next -->
 
-    ```python
-    x = [*x, 1]
-    ```
+```python
+x = [*x, 1]
+```
 
-    ```python
-    x = [*x, 2]
-    ```
-    """
+```python
+x = [*x, 2]
+```
+"""
 
     test_document = tmp_path / "test.md"
     test_document.write_text(data=content, encoding="utf-8")
