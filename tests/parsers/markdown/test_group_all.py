@@ -59,10 +59,10 @@ def test_group_all(tmp_path: Path) -> None:
     for example in document.examples():
         example.evaluate()
 
-    # Should have one combined block with all three code blocks
     assert document.namespace["blocks"] == [
         "x = []\n\n\n\nx = [*x, 1]\n\n\n\nx = [*x, 2]\n",
     ]
+    assert len(document.evaluators) == 0
 
 
 def test_group_all_single_block(tmp_path: Path) -> None:
