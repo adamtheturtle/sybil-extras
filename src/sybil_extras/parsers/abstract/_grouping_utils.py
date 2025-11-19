@@ -13,7 +13,7 @@ def combine_examples_text(
     *,
     pad_groups: bool,
 ) -> Lexeme:
-    """Combine text from multiple examples into a single lexeme.
+    """Combine text from multiple examples.
 
     Pad the examples with newlines to ensure that line numbers in
     error messages match the line numbers in the source.
@@ -26,7 +26,7 @@ def combine_examples_text(
             to not have a bunch of newlines in it, such as formatters.
 
     Returns:
-        A lexeme containing the combined text.
+        The combined text.
     """
     result = examples[0].parsed
     for example in examples[1:]:
