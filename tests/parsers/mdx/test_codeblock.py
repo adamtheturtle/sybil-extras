@@ -125,7 +125,8 @@ y = 2
     for example in document.examples():
         example.evaluate()
 
-    assert len(collected_blocks) == 2  # noqa: PLR2004
+    expected_block_count = 2
+    assert len(collected_blocks) == expected_block_count
     assert collected_blocks[0] == ("x = 1\n", {"title": "first.py"})
     assert collected_blocks[1] == ("y = 2\n", {"title": "second.py"})
 
@@ -165,7 +166,8 @@ z = 3
     for example in document.examples():
         example.evaluate()
 
-    assert len(collected_blocks) == 2  # noqa: PLR2004
+    expected_block_count = 2
+    assert len(collected_blocks) == expected_block_count
     assert collected_blocks[0] == "x = 1\n"
     assert collected_blocks[1] == "z = 3\n"
 
@@ -201,7 +203,8 @@ y = 2
     for example in document.examples():
         example.evaluate()
 
-    assert len(collected_blocks) == 2  # noqa: PLR2004
+    expected_block_count = 2
+    assert len(collected_blocks) == expected_block_count
     assert collected_blocks[0] == "x = 1\n"
     assert collected_blocks[1] == "y = 2\n"
 

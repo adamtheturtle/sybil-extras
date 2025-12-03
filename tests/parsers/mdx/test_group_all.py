@@ -53,9 +53,12 @@ assert z == 3
         example.evaluate()
 
     # Variables should be available across all blocks
-    assert namespace["x"] == 1
-    assert namespace["y"] == 2  # noqa: PLR2004
-    assert namespace["z"] == 3  # noqa: PLR2004
+    expected_x = 1
+    expected_y = 2
+    expected_z = 3
+    assert namespace["x"] == expected_x
+    assert namespace["y"] == expected_y
+    assert namespace["z"] == expected_z
 
 
 def test_group_all_empty_document(tmp_path: Path) -> None:
@@ -136,7 +139,8 @@ assert result == 3
         example.evaluate()
 
     # Functions should be defined and callable
-    assert namespace["result"] == 3  # noqa: PLR2004
+    expected_result = 3
+    assert namespace["result"] == expected_result
 
 
 def test_group_all_multiple_languages(tmp_path: Path) -> None:

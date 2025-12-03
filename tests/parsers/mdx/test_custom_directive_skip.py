@@ -41,7 +41,7 @@ x = [*x, 3]
         """
         Execute the code in the document namespace.
         """
-        exec(
+        exec(  # noqa: S102
             example.parsed,
             globals=example.document.namespace,
             locals=example.document.namespace,
@@ -93,7 +93,7 @@ x = [*x, 4]
         """
         Execute the code in the document namespace.
         """
-        exec(
+        exec(  # noqa: S102
             example.parsed,
             globals=example.document.namespace,
             locals=example.document.namespace,
@@ -135,7 +135,7 @@ x = [*x, 2]
         """
         Execute the code in the document namespace.
         """
-        exec(
+        exec(  # noqa: S102
             example.parsed,
             globals=example.document.namespace,
             locals=example.document.namespace,
@@ -179,7 +179,7 @@ x = [*x, 3]
         """
         Execute the code in the document namespace.
         """
-        exec(
+        exec(  # noqa: S102
             example.parsed,
             globals=example.document.namespace,
             locals=example.document.namespace,
@@ -225,7 +225,7 @@ x = [*x, 3]
         """
         Execute the code in the document namespace.
         """
-        exec(
+        exec(  # noqa: S102
             example.parsed,
             globals=example.document.namespace,
             locals=example.document.namespace,

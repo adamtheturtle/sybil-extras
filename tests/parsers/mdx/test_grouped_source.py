@@ -66,7 +66,8 @@ x = [*x, 3]
         example.evaluate()
 
     # First block ungrouped, second/third grouped, fourth ungrouped
-    assert len(document.namespace["blocks"]) == 3  # noqa: PLR2004
+    expected_block_count = 3
+    assert len(document.namespace["blocks"]) == expected_block_count
     assert document.namespace["blocks"][0] == "x = []\n"
     assert "x = [*x, 1]" in document.namespace["blocks"][1]
     assert "x = [*x, 2]" in document.namespace["blocks"][1]
@@ -168,7 +169,8 @@ assert y == 2
         example.evaluate()
 
     # Should have two combined blocks, one for each group
-    assert len(collected_blocks) == 2  # noqa: PLR2004
+    expected_block_count = 2
+    assert len(collected_blocks) == expected_block_count
 
     # Find the setup and test blocks
     setup_block = next(b for b in collected_blocks if "x = 1" in b)
@@ -363,4 +365,5 @@ y = 2
     empty_line_count = sum(1 for line in lines if line == "")
     # Should have minimal empty lines with pad_groups=False
     # At most one separator newline plus trailing
-    assert empty_line_count <= 2  # noqa: PLR2004
+    max_empty_lines = 2
+    assert empty_line_count <= max_empty_lines
