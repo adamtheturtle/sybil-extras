@@ -42,15 +42,15 @@ class CodeBlockParser:
 
         # Create a pattern to match the info line with optional attributes
         if language:
-            escaped_lang = re.escape(language)
+            escaped_lang = re.escape(pattern=language)
             info_pattern = re.compile(
-                rf"(?P<language>{escaped_lang})(?P<attributes>[^\n]*?)$\n",
-                re.MULTILINE,
+                pattern=rf"(?P<language>{escaped_lang})(?P<attributes>[^\n]*?)$\n",
+                flags=re.MULTILINE,
             )
         else:
             info_pattern = re.compile(
-                r"(?P<language>\w+)(?P<attributes>[^\n]*?)$\n",
-                re.MULTILINE,
+                pattern=r"(?P<language>\w+)(?P<attributes>[^\n]*?)$\n",
+                flags=re.MULTILINE,
             )
 
         self._lexer = RawFencedCodeBlockLexer(
@@ -70,7 +70,7 @@ class CodeBlockParser:
 
             # Parse attributes from the attributes string
             attr_string = region.lexemes.get("attributes", "")
-            attributes = self._parse_attributes(attr_string)
+            attributes = self._parse_attributes(attr_string=attr_string)
 
             # Get the source lexeme
             source_lexeme = region.lexemes["source"]
@@ -94,9 +94,9 @@ class CodeBlockParser:
         attributes: dict[str, str] = {}
 
         # Pattern to match key="value" pairs
-        attr_pattern = re.compile(r'(\w+)="([^"]*)"')
+        attr_pattern = re.compile(pattern=r'(\w+)="([^"]*)"')
 
-        for match in attr_pattern.finditer(attr_string):
+        for match in attr_pattern.finditer(string=attr_string):
             key = match.group(1)
             value = match.group(2)
             attributes[key] = value

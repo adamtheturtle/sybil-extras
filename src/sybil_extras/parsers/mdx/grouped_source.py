@@ -97,15 +97,15 @@ class GroupAttributeParser:
 
         # Pattern to match MDX code blocks with group attribute
         if language:
-            escaped_lang = re.escape(language)
+            escaped_lang = re.escape(pattern=language)
             self._pattern = re.compile(
-                rf'^```{escaped_lang}\s+[^\n]*group="([^"]+)"[^\n]*\n(.*?)^```$',
-                re.MULTILINE | re.DOTALL,
+                pattern=rf'^```{escaped_lang}\s+[^\n]*group="([^"]+)"[^\n]*\n(.*?)^```$',
+                flags=re.MULTILINE | re.DOTALL,
             )
         else:
             self._pattern = re.compile(
-                r'^```(\w+)\s+[^\n]*group="([^"]+)"[^\n]*\n(.*?)^```$',
-                re.MULTILINE | re.DOTALL,
+                pattern=r'^```(\w+)\s+[^\n]*group="([^"]+)"[^\n]*\n(.*?)^```$',
+                flags=re.MULTILINE | re.DOTALL,
             )
 
     def __call__(self, document: Document) -> Iterable[Region]:
@@ -118,7 +118,7 @@ class GroupAttributeParser:
         # Collect all blocks by group name
         groups: dict[str, list[tuple[int, int, str, int]]] = {}
 
-        for match in self._pattern.finditer(document.text):
+        for match in self._pattern.finditer(string=document.text):
             if self._language:
                 # Language specified: group(1) is group name, group(2) is code
                 group_name = match.group(1)
