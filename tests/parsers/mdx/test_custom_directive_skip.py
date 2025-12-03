@@ -41,7 +41,11 @@ x = [*x, 3]
         """
         Execute the code in the document namespace.
         """
-        exec(example.parsed, example.document.namespace)  # noqa: S102
+        exec(
+            example.parsed,
+            globals=example.document.namespace,
+            locals=example.document.namespace,
+        )
 
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
@@ -89,7 +93,11 @@ x = [*x, 4]
         """
         Execute the code in the document namespace.
         """
-        exec(example.parsed, example.document.namespace)  # noqa: S102
+        exec(
+            example.parsed,
+            globals=example.document.namespace,
+            locals=example.document.namespace,
+        )
 
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
@@ -127,7 +135,11 @@ x = [*x, 2]
         """
         Execute the code in the document namespace.
         """
-        exec(example.parsed, example.document.namespace)  # noqa: S102
+        exec(
+            example.parsed,
+            globals=example.document.namespace,
+            locals=example.document.namespace,
+        )
 
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
@@ -167,7 +179,11 @@ x = [*x, 3]
         """
         Execute the code in the document namespace.
         """
-        exec(example.parsed, example.document.namespace)  # noqa: S102
+        exec(
+            example.parsed,
+            globals=example.document.namespace,
+            locals=example.document.namespace,
+        )
 
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
@@ -209,7 +225,11 @@ x = [*x, 3]
         """
         Execute the code in the document namespace.
         """
-        exec(example.parsed, example.document.namespace)  # noqa: S102
+        exec(
+            example.parsed,
+            globals=example.document.namespace,
+            locals=example.document.namespace,
+        )
 
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 

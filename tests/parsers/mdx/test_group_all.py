@@ -38,7 +38,7 @@ assert z == 3
         """
         Execute the code in a shared namespace.
         """
-        exec(example.parsed, namespace)  # noqa: S102
+        exec(example.parsed, globals=namespace, locals=namespace)  # noqa: S102
 
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
     group_all_parser = GroupAllParser(
@@ -121,7 +121,7 @@ assert result == 3
         """
         Execute the code in a shared namespace.
         """
-        exec(example.parsed, namespace)  # noqa: S102
+        exec(example.parsed, globals=namespace, locals=namespace)  # noqa: S102
 
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
     group_all_parser = GroupAllParser(
@@ -210,7 +210,7 @@ assert x == 1
         """
         Execute the code in a shared namespace.
         """
-        exec(example.parsed, namespace)  # noqa: S102
+        exec(example.parsed, globals=namespace, locals=namespace)  # noqa: S102
 
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
     group_all_parser = GroupAllParser(

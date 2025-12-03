@@ -29,7 +29,7 @@ print(x)
         example.document.namespace["code"] = example.parsed
 
     parser = CodeBlockParser(language="python", evaluator=evaluator)
-    document = check_parser(parser, content)
+    document = check_parser(parser=parser, text=content)
 
     assert document.namespace["code"] == "x = 1\nprint(x)\n"
 
@@ -54,7 +54,7 @@ print("hello")
         )
 
     parser = CodeBlockParser(language="python", evaluator=evaluator)
-    document = check_parser(parser, content)
+    document = check_parser(parser=parser, text=content)
 
     assert document.namespace["code"] == 'print("hello")\n'
     assert document.namespace["attributes"] == {"title": "hello.py"}
@@ -81,7 +81,7 @@ y = 2
         )
 
     parser = CodeBlockParser(language="python", evaluator=evaluator)
-    document = check_parser(parser, content)
+    document = check_parser(parser=parser, text=content)
 
     assert document.namespace["code"] == "x = 1\ny = 2\n"
     assert document.namespace["attributes"] == {
@@ -225,7 +225,7 @@ x = 1
         )
 
     parser = CodeBlockParser(language="python", evaluator=evaluator)
-    document = check_parser(parser, content)
+    document = check_parser(parser=parser, text=content)
 
     assert document.namespace["attributes"] == {
         "title": "my-script.py",
@@ -249,6 +249,6 @@ def test_empty_codeblock() -> None:
         example.document.namespace["code"] = example.parsed
 
     parser = CodeBlockParser(language="python", evaluator=evaluator)
-    document = check_parser(parser, content)
+    document = check_parser(parser=parser, text=content)
 
     assert document.namespace["code"] == ""
