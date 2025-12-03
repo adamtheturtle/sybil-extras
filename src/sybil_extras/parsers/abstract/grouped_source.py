@@ -6,10 +6,13 @@ from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from typing import Literal
 
+from beartype import beartype
 from sybil import Document, Example, Region
 from sybil.example import NotEvaluated
 from sybil.parsers.abstract.lexers import LexerCollection
 from sybil.typing import Evaluator, Lexer
+
+from sybil_extras.grouping_markers import GroupDelimiters
 
 from ._grouping_utils import (
     create_combined_example,
@@ -36,12 +39,14 @@ class _Grouper:
     Group blocks of source code.
     """
 
+    @beartype
     def __init__(
         self,
         *,
         evaluator: Evaluator,
         directive: str,
         pad_groups: bool,
+        delimiters: GroupDelimiters | None = None,
     ) -> None:
         """
         Args:
@@ -51,6 +56,9 @@ class _Grouper:
                 This is useful for error messages that reference line numbers.
                 However, this is detrimental to commands that expect the file
                 to not have a bunch of newlines in it, such as formatters.
+            delimiters: Optional delimiters to insert between blocks.
+                If provided, magic comment markers will be added to mark
+                block boundaries for tools like doccmd.
         """
         self._document_state: dict[Document, _GroupState] = defaultdict(
             _GroupState
@@ -58,6 +66,7 @@ class _Grouper:
         self._evaluator = evaluator
         self._directive = directive
         self._pad_groups = pad_groups
+        self._delimiters = delimiters
 
     def _evaluate_grouper_example(self, example: Example) -> None:
         """
@@ -89,6 +98,7 @@ class _Grouper:
                 examples=state.examples,
                 evaluator=self._evaluator,
                 pad_groups=self._pad_groups,
+                delimiters=self._delimiters,
             )
             new_example = create_combined_example(
                 examples=state.examples,
@@ -134,6 +144,7 @@ class AbstractGroupedSourceParser:
     An abstract parser for grouping blocks of source code.
     """
 
+    @beartype
     def __init__(
         self,
         *,
@@ -141,6 +152,7 @@ class AbstractGroupedSourceParser:
         evaluator: Evaluator,
         directive: str,
         pad_groups: bool,
+        delimiters: GroupDelimiters | None = None,
     ) -> None:
         """
         Args:
@@ -151,12 +163,16 @@ class AbstractGroupedSourceParser:
                 This is useful for error messages that reference line numbers.
                 However, this is detrimental to commands that expect the file
                 to not have a bunch of newlines in it, such as formatters.
+            delimiters: Optional delimiters to insert between blocks.
+                If provided, magic comment markers will be added to mark
+                block boundaries for tools like doccmd.
         """
         self._lexers: LexerCollection = LexerCollection(lexers)
         self._grouper: _Grouper = _Grouper(
             evaluator=evaluator,
             directive=directive,
             pad_groups=pad_groups,
+            delimiters=delimiters,
         )
 
     def __call__(self, document: Document) -> Iterable[Region]:

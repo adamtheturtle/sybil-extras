@@ -4,15 +4,24 @@ Shared utilities for grouping parsers.
 
 from collections.abc import Sequence
 
+from beartype import beartype
 from sybil import Example, Region
 from sybil.region import Lexeme
 from sybil.typing import Evaluator
 
+from sybil_extras.grouping_markers import (
+    BlockPosition,
+    GroupDelimiters,
+    insert_markers,
+)
 
+
+@beartype
 def _combine_examples_text(
     examples: Sequence[Example],
     *,
     pad_groups: bool,
+    delimiters: GroupDelimiters | None = None,
 ) -> Lexeme:
     """Combine text from multiple examples.
 
@@ -25,12 +34,29 @@ def _combine_examples_text(
             This is useful for error messages that reference line numbers.
             However, this is detrimental to commands that expect the file
             to not have a bunch of newlines in it, such as formatters.
+        delimiters: Optional delimiters to insert between blocks.
+            If provided, magic comment markers will be added to mark
+            block boundaries.
 
     Returns:
         The combined text.
     """
     result = examples[0].parsed
-    for example in examples[1:]:
+    block_positions: list[BlockPosition] = []
+    current_line = 0
+
+    # Track the first block
+    first_block_lines = len(examples[0].parsed.splitlines())
+    block_positions.append(
+        BlockPosition(
+            start_line=0,
+            end_line=first_block_lines,
+            block_index=0,
+        )
+    )
+    current_line = first_block_lines
+
+    for block_index, example in enumerate(examples[1:], start=1):
         existing_lines = len(result.text.splitlines())
         if pad_groups:
             padding_lines = example.line - examples[0].line - existing_lines
@@ -38,14 +64,39 @@ def _combine_examples_text(
             padding_lines = 1
 
         padding = "\n" * padding_lines
+        current_line += padding_lines
+
+        block_start_line = current_line
+        example_lines = len(example.parsed.splitlines())
+        block_end_line = current_line + example_lines
+
+        block_positions.append(
+            BlockPosition(
+                start_line=block_start_line,
+                end_line=block_end_line,
+                block_index=block_index,
+            )
+        )
+
         result = Lexeme(
             text=result.text + padding + example.parsed,
             offset=result.offset,
             line_offset=result.line_offset,
         )
+        current_line = block_end_line
+
+    combined_text = result.text
+
+    # Insert markers if delimiters are provided
+    if delimiters is not None:
+        combined_text = insert_markers(
+            grouped_source=combined_text,
+            block_positions=block_positions,
+            delimiters=delimiters,
+        )
 
     return Lexeme(
-        text=result.text,
+        text=combined_text,
         offset=result.offset,
         line_offset=result.line_offset,
     )
@@ -63,11 +114,13 @@ def has_source(example: Example) -> bool:
     return "source" in example.region.lexemes
 
 
+@beartype
 def create_combined_region(
     examples: Sequence[Example],
     *,
     evaluator: Evaluator,
     pad_groups: bool,
+    delimiters: GroupDelimiters | None = None,
 ) -> Region:
     """Create a combined region from multiple examples.
 
@@ -75,6 +128,7 @@ def create_combined_region(
         examples: The examples to combine.
         evaluator: The evaluator to use for the combined region.
         pad_groups: Whether to pad groups with empty lines.
+        delimiters: Optional delimiters to insert between blocks.
 
     Returns:
         The combined region.
@@ -85,6 +139,7 @@ def create_combined_region(
         parsed=_combine_examples_text(
             examples=examples,
             pad_groups=pad_groups,
+            delimiters=delimiters,
         ),
         evaluator=evaluator,
         lexemes=examples[0].region.lexemes,

@@ -4,12 +4,14 @@ A group parser for MyST.
 
 import re
 
+from beartype import beartype
 from sybil.parsers.markdown.lexers import DirectiveInHTMLCommentLexer
 from sybil.parsers.myst.lexers import (
     DirectiveInPercentCommentLexer,
 )
 from sybil.typing import Evaluator
 
+from sybil_extras.grouping_markers import GroupDelimiters
 from sybil_extras.parsers.abstract.grouped_source import (
     AbstractGroupedSourceParser,
 )
@@ -20,12 +22,14 @@ class GroupedSourceParser(AbstractGroupedSourceParser):
     A code block group parser for MyST.
     """
 
+    @beartype
     def __init__(
         self,
         *,
         directive: str,
         evaluator: Evaluator,
         pad_groups: bool,
+        delimiters: GroupDelimiters | None = None,
     ) -> None:
         """
         Args:
@@ -35,6 +39,9 @@ class GroupedSourceParser(AbstractGroupedSourceParser):
                 This is useful for error messages that reference line numbers.
                 However, this is detrimental to commands that expect the file
                 to not have a bunch of newlines in it, such as formatters.
+            delimiters: Optional delimiters to insert between blocks.
+                If provided, magic comment markers will be added to mark
+                block boundaries for tools like doccmd.
         """
         lexers = [
             DirectiveInPercentCommentLexer(
@@ -49,4 +56,5 @@ class GroupedSourceParser(AbstractGroupedSourceParser):
             evaluator=evaluator,
             directive=directive,
             pad_groups=pad_groups,
+            delimiters=delimiters,
         )
