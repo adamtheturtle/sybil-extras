@@ -6,24 +6,21 @@ from pathlib import Path
 
 from sybil import Sybil
 from sybil.example import Example
+from sybil.testing import check_parser
 
 from sybil_extras.parsers.mdx.codeblock import CodeBlockParser
 
 
-def test_basic_codeblock(tmp_path: Path) -> None:
+def test_basic_codeblock() -> None:
     """
     Test parsing a basic MDX code block without attributes.
     """
     content = """\
-# Test Document
-
 ```python
 x = 1
 print(x)
 ```
 """
-    test_document = tmp_path / "test.mdx"
-    test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(example: Example) -> None:
         """
@@ -32,28 +29,20 @@ print(x)
         example.document.namespace["code"] = example.parsed
 
     parser = CodeBlockParser(language="python", evaluator=evaluator)
-    sybil = Sybil(parsers=[parser])
-    document = sybil.parse(path=test_document)
-
-    for example in document.examples():
-        example.evaluate()
+    document = check_parser(parser, content)
 
     assert document.namespace["code"] == "x = 1\nprint(x)\n"
 
 
-def test_codeblock_with_title(tmp_path: Path) -> None:
+def test_codeblock_with_title() -> None:
     """
     Test parsing an MDX code block with a title attribute.
     """
     content = """\
-# Test Document
-
 ```python title="hello.py"
 print("hello")
 ```
 """
-    test_document = tmp_path / "test.mdx"
-    test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(example: Example) -> None:
         """
@@ -65,17 +54,13 @@ print("hello")
         )
 
     parser = CodeBlockParser(language="python", evaluator=evaluator)
-    sybil = Sybil(parsers=[parser])
-    document = sybil.parse(path=test_document)
-
-    for example in document.examples():
-        example.evaluate()
+    document = check_parser(parser, content)
 
     assert document.namespace["code"] == 'print("hello")\n'
     assert document.namespace["attributes"] == {"title": "hello.py"}
 
 
-def test_codeblock_with_multiple_attributes(tmp_path: Path) -> None:
+def test_codeblock_with_multiple_attributes() -> None:
     """
     Test parsing an MDX code block with multiple attributes.
     """
@@ -85,8 +70,6 @@ x = 1
 y = 2
 ```
 """
-    test_document = tmp_path / "test.mdx"
-    test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(example: Example) -> None:
         """
@@ -98,11 +81,7 @@ y = 2
         )
 
     parser = CodeBlockParser(language="python", evaluator=evaluator)
-    sybil = Sybil(parsers=[parser])
-    document = sybil.parse(path=test_document)
-
-    for example in document.examples():
-        example.evaluate()
+    document = check_parser(parser, content)
 
     assert document.namespace["code"] == "x = 1\ny = 2\n"
     assert document.namespace["attributes"] == {
@@ -227,7 +206,7 @@ y = 2
     assert collected_blocks[1] == "y = 2\n"
 
 
-def test_attributes_with_special_characters(tmp_path: Path) -> None:
+def test_attributes_with_special_characters() -> None:
     """
     Test parsing attributes with special characters in values.
     """
@@ -236,8 +215,6 @@ def test_attributes_with_special_characters(tmp_path: Path) -> None:
 x = 1
 ```
 """
-    test_document = tmp_path / "test.mdx"
-    test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(example: Example) -> None:
         """
@@ -248,11 +225,7 @@ x = 1
         )
 
     parser = CodeBlockParser(language="python", evaluator=evaluator)
-    sybil = Sybil(parsers=[parser])
-    document = sybil.parse(path=test_document)
-
-    for example in document.examples():
-        example.evaluate()
+    document = check_parser(parser, content)
 
     assert document.namespace["attributes"] == {
         "title": "my-script.py",
@@ -260,7 +233,7 @@ x = 1
     }
 
 
-def test_empty_codeblock(tmp_path: Path) -> None:
+def test_empty_codeblock() -> None:
     """
     Test parsing an empty MDX code block.
     """
@@ -268,8 +241,6 @@ def test_empty_codeblock(tmp_path: Path) -> None:
 ```python title="empty.py"
 ```
 """
-    test_document = tmp_path / "test.mdx"
-    test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(example: Example) -> None:
         """
@@ -278,10 +249,6 @@ def test_empty_codeblock(tmp_path: Path) -> None:
         example.document.namespace["code"] = example.parsed
 
     parser = CodeBlockParser(language="python", evaluator=evaluator)
-    sybil = Sybil(parsers=[parser])
-    document = sybil.parse(path=test_document)
-
-    for example in document.examples():
-        example.evaluate()
+    document = check_parser(parser, content)
 
     assert document.namespace["code"] == ""
