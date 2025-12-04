@@ -101,6 +101,24 @@ def _html_directive(text: str) -> str:
     return f"<!--- {text} -->"
 
 
+class _UnsupportedSphinxJinja2Parser:
+    """
+    Placeholder parser for markups without sphinx-jinja2 support.
+    """
+
+    def __init__(self, *args: object) -> None:
+        msg = "SphinxJinja2Parser is not available for this markup."
+        raise NotImplementedError(msg)
+
+
+def _unsupported_alternate_directive_renderer(_: str) -> str:
+    """
+    Raise when alternate directives are not supported for a markup.
+    """
+    msg = "Alternate directives are not defined for this markup."
+    raise NotImplementedError(msg)
+
+
 @dataclass(frozen=True)
 class MarkupLanguage:
     """
@@ -111,41 +129,44 @@ class MarkupLanguage:
     extension: str
     code_block_parser_cls: type
     python_code_block_parser_cls: type
-    skip_parser_cls: type | None
+    skip_parser_cls: type
     group_all_parser_cls: type
     grouped_source_parser_cls: type
-    custom_skip_parser_cls: type | None = None
-    sphinx_jinja_parser_cls: type | None = None
+    _block_renderer: Callable[[str], str]
+    _directive_renderer: Callable[[str], str]
+    custom_skip_parser_cls: type
+    sphinx_jinja_parser_cls: type
     trailing_newline: bool = False
-    _block_renderer: Callable[[str], str] | None = None
-    _directive_renderer: Callable[[str], str] | None = None
-    _alternate_directive_renderer: Callable[[str], str] | None = None
+    _alternate_directive_renderer: Callable[[str], str] = (
+        _unsupported_alternate_directive_renderer
+    )
 
     def code_block(self, body: str) -> str:
         """
         Create a code block fragment.
         """
-        if self._block_renderer is None:
-            msg = "No code block renderer defined."
-            raise ValueError(msg)
         return self._block_renderer(body.rstrip("\n"))
 
     def directive(self, directive: str) -> str:
         """
         Create a directive fragment.
         """
-        if self._directive_renderer is None:
-            msg = "This markup does not support directives."
-            raise ValueError(msg)
         return self._directive_renderer(directive)
 
-    def alternate_directive(self, directive: str) -> str | None:
+    def alternate_directive(self, directive: str) -> str:
         """
-        Render an alternate directive string, if supported.
+        Render an alternate directive string.
         """
-        if self._alternate_directive_renderer is None:
-            return None
         return self._alternate_directive_renderer(directive)
+
+    def supports_alternate_directive(self) -> bool:
+        """
+        Determine if this markup defines an alternate directive renderer.
+        """
+        return (
+            self._alternate_directive_renderer
+            is not _unsupported_alternate_directive_renderer
+        )
 
     def document(self, *parts: str) -> str:
         """
@@ -154,8 +175,6 @@ class MarkupLanguage:
         cleaned_parts = [
             part.strip("\n") for part in parts if part.strip("\n")
         ]
-        if not cleaned_parts:
-            return ""
         return "\n\n".join(cleaned_parts) + "\n"
 
     def expected_text(self, text: str) -> str:
@@ -191,6 +210,7 @@ MARKUP_LANGUAGES: tuple[MarkupLanguage, ...] = (
         group_all_parser_cls=MarkdownGroupAllParser,
         grouped_source_parser_cls=MarkdownGroupedSourceParser,
         custom_skip_parser_cls=MarkdownCustomSkipParser,
+        sphinx_jinja_parser_cls=_UnsupportedSphinxJinja2Parser,
         trailing_newline=True,
         _block_renderer=_markdown_code_block,
         _directive_renderer=_html_directive,

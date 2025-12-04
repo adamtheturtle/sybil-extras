@@ -173,9 +173,7 @@ def test_group_all_with_skip(
         evaluator=evaluator,
         pad_groups=True,
     )
-    skip_parser = None
-    if markup_language.skip_parser_cls is not None:
-        skip_parser = markup_language.skip_parser_cls()
+    skip_parser = markup_language.skip_parser_cls()
 
     document = evaluate_document(
         tmp_path=tmp_path,
@@ -186,11 +184,7 @@ def test_group_all_with_skip(
             markup_language.code_block("x = [*x, 1]"),
             markup_language.code_block("x = [*x, 2]"),
         ],
-        parsers=(
-            [code_block_parser, group_all_parser]
-            if skip_parser is None
-            else [code_block_parser, skip_parser, group_all_parser]
-        ),
+        parsers=[code_block_parser, skip_parser, group_all_parser],
     )
 
     expected = markup_language.expected_text(

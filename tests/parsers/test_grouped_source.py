@@ -171,15 +171,9 @@ def test_group_with_skip(
         language="python",
         evaluator=evaluator,
     )
-    skip_parser = (
-        markup_language.skip_parser_cls()
-        if markup_language.skip_parser_cls
-        else None
-    )
+    skip_parser = markup_language.skip_parser_cls()
 
-    parsers = [code_block_parser, group_parser]
-    if skip_parser is not None:
-        parsers.insert(1, skip_parser)
+    parsers = [code_block_parser, skip_parser, group_parser]
 
     document = evaluate_document(
         tmp_path=tmp_path,
