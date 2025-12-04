@@ -12,7 +12,7 @@ from sybil.parsers.markdown.lexers import (
     DirectiveInHTMLCommentLexer,
     RawFencedCodeBlockLexer,
 )
-from sybil.typing import Evaluator
+from sybil.typing import Evaluator, Lexer
 
 _INFO_LINE_PATTERN = re.compile(
     pattern=r"(?P<language>[^\s`]+)(?P<attributes>(?:[ \t]+[^\n]*?)?)$\n",
@@ -48,7 +48,7 @@ class CodeBlockParser(AbstractCodeBlockParser):
             language: The language to match (for example ``python``).
             evaluator: The evaluator used for the parsed code block.
         """
-        lexers = [
+        lexers: list[Lexer] = [
             RawFencedCodeBlockLexer(
                 info_pattern=_INFO_LINE_PATTERN,
                 mapping={
