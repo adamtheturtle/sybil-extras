@@ -10,7 +10,6 @@ import subprocess
 import sys
 import textwrap
 import time
-from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
@@ -20,13 +19,15 @@ import pytest
 from click.testing import CliRunner
 from sybil import Sybil
 from sybil.example import Example
-from sybil.parsers.markdown.codeblock import (
-    CodeBlockParser as MarkdownCodeBlockParser,
-)
-from sybil.parsers.myst.codeblock import CodeBlockParser as MySTCodeBlockParser
 from sybil.parsers.rest.codeblock import CodeBlockParser
 
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
+from sybil_extras.languages import (
+    MARKDOWN,
+    MYST,
+    RESTRUCTUREDTEXT,
+    MarkupLanguage,
+)
 
 
 @pytest.fixture(
@@ -72,33 +73,14 @@ def fixture_rst_file(tmp_path: Path) -> Path:
     return test_document
 
 
-@dataclass(frozen=True)
-class _MarkupLanguageValue:
-    """
-    Associated values for the supported markup languages.
-    """
-
-    name: str
-    code_block_parser_cls: type
-
-
 class _MarkupLanguage(Enum):
     """
     Supported markup languages.
     """
 
-    RESTRUCTUREDTEXT = _MarkupLanguageValue(
-        name="reStructuredText",
-        code_block_parser_cls=CodeBlockParser,
-    )
-    MARKDOWN = _MarkupLanguageValue(
-        name="Markdown",
-        code_block_parser_cls=MarkdownCodeBlockParser,
-    )
-    MYST = _MarkupLanguageValue(
-        name="MyST",
-        code_block_parser_cls=MySTCodeBlockParser,
-    )
+    RESTRUCTUREDTEXT = RESTRUCTUREDTEXT
+    MARKDOWN = MARKDOWN
+    MYST = MYST
 
 
 @pytest.fixture(
