@@ -7,10 +7,10 @@ from pathlib import Path
 
 import pytest
 from sybil import Sybil
-from sybil.example import Example
 from sybil.parsers.rest.codeblock import CodeBlockParser
 from sybil.parsers.rest.skip import SkipParser
 
+from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 from sybil_extras.parsers.rest.grouped_source import GroupedSourceParser
@@ -57,15 +57,7 @@ def test_group(tmp_path: Path) -> None:
     test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
-    def evaluator(example: Example) -> None:
-        """
-        Add code block content to the namespace.
-        """
-        existing_blocks = example.document.namespace.get("blocks", [])
-        example.document.namespace["blocks"] = [
-            *existing_blocks,
-            example.parsed,
-        ]
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
 
     group_parser = GroupedSourceParser(
         directive="group",
@@ -114,15 +106,7 @@ def test_nothing_after_group(tmp_path: Path) -> None:
     test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
-    def evaluator(example: Example) -> None:
-        """
-        Add code block content to the namespace.
-        """
-        existing_blocks = example.document.namespace.get("blocks", [])
-        example.document.namespace["blocks"] = [
-            *existing_blocks,
-            example.parsed,
-        ]
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
 
     group_parser = GroupedSourceParser(
         directive="group",
@@ -165,15 +149,7 @@ def test_empty_group(tmp_path: Path) -> None:
     test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
-    def evaluator(example: Example) -> None:
-        """
-        Add code block content to the namespace.
-        """
-        existing_blocks = example.document.namespace.get("blocks", [])
-        example.document.namespace["blocks"] = [
-            *existing_blocks,
-            example.parsed,
-        ]
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
 
     group_parser = GroupedSourceParser(
         directive="group",
@@ -226,15 +202,7 @@ def test_group_with_skip(tmp_path: Path) -> None:
     test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
-    def evaluator(example: Example) -> None:
-        """
-        Add code block content to the namespace.
-        """
-        existing_blocks = example.document.namespace.get("blocks", [])
-        example.document.namespace["blocks"] = [
-            *existing_blocks,
-            example.parsed,
-        ]
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
 
     group_parser = GroupedSourceParser(
         directive="group",
@@ -406,15 +374,7 @@ def test_directive_name_not_regex_escaped(tmp_path: Path) -> None:
     test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
 
-    def evaluator(example: Example) -> None:
-        """
-        Add code block content to the namespace.
-        """
-        existing_blocks = example.document.namespace.get("blocks", [])
-        example.document.namespace["blocks"] = [
-            *existing_blocks,
-            example.parsed,
-        ]
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
 
     group_parser = GroupedSourceParser(
         directive="custom-group[has_square_brackets]",
