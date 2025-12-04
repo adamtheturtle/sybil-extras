@@ -12,7 +12,7 @@ from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 from sybil_extras.languages import RESTRUCTUREDTEXT, MarkupLanguage
-from tests.helpers import document_data, join_markup
+from tests.helpers import join_markup
 
 
 def test_group(language: MarkupLanguage, tmp_path: Path) -> None:
@@ -33,7 +33,7 @@ def test_group(language: MarkupLanguage, tmp_path: Path) -> None:
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=document_data(content=content),
+        data=f"{content}{language.document_ending}",
         encoding="utf-8",
     )
 
@@ -75,7 +75,7 @@ def test_nothing_after_group(language: MarkupLanguage, tmp_path: Path) -> None:
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=document_data(content=content),
+        data=f"{content}{language.document_ending}",
         encoding="utf-8",
     )
 
@@ -114,7 +114,7 @@ def test_empty_group(language: MarkupLanguage, tmp_path: Path) -> None:
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=document_data(content=content),
+        data=f"{content}{language.document_ending}",
         encoding="utf-8",
     )
 
@@ -156,7 +156,7 @@ def test_group_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=document_data(content=content),
+        data=f"{content}{language.document_ending}",
         encoding="utf-8",
     )
 
@@ -195,7 +195,7 @@ def test_no_argument(language: MarkupLanguage, tmp_path: Path) -> None:
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=document_data(content=content),
+        data=f"{content}{language.document_ending}",
         encoding="utf-8",
     )
 
@@ -226,7 +226,7 @@ def test_malformed_argument(language: MarkupLanguage, tmp_path: Path) -> None:
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=document_data(content=content),
+        data=f"{content}{language.document_ending}",
         encoding="utf-8",
     )
 
@@ -251,7 +251,7 @@ def test_end_only(language: MarkupLanguage, tmp_path: Path) -> None:
     content = language.directive_builder(directive="group", argument="end")
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=document_data(content=content),
+        data=f"{content}{language.document_ending}",
         encoding="utf-8",
     )
 
@@ -282,7 +282,7 @@ def test_start_after_start(language: MarkupLanguage, tmp_path: Path) -> None:
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=document_data(content=content),
+        data=f"{content}{language.document_ending}",
         encoding="utf-8",
     )
 
@@ -326,7 +326,7 @@ def test_directive_name_not_regex_escaped(
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=document_data(content=content),
+        data=f"{content}{language.document_ending}",
         encoding="utf-8",
     )
 
@@ -370,7 +370,7 @@ def test_with_shell_command_evaluator(
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=document_data(content=content),
+        data=f"{content}{language.document_ending}",
         encoding="utf-8",
     )
 
@@ -426,7 +426,7 @@ def test_no_pad_groups(language: MarkupLanguage, tmp_path: Path) -> None:
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=document_data(content=content),
+        data=f"{content}{language.document_ending}",
         encoding="utf-8",
     )
 

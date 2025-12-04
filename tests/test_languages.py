@@ -18,7 +18,7 @@ from sybil_extras.languages import (
     RESTRUCTUREDTEXT,
     MarkupLanguage,
 )
-from tests.helpers import document_data, join_markup
+from tests.helpers import join_markup
 
 
 @pytest.mark.parametrize(
@@ -41,7 +41,7 @@ def test_code_block_parser(
     content = language.code_block_builder(code=code, language="python")
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=document_data(content=content),
+        data=f"{content}{language.document_ending}",
         encoding="utf-8",
     )
 
@@ -80,7 +80,7 @@ def test_skip_parser(
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=document_data(content=content),
+        data=f"{content}{language.document_ending}",
         encoding="utf-8",
     )
 
@@ -138,7 +138,7 @@ def test_group_parser(
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=document_data(content=content),
+        data=f"{content}{language.document_ending}",
         encoding="utf-8",
     )
 
@@ -183,7 +183,7 @@ def test_sphinx_jinja_parser(
     jinja_content = jinja_builder(body="{{ 1 + 1 }}")
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=document_data(content=jinja_content),
+        data=f"{jinja_content}{language.document_ending}",
         encoding="utf-8",
     )
 

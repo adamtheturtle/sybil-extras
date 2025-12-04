@@ -10,7 +10,7 @@ from sybil.evaluators.python import PythonEvaluator
 from sybil.evaluators.skip import SkipState
 
 from sybil_extras.languages import MarkupLanguage
-from tests.helpers import document_data, join_markup
+from tests.helpers import join_markup
 
 
 def test_skip(language: MarkupLanguage, tmp_path: Path) -> None:
@@ -26,7 +26,7 @@ def test_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=document_data(content=content),
+        data=f"{content}{language.document_ending}",
         encoding="utf-8",
     )
 
@@ -91,7 +91,7 @@ def test_directive_name_in_evaluate_error(
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=document_data(content=content),
+        data=f"{content}{language.document_ending}",
         encoding="utf-8",
     )
 
@@ -120,7 +120,7 @@ def test_directive_name_in_parse_error(
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=document_data(content=content),
+        data=f"{content}{language.document_ending}",
         encoding="utf-8",
     )
 
@@ -148,7 +148,7 @@ def test_directive_name_not_regex_escaped(
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=document_data(content=content),
+        data=f"{content}{language.document_ending}",
         encoding="utf-8",
     )
 
