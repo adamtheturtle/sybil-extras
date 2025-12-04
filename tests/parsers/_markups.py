@@ -106,17 +106,10 @@ class _UnsupportedSphinxJinja2Parser:
     Placeholder parser for markups without sphinx-jinja2 support.
     """
 
-    def __init__(self, *args: object) -> None:
-        msg = "SphinxJinja2Parser is not available for this markup."
-        raise NotImplementedError(msg)
+    def __init__(self, *args: object) -> None: ...
 
 
-def _unsupported_alternate_directive_renderer(_: str) -> str:
-    """
-    Raise when alternate directives are not supported for a markup.
-    """
-    msg = "Alternate directives are not defined for this markup."
-    raise NotImplementedError(msg)
+def _unsupported_alternate_directive_renderer(_: str) -> str: ...
 
 
 @dataclass(frozen=True)
