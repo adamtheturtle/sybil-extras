@@ -12,7 +12,7 @@ from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 from sybil_extras.languages import RESTRUCTUREDTEXT, MarkupLanguage
-from tests.helpers import document_data, join_markup, write_document
+from tests.helpers import document_data, join_markup
 
 
 def test_group(language: MarkupLanguage, tmp_path: Path) -> None:
@@ -20,21 +20,21 @@ def test_group(language: MarkupLanguage, tmp_path: Path) -> None:
     The group parser groups examples.
     """
     content = join_markup(
-        language.code_block(code="x = []"),
-        language.directive(directive="group", argument="start"),
-        language.code_block(code="x = [*x, 1]"),
-        language.code_block(code="x = [*x, 2]"),
-        language.directive(directive="group", argument="end"),
-        language.code_block(code="x = [*x, 3]"),
-        language.directive(directive="group", argument="start"),
-        language.code_block(code="x = [*x, 4]"),
-        language.code_block(code="x = [*x, 5]"),
-        language.directive(directive="group", argument="end"),
+        language.code_block_builder(code="x = []", language="python"),
+        language.directive_builder(directive="group", argument="start"),
+        language.code_block_builder(code="x = [*x, 1]", language="python"),
+        language.code_block_builder(code="x = [*x, 2]", language="python"),
+        language.directive_builder(directive="group", argument="end"),
+        language.code_block_builder(code="x = [*x, 3]", language="python"),
+        language.directive_builder(directive="group", argument="start"),
+        language.code_block_builder(code="x = [*x, 4]", language="python"),
+        language.code_block_builder(code="x = [*x, 5]", language="python"),
+        language.directive_builder(directive="group", argument="end"),
     )
-    test_document = write_document(
-        language=language,
-        directory=tmp_path,
+    test_document = tmp_path / f"test{language.file_extension}"
+    test_document.write_text(
         data=document_data(language=language, content=content),
+        encoding="utf-8",
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
@@ -67,16 +67,16 @@ def test_nothing_after_group(language: MarkupLanguage, tmp_path: Path) -> None:
     Groups are handled even at the end of a document.
     """
     content = join_markup(
-        language.code_block(code="x = []"),
-        language.directive(directive="group", argument="start"),
-        language.code_block(code="x = [*x, 1]"),
-        language.code_block(code="x = [*x, 2]"),
-        language.directive(directive="group", argument="end"),
+        language.code_block_builder(code="x = []", language="python"),
+        language.directive_builder(directive="group", argument="start"),
+        language.code_block_builder(code="x = [*x, 1]", language="python"),
+        language.code_block_builder(code="x = [*x, 2]", language="python"),
+        language.directive_builder(directive="group", argument="end"),
     )
-    test_document = write_document(
-        language=language,
-        directory=tmp_path,
+    test_document = tmp_path / f"test{language.file_extension}"
+    test_document.write_text(
         data=document_data(language=language, content=content),
+        encoding="utf-8",
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
@@ -107,15 +107,15 @@ def test_empty_group(language: MarkupLanguage, tmp_path: Path) -> None:
     Empty groups are handled gracefully.
     """
     content = join_markup(
-        language.code_block(code="x = []"),
-        language.directive(directive="group", argument="start"),
-        language.directive(directive="group", argument="end"),
-        language.code_block(code="x = [*x, 3]"),
+        language.code_block_builder(code="x = []", language="python"),
+        language.directive_builder(directive="group", argument="start"),
+        language.directive_builder(directive="group", argument="end"),
+        language.code_block_builder(code="x = [*x, 3]", language="python"),
     )
-    test_document = write_document(
-        language=language,
-        directory=tmp_path,
+    test_document = tmp_path / f"test{language.file_extension}"
+    test_document.write_text(
         data=document_data(language=language, content=content),
+        encoding="utf-8",
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
@@ -146,18 +146,18 @@ def test_group_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     Skip directives are respected within a group.
     """
     content = join_markup(
-        language.code_block(code="x = []"),
-        language.directive(directive="group", argument="start"),
-        language.code_block(code="x = [*x, 1]"),
-        language.directive(directive="skip", argument="next"),
-        language.code_block(code="x = [*x, 2]"),
-        language.directive(directive="group", argument="end"),
-        language.code_block(code="x = [*x, 3]"),
+        language.code_block_builder(code="x = []", language="python"),
+        language.directive_builder(directive="group", argument="start"),
+        language.code_block_builder(code="x = [*x, 1]", language="python"),
+        language.directive_builder(directive="skip", argument="next"),
+        language.code_block_builder(code="x = [*x, 2]", language="python"),
+        language.directive_builder(directive="group", argument="end"),
+        language.code_block_builder(code="x = [*x, 3]", language="python"),
     )
-    test_document = write_document(
-        language=language,
-        directory=tmp_path,
+    test_document = tmp_path / f"test{language.file_extension}"
+    test_document.write_text(
         data=document_data(language=language, content=content),
+        encoding="utf-8",
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
@@ -190,13 +190,13 @@ def test_no_argument(language: MarkupLanguage, tmp_path: Path) -> None:
     An error is raised when a group directive has no arguments.
     """
     content = join_markup(
-        language.directive(directive="group"),
-        language.directive(directive="group", argument="end"),
+        language.directive_builder(directive="group"),
+        language.directive_builder(directive="group", argument="end"),
     )
-    test_document = write_document(
-        language=language,
-        directory=tmp_path,
+    test_document = tmp_path / f"test{language.file_extension}"
+    test_document.write_text(
         data=document_data(language=language, content=content),
+        encoding="utf-8",
     )
 
     group_parser = language.group_parser_cls(
@@ -218,13 +218,16 @@ def test_malformed_argument(language: MarkupLanguage, tmp_path: Path) -> None:
     An error is raised when the group directive argument is invalid.
     """
     content = join_markup(
-        language.directive(directive="group", argument="not_start_or_end"),
-        language.directive(directive="group", argument="end"),
+        language.directive_builder(
+            directive="group",
+            argument="not_start_or_end",
+        ),
+        language.directive_builder(directive="group", argument="end"),
     )
-    test_document = write_document(
-        language=language,
-        directory=tmp_path,
+    test_document = tmp_path / f"test{language.file_extension}"
+    test_document.write_text(
         data=document_data(language=language, content=content),
+        encoding="utf-8",
     )
 
     group_parser = language.group_parser_cls(
@@ -245,11 +248,11 @@ def test_end_only(language: MarkupLanguage, tmp_path: Path) -> None:
     """
     An error is raised when an end directive has no matching start.
     """
-    content = language.directive(directive="group", argument="end")
-    test_document = write_document(
-        language=language,
-        directory=tmp_path,
+    content = language.directive_builder(directive="group", argument="end")
+    test_document = tmp_path / f"test{language.file_extension}"
+    test_document.write_text(
         data=document_data(language=language, content=content),
+        encoding="utf-8",
     )
 
     group_parser = language.group_parser_cls(
@@ -274,13 +277,13 @@ def test_start_after_start(language: MarkupLanguage, tmp_path: Path) -> None:
     An error is raised when start directives are nested improperly.
     """
     content = join_markup(
-        language.directive(directive="group", argument="start"),
-        language.directive(directive="group", argument="start"),
+        language.directive_builder(directive="group", argument="start"),
+        language.directive_builder(directive="group", argument="start"),
     )
-    test_document = write_document(
-        language=language,
-        directory=tmp_path,
+    test_document = tmp_path / f"test{language.file_extension}"
+    test_document.write_text(
         data=document_data(language=language, content=content),
+        encoding="utf-8",
     )
 
     group_parser = language.group_parser_cls(
@@ -310,21 +313,21 @@ def test_directive_name_not_regex_escaped(
     """
     directive = "custom-group[has_square_brackets]"
     content = join_markup(
-        language.code_block(code="x = []"),
-        language.directive(directive=directive, argument="start"),
-        language.code_block(code="x = [*x, 1]"),
-        language.code_block(code="x = [*x, 2]"),
-        language.directive(directive=directive, argument="end"),
-        language.code_block(code="x = [*x, 3]"),
-        language.directive(directive=directive, argument="start"),
-        language.code_block(code="x = [*x, 4]"),
-        language.code_block(code="x = [*x, 5]"),
-        language.directive(directive=directive, argument="end"),
+        language.code_block_builder(code="x = []", language="python"),
+        language.directive_builder(directive=directive, argument="start"),
+        language.code_block_builder(code="x = [*x, 1]", language="python"),
+        language.code_block_builder(code="x = [*x, 2]", language="python"),
+        language.directive_builder(directive=directive, argument="end"),
+        language.code_block_builder(code="x = [*x, 3]", language="python"),
+        language.directive_builder(directive=directive, argument="start"),
+        language.code_block_builder(code="x = [*x, 4]", language="python"),
+        language.code_block_builder(code="x = [*x, 5]", language="python"),
+        language.directive_builder(directive=directive, argument="end"),
     )
-    test_document = write_document(
-        language=language,
-        directory=tmp_path,
+    test_document = tmp_path / f"test{language.file_extension}"
+    test_document.write_text(
         data=document_data(language=language, content=content),
+        encoding="utf-8",
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
@@ -360,15 +363,15 @@ def test_with_shell_command_evaluator(
     The group parser cooperates with the shell command evaluator.
     """
     content = join_markup(
-        language.directive(directive="group", argument="start"),
-        language.code_block(code="x = [*x, 1]"),
-        language.code_block(code="x = [*x, 2]"),
-        language.directive(directive="group", argument="end"),
+        language.directive_builder(directive="group", argument="start"),
+        language.code_block_builder(code="x = [*x, 1]", language="python"),
+        language.code_block_builder(code="x = [*x, 2]", language="python"),
+        language.directive_builder(directive="group", argument="end"),
     )
-    test_document = write_document(
-        language=language,
-        directory=tmp_path,
+    test_document = tmp_path / f"test{language.file_extension}"
+    test_document.write_text(
         data=document_data(language=language, content=content),
+        encoding="utf-8",
     )
 
     output_document = tmp_path / "output.txt"
@@ -416,15 +419,15 @@ def test_no_pad_groups(language: MarkupLanguage, tmp_path: Path) -> None:
     It is possible to avoid padding grouped code blocks.
     """
     content = join_markup(
-        language.directive(directive="group", argument="start"),
-        language.code_block(code="x = [*x, 1]"),
-        language.code_block(code="x = [*x, 2]"),
-        language.directive(directive="group", argument="end"),
+        language.directive_builder(directive="group", argument="start"),
+        language.code_block_builder(code="x = [*x, 1]", language="python"),
+        language.code_block_builder(code="x = [*x, 2]", language="python"),
+        language.directive_builder(directive="group", argument="end"),
     )
-    test_document = write_document(
-        language=language,
-        directory=tmp_path,
+    test_document = tmp_path / f"test{language.file_extension}"
+    test_document.write_text(
         data=document_data(language=language, content=content),
+        encoding="utf-8",
     )
 
     output_document = tmp_path / "output.txt"
@@ -472,12 +475,21 @@ def test_rest_group_parser_handles_missing_trailing_newline(
     The reST group parser handles directives without trailing newlines.
     """
     content = join_markup(
-        RESTRUCTUREDTEXT.directive(directive="group", argument="start"),
-        RESTRUCTUREDTEXT.code_block(code="x = [*x, 1]"),
-        RESTRUCTUREDTEXT.code_block(code="x = [*x, 2]"),
-        RESTRUCTUREDTEXT.directive(directive="group", argument="end"),
+        RESTRUCTUREDTEXT.directive_builder(
+            directive="group",
+            argument="start",
+        ),
+        RESTRUCTUREDTEXT.code_block_builder(
+            code="x = [*x, 1]",
+            language="python",
+        ),
+        RESTRUCTUREDTEXT.code_block_builder(
+            code="x = [*x, 2]",
+            language="python",
+        ),
+        RESTRUCTUREDTEXT.directive_builder(directive="group", argument="end"),
     )
-    document_path = RESTRUCTUREDTEXT.document_path(directory=tmp_path)
+    document_path = tmp_path / f"test{RESTRUCTUREDTEXT.file_extension}"
     document_path.write_text(data=content, encoding="utf-8")
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")

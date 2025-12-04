@@ -3,9 +3,8 @@ Tools for managing markup languages and generating snippets.
 """
 
 import textwrap
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 from dataclasses import dataclass
-from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, TypeAlias, runtime_checkable
 
 import sybil.parsers.markdown
@@ -141,9 +140,43 @@ class _GroupAllParser(Protocol):
         ...  # pylint: disable=unnecessary-ellipsis
 
 
-CodeBlockBuilder = Callable[[str, str], str]
-DirectiveBuilder = Callable[[str, str | None], str]
-JinjaBlockBuilder = Callable[[str], str]
+@runtime_checkable
+class CodeBlockBuilder(Protocol):
+    """
+    A callable that renders code blocks for a markup language.
+    """
+
+    def __call__(self, code: str, language: str) -> str:
+        """
+        Render ``code`` for ``language``.
+        """
+        ...  # pylint: disable=unnecessary-ellipsis
+
+
+@runtime_checkable
+class DirectiveBuilder(Protocol):
+    """
+    A callable that renders directives for a markup language.
+    """
+
+    def __call__(self, directive: str, argument: str | None = None) -> str:
+        """
+        Render ``directive`` with the optional ``argument``.
+        """
+        ...  # pylint: disable=unnecessary-ellipsis
+
+
+@runtime_checkable
+class JinjaBlockBuilder(Protocol):
+    """
+    A callable that renders Jinja blocks for a markup language.
+    """
+
+    def __call__(self, body: str) -> str:
+        """
+        Render a Jinja block containing ``body``.
+        """
+        ...  # pylint: disable=unnecessary-ellipsis
 
 
 @beartype
@@ -179,7 +212,10 @@ def _rst_code_block(code: str, language: str) -> str:
 
 
 @beartype
-def _html_comment_directive(directive: str, argument: str | None) -> str:
+def _html_comment_directive(
+    directive: str,
+    argument: str | None = None,
+) -> str:
     """
     Render a directive embedded in an HTML comment.
     """
@@ -188,7 +224,10 @@ def _html_comment_directive(directive: str, argument: str | None) -> str:
 
 
 @beartype
-def _rst_directive(directive: str, argument: str | None) -> str:
+def _rst_directive(
+    directive: str,
+    argument: str | None = None,
+) -> str:
     """
     Render a directive for reStructuredText documents.
     """
@@ -259,42 +298,9 @@ class MarkupLanguage:
     group_parser_cls: type[_GroupedSourceParser]
     group_all_parser_cls: type[_GroupAllParser]
     sphinx_jinja_parser_cls: type[_SphinxJinja2Parser] | None
-    _code_block_builder: CodeBlockBuilder
-    _directive_builder: DirectiveBuilder
-    _jinja_block_builder: JinjaBlockBuilder | None
-
-    def document_name(self, stem: str = "test") -> str:
-        """
-        Return a filename for the given document stem.
-        """
-        return f"{stem}{self.file_extension}"
-
-    def document_path(self, directory: Path, stem: str = "test") -> Path:
-        """
-        Return a path inside ``directory`` using the language extension.
-        """
-        return directory / self.document_name(stem=stem)
-
-    def code_block(self, code: str, *, language: str = "python") -> str:
-        """
-        Create a code block for the markup language.
-        """
-        return self._code_block_builder(code, language)
-
-    def directive(self, directive: str, argument: str | None = None) -> str:
-        """
-        Create a directive for the markup language.
-        """
-        return self._directive_builder(directive, argument)
-
-    def jinja_block(self, body: str) -> str:
-        """
-        Create a sphinx-jinja block for the markup language.
-        """
-        if self._jinja_block_builder is None:
-            msg = f"{self.name} does not support sphinx-jinja blocks."
-            raise ValueError(msg)
-        return self._jinja_block_builder(body)
+    code_block_builder: CodeBlockBuilder
+    directive_builder: DirectiveBuilder
+    jinja_block_builder: JinjaBlockBuilder | None
 
 
 MYST = MarkupLanguage(
@@ -307,9 +313,9 @@ MYST = MarkupLanguage(
     group_parser_cls=sybil_extras.parsers.myst.grouped_source.GroupedSourceParser,
     group_all_parser_cls=sybil_extras.parsers.myst.group_all.GroupAllParser,
     sphinx_jinja_parser_cls=sybil_extras.parsers.myst.sphinx_jinja2.SphinxJinja2Parser,
-    _code_block_builder=_markdown_code_block,
-    _directive_builder=_html_comment_directive,
-    _jinja_block_builder=_myst_jinja_block,
+    code_block_builder=_markdown_code_block,
+    directive_builder=_html_comment_directive,
+    jinja_block_builder=_myst_jinja_block,
 )
 
 RESTRUCTUREDTEXT = MarkupLanguage(
@@ -320,9 +326,9 @@ RESTRUCTUREDTEXT = MarkupLanguage(
     group_parser_cls=sybil_extras.parsers.rest.grouped_source.GroupedSourceParser,
     group_all_parser_cls=sybil_extras.parsers.rest.group_all.GroupAllParser,
     sphinx_jinja_parser_cls=sybil_extras.parsers.rest.sphinx_jinja2.SphinxJinja2Parser,
-    _code_block_builder=_rst_code_block,
-    _directive_builder=_rst_directive,
-    _jinja_block_builder=_rst_jinja_block,
+    code_block_builder=_rst_code_block,
+    directive_builder=_rst_directive,
+    jinja_block_builder=_rst_jinja_block,
 )
 
 MARKDOWN = MarkupLanguage(
@@ -333,9 +339,9 @@ MARKDOWN = MarkupLanguage(
     group_parser_cls=sybil_extras.parsers.markdown.grouped_source.GroupedSourceParser,
     group_all_parser_cls=sybil_extras.parsers.markdown.group_all.GroupAllParser,
     sphinx_jinja_parser_cls=None,
-    _code_block_builder=_markdown_code_block,
-    _directive_builder=_html_comment_directive,
-    _jinja_block_builder=None,
+    code_block_builder=_markdown_code_block,
+    directive_builder=_html_comment_directive,
+    jinja_block_builder=None,
 )
 
 

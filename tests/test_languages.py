@@ -18,7 +18,7 @@ from sybil_extras.languages import (
     RESTRUCTUREDTEXT,
     MarkupLanguage,
 )
-from tests.helpers import document_data, join_markup, write_document
+from tests.helpers import document_data, join_markup
 
 
 @pytest.mark.parametrize(
@@ -38,11 +38,11 @@ def test_code_block_parser(
     Test that each language's code block parser works correctly.
     """
     code = f"x = {value}"
-    content = language.code_block(code=code)
-    test_document = write_document(
-        language=language,
-        directory=tmp_path,
+    content = language.code_block_builder(code=code, language="python")
+    test_document = tmp_path / f"test{language.file_extension}"
+    test_document.write_text(
         data=document_data(language=language, content=content),
+        encoding="utf-8",
     )
 
     parser = language.code_block_parser_cls(
@@ -75,13 +75,13 @@ def test_skip_parser(
     Test that each language's skip parser works correctly.
     """
     content = join_markup(
-        language.directive(directive="skip", argument="next"),
-        language.code_block(code=f"x = {value}"),
+        language.directive_builder(directive="skip", argument="next"),
+        language.code_block_builder(code=f"x = {value}", language="python"),
     )
-    test_document = write_document(
-        language=language,
-        directory=tmp_path,
+    test_document = tmp_path / f"test{language.file_extension}"
+    test_document.write_text(
         data=document_data(language=language, content=content),
+        encoding="utf-8",
     )
 
     skip_parser = language.skip_parser_cls(directive="skip")
@@ -111,7 +111,7 @@ def test_code_block_empty(language: MarkupLanguage) -> None:
     """
     Code block builders handle empty content.
     """
-    block = language.code_block(code="")
+    block = language.code_block_builder(code="", language="python")
     assert block
 
 
@@ -129,11 +129,10 @@ def test_write_document_empty(
     """
     Writing an empty document does not add trailing newlines.
     """
-    path = write_document(
-        language=language,
-        directory=tmp_path,
+    path = tmp_path / f"empty{language.file_extension}"
+    path.write_text(
         data=document_data(language=language, content=""),
-        stem="empty",
+        encoding="utf-8",
     )
     assert path.read_text(encoding="utf-8") == ""
 
@@ -154,15 +153,15 @@ def test_group_parser(
     Test that each language's group parser works correctly.
     """
     content = join_markup(
-        language.directive(directive="group", argument="start"),
-        language.code_block(code="x = 1"),
-        language.code_block(code="x = x + 1"),
-        language.directive(directive="group", argument="end"),
+        language.directive_builder(directive="group", argument="start"),
+        language.code_block_builder(code="x = 1", language="python"),
+        language.code_block_builder(code="x = x + 1", language="python"),
+        language.directive_builder(directive="group", argument="end"),
     )
-    test_document = write_document(
-        language=language,
-        directory=tmp_path,
+    test_document = tmp_path / f"test{language.file_extension}"
+    test_document.write_text(
         data=document_data(language=language, content=content),
+        encoding="utf-8",
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
@@ -200,12 +199,14 @@ def test_sphinx_jinja_parser(
     Test that each language's sphinx-jinja parser works correctly.
     """
     assert language.sphinx_jinja_parser_cls is not None
+    jinja_builder = language.jinja_block_builder
+    assert jinja_builder is not None
 
-    jinja_content = language.jinja_block(body="{{ 1 + 1 }}")
-    test_document = write_document(
-        language=language,
-        directory=tmp_path,
+    jinja_content = jinja_builder(body="{{ 1 + 1 }}")
+    test_document = tmp_path / f"test{language.file_extension}"
+    test_document.write_text(
         data=document_data(language=language, content=jinja_content),
+        encoding="utf-8",
     )
 
     jinja_parser = language.sphinx_jinja_parser_cls(evaluator=NoOpEvaluator())
@@ -221,11 +222,7 @@ def test_markdown_no_sphinx_jinja() -> None:
     Test that Markdown does not have a sphinx-jinja parser.
     """
     assert MARKDOWN.sphinx_jinja_parser_cls is None
-    with pytest.raises(
-        expected_exception=ValueError,
-        match="does not support sphinx-jinja blocks",
-    ):
-        MARKDOWN.jinja_block(body="{{ 1 }}")
+    assert MARKDOWN.jinja_block_builder is None
 
 
 def test_language_names() -> None:

@@ -2,9 +2,7 @@
 Helpers shared across tests.
 """
 
-from pathlib import Path
-
-from sybil_extras.languages import MarkupLanguage
+from sybil_extras.languages import RESTRUCTUREDTEXT, MarkupLanguage
 
 
 def join_markup(*parts: str) -> str:
@@ -16,26 +14,14 @@ def join_markup(*parts: str) -> str:
 
 
 def document_data(language: MarkupLanguage, content: str) -> str:
-    """
-    Calculate the data ``write_document`` should persist.
+    """Calculate the normalized markup to persist.
+
+    reStructuredText needs a blank line separating directives from
+    following content, so it keeps the double newline while other
+    languages only get a single trailing newline.
     """
     if not content:
         return ""
     normalized = content.rstrip("\n")
-    suffix = "\n\n" if language.file_extension == ".rst" else "\n"
+    suffix = "\n\n" if language is RESTRUCTUREDTEXT else "\n"
     return f"{normalized}{suffix}"
-
-
-def write_document(
-    language: MarkupLanguage,
-    directory: Path,
-    data: str,
-    *,
-    stem: str = "test",
-) -> Path:
-    """
-    Write ``data`` to ``directory`` using the language extension.
-    """
-    path = language.document_path(directory=directory, stem=stem)
-    path.write_text(data=data, encoding="utf-8")
-    return path

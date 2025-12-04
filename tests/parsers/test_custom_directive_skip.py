@@ -11,7 +11,7 @@ from sybil.evaluators.python import PythonEvaluator
 from sybil.evaluators.skip import SkipState
 
 from sybil_extras.languages import MarkupLanguage
-from tests.helpers import document_data, join_markup, write_document
+from tests.helpers import document_data, join_markup
 
 
 def _code_block_parser(
@@ -33,15 +33,15 @@ def test_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     """
     content = join_markup(
         "Example",
-        language.code_block(code="x = []"),
-        language.directive(directive="custom-skip", argument="next"),
-        language.code_block(code="x = [*x, 2]"),
-        language.code_block(code="x = [*x, 3]"),
+        language.code_block_builder(code="x = []", language="python"),
+        language.directive_builder(directive="custom-skip", argument="next"),
+        language.code_block_builder(code="x = [*x, 2]", language="python"),
+        language.code_block_builder(code="x = [*x, 3]", language="python"),
     )
-    test_document = write_document(
-        language=language,
-        directory=tmp_path,
+    test_document = tmp_path / f"test{language.file_extension}"
+    test_document.write_text(
         data=document_data(language=language, content=content),
+        encoding="utf-8",
     )
 
     skip_parser = language.skip_parser_cls(directive="custom-skip")
@@ -95,11 +95,14 @@ def test_directive_name_in_evaluate_error(
     """
     The directive name is included in evaluation errors.
     """
-    content = language.directive(directive="custom-skip", argument="end")
-    test_document = write_document(
-        language=language,
-        directory=tmp_path,
+    content = language.directive_builder(
+        directive="custom-skip",
+        argument="end",
+    )
+    test_document = tmp_path / f"test{language.file_extension}"
+    test_document.write_text(
         data=document_data(language=language, content=content),
+        encoding="utf-8",
     )
 
     skip_parser = language.skip_parser_cls(directive="custom-skip")
@@ -121,11 +124,14 @@ def test_directive_name_in_parse_error(
     """
     The directive name is included in parsing errors.
     """
-    content = language.directive(directive="custom-skip", argument="!!!")
-    test_document = write_document(
-        language=language,
-        directory=tmp_path,
+    content = language.directive_builder(
+        directive="custom-skip",
+        argument="!!!",
+    )
+    test_document = tmp_path / f"test{language.file_extension}"
+    test_document.write_text(
         data=document_data(language=language, content=content),
+        encoding="utf-8",
     )
 
     skip_parser = language.skip_parser_cls(directive="custom-skip")
@@ -147,13 +153,13 @@ def test_directive_name_not_regex_escaped(
     """
     directive = "custom-skip[has_square_brackets]"
     content = join_markup(
-        language.directive(directive=directive, argument="next"),
-        language.code_block(code="block = 1"),
+        language.directive_builder(directive=directive, argument="next"),
+        language.code_block_builder(code="block = 1", language="python"),
     )
-    test_document = write_document(
-        language=language,
-        directory=tmp_path,
+    test_document = tmp_path / f"test{language.file_extension}"
+    test_document.write_text(
         data=document_data(language=language, content=content),
+        encoding="utf-8",
     )
 
     code_block_parser = _code_block_parser(language=language)

@@ -11,7 +11,7 @@ from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.languages import (
     MarkupLanguage,
 )
-from tests.helpers import document_data, join_markup, write_document
+from tests.helpers import document_data, join_markup
 
 
 def test_group_all(language: MarkupLanguage, tmp_path: Path) -> None:
@@ -19,14 +19,14 @@ def test_group_all(language: MarkupLanguage, tmp_path: Path) -> None:
     All code blocks are grouped into a single block.
     """
     content = join_markup(
-        language.code_block(code="x = []"),
-        language.code_block(code="x = [*x, 1]"),
-        language.code_block(code="x = [*x, 2]"),
+        language.code_block_builder(code="x = []", language="python"),
+        language.code_block_builder(code="x = [*x, 1]", language="python"),
+        language.code_block_builder(code="x = [*x, 2]", language="python"),
     )
-    test_document = write_document(
-        language=language,
-        directory=tmp_path,
+    test_document = tmp_path / f"test{language.file_extension}"
+    test_document.write_text(
         data=document_data(language=language, content=content),
+        encoding="utf-8",
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
@@ -61,11 +61,11 @@ def test_group_all_single_block(
     """
     Grouping a single block preserves it.
     """
-    content = language.code_block(code="x = []")
-    test_document = write_document(
-        language=language,
-        directory=tmp_path,
+    content = language.code_block_builder(code="x = []", language="python")
+    test_document = tmp_path / f"test{language.file_extension}"
+    test_document.write_text(
         data=document_data(language=language, content=content),
+        encoding="utf-8",
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
@@ -96,10 +96,10 @@ def test_group_all_empty_document(
     Empty documents do not raise errors.
     """
     content = "Empty document without code blocks."
-    test_document = write_document(
-        language=language,
-        directory=tmp_path,
+    test_document = tmp_path / f"test{language.file_extension}"
+    test_document.write_text(
         data=document_data(language=language, content=content),
+        encoding="utf-8",
     )
 
     group_all_parser = language.group_all_parser_cls(
@@ -125,14 +125,14 @@ def test_group_all_no_pad(language: MarkupLanguage, tmp_path: Path) -> None:
     Groups can be combined without inserting extra padding.
     """
     content = join_markup(
-        language.code_block(code="x = []"),
-        language.code_block(code="x = [*x, 1]"),
-        language.code_block(code="x = [*x, 2]"),
+        language.code_block_builder(code="x = []", language="python"),
+        language.code_block_builder(code="x = [*x, 1]", language="python"),
+        language.code_block_builder(code="x = [*x, 2]", language="python"),
     )
-    test_document = write_document(
-        language=language,
-        directory=tmp_path,
+    test_document = tmp_path / f"test{language.file_extension}"
+    test_document.write_text(
         data=document_data(language=language, content=content),
+        encoding="utf-8",
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
@@ -163,15 +163,15 @@ def test_group_all_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     Skip directives are honored when grouping code blocks.
     """
     content = join_markup(
-        language.code_block(code="x = []"),
-        language.directive(directive="skip", argument="next"),
-        language.code_block(code="x = [*x, 1]"),
-        language.code_block(code="x = [*x, 2]"),
+        language.code_block_builder(code="x = []", language="python"),
+        language.directive_builder(directive="skip", argument="next"),
+        language.code_block_builder(code="x = [*x, 1]", language="python"),
+        language.code_block_builder(code="x = [*x, 2]", language="python"),
     )
-    test_document = write_document(
-        language=language,
-        directory=tmp_path,
+    test_document = tmp_path / f"test{language.file_extension}"
+    test_document.write_text(
         data=document_data(language=language, content=content),
+        encoding="utf-8",
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
