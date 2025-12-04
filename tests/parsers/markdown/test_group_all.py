@@ -5,12 +5,12 @@ Tests for the group all parser for Markdown.
 from pathlib import Path
 
 from sybil import Sybil
-from sybil.example import Example
 from sybil.parsers.markdown.codeblock import (
     CodeBlockParser,
 )
 from sybil.parsers.markdown.skip import SkipParser
 
+from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.parsers.markdown.group_all import GroupAllParser
 
@@ -37,15 +37,7 @@ def test_group_all(tmp_path: Path) -> None:
     test_document = tmp_path / "test.md"
     test_document.write_text(data=content, encoding="utf-8")
 
-    def evaluator(example: Example) -> None:
-        """
-        Add code block content to the namespace.
-        """
-        existing_blocks = example.document.namespace.get("blocks", [])
-        example.document.namespace["blocks"] = [
-            *existing_blocks,
-            example.parsed,
-        ]
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
 
     group_all_parser = GroupAllParser(
         evaluator=evaluator,
@@ -79,15 +71,7 @@ def test_group_all_single_block(tmp_path: Path) -> None:
     test_document = tmp_path / "test.md"
     test_document.write_text(data=content, encoding="utf-8")
 
-    def evaluator(example: Example) -> None:
-        """
-        Add code block content to the namespace.
-        """
-        existing_blocks = example.document.namespace.get("blocks", [])
-        example.document.namespace["blocks"] = [
-            *existing_blocks,
-            example.parsed,
-        ]
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
 
     group_all_parser = GroupAllParser(
         evaluator=evaluator,
@@ -158,15 +142,7 @@ def test_group_all_no_pad(tmp_path: Path) -> None:
     test_document = tmp_path / "test.md"
     test_document.write_text(data=content, encoding="utf-8")
 
-    def evaluator(example: Example) -> None:
-        """
-        Add code block content to the namespace.
-        """
-        existing_blocks = example.document.namespace.get("blocks", [])
-        example.document.namespace["blocks"] = [
-            *existing_blocks,
-            example.parsed,
-        ]
+    evaluator = BlockAccumulatorEvaluator()
 
     group_all_parser = GroupAllParser(
         evaluator=evaluator,
@@ -212,15 +188,7 @@ def test_group_all_with_skip(tmp_path: Path) -> None:
     test_document = tmp_path / "test.md"
     test_document.write_text(data=content, encoding="utf-8")
 
-    def evaluator(example: Example) -> None:
-        """
-        Add code block content to the namespace.
-        """
-        existing_blocks = example.document.namespace.get("blocks", [])
-        example.document.namespace["blocks"] = [
-            *existing_blocks,
-            example.parsed,
-        ]
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
 
     group_all_parser = GroupAllParser(
         evaluator=evaluator,

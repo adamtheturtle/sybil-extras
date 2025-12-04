@@ -83,6 +83,32 @@ ShellCommandEvaluator
 
     pytest_collect_file = sybil.pytest()
 
+BlockAccumulatorEvaluator
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``BlockAccumulatorEvaluator`` accumulates parsed code block content in a list within the document's namespace.
+This is useful for testing parsers that group multiple code blocks together.
+
+.. code-block:: python
+
+    """Use BlockAccumulatorEvaluator to accumulate code blocks."""
+
+    from sybil import Sybil
+    from sybil.parsers.rest.codeblock import CodeBlockParser
+
+    from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
+
+    namespace_key = "blocks"
+    evaluator = BlockAccumulatorEvaluator(namespace_key=namespace_key)
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path="example.rst")
+
+    for example in document.examples():
+        example.evaluate()
+
+    blocks = document.namespace[namespace_key]
+
 NoOpEvaluator
 ^^^^^^^^^^^^^
 
