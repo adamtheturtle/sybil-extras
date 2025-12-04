@@ -114,7 +114,7 @@ repos:
       - id: shellcheck-docs
         name: shellcheck-docs
         entry: uvx --python=3.13 doccmd --no-write-to-file --example-workers 0 --language=shell
-          --language=console --command="shellcheck --shell=bash"
+          --language=console --command="uv run --extra=dev shellcheck --shell=bash"
         language: python
         types_or: [markdown, rst]
         additional_dependencies: [uv==0.9.5]
@@ -131,7 +131,8 @@ repos:
       - id: shfmt-docs
         name: shfmt-docs
         entry: uvx --python=3.13 doccmd --language=shell --language=console --skip-marker=shfmt
-          --no-pad-file --command="shfmt --write --space-redirects --indent=4"
+          --no-pad-file --command="uv run --extra=dev shfmt --write --space-redirects
+          --indent=4"
         language: python
         types_or: [markdown, rst]
         additional_dependencies: [uv==0.9.5]
@@ -150,7 +151,7 @@ repos:
         name: mypy-docs
         stages: [pre-push]
         entry: uvx --python=3.13 doccmd --no-write-to-file --example-workers 0 --language=python
-          --command="mypy"
+          --command="uv run --extra=dev mypy"
         language: python
         types_or: [markdown, rst]
         additional_dependencies: [uv==0.9.5]
@@ -176,7 +177,7 @@ repos:
         name: pyright-docs
         stages: [pre-push]
         entry: uvx --python=3.13 doccmd --no-write-to-file --example-workers 0 --language=python
-          --command="pyright"
+          --command="uv run --extra=dev pyright"
         language: python
         types_or: [markdown, rst]
         additional_dependencies: [uv==0.9.5]
@@ -193,7 +194,7 @@ repos:
       - id: vulture-docs
         name: vulture docs
         entry: uvx --python=3.13 doccmd --no-write-to-file --example-workers 0 --language=python
-          --command="vulture"
+          --command="uv run --extra=dev vulture"
         language: python
         types_or: [markdown, rst]
         additional_dependencies: [uv==0.9.5]
@@ -227,7 +228,7 @@ repos:
       - id: pylint-docs
         name: pylint-docs
         entry: uvx --python=3.13 doccmd --no-write-to-file --example-workers 0 --language=python
-          --command="pylint"
+          --command="uv run --extra=dev pylint"
         language: python
         stages: [manual]
         types_or: [markdown, rst]
@@ -252,7 +253,8 @@ repos:
 
       - id: ruff-check-fix-docs
         name: Ruff check fix docs
-        entry: uvx --python=3.13 doccmd --language=python --command="ruff check --fix"
+        entry: uvx --python=3.13 doccmd --language=python --command="uv run --extra=dev
+          ruff check --fix"
         language: python
         types_or: [markdown, rst]
         additional_dependencies: [uv==0.9.5]
@@ -268,8 +270,8 @@ repos:
 
       - id: ruff-format-fix-docs
         name: Ruff format docs
-        entry: uvx --python=3.13 doccmd --language=python --no-pad-file --command="ruff
-          format"
+        entry: uvx --python=3.13 doccmd --language=python --no-pad-file --command="uv
+          run --extra=dev ruff format"
         language: python
         types_or: [markdown, rst]
         additional_dependencies: [uv==0.9.5]
@@ -294,7 +296,7 @@ repos:
       - id: interrogate-docs
         name: interrogate docs
         entry: uvx --python=3.13 doccmd --no-write-to-file --example-workers 0 --language=python
-          --command="interrogate"
+          --command="uv run --extra=dev interrogate"
         language: python
         types_or: [markdown, rst]
         additional_dependencies: [uv==0.9.5]
