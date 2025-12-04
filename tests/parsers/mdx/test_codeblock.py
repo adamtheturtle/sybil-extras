@@ -7,6 +7,7 @@ from pathlib import Path
 from sybil import Sybil
 from sybil.example import Example
 from sybil.testing import check_parser
+from sybil.typing import Evaluator
 
 from sybil_extras.parsers.mdx.codeblock import CodeBlockParser
 
@@ -255,3 +256,59 @@ def test_empty_codeblock() -> None:
     document = check_parser(parser=parser, text=content)
 
     assert document.namespace["code"] == ""
+
+
+def test_language_mismatch_with_generic_parser(tmp_path: Path) -> None:
+    """
+    Test that when using a generic parser (language=None), the language filter
+    in __call__ correctly skips non-matching languages.
+    """
+    content = """\
+```python
+x = 1
+```
+
+```javascript
+y = 2
+```
+
+```python
+z = 3
+```
+"""
+    test_document = tmp_path / "test.mdx"
+    test_document.write_text(data=content, encoding="utf-8")
+
+    collected_blocks: list[str] = []
+
+    def evaluator(example: Example) -> None:
+        """
+        Collect all parsed code blocks.
+        """
+        collected_blocks.append(example.parsed)
+
+    # Create a parser with language=None to match all languages
+    # then manually filter in a wrapper
+    class FilteringParser(CodeBlockParser):
+        """
+        Parser that demonstrates the language filtering logic.
+        """
+
+        def __init__(self, target_language: str, evaluator: Evaluator) -> None:
+            # Initialize with no language filter in the regex
+            super().__init__(language=None, evaluator=evaluator)
+            # But set _language to trigger the runtime check
+            self._language = target_language
+
+    parser = FilteringParser(target_language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_document)
+
+    for example in document.examples():
+        example.evaluate()
+
+    # Should only have Python blocks
+    expected_block_count = 2
+    assert len(collected_blocks) == expected_block_count
+    assert collected_blocks[0] == "x = 1\n"
+    assert collected_blocks[1] == "z = 3\n"

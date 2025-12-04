@@ -60,21 +60,22 @@ assert z == 3
     assert "z = x + y" in combined
 
 
-def test_group_all_empty_document(tmp_path: Path) -> None:
-    """
-    Test that group all parser handles documents without code blocks.
+def test_group_all_evaluator_called(tmp_path: Path) -> None:
+    """Test that the evaluator is actually called when there are code blocks.
+
+    This ensures the evaluator code path is covered.
     """
     content = """\
-# Just a heading
-
-Some text without code blocks.
+```python
+x = 1
+```
 """
     test_document = tmp_path / "test.mdx"
     test_document.write_text(data=content, encoding="utf-8")
 
     def evaluator(example: Example) -> None:
         """
-        This should not be called.
+        Mark that the evaluator was called.
         """
         example.document.namespace["called"] = True
 
@@ -90,8 +91,8 @@ Some text without code blocks.
     for example in document.examples():
         example.evaluate()
 
-    # Evaluator should not have been called for code blocks
-    assert "called" not in document.namespace
+    # Evaluator should have been called
+    assert document.namespace["called"] is True
 
 
 def test_group_all_with_no_padding(tmp_path: Path) -> None:
