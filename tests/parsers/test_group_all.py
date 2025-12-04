@@ -6,13 +6,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
 from sybil import Document, Region, Sybil
 
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.languages import (
-    ALL_LANGUAGES,
     RESTRUCTUREDTEXT,
     MarkupLanguage,
 )
@@ -27,16 +25,6 @@ if TYPE_CHECKING:
 _PAD_SEPARATOR = "\n\n\n\n"
 _NO_PAD_SEPARATOR = "\n\n"
 _SKIP_GAP = "\n" * 10
-
-
-@pytest.fixture(name="language", params=ALL_LANGUAGES)
-def fixture_language(request: pytest.FixtureRequest) -> MarkupLanguage:
-    """
-    Provide each supported markup language for parametrized tests.
-    """
-    language = request.param
-    assert isinstance(language, MarkupLanguage)
-    return language
 
 
 def _code_block_parser(

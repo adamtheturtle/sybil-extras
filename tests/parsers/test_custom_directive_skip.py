@@ -9,18 +9,8 @@ import pytest
 from sybil import Document, Region, Sybil
 from sybil.evaluators.skip import SkipState
 
-from sybil_extras.languages import ALL_LANGUAGES, MarkupLanguage
+from sybil_extras.languages import MarkupLanguage
 from tests.helpers import join_markup, write_document
-
-
-@pytest.fixture(name="language", params=ALL_LANGUAGES)
-def fixture_language(request: pytest.FixtureRequest) -> MarkupLanguage:
-    """
-    Provide each supported markup language for parametrized tests.
-    """
-    language = request.param
-    assert isinstance(language, MarkupLanguage)
-    return language
 
 
 def _code_block_parser(
