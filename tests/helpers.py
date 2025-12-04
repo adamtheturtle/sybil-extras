@@ -20,11 +20,5 @@ def document_data(content: str) -> str:
     content and would corrupt the indentation required in the serialized
     markup.
     """
-    if not content:
-        return ""
     normalized = content.rstrip("\n")
-    # reStructuredText needs a blank line separating directives from
-    # following content, so it keeps the double newline while other
-    # languages only get a single trailing newline.
-    suffix = "\n\n"
-    return f"{normalized}{suffix}"
+    return f"{normalized}\n\n"

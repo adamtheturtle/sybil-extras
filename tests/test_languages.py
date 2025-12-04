@@ -118,28 +118,6 @@ def test_code_block_empty(language: MarkupLanguage) -> None:
 @pytest.mark.parametrize(
     argnames=("language"),
     argvalues=[
-        pytest.param(MYST, id="myst-empty-doc"),
-        pytest.param(RESTRUCTUREDTEXT, id="rest-empty-doc"),
-        pytest.param(MARKDOWN, id="markdown-empty-doc"),
-    ],
-)
-def test_write_document_empty(
-    language: MarkupLanguage, tmp_path: Path
-) -> None:
-    """
-    Writing an empty document does not add trailing newlines.
-    """
-    path = tmp_path / f"empty{language.file_extension}"
-    path.write_text(
-        data=document_data(content=""),
-        encoding="utf-8",
-    )
-    assert path.read_text(encoding="utf-8") == ""
-
-
-@pytest.mark.parametrize(
-    argnames=("language"),
-    argvalues=[
         pytest.param(MYST, id="myst-grouped"),
         pytest.param(RESTRUCTUREDTEXT, id="rest-grouped"),
         pytest.param(MARKDOWN, id="markdown-grouped"),
