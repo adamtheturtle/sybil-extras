@@ -26,7 +26,6 @@ from sybil_extras.languages import (
     MARKDOWN,
     MYST,
     RESTRUCTUREDTEXT,
-    MarkupLanguage,
 )
 
 
