@@ -2,9 +2,7 @@
 Unified tests for the GroupAllParser across markup languages.
 """
 
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 import pytest
 
@@ -17,9 +15,6 @@ from ._markups import (
     evaluate_document,
     parse_document,
 )
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 @pytest.fixture(params=MARKUP_LANGUAGES, ids=lambda markup: markup.name)

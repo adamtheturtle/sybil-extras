@@ -2,10 +2,9 @@
 Helpers and fixtures for testing parsers across markup languages.
 """
 
-from __future__ import annotations
-
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 from sybil import Document, Sybil
 from sybil.parsers.markdown.codeblock import (
@@ -29,6 +28,7 @@ from sybil.parsers.rest.codeblock import (
     PythonCodeBlockParser as ReSTPythonCodeBlockParser,
 )
 from sybil.parsers.rest.skip import SkipParser as ReSTSkipParser
+from sybil.region import Region
 
 from sybil_extras.parsers.markdown.custom_directive_skip import (
     CustomDirectiveSkipParser as MarkdownCustomSkipParser,
@@ -63,12 +63,6 @@ from sybil_extras.parsers.rest.grouped_source import (
 from sybil_extras.parsers.rest.sphinx_jinja2 import (
     SphinxJinja2Parser as ReSTSphinxJinja2Parser,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Sequence
-    from pathlib import Path
-
-    from sybil.region import Region
 
 
 def _rst_code_block(body: str) -> str:

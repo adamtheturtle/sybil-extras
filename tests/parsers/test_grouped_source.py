@@ -2,11 +2,10 @@
 Unified tests for the GroupedSourceParser across markup languages.
 """
 
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 import pytest
+from sybil.typing import Evaluator, Parser
 
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
@@ -18,11 +17,6 @@ from ._markups import (
     evaluate_document,
     parse_document,
 )
-
-if TYPE_CHECKING:
-    from pathlib import Path
-
-    from sybil.typing import Evaluator, Parser
 
 
 @pytest.fixture(params=MARKUP_LANGUAGES, ids=lambda markup: markup.name)
