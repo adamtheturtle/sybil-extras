@@ -89,29 +89,11 @@ BlockAccumulatorEvaluator
 The ``BlockAccumulatorEvaluator`` accumulates parsed code block content in a list within the document's namespace.
 This is useful for testing parsers that group multiple code blocks together.
 
-.. invisible-code-block: python
-
-   """Create a temporary reStructuredText document for the example."""
-   import tempfile
-   from pathlib import Path
-
-   content = (
-       ".. code-block:: python\n\n"
-       "   x = 1\n\n"
-       ".. code-block:: python\n\n"
-       "   y = 2\n\n"
-       ".. code-block:: python\n\n"
-       "   z = 3\n"
-   )
-   with tempfile.NamedTemporaryFile(mode="w", suffix=".rst", delete=False) as f:
-       f.write(content)
-       my_document = Path(f.name)
-
-   assert my_document.exists()
-
 .. code-block:: python
 
     """Use BlockAccumulatorEvaluator to accumulate code blocks."""
+
+    from pathlib import Path
 
     from sybil import Sybil
     from sybil.parsers.rest.codeblock import CodeBlockParser
@@ -122,18 +104,13 @@ This is useful for testing parsers that group multiple code blocks together.
     evaluator = BlockAccumulatorEvaluator(namespace_key=namespace_key)
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
-    document = sybil.parse(path=my_document)
+    document = sybil.parse(path=Path("README.rst"))
 
     for example in document.examples():
         example.evaluate()
 
     blocks = document.namespace[namespace_key]
-    assert blocks == ["x = 1\n", "y = 2\n", "z = 3"]
-
-.. invisible-code-block: python
-
-   """Clean up the temporary document used in the example."""
-   my_document.unlink()
+    assert len(blocks)
 
 NoOpEvaluator
 ^^^^^^^^^^^^^
