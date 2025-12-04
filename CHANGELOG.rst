@@ -5,6 +5,7 @@ Next
 ----
 
 * Add ``BlockAccumulatorEvaluator``.
+* Add ``languages`` module with ``MarkupLanguage`` dataclass and predefined instances (``MYST``, ``RESTRUCTUREDTEXT``, ``MARKDOWN``).
 
 2025.11.19
 ----------
