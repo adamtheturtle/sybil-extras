@@ -2,8 +2,6 @@
 Helpers shared across tests.
 """
 
-from sybil_extras.languages import RESTRUCTUREDTEXT, MarkupLanguage
-
 
 def join_markup(*parts: str) -> str:
     """
@@ -13,18 +11,20 @@ def join_markup(*parts: str) -> str:
     return "\n\n".join(cleaned_parts)
 
 
-def document_data(language: MarkupLanguage, content: str) -> str:
+def document_data(content: str) -> str:
     """Calculate the normalized markup to persist.
 
-    reStructuredText needs a blank line separating directives from
-    following content, so it keeps the double newline while other
-    languages only get a single trailing newline. This intentionally
-    differs from :func:`sybil_extras.languages._normalize_code`, which
-    dedents block content and would corrupt the indentation required in
-    the serialized markup.
+    Always keep a blank line separating directives from content across
+    languages. This intentionally differs from
+    :func:`sybil_extras.languages._normalize_code`, which dedents block
+    content and would corrupt the indentation required in the serialized
+    markup.
     """
     if not content:
         return ""
     normalized = content.rstrip("\n")
-    suffix = "\n\n" if language is RESTRUCTUREDTEXT else "\n"
+    # reStructuredText needs a blank line separating directives from
+    # following content, so it keeps the double newline while other
+    # languages only get a single trailing newline.
+    suffix = "\n\n"
     return f"{normalized}{suffix}"

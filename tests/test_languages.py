@@ -41,7 +41,7 @@ def test_code_block_parser(
     content = language.code_block_builder(code=code, language="python")
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=document_data(language=language, content=content),
+        data=document_data(content=content),
         encoding="utf-8",
     )
 
@@ -80,7 +80,7 @@ def test_skip_parser(
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=document_data(language=language, content=content),
+        data=document_data(content=content),
         encoding="utf-8",
     )
 
@@ -131,7 +131,7 @@ def test_write_document_empty(
     """
     path = tmp_path / f"empty{language.file_extension}"
     path.write_text(
-        data=document_data(language=language, content=""),
+        data=document_data(content=""),
         encoding="utf-8",
     )
     assert path.read_text(encoding="utf-8") == ""
@@ -160,7 +160,7 @@ def test_group_parser(
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=document_data(language=language, content=content),
+        data=document_data(content=content),
         encoding="utf-8",
     )
 
@@ -205,7 +205,7 @@ def test_sphinx_jinja_parser(
     jinja_content = jinja_builder(body="{{ 1 + 1 }}")
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=document_data(language=language, content=jinja_content),
+        data=document_data(content=jinja_content),
         encoding="utf-8",
     )
 
