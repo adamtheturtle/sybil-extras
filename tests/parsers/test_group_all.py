@@ -165,11 +165,18 @@ def test_group_all_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     """
     Skip directives are honored when grouping code blocks.
     """
+    skip_directive = language.directive_builder(
+        directive="skip", argument="next"
+    )
+    skipped_block = language.code_block_builder(
+        code="x = [*x, 1]", language="python"
+    )
+
     content = language.markup_separator.join(
         [
             language.code_block_builder(code="x = []", language="python"),
-            language.directive_builder(directive="skip", argument="next"),
-            language.code_block_builder(code="x = [*x, 1]", language="python"),
+            skip_directive,
+            skipped_block,
             language.code_block_builder(code="x = [*x, 2]", language="python"),
         ]
     )
@@ -196,8 +203,21 @@ def test_group_all_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     for example in document.examples():
         example.evaluate()
 
-    # Skip directives (and the skipped block) span ten lines, so pad with the
-    # same number of newlines to keep downstream line numbers aligned.
-    skipped_lines = "\n" * 10
+    # Calculate the number of newlines spanned by the skip directive and
+    # skipped block.
+    # The skipped section includes separators and content between the two
+    # combined blocks.
+    skip_and_block = language.markup_separator.join(
+        [skip_directive, skipped_block]
+    )
+    full_skipped_section = (
+        language.markup_separator + skip_and_block + language.markup_separator
+    )
+    # Add 2 to account for the newlines needed to maintain line number
+    # alignment:
+    # one for the separator after the closing backticks, and one for the line
+    # spacing.
+    num_skipped_newlines = full_skipped_section.count("\n") + 2
+    skipped_lines = "\n" * num_skipped_newlines
     expected = f"x = []{skipped_lines}x = [*x, 2]\n"
     assert document.namespace["blocks"] == [expected]
