@@ -14,6 +14,7 @@ from sybil_extras.evaluators.block_accumulator import (
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.languages import (
     MARKDOWN,
+    MDX,
     MYST,
     RESTRUCTUREDTEXT,
     MarkupLanguage,
@@ -26,6 +27,7 @@ from sybil_extras.languages import (
         pytest.param(MYST, 1, id="myst-code-block"),
         pytest.param(RESTRUCTUREDTEXT, 2, id="rest-code-block"),
         pytest.param(MARKDOWN, 3, id="markdown-code-block"),
+        pytest.param(MDX, 4, id="mdx-code-block"),
     ],
 )
 def test_code_block_parser(
@@ -63,6 +65,7 @@ def test_code_block_parser(
         pytest.param(MYST, 1, id="myst-skip"),
         pytest.param(RESTRUCTUREDTEXT, 2, id="rest-skip"),
         pytest.param(MARKDOWN, 3, id="markdown-skip"),
+        pytest.param(MDX, 4, id="mdx-skip"),
     ],
 )
 def test_skip_parser(
@@ -108,6 +111,7 @@ def test_skip_parser(
         pytest.param(MYST, id="myst-empty"),
         pytest.param(RESTRUCTUREDTEXT, id="rest-empty"),
         pytest.param(MARKDOWN, id="markdown-empty"),
+        pytest.param(MDX, id="mdx-empty"),
     ],
 )
 def test_code_block_empty(language: MarkupLanguage) -> None:
@@ -124,6 +128,7 @@ def test_code_block_empty(language: MarkupLanguage) -> None:
         pytest.param(MYST, id="myst-grouped"),
         pytest.param(RESTRUCTUREDTEXT, id="rest-grouped"),
         pytest.param(MARKDOWN, id="markdown-grouped"),
+        pytest.param(MDX, id="mdx-grouped"),
     ],
 )
 def test_group_parser(
@@ -207,10 +212,11 @@ def test_sphinx_jinja_parser(
 
 def test_markdown_no_sphinx_jinja() -> None:
     """
-    Test that Markdown does not have a sphinx-jinja parser.
+    Test that Markdown-like formats do not have a sphinx-jinja parser.
     """
-    assert MARKDOWN.sphinx_jinja_parser_cls is None
-    assert MARKDOWN.jinja_block_builder is None
+    for language in (MARKDOWN, MDX):
+        assert language.sphinx_jinja_parser_cls is None
+        assert language.jinja_block_builder is None
 
 
 def test_language_names() -> None:
@@ -220,3 +226,34 @@ def test_language_names() -> None:
     assert MYST.name == "MyST"
     assert RESTRUCTUREDTEXT.name == "reStructuredText"
     assert MARKDOWN.name == "Markdown"
+    assert MDX.name == "MDX"
+
+
+def test_mdx_code_block_attributes(tmp_path: Path) -> None:
+    """
+    MDX code block parsers expose attributes from the info line.
+    """
+    mdx_content = (
+        '```python title="example.py" group="setup"\nvalue = 7\n```\n'
+    )
+    test_document = tmp_path / "test.mdx"
+    test_document.write_text(
+        data=f"{mdx_content}{MDX.markup_separator}",
+        encoding="utf-8",
+    )
+
+    parser = MDX.code_block_parser_cls(
+        language="python",
+        evaluator=PythonEvaluator(),
+    )
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_document)
+
+    (example,) = document.examples()
+    example.evaluate()
+
+    assert document.namespace == {"value": 7}
+    assert example.region.lexemes["attributes"] == {
+        "title": "example.py",
+        "group": "setup",
+    }

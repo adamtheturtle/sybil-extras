@@ -146,7 +146,8 @@ CustomDirectiveSkipParser
     from sybil.parsers.rest.codeblock import PythonCodeBlockParser
 
     # Similar parsers are available at
-    # sybil_extras.parsers.markdown.custom_directive_skip and
+    # sybil_extras.parsers.markdown.custom_directive_skip,
+    # sybil_extras.parsers.mdx.custom_directive_skip and
     # sybil_extras.parsers.myst.custom_directive_skip.
     from sybil_extras.parsers.rest.custom_directive_skip import (
         CustomDirectiveSkipParser,
@@ -163,7 +164,7 @@ This allows you to skip code blocks in the same way as described in
 the Sybil documentation for skipping examples in
 `reStructuredText <https://sybil.readthedocs.io/en/latest/rest.html#skipping-examples>`_,
 `Markdown <https://sybil.readthedocs.io/en/latest/rest.html#skipping-examples>`_ ,
-and `MyST <https://sybil.readthedocs.io/en/latest/myst.html#skipping-examples>`_ files,
+MDX, and `MyST <https://sybil.readthedocs.io/en/latest/myst.html#skipping-examples>`_ files,
 but with custom text, e.g. ``custom-marker-skip`` replacing the word ``skip``.
 
 GroupedSourceParser
@@ -181,7 +182,8 @@ GroupedSourceParser
     from sybil.parsers.rest.codeblock import PythonCodeBlockParser
 
     # Similar parsers are available at
-    # sybil_extras.parsers.markdown.grouped_source and
+    # sybil_extras.parsers.markdown.grouped_source,
+    # sybil_extras.parsers.mdx.grouped_source and
     # sybil_extras.parsers.myst.grouped_source.
     from sybil_extras.parsers.rest.grouped_source import GroupedSourceParser
 
@@ -271,7 +273,8 @@ GroupAllParser
     from sybil.parsers.rest.codeblock import PythonCodeBlockParser
 
     # Similar parsers are available at
-    # sybil_extras.parsers.markdown.group_all and
+    # sybil_extras.parsers.markdown.group_all,
+    # sybil_extras.parsers.mdx.group_all and
     # sybil_extras.parsers.myst.group_all.
     from sybil_extras.parsers.rest.group_all import GroupAllParser
 
@@ -327,7 +330,8 @@ This extracts the source, arguments and options from ``.. jinja::`` directive bl
     from sybil.example import Example
 
     # A similar parser is available at sybil_extras.parsers.myst.sphinx_jinja2.
-    # There is no Markdown parser as Sphinx is not used with Markdown without MyST.
+    # There are no Markdown or MDX parsers as Sphinx is not used with them
+    # without MyST.
     from sybil_extras.parsers.rest.sphinx_jinja2 import SphinxJinja2Parser
 
 
@@ -358,10 +362,11 @@ This is useful for building tools that need to work consistently across multiple
     from sybil import Sybil
 
     from sybil_extras.evaluators.no_op import NoOpEvaluator
-    from sybil_extras.languages import MARKDOWN, MYST, RESTRUCTUREDTEXT
+    from sybil_extras.languages import MARKDOWN, MDX, MYST, RESTRUCTUREDTEXT
 
     assert MYST.name == "MyST"
     assert MARKDOWN.name == "Markdown"
+    assert MDX.name == "MDX"
     assert RESTRUCTUREDTEXT.name == "reStructuredText"
 
     code_parser = RESTRUCTUREDTEXT.code_block_parser_cls(
