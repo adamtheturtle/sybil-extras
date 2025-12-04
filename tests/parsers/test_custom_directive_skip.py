@@ -10,20 +10,22 @@ from sybil.evaluators.python import PythonEvaluator
 from sybil.evaluators.skip import SkipState
 
 from sybil_extras.languages import MarkupLanguage
-from tests.helpers import join_markup
 
 
 def test_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     """
     The custom directive skip parser can be used to set skips.
     """
-    content = join_markup(
-        language,
-        "Example",
-        language.code_block_builder(code="x = []", language="python"),
-        language.directive_builder(directive="custom-skip", argument="next"),
-        language.code_block_builder(code="x = [*x, 2]", language="python"),
-        language.code_block_builder(code="x = [*x, 3]", language="python"),
+    content = language.markup_separator.join(
+        [
+            "Example",
+            language.code_block_builder(code="x = []", language="python"),
+            language.directive_builder(
+                directive="custom-skip", argument="next"
+            ),
+            language.code_block_builder(code="x = [*x, 2]", language="python"),
+            language.code_block_builder(code="x = [*x, 3]", language="python"),
+        ]
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
@@ -143,10 +145,11 @@ def test_directive_name_not_regex_escaped(
     Directive names containing regex characters are matched literally.
     """
     directive = "custom-skip[has_square_brackets]"
-    content = join_markup(
-        language,
-        language.directive_builder(directive=directive, argument="next"),
-        language.code_block_builder(code="block = 1", language="python"),
+    content = language.markup_separator.join(
+        [
+            language.directive_builder(directive=directive, argument="next"),
+            language.code_block_builder(code="block = 1", language="python"),
+        ]
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(

@@ -11,18 +11,18 @@ from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.languages import (
     MarkupLanguage,
 )
-from tests.helpers import join_markup
 
 
 def test_group_all(language: MarkupLanguage, tmp_path: Path) -> None:
     """
     All code blocks are grouped into a single block.
     """
-    content = join_markup(
-        language,
-        language.code_block_builder(code="x = []", language="python"),
-        language.code_block_builder(code="x = [*x, 1]", language="python"),
-        language.code_block_builder(code="x = [*x, 2]", language="python"),
+    content = language.markup_separator.join(
+        [
+            language.code_block_builder(code="x = []", language="python"),
+            language.code_block_builder(code="x = [*x, 1]", language="python"),
+            language.code_block_builder(code="x = [*x, 2]", language="python"),
+        ]
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
@@ -125,11 +125,12 @@ def test_group_all_no_pad(language: MarkupLanguage, tmp_path: Path) -> None:
     """
     Groups can be combined without inserting extra padding.
     """
-    content = join_markup(
-        language,
-        language.code_block_builder(code="x = []", language="python"),
-        language.code_block_builder(code="x = [*x, 1]", language="python"),
-        language.code_block_builder(code="x = [*x, 2]", language="python"),
+    content = language.markup_separator.join(
+        [
+            language.code_block_builder(code="x = []", language="python"),
+            language.code_block_builder(code="x = [*x, 1]", language="python"),
+            language.code_block_builder(code="x = [*x, 2]", language="python"),
+        ]
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
@@ -164,12 +165,13 @@ def test_group_all_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     """
     Skip directives are honored when grouping code blocks.
     """
-    content = join_markup(
-        language,
-        language.code_block_builder(code="x = []", language="python"),
-        language.directive_builder(directive="skip", argument="next"),
-        language.code_block_builder(code="x = [*x, 1]", language="python"),
-        language.code_block_builder(code="x = [*x, 2]", language="python"),
+    content = language.markup_separator.join(
+        [
+            language.code_block_builder(code="x = []", language="python"),
+            language.directive_builder(directive="skip", argument="next"),
+            language.code_block_builder(code="x = [*x, 1]", language="python"),
+            language.code_block_builder(code="x = [*x, 2]", language="python"),
+        ]
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
