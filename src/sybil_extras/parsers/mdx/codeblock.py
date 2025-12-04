@@ -32,7 +32,7 @@ _ATTRIBUTE_PATTERN = re.compile(
 
 
 @beartype
-class CodeBlockParser(AbstractCodeBlockParser):
+class CodeBlockParser:
     """
     A parser for MDX fenced code blocks that preserves attributes.
     """
@@ -62,7 +62,7 @@ class CodeBlockParser(AbstractCodeBlockParser):
                 arguments=".+",
             ),
         ]
-        super().__init__(
+        self._parser = AbstractCodeBlockParser(
             lexers=lexers,
             language=language,
             evaluator=evaluator,
@@ -72,7 +72,7 @@ class CodeBlockParser(AbstractCodeBlockParser):
         """
         Yield regions for code blocks, parsing any MDX attributes.
         """
-        for region in super().__call__(document):
+        for region in self._parser(document):
             raw_attributes = region.lexemes.get("attributes_raw")
             parsed_attributes = self._parse_attributes(
                 attr_string=raw_attributes
