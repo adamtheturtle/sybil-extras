@@ -20,5 +20,4 @@ def document_data(content: str) -> str:
     content and would corrupt the indentation required in the serialized
     markup.
     """
-    normalized = content.rstrip("\n")
-    return f"{normalized}\n\n"
+    return f"{content}\n\n"
