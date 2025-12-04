@@ -206,18 +206,17 @@ def test_group_all_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     # Calculate the number of newlines spanned by the skip directive and
     # skipped block.
     # The skipped section includes separators and content between the two
-    # combined blocks.
-    skip_and_block = language.markup_separator.join(
-        [skip_directive, skipped_block]
-    )
+    # combined blocks, plus the separator after the closing code block
+    # delimiter and the line spacing separator.
     full_skipped_section = (
-        language.markup_separator + skip_and_block + language.markup_separator
+        language.markup_separator
+        + skip_directive
+        + language.markup_separator
+        + skipped_block
+        + language.markup_separator
+        + language.markup_separator
     )
-    # Add 2 to account for the newlines needed to maintain line number
-    # alignment:
-    # one for the separator after the closing backticks, and one for the line
-    # spacing.
-    num_skipped_newlines = full_skipped_section.count("\n") + 2
+    num_skipped_newlines = full_skipped_section.count("\n")
     skipped_lines = "\n" * num_skipped_newlines
     expected = f"x = []{skipped_lines}x = [*x, 2]\n"
     assert document.namespace["blocks"] == [expected]
