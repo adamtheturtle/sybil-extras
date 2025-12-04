@@ -21,8 +21,8 @@ from sybil_extras.languages import (
 
 
 @pytest.mark.parametrize(
-    ("language", "content", "expected_namespace"),
-    [
+    argnames=("language", "content", "expected_namespace"),
+    argvalues=[
         pytest.param(
             MYST,
             textwrap.dedent(
@@ -88,8 +88,8 @@ def test_code_block_parser(
 
 
 @pytest.mark.parametrize(
-    ("language", "skip_directive_content"),
-    [
+    argnames=("language", "skip_directive_content"),
+    argvalues=[
         pytest.param(
             MYST,
             textwrap.dedent(
@@ -159,8 +159,8 @@ def test_skip_parser(
 
 
 @pytest.mark.parametrize(
-    ("language", "grouped_content", "expected_result"),
-    [
+    argnames=("language", "grouped_content", "expected_result"),
+    argvalues=[
         pytest.param(
             MYST,
             textwrap.dedent(
@@ -257,8 +257,8 @@ def test_group_parser(
 
 
 @pytest.mark.parametrize(
-    ("language", "jinja_content"),
-    [
+    argnames=("language", "jinja_content"),
+    argvalues=[
         pytest.param(
             MYST,
             textwrap.dedent(
