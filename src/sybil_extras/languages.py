@@ -140,6 +140,7 @@ DirectiveBuilder = Callable[[str, str | None], str]
 JinjaBlockBuilder = Callable[[str], str]
 
 
+@beartype
 def _normalize_code(content: str) -> str:
     """
     Normalize code provided in tests into a block-friendly form.
@@ -150,6 +151,7 @@ def _normalize_code(content: str) -> str:
     return f"{normalized}\n"
 
 
+@beartype
 def _markdown_code_block(code: str, language: str) -> str:
     """
     Build a Markdown/MyST code block.
@@ -158,6 +160,7 @@ def _markdown_code_block(code: str, language: str) -> str:
     return f"```{language}\n{normalized}```"
 
 
+@beartype
 def _rst_code_block(code: str, language: str) -> str:
     """
     Build a reStructuredText code block.
@@ -169,6 +172,7 @@ def _rst_code_block(code: str, language: str) -> str:
     return f".. code-block:: {language}\n\n{indented}".rstrip()
 
 
+@beartype
 def _html_comment_directive(directive: str, argument: str | None) -> str:
     """
     Render a directive embedded in an HTML comment.
@@ -177,6 +181,7 @@ def _html_comment_directive(directive: str, argument: str | None) -> str:
     return f"<!--- {directive}{suffix} -->"
 
 
+@beartype
 def _rst_directive(directive: str, argument: str | None) -> str:
     """
     Render a directive for reStructuredText documents.
@@ -186,6 +191,7 @@ def _rst_directive(directive: str, argument: str | None) -> str:
     return f".. {directive}: {argument}"
 
 
+@beartype
 def _myst_jinja_block(body: str) -> str:
     """
     Render a sphinx-jinja block for MyST.
@@ -194,6 +200,7 @@ def _myst_jinja_block(body: str) -> str:
     return f"```{{jinja}}\n{normalized}```"
 
 
+@beartype
 def _rst_jinja_block(body: str) -> str:
     """
     Render a sphinx-jinja block for reStructuredText.

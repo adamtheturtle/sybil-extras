@@ -49,7 +49,10 @@ def _code_block_parser(
     """
     if evaluator is None:
         return language.code_block_parser_cls(language="python")
-    return language.code_block_parser_cls(language="python", evaluator=evaluator)
+    return language.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
 
 
 def _group_all_parser(
@@ -137,7 +140,10 @@ def test_group_all(language: MarkupLanguage, tmp_path: Path) -> None:
     assert len(document.evaluators) == 0
 
 
-def test_group_all_single_block(language: MarkupLanguage, tmp_path: Path) -> None:
+def test_group_all_single_block(
+    language: MarkupLanguage,
+    tmp_path: Path,
+) -> None:
     """
     Grouping a single block preserves it.
     """
@@ -169,7 +175,10 @@ def test_group_all_single_block(language: MarkupLanguage, tmp_path: Path) -> Non
     assert document.namespace["blocks"] == [expected]
 
 
-def test_group_all_empty_document(language: MarkupLanguage, tmp_path: Path) -> None:
+def test_group_all_empty_document(
+    language: MarkupLanguage,
+    tmp_path: Path,
+) -> None:
     """
     Empty documents do not raise errors.
     """
