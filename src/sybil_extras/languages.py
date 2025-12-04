@@ -262,6 +262,7 @@ class _CodeBlockParser(Protocol):
 
     def __init__(
         self,
+        *,
         language: str | None = None,
         evaluator: Evaluator | None = None,
     ) -> None:
