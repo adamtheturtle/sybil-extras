@@ -47,8 +47,10 @@ def test_group_all(language: MarkupLanguage, tmp_path: Path) -> None:
         example.evaluate()
 
     blocks = ["x = []", "x = [*x, 1]", "x = [*x, 2]"]
-    separator = language.markup_separator * 2
-    expected = separator.join(blocks) + "\n"
+    separator_newlines = len(language.markup_separator)
+    padding_newlines = separator_newlines + 2
+    padding = "\n" * padding_newlines
+    expected = padding.join(blocks) + "\n"
     assert document.namespace["blocks"] == [expected]
     assert len(document.evaluators) == 0
 
@@ -153,7 +155,9 @@ def test_group_all_no_pad(language: MarkupLanguage, tmp_path: Path) -> None:
         example.evaluate()
 
     blocks = ["x = []", "x = [*x, 1]", "x = [*x, 2]"]
-    expected = language.markup_separator.join(blocks) + "\n"
+    # When pad_groups=False, blocks are separated by 2 newlines (1 blank line)
+    padding = "\n\n"
+    expected = padding.join(blocks) + "\n"
     assert document.namespace["blocks"] == [expected]
 
 
@@ -208,6 +212,10 @@ def test_group_all_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
         + language.markup_separator
     )
     num_skipped_newlines = full_skipped_section.count("\n")
-    skipped_lines = "\n" * num_skipped_newlines
+    # Add 1 for MyST/Markdown to account for the newline after the first block
+    # RST doesn't need this adjustment
+    separator_newlines = len(language.markup_separator)
+    adjustment = 1 if separator_newlines == 1 else 0
+    skipped_lines = "\n" * (num_skipped_newlines + adjustment)
     expected = f"x = []{skipped_lines}x = [*x, 2]\n"
     assert document.namespace["blocks"] == [expected]

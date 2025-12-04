@@ -164,7 +164,12 @@ def test_group_parser(
     for example in document.examples():
         example.evaluate()
 
-    assert document.namespace["blocks"] == ["x = 1\n\n\n\nx = x + 1\n"]
+    separator_newlines = len(language.markup_separator)
+    padding_newlines = separator_newlines + 1
+    padding = "\n" * padding_newlines
+
+    expected = f"x = 1\n{padding}x = x + 1\n"
+    assert document.namespace["blocks"] == [expected]
 
 
 @pytest.mark.parametrize(

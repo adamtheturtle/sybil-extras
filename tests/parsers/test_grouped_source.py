@@ -2,7 +2,6 @@
 Grouped source parser tests shared across markup languages.
 """
 
-import textwrap
 from pathlib import Path
 
 import pytest
@@ -11,7 +10,7 @@ from sybil import Sybil
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
-from sybil_extras.languages import RESTRUCTUREDTEXT, MarkupLanguage
+from sybil_extras.languages import MarkupLanguage
 
 
 def test_group(language: MarkupLanguage, tmp_path: Path) -> None:
@@ -55,11 +54,15 @@ def test_group(language: MarkupLanguage, tmp_path: Path) -> None:
     for example in document.examples():
         example.evaluate()
 
+    separator_newlines = len(language.markup_separator)
+    padding_newlines = separator_newlines + 1
+    padding = "\n" * padding_newlines
+
     assert document.namespace["blocks"] == [
         "x = []\n",
-        "x = [*x, 1]\n\n\n\nx = [*x, 2]\n",
+        f"x = [*x, 1]\n{padding}x = [*x, 2]\n",
         "x = [*x, 3]\n",
-        "x = [*x, 4]\n\n\n\nx = [*x, 5]\n",
+        f"x = [*x, 4]\n{padding}x = [*x, 5]\n",
     ]
 
 
@@ -99,9 +102,13 @@ def test_nothing_after_group(language: MarkupLanguage, tmp_path: Path) -> None:
     for example in document.examples():
         example.evaluate()
 
+    separator_newlines = len(language.markup_separator)
+    padding_newlines = separator_newlines + 1
+    padding = "\n" * padding_newlines
+
     assert document.namespace["blocks"] == [
         "x = []\n",
-        "x = [*x, 1]\n\n\n\nx = [*x, 2]\n",
+        f"x = [*x, 1]\n{padding}x = [*x, 2]\n",
     ]
 
 
@@ -362,11 +369,15 @@ def test_directive_name_not_regex_escaped(
     for example in document.examples():
         example.evaluate()
 
+    separator_newlines = len(language.markup_separator)
+    padding_newlines = separator_newlines + 1
+    padding = "\n" * padding_newlines
+
     assert document.namespace["blocks"] == [
         "x = []\n",
-        "x = [*x, 1]\n\n\n\nx = [*x, 2]\n",
+        f"x = [*x, 1]\n{padding}x = [*x, 2]\n",
         "x = [*x, 3]\n",
-        "x = [*x, 4]\n\n\n\nx = [*x, 5]\n",
+        f"x = [*x, 4]\n{padding}x = [*x, 5]\n",
     ]
 
 
@@ -412,22 +423,16 @@ def test_with_shell_command_evaluator(
         example.evaluate()
 
     output_document_content = output_document.read_text(encoding="utf-8")
-    expected_output_document_content = textwrap.dedent(
-        text="""\
 
+    separator_newlines = len(language.markup_separator)
+    padding_newlines = separator_newlines + 1
 
+    leading_padding = "\n" * (separator_newlines * 2)
+    block_padding = "\n" * padding_newlines
 
-        x = [*x, 1]
-
-
-
-        x = [*x, 2]
-            """,
+    expected_output_document_content = (
+        f"{leading_padding}x = [*x, 1]\n{block_padding}x = [*x, 2]\n"
     )
-    if language is RESTRUCTUREDTEXT:
-        expected_output_document_content = (
-            f"\n{expected_output_document_content}"
-        )
     assert output_document_content == expected_output_document_content
 
 
@@ -470,18 +475,11 @@ def test_no_pad_groups(language: MarkupLanguage, tmp_path: Path) -> None:
         example.evaluate()
 
     output_document_content = output_document.read_text(encoding="utf-8")
-    expected_output_document_content = textwrap.dedent(
-        text="""\
 
+    separator_newlines = len(language.markup_separator)
+    leading_padding = "\n" * (separator_newlines * 2)
 
-
-        x = [*x, 1]
-
-        x = [*x, 2]
-            """,
+    expected_output_document_content = (
+        f"{leading_padding}x = [*x, 1]\n\nx = [*x, 2]\n"
     )
-    if language is RESTRUCTUREDTEXT:
-        expected_output_document_content = (
-            f"\n{expected_output_document_content}"
-        )
     assert output_document_content == expected_output_document_content
