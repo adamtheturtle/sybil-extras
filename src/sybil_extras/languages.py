@@ -300,7 +300,7 @@ class MarkupLanguage:
 MYST = MarkupLanguage(
     name="MyST",
     file_extension=".md",
-    document_ending="\n\n",
+    document_ending="\n",
     skip_parser_cls=(
         sybil_extras.parsers.myst.custom_directive_skip.CustomDirectiveSkipParser
     ),
@@ -330,7 +330,7 @@ RESTRUCTUREDTEXT = MarkupLanguage(
 MARKDOWN = MarkupLanguage(
     name="Markdown",
     file_extension=".md",
-    document_ending="\n\n",
+    document_ending="\n",
     skip_parser_cls=sybil_extras.parsers.markdown.custom_directive_skip.CustomDirectiveSkipParser,
     code_block_parser_cls=sybil.parsers.markdown.CodeBlockParser,
     group_parser_cls=sybil_extras.parsers.markdown.grouped_source.GroupedSourceParser,
