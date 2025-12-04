@@ -36,16 +36,13 @@ x = [*x, 3]
     test_document.write_text(data=content, encoding="utf-8")
 
     skip_parser = CustomDirectiveSkipParser(directive="myskip")
+    executed_blocks: list[str] = []
 
     def evaluator(example: Example) -> None:
         """
-        Execute the code in the document namespace.
+        Track which blocks were executed (not skipped).
         """
-        exec(  # noqa: S102
-            example.parsed,
-            globals=example.document.namespace,
-            locals=example.document.namespace,
-        )
+        executed_blocks.append(example.parsed)
 
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
@@ -55,8 +52,11 @@ x = [*x, 3]
     for example in document.examples():
         example.evaluate()
 
-    # The second block should be skipped, so x should be [3] not [2, 3]
-    assert document.namespace["x"] == [3]
+    # The second block should be skipped, so we should have 2 blocks executed
+    expected_block_count = 2
+    assert len(executed_blocks) == expected_block_count
+    assert executed_blocks[0] == "x = []\n"
+    assert executed_blocks[1] == "x = [*x, 3]\n"
 
 
 def test_skip_start_end(tmp_path: Path) -> None:
@@ -88,16 +88,13 @@ x = [*x, 4]
     test_document.write_text(data=content, encoding="utf-8")
 
     skip_parser = CustomDirectiveSkipParser(directive="myskip")
+    executed_blocks: list[str] = []
 
     def evaluator(example: Example) -> None:
         """
-        Execute the code in the document namespace.
+        Track which blocks were executed (not skipped).
         """
-        exec(  # noqa: S102
-            example.parsed,
-            globals=example.document.namespace,
-            locals=example.document.namespace,
-        )
+        executed_blocks.append(example.parsed)
 
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
@@ -107,8 +104,11 @@ x = [*x, 4]
     for example in document.examples():
         example.evaluate()
 
-    # The second and third blocks should be skipped, so x should be [4]
-    assert document.namespace["x"] == [4]
+    # The second and third blocks should be skipped, so we should have 2 blocks
+    expected_block_count = 2
+    assert len(executed_blocks) == expected_block_count
+    assert executed_blocks[0] == "x = []\n"
+    assert executed_blocks[1] == "x = [*x, 4]\n"
 
 
 def test_skip_with_custom_directive_name(tmp_path: Path) -> None:
@@ -130,16 +130,13 @@ x = [*x, 2]
     test_document.write_text(data=content, encoding="utf-8")
 
     skip_parser = CustomDirectiveSkipParser(directive="ignore")
+    executed_blocks: list[str] = []
 
     def evaluator(example: Example) -> None:
         """
-        Execute the code in the document namespace.
+        Track which blocks were executed (not skipped).
         """
-        exec(  # noqa: S102
-            example.parsed,
-            globals=example.document.namespace,
-            locals=example.document.namespace,
-        )
+        executed_blocks.append(example.parsed)
 
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
@@ -150,7 +147,8 @@ x = [*x, 2]
         example.evaluate()
 
     # The second block should be skipped
-    assert document.namespace["x"] == []
+    assert len(executed_blocks) == 1
+    assert executed_blocks[0] == "x = []\n"
 
 
 def test_no_skip_when_directive_absent(tmp_path: Path) -> None:
@@ -174,16 +172,13 @@ x = [*x, 3]
     test_document.write_text(data=content, encoding="utf-8")
 
     skip_parser = CustomDirectiveSkipParser(directive="myskip")
+    executed_blocks: list[str] = []
 
     def evaluator(example: Example) -> None:
         """
-        Execute the code in the document namespace.
+        Track which blocks were executed (not skipped).
         """
-        exec(  # noqa: S102
-            example.parsed,
-            globals=example.document.namespace,
-            locals=example.document.namespace,
-        )
+        executed_blocks.append(example.parsed)
 
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
@@ -194,7 +189,11 @@ x = [*x, 3]
         example.evaluate()
 
     # All blocks should execute
-    assert document.namespace["x"] == [2, 3]
+    expected_block_count = 3
+    assert len(executed_blocks) == expected_block_count
+    assert executed_blocks[0] == "x = []\n"
+    assert executed_blocks[1] == "x = [*x, 2]\n"
+    assert executed_blocks[2] == "x = [*x, 3]\n"
 
 
 def test_skip_with_attributes(tmp_path: Path) -> None:
@@ -220,16 +219,13 @@ x = [*x, 3]
     test_document.write_text(data=content, encoding="utf-8")
 
     skip_parser = CustomDirectiveSkipParser(directive="myskip")
+    executed_blocks: list[str] = []
 
     def evaluator(example: Example) -> None:
         """
-        Execute the code in the document namespace.
+        Track which blocks were executed (not skipped).
         """
-        exec(  # noqa: S102
-            example.parsed,
-            globals=example.document.namespace,
-            locals=example.document.namespace,
-        )
+        executed_blocks.append(example.parsed)
 
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
 
@@ -240,7 +236,10 @@ x = [*x, 3]
         example.evaluate()
 
     # The second block should be skipped
-    assert document.namespace["x"] == [3]
+    expected_block_count = 2
+    assert len(executed_blocks) == expected_block_count
+    assert executed_blocks[0] == "x = []\n"
+    assert executed_blocks[1] == "x = [*x, 3]\n"
 
 
 def test_skipper_property() -> None:

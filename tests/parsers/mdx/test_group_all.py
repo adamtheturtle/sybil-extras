@@ -32,13 +32,13 @@ assert z == 3
     test_document = tmp_path / "test.mdx"
     test_document.write_text(data=content, encoding="utf-8")
 
-    namespace: dict[str, int] = {}
+    collected_blocks: list[str] = []
 
     def evaluator(example: Example) -> None:
         """
-        Execute the code in a shared namespace.
+        Collect parsed code blocks.
         """
-        exec(example.parsed, globals=namespace, locals=namespace)  # noqa: S102
+        collected_blocks.append(example.parsed)
 
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
     group_all_parser = GroupAllParser(
@@ -52,13 +52,12 @@ assert z == 3
     for example in document.examples():
         example.evaluate()
 
-    # Variables should be available across all blocks
-    expected_x = 1
-    expected_y = 2
-    expected_z = 3
-    assert namespace["x"] == expected_x
-    assert namespace["y"] == expected_y
-    assert namespace["z"] == expected_z
+    # GroupAllParser should combine all blocks into one
+    assert len(collected_blocks) == 1
+    combined = collected_blocks[0]
+    assert "x = 1" in combined
+    assert "y = 2" in combined
+    assert "z = x + y" in combined
 
 
 def test_group_all_empty_document(tmp_path: Path) -> None:
@@ -118,13 +117,13 @@ assert result == 3
     test_document = tmp_path / "test.mdx"
     test_document.write_text(data=content, encoding="utf-8")
 
-    namespace: dict[str, int] = {}
+    collected_blocks: list[str] = []
 
     def evaluator(example: Example) -> None:
         """
-        Execute the code in a shared namespace.
+        Collect parsed code blocks.
         """
-        exec(example.parsed, globals=namespace, locals=namespace)  # noqa: S102
+        collected_blocks.append(example.parsed)
 
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
     group_all_parser = GroupAllParser(
@@ -138,9 +137,12 @@ assert result == 3
     for example in document.examples():
         example.evaluate()
 
-    # Functions should be defined and callable
-    expected_result = 3
-    assert namespace["result"] == expected_result
+    # Should have one combined block
+    assert len(collected_blocks) == 1
+    combined = collected_blocks[0]
+    assert "def foo():" in combined
+    assert "def bar():" in combined
+    assert "result = foo() + bar()" in combined
 
 
 def test_group_all_multiple_languages(tmp_path: Path) -> None:
@@ -208,13 +210,13 @@ assert x == 1
     test_document = tmp_path / "test.mdx"
     test_document.write_text(data=content, encoding="utf-8")
 
-    namespace: dict[str, int] = {}
+    collected_blocks: list[str] = []
 
     def evaluator(example: Example) -> None:
         """
-        Execute the code in a shared namespace.
+        Collect parsed code blocks.
         """
-        exec(example.parsed, globals=namespace, locals=namespace)  # noqa: S102
+        collected_blocks.append(example.parsed)
 
     code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
     group_all_parser = GroupAllParser(
@@ -228,5 +230,8 @@ assert x == 1
     for example in document.examples():
         example.evaluate()
 
-    # Both blocks should execute successfully
-    assert namespace["x"] == 1
+    # Both blocks should be combined
+    assert len(collected_blocks) == 1
+    combined = collected_blocks[0]
+    assert "x = 1" in combined
+    assert "assert x == 1" in combined
