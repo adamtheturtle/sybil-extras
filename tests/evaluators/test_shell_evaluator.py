@@ -10,7 +10,6 @@ import subprocess
 import sys
 import textwrap
 import time
-from enum import Enum
 from pathlib import Path
 
 import charset_normalizer
@@ -26,6 +25,7 @@ from sybil_extras.languages import (
     MARKDOWN,
     MYST,
     RESTRUCTUREDTEXT,
+    MarkupLanguage,
 )
 
 
@@ -70,30 +70,6 @@ def fixture_rst_file(tmp_path: Path) -> Path:
     test_document = tmp_path / "test_document.example.rst"
     test_document.write_text(data=content, encoding="utf-8")
     return test_document
-
-
-class _MarkupLanguage(Enum):
-    """
-    Supported markup languages.
-    """
-
-    RESTRUCTUREDTEXT = RESTRUCTUREDTEXT
-    MARKDOWN = MARKDOWN
-    MYST = MYST
-
-
-@pytest.fixture(
-    name="markup_language",
-    params=_MarkupLanguage,
-)
-def fixture_markup_language(
-    request: pytest.FixtureRequest,
-) -> _MarkupLanguage:
-    """
-    Fixture to parametrize over the supported markup languages.
-    """
-    assert isinstance(request.param, _MarkupLanguage)
-    return request.param
 
 
 def test_error(*, rst_file: Path, use_pty_option: bool) -> None:
@@ -421,7 +397,7 @@ def test_write_to_file_new_content_trailing_newlines(
     *,
     write_to_file: bool,
     use_pty_option: bool,
-    markup_language: _MarkupLanguage,
+    markup_language: MarkupLanguage,
 ) -> None:
     """Changes are written to the original file iff `write_to_file` is True.
 
@@ -429,7 +405,7 @@ def test_write_to_file_new_content_trailing_newlines(
     block types that allow them.
     """
     original_content = {
-        _MarkupLanguage.RESTRUCTUREDTEXT: textwrap.dedent(
+        RESTRUCTUREDTEXT: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -439,7 +415,7 @@ def test_write_to_file_new_content_trailing_newlines(
                assert x == 4
             """
         ),
-        _MarkupLanguage.MARKDOWN: textwrap.dedent(
+        MARKDOWN: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -449,7 +425,7 @@ def test_write_to_file_new_content_trailing_newlines(
             ```
             """
         ),
-        _MarkupLanguage.MYST: textwrap.dedent(
+        MYST: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -473,7 +449,7 @@ def test_write_to_file_new_content_trailing_newlines(
         write_to_file=write_to_file,
         use_pty=use_pty_option,
     )
-    parser = markup_language.value.code_block_parser_cls(
+    parser = markup_language.code_block_parser_cls(
         language="python",
         evaluator=evaluator,
     )
@@ -487,7 +463,7 @@ def test_write_to_file_new_content_trailing_newlines(
     expected_content = {
         # There is no code block in reStructuredText that ends with multiple
         # newlines.
-        _MarkupLanguage.RESTRUCTUREDTEXT: textwrap.dedent(
+        RESTRUCTUREDTEXT: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -496,7 +472,7 @@ def test_write_to_file_new_content_trailing_newlines(
                foobar
             """
         ),
-        _MarkupLanguage.MARKDOWN: textwrap.dedent(
+        MARKDOWN: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -506,7 +482,7 @@ def test_write_to_file_new_content_trailing_newlines(
             ```
             """
         ),
-        _MarkupLanguage.MYST: textwrap.dedent(
+        MYST: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -529,7 +505,7 @@ def test_write_to_file_new_content_no_trailing_newlines(
     *,
     write_to_file: bool,
     use_pty_option: bool,
-    markup_language: _MarkupLanguage,
+    markup_language: MarkupLanguage,
 ) -> None:
     """Changes are written to the original file iff `write_to_file` is True.
 
@@ -537,7 +513,7 @@ def test_write_to_file_new_content_no_trailing_newlines(
     valid.
     """
     original_content = {
-        _MarkupLanguage.RESTRUCTUREDTEXT: textwrap.dedent(
+        RESTRUCTUREDTEXT: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -547,7 +523,7 @@ def test_write_to_file_new_content_no_trailing_newlines(
                assert x == 4
             """
         ),
-        _MarkupLanguage.MARKDOWN: textwrap.dedent(
+        MARKDOWN: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -557,7 +533,7 @@ def test_write_to_file_new_content_no_trailing_newlines(
             ```
             """
         ),
-        _MarkupLanguage.MYST: textwrap.dedent(
+        MYST: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -579,7 +555,7 @@ def test_write_to_file_new_content_no_trailing_newlines(
         write_to_file=write_to_file,
         use_pty=use_pty_option,
     )
-    parser = markup_language.value.code_block_parser_cls(
+    parser = markup_language.code_block_parser_cls(
         language="python",
         evaluator=evaluator,
     )
@@ -593,7 +569,7 @@ def test_write_to_file_new_content_no_trailing_newlines(
     expected_content = {
         # There is no code block in reStructuredText that ends with multiple
         # newlines.
-        _MarkupLanguage.RESTRUCTUREDTEXT: textwrap.dedent(
+        RESTRUCTUREDTEXT: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -602,7 +578,7 @@ def test_write_to_file_new_content_no_trailing_newlines(
                foobar
             """
         ),
-        _MarkupLanguage.MARKDOWN: textwrap.dedent(
+        MARKDOWN: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -611,7 +587,7 @@ def test_write_to_file_new_content_no_trailing_newlines(
             ```
             """
         ),
-        _MarkupLanguage.MYST: textwrap.dedent(
+        MYST: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -631,13 +607,13 @@ def test_write_to_file_indented_existing_block(
     tmp_path: Path,
     *,
     use_pty_option: bool,
-    markup_language: _MarkupLanguage,
+    markup_language: MarkupLanguage,
 ) -> None:
     """
     Changes are written to indented code blocks.
     """
     original_content = {
-        _MarkupLanguage.RESTRUCTUREDTEXT: textwrap.dedent(
+        RESTRUCTUREDTEXT: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -647,7 +623,7 @@ def test_write_to_file_indented_existing_block(
                    assert x == 4
             """
         ),
-        _MarkupLanguage.MARKDOWN: textwrap.dedent(
+        MARKDOWN: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -657,7 +633,7 @@ def test_write_to_file_indented_existing_block(
                 ```
             """
         ),
-        _MarkupLanguage.MYST: textwrap.dedent(
+        MYST: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -679,7 +655,7 @@ def test_write_to_file_indented_existing_block(
         write_to_file=True,
         use_pty=use_pty_option,
     )
-    parser = markup_language.value.code_block_parser_cls(
+    parser = markup_language.code_block_parser_cls(
         language="python",
         evaluator=evaluator,
     )
@@ -693,7 +669,7 @@ def test_write_to_file_indented_existing_block(
     expected_content = {
         # There is no code block in reStructuredText that ends with multiple
         # newlines.
-        _MarkupLanguage.RESTRUCTUREDTEXT: textwrap.dedent(
+        RESTRUCTUREDTEXT: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -702,7 +678,7 @@ def test_write_to_file_indented_existing_block(
                    foobar
             """
         ),
-        _MarkupLanguage.MARKDOWN: textwrap.dedent(
+        MARKDOWN: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -711,7 +687,7 @@ def test_write_to_file_indented_existing_block(
                 ```
             """
         ),
-        _MarkupLanguage.MYST: textwrap.dedent(
+        MYST: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -728,13 +704,13 @@ def test_write_to_file_indented_empty_existing_block(
     tmp_path: Path,
     *,
     use_pty_option: bool,
-    markup_language: _MarkupLanguage,
+    markup_language: MarkupLanguage,
 ) -> None:
     """
     Changes are written to indented code blocks.
     """
     original_content = {
-        _MarkupLanguage.RESTRUCTUREDTEXT: textwrap.dedent(
+        RESTRUCTUREDTEXT: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -743,7 +719,7 @@ def test_write_to_file_indented_empty_existing_block(
             After code block
             """
         ),
-        _MarkupLanguage.MARKDOWN: textwrap.dedent(
+        MARKDOWN: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -753,7 +729,7 @@ def test_write_to_file_indented_empty_existing_block(
             After code block
             """
         ),
-        _MarkupLanguage.MYST: textwrap.dedent(
+        MYST: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -775,7 +751,7 @@ def test_write_to_file_indented_empty_existing_block(
         write_to_file=True,
         use_pty=use_pty_option,
     )
-    parser = markup_language.value.code_block_parser_cls(
+    parser = markup_language.code_block_parser_cls(
         language="python",
         evaluator=evaluator,
     )
@@ -789,7 +765,7 @@ def test_write_to_file_indented_empty_existing_block(
     expected_content = {
         # There is no code block in reStructuredText that ends with multiple
         # newlines.
-        _MarkupLanguage.RESTRUCTUREDTEXT: textwrap.dedent(
+        RESTRUCTUREDTEXT: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -800,7 +776,7 @@ def test_write_to_file_indented_empty_existing_block(
             After code block
             """
         ),
-        _MarkupLanguage.MARKDOWN: textwrap.dedent(
+        MARKDOWN: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -811,7 +787,7 @@ def test_write_to_file_indented_empty_existing_block(
             After code block
             """
         ),
-        _MarkupLanguage.MYST: textwrap.dedent(
+        MYST: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -1212,7 +1188,7 @@ def test_empty_code_block_write_content_to_file(
     tmp_path: Path,
     use_pty_option: bool,
     write_to_file_option: bool,
-    markup_language: _MarkupLanguage,
+    markup_language: MarkupLanguage,
 ) -> None:
     """
     An error is given when trying to write content to an empty code block.
@@ -1249,9 +1225,9 @@ def test_empty_code_block_write_content_to_file(
     )
 
     content = {
-        _MarkupLanguage.RESTRUCTUREDTEXT: rst_content,
-        _MarkupLanguage.MARKDOWN: markdown_content,
-        _MarkupLanguage.MYST: myst_content,
+        RESTRUCTUREDTEXT: rst_content,
+        MARKDOWN: markdown_content,
+        MYST: myst_content,
     }[markup_language]
     source_file = tmp_path / "source_file.txt"
     source_file.write_text(data=content, encoding="utf-8")
@@ -1267,7 +1243,7 @@ def test_empty_code_block_write_content_to_file(
         use_pty=use_pty_option,
     )
 
-    parser = markup_language.value.code_block_parser_cls(
+    parser = markup_language.code_block_parser_cls(
         language="python",
         evaluator=evaluator,
     )
@@ -1279,7 +1255,7 @@ def test_empty_code_block_write_content_to_file(
     expected_modified_content = {
         # There is no code block in reStructuredText that ends with multiple
         # newlines.
-        _MarkupLanguage.RESTRUCTUREDTEXT: textwrap.dedent(
+        RESTRUCTUREDTEXT: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -1290,7 +1266,7 @@ def test_empty_code_block_write_content_to_file(
             After empty code block
             """
         ),
-        _MarkupLanguage.MARKDOWN: textwrap.dedent(
+        MARKDOWN: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -1302,7 +1278,7 @@ def test_empty_code_block_write_content_to_file(
             After empty code block
             """
         ),
-        _MarkupLanguage.MYST: textwrap.dedent(
+        MYST: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -1329,13 +1305,13 @@ def test_empty_code_block_write_content_to_file_with_options(
     *,
     tmp_path: Path,
     use_pty_option: bool,
-    markup_language: _MarkupLanguage,
+    markup_language: MarkupLanguage,
 ) -> None:
     """
     It is possible to write content to an empty code block even if that code
     block has options.
     """
-    if markup_language == _MarkupLanguage.MARKDOWN:
+    if markup_language is MARKDOWN:
         # Markdown does not support code block options.
         return
 
@@ -1363,8 +1339,8 @@ def test_empty_code_block_write_content_to_file_with_options(
     )
 
     content = {
-        _MarkupLanguage.RESTRUCTUREDTEXT: rst_content,
-        _MarkupLanguage.MYST: myst_content,
+        RESTRUCTUREDTEXT: rst_content,
+        MYST: myst_content,
     }[markup_language]
     source_file = tmp_path / "source_file.txt"
     source_file.write_text(data=content, encoding="utf-8")
@@ -1378,7 +1354,7 @@ def test_empty_code_block_write_content_to_file_with_options(
         use_pty=use_pty_option,
     )
 
-    parser = markup_language.value.code_block_parser_cls(
+    parser = markup_language.code_block_parser_cls(
         language="python",
         evaluator=evaluator,
     )
@@ -1390,7 +1366,7 @@ def test_empty_code_block_write_content_to_file_with_options(
     expected_modified_content = {
         # There is no code block in reStructuredText that ends with multiple
         # newlines.
-        _MarkupLanguage.RESTRUCTUREDTEXT: textwrap.dedent(
+        RESTRUCTUREDTEXT: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -1402,7 +1378,7 @@ def test_empty_code_block_write_content_to_file_with_options(
             After empty code block
             """
         ),
-        _MarkupLanguage.MYST: textwrap.dedent(
+        MYST: textwrap.dedent(
             text="""\
             Not in code block
 

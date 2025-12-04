@@ -2,7 +2,6 @@
 Tests for the languages module.
 """
 
-import textwrap
 from pathlib import Path
 
 import pytest
@@ -22,58 +21,28 @@ from sybil_extras.languages import (
 
 
 @pytest.mark.parametrize(
-    argnames=("language", "content", "expected_namespace"),
+    argnames=("language", "value"),
     argvalues=[
-        pytest.param(
-            MYST,
-            textwrap.dedent(
-                text="""\
-                ```python
-                x = 1
-                ```
-                """
-            ),
-            {"x": 1},
-            id="myst-code-block",
-        ),
-        pytest.param(
-            RESTRUCTUREDTEXT,
-            textwrap.dedent(
-                text="""\
-                .. code-block:: python
-
-                   x = 2
-                """
-            ),
-            {"x": 2},
-            id="rest-code-block",
-        ),
-        pytest.param(
-            MARKDOWN,
-            textwrap.dedent(
-                text="""\
-                ```python
-                x = 3
-                ```
-                """
-            ),
-            {"x": 3},
-            id="markdown-code-block",
-        ),
+        pytest.param(MYST, 1, id="myst-code-block"),
+        pytest.param(RESTRUCTUREDTEXT, 2, id="rest-code-block"),
+        pytest.param(MARKDOWN, 3, id="markdown-code-block"),
     ],
 )
 def test_code_block_parser(
     language: MarkupLanguage,
-    content: str,
-    expected_namespace: dict[str, object],
+    value: int,
     tmp_path: Path,
 ) -> None:
     """
     Test that each language's code block parser works correctly.
     """
-    extension = ".md" if language in {MYST, MARKDOWN} else ".rst"
-    test_document = tmp_path / f"test{extension}"
-    test_document.write_text(data=content, encoding="utf-8")
+    code = f"x = {value}"
+    content = language.code_block_builder(code=code, language="python")
+    test_document = tmp_path / "test"
+    test_document.write_text(
+        data=f"{content}{language.markup_separator}",
+        encoding="utf-8",
+    )
 
     parser = language.code_block_parser_cls(
         language="python",
@@ -85,64 +54,38 @@ def test_code_block_parser(
     for example in document.examples():
         example.evaluate()
 
-    assert document.namespace == expected_namespace
+    assert document.namespace == {"x": value}
 
 
 @pytest.mark.parametrize(
-    argnames=("language", "skip_directive_content"),
+    argnames=("language", "value"),
     argvalues=[
-        pytest.param(
-            MYST,
-            textwrap.dedent(
-                text="""\
-                % skip: next
-
-                ```python
-                x = 1
-                ```
-                """
-            ),
-            id="myst-skip",
-        ),
-        pytest.param(
-            RESTRUCTUREDTEXT,
-            textwrap.dedent(
-                text="""\
-                .. skip: next
-
-                .. code-block:: python
-
-                   x = 2
-                """
-            ),
-            id="rest-skip",
-        ),
-        pytest.param(
-            MARKDOWN,
-            textwrap.dedent(
-                text="""\
-                <!--- skip: next -->
-
-                ```python
-                x = 3
-                ```
-                """
-            ),
-            id="markdown-skip",
-        ),
+        pytest.param(MYST, 1, id="myst-skip"),
+        pytest.param(RESTRUCTUREDTEXT, 2, id="rest-skip"),
+        pytest.param(MARKDOWN, 3, id="markdown-skip"),
     ],
 )
 def test_skip_parser(
     language: MarkupLanguage,
-    skip_directive_content: str,
+    value: int,
     tmp_path: Path,
 ) -> None:
     """
     Test that each language's skip parser works correctly.
     """
-    extension = ".md" if language in {MYST, MARKDOWN} else ".rst"
-    test_document = tmp_path / f"test{extension}"
-    test_document.write_text(data=skip_directive_content, encoding="utf-8")
+    content = language.markup_separator.join(
+        [
+            language.directive_builder(directive="skip", argument="next"),
+            language.code_block_builder(
+                code=f"x = {value}", language="python"
+            ),
+        ]
+    )
+    test_document = tmp_path / "test"
+    test_document.write_text(
+        data=f"{content}{language.markup_separator}",
+        encoding="utf-8",
+    )
 
     skip_parser = language.skip_parser_cls(directive="skip")
     code_parser = language.code_block_parser_cls(
@@ -160,82 +103,49 @@ def test_skip_parser(
 
 
 @pytest.mark.parametrize(
-    argnames=("language", "grouped_content", "expected_result"),
+    argnames=("language"),
     argvalues=[
-        pytest.param(
-            MYST,
-            textwrap.dedent(
-                text="""\
-                <!--- group: start -->
+        pytest.param(MYST, id="myst-empty"),
+        pytest.param(RESTRUCTUREDTEXT, id="rest-empty"),
+        pytest.param(MARKDOWN, id="markdown-empty"),
+    ],
+)
+def test_code_block_empty(language: MarkupLanguage) -> None:
+    """
+    Code block builders handle empty content.
+    """
+    block = language.code_block_builder(code="", language="python")
+    assert block
 
-                ```python
-                x = 1
-                ```
 
-                ```python
-                x = x + 1
-                ```
-
-                <!--- group: end -->
-                """
-            ),
-            ["x = 1\n\n\n\nx = x + 1\n"],
-            id="myst-grouped",
-        ),
-        pytest.param(
-            RESTRUCTUREDTEXT,
-            textwrap.dedent(
-                text="""\
-                .. group: start
-
-                .. code-block:: python
-
-                   x = 1
-
-                .. code-block:: python
-
-                   x = x + 1
-
-                .. group: end
-                """
-            ),
-            ["x = 1\n\n\n\nx = x + 1\n"],
-            id="rest-grouped",
-        ),
-        pytest.param(
-            MARKDOWN,
-            textwrap.dedent(
-                text="""\
-                <!--- group: start -->
-
-                ```python
-                x = 1
-                ```
-
-                ```python
-                x = x + 1
-                ```
-
-                <!--- group: end -->
-                """
-            ),
-            ["x = 1\n\n\n\nx = x + 1\n"],
-            id="markdown-grouped",
-        ),
+@pytest.mark.parametrize(
+    argnames=("language"),
+    argvalues=[
+        pytest.param(MYST, id="myst-grouped"),
+        pytest.param(RESTRUCTUREDTEXT, id="rest-grouped"),
+        pytest.param(MARKDOWN, id="markdown-grouped"),
     ],
 )
 def test_group_parser(
     language: MarkupLanguage,
-    grouped_content: str,
-    expected_result: list[str],
     tmp_path: Path,
 ) -> None:
     """
     Test that each language's group parser works correctly.
     """
-    extension = ".md" if language in {MYST, MARKDOWN} else ".rst"
-    test_document = tmp_path / f"test{extension}"
-    test_document.write_text(data=grouped_content, encoding="utf-8")
+    content = language.markup_separator.join(
+        [
+            language.directive_builder(directive="group", argument="start"),
+            language.code_block_builder(code="x = 1", language="python"),
+            language.code_block_builder(code="x = x + 1", language="python"),
+            language.directive_builder(directive="group", argument="end"),
+        ]
+    )
+    test_document = tmp_path / "test"
+    test_document.write_text(
+        data=f"{content}{language.markup_separator}",
+        encoding="utf-8",
+    )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
 
@@ -254,49 +164,38 @@ def test_group_parser(
     for example in document.examples():
         example.evaluate()
 
-    assert document.namespace["blocks"] == expected_result
+    separator_newlines = len(language.markup_separator)
+    padding_newlines = separator_newlines + 1
+    padding = "\n" * padding_newlines
+
+    expected = f"x = 1\n{padding}x = x + 1\n"
+    assert document.namespace["blocks"] == [expected]
 
 
 @pytest.mark.parametrize(
-    argnames=("language", "jinja_content"),
+    argnames=("language"),
     argvalues=[
-        pytest.param(
-            MYST,
-            textwrap.dedent(
-                text="""\
-                ```{jinja}
-                {{ 1 + 1 }}
-                ```
-                """
-            ),
-            id="myst-jinja",
-        ),
-        pytest.param(
-            RESTRUCTUREDTEXT,
-            textwrap.dedent(
-                text="""\
-                .. jinja::
-
-                   {{ 1 + 1 }}
-                """
-            ),
-            id="rest-jinja",
-        ),
+        pytest.param(MYST, id="myst-jinja"),
+        pytest.param(RESTRUCTUREDTEXT, id="rest-jinja"),
     ],
 )
 def test_sphinx_jinja_parser(
     language: MarkupLanguage,
-    jinja_content: str,
     tmp_path: Path,
 ) -> None:
     """
     Test that each language's sphinx-jinja parser works correctly.
     """
     assert language.sphinx_jinja_parser_cls is not None
+    jinja_builder = language.jinja_block_builder
+    assert jinja_builder is not None
 
-    extension = ".md" if language == MYST else ".rst"
-    test_document = tmp_path / f"test{extension}"
-    test_document.write_text(data=jinja_content, encoding="utf-8")
+    jinja_content = jinja_builder(body="{{ 1 + 1 }}")
+    test_document = tmp_path / "test"
+    test_document.write_text(
+        data=f"{jinja_content}{language.markup_separator}",
+        encoding="utf-8",
+    )
 
     jinja_parser = language.sphinx_jinja_parser_cls(evaluator=NoOpEvaluator())
     sybil = Sybil(parsers=[jinja_parser])
@@ -311,6 +210,7 @@ def test_markdown_no_sphinx_jinja() -> None:
     Test that Markdown does not have a sphinx-jinja parser.
     """
     assert MARKDOWN.sphinx_jinja_parser_cls is None
+    assert MARKDOWN.jinja_block_builder is None
 
 
 def test_language_names() -> None:
