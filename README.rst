@@ -105,7 +105,7 @@ This is useful for testing parsers that group multiple code blocks together.
    )
    with tempfile.NamedTemporaryFile(mode="w", suffix=".rst", delete=False) as f:
        f.write(content)
-       temp_path = Path(f.name)
+       my_document = Path(f.name)
 
 .. code-block:: python
 
@@ -120,7 +120,7 @@ This is useful for testing parsers that group multiple code blocks together.
     evaluator = BlockAccumulatorEvaluator(namespace_key=namespace_key)
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
-    document = sybil.parse(path=temp_path)
+    document = sybil.parse(path=my_document)
 
     for example in document.examples():
         example.evaluate()
@@ -131,7 +131,7 @@ This is useful for testing parsers that group multiple code blocks together.
 .. invisible-code-block: python
 
    """Clean up the temporary document used in the example."""
-   temp_path.unlink()
+   my_document.unlink()
 
 NoOpEvaluator
 ^^^^^^^^^^^^^
