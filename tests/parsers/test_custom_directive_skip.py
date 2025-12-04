@@ -11,7 +11,7 @@ from sybil.evaluators.python import PythonEvaluator
 from sybil.evaluators.skip import SkipState
 
 from sybil_extras.languages import MarkupLanguage
-from tests.helpers import join_markup, write_document
+from tests.helpers import document_data, join_markup, write_document
 
 
 def _code_block_parser(
@@ -41,7 +41,7 @@ def test_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     test_document = write_document(
         language=language,
         directory=tmp_path,
-        content=content,
+        data=document_data(language=language, content=content),
     )
 
     skip_parser = language.skip_parser_cls(directive="custom-skip")
@@ -99,7 +99,7 @@ def test_directive_name_in_evaluate_error(
     test_document = write_document(
         language=language,
         directory=tmp_path,
-        content=content,
+        data=document_data(language=language, content=content),
     )
 
     skip_parser = language.skip_parser_cls(directive="custom-skip")
@@ -125,7 +125,7 @@ def test_directive_name_in_parse_error(
     test_document = write_document(
         language=language,
         directory=tmp_path,
-        content=content,
+        data=document_data(language=language, content=content),
     )
 
     skip_parser = language.skip_parser_cls(directive="custom-skip")
@@ -153,7 +153,7 @@ def test_directive_name_not_regex_escaped(
     test_document = write_document(
         language=language,
         directory=tmp_path,
-        content=content,
+        data=document_data(language=language, content=content),
     )
 
     code_block_parser = _code_block_parser(language=language)

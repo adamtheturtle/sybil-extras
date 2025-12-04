@@ -15,22 +15,27 @@ def join_markup(*parts: str) -> str:
     return "\n\n".join(cleaned_parts)
 
 
+def document_data(language: MarkupLanguage, content: str) -> str:
+    """
+    Calculate the data ``write_document`` should persist.
+    """
+    if not content:
+        return ""
+    normalized = content.rstrip("\n")
+    suffix = "\n\n" if language.file_extension == ".rst" else "\n"
+    return f"{normalized}{suffix}"
+
+
 def write_document(
     language: MarkupLanguage,
     directory: Path,
-    content: str,
+    data: str,
     *,
     stem: str = "test",
 ) -> Path:
     """
-    Write ``content`` to ``directory`` using the language extension.
+    Write ``data`` to ``directory`` using the language extension.
     """
     path = language.document_path(directory=directory, stem=stem)
-    if not content:
-        data = ""
-    else:
-        normalized = content.rstrip("\n")
-        suffix = "\n\n" if language.file_extension == ".rst" else "\n"
-        data = f"{normalized}{suffix}"
     path.write_text(data=data, encoding="utf-8")
     return path

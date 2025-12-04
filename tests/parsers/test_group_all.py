@@ -11,7 +11,7 @@ from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.languages import (
     MarkupLanguage,
 )
-from tests.helpers import join_markup, write_document
+from tests.helpers import document_data, join_markup, write_document
 
 
 def test_group_all(language: MarkupLanguage, tmp_path: Path) -> None:
@@ -26,7 +26,7 @@ def test_group_all(language: MarkupLanguage, tmp_path: Path) -> None:
     test_document = write_document(
         language=language,
         directory=tmp_path,
-        content=content,
+        data=document_data(language=language, content=content),
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
@@ -65,7 +65,7 @@ def test_group_all_single_block(
     test_document = write_document(
         language=language,
         directory=tmp_path,
-        content=content,
+        data=document_data(language=language, content=content),
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
@@ -99,7 +99,7 @@ def test_group_all_empty_document(
     test_document = write_document(
         language=language,
         directory=tmp_path,
-        content=content,
+        data=document_data(language=language, content=content),
     )
 
     group_all_parser = language.group_all_parser_cls(
@@ -132,7 +132,7 @@ def test_group_all_no_pad(language: MarkupLanguage, tmp_path: Path) -> None:
     test_document = write_document(
         language=language,
         directory=tmp_path,
-        content=content,
+        data=document_data(language=language, content=content),
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
@@ -171,7 +171,7 @@ def test_group_all_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     test_document = write_document(
         language=language,
         directory=tmp_path,
-        content=content,
+        data=document_data(language=language, content=content),
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")

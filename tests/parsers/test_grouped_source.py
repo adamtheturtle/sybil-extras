@@ -12,7 +12,7 @@ from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 from sybil_extras.languages import RESTRUCTUREDTEXT, MarkupLanguage
-from tests.helpers import join_markup, write_document
+from tests.helpers import document_data, join_markup, write_document
 
 
 def test_group(language: MarkupLanguage, tmp_path: Path) -> None:
@@ -34,7 +34,7 @@ def test_group(language: MarkupLanguage, tmp_path: Path) -> None:
     test_document = write_document(
         language=language,
         directory=tmp_path,
-        content=content,
+        data=document_data(language=language, content=content),
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
@@ -76,7 +76,7 @@ def test_nothing_after_group(language: MarkupLanguage, tmp_path: Path) -> None:
     test_document = write_document(
         language=language,
         directory=tmp_path,
-        content=content,
+        data=document_data(language=language, content=content),
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
@@ -115,7 +115,7 @@ def test_empty_group(language: MarkupLanguage, tmp_path: Path) -> None:
     test_document = write_document(
         language=language,
         directory=tmp_path,
-        content=content,
+        data=document_data(language=language, content=content),
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
@@ -157,7 +157,7 @@ def test_group_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     test_document = write_document(
         language=language,
         directory=tmp_path,
-        content=content,
+        data=document_data(language=language, content=content),
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
@@ -196,7 +196,7 @@ def test_no_argument(language: MarkupLanguage, tmp_path: Path) -> None:
     test_document = write_document(
         language=language,
         directory=tmp_path,
-        content=content,
+        data=document_data(language=language, content=content),
     )
 
     group_parser = language.group_parser_cls(
@@ -224,7 +224,7 @@ def test_malformed_argument(language: MarkupLanguage, tmp_path: Path) -> None:
     test_document = write_document(
         language=language,
         directory=tmp_path,
-        content=content,
+        data=document_data(language=language, content=content),
     )
 
     group_parser = language.group_parser_cls(
@@ -249,7 +249,7 @@ def test_end_only(language: MarkupLanguage, tmp_path: Path) -> None:
     test_document = write_document(
         language=language,
         directory=tmp_path,
-        content=content,
+        data=document_data(language=language, content=content),
     )
 
     group_parser = language.group_parser_cls(
@@ -280,7 +280,7 @@ def test_start_after_start(language: MarkupLanguage, tmp_path: Path) -> None:
     test_document = write_document(
         language=language,
         directory=tmp_path,
-        content=content,
+        data=document_data(language=language, content=content),
     )
 
     group_parser = language.group_parser_cls(
@@ -324,7 +324,7 @@ def test_directive_name_not_regex_escaped(
     test_document = write_document(
         language=language,
         directory=tmp_path,
-        content=content,
+        data=document_data(language=language, content=content),
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
@@ -368,7 +368,7 @@ def test_with_shell_command_evaluator(
     test_document = write_document(
         language=language,
         directory=tmp_path,
-        content=content,
+        data=document_data(language=language, content=content),
     )
 
     output_document = tmp_path / "output.txt"
@@ -424,7 +424,7 @@ def test_no_pad_groups(language: MarkupLanguage, tmp_path: Path) -> None:
     test_document = write_document(
         language=language,
         directory=tmp_path,
-        content=content,
+        data=document_data(language=language, content=content),
     )
 
     output_document = tmp_path / "output.txt"

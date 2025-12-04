@@ -18,7 +18,7 @@ from sybil_extras.languages import (
     RESTRUCTUREDTEXT,
     MarkupLanguage,
 )
-from tests.helpers import join_markup, write_document
+from tests.helpers import document_data, join_markup, write_document
 
 
 @pytest.mark.parametrize(
@@ -42,7 +42,7 @@ def test_code_block_parser(
     test_document = write_document(
         language=language,
         directory=tmp_path,
-        content=content,
+        data=document_data(language=language, content=content),
     )
 
     parser = language.code_block_parser_cls(
@@ -81,7 +81,7 @@ def test_skip_parser(
     test_document = write_document(
         language=language,
         directory=tmp_path,
-        content=content,
+        data=document_data(language=language, content=content),
     )
 
     skip_parser = language.skip_parser_cls(directive="skip")
@@ -132,7 +132,7 @@ def test_write_document_empty(
     path = write_document(
         language=language,
         directory=tmp_path,
-        content="",
+        data=document_data(language=language, content=""),
         stem="empty",
     )
     assert path.read_text(encoding="utf-8") == ""
@@ -162,7 +162,7 @@ def test_group_parser(
     test_document = write_document(
         language=language,
         directory=tmp_path,
-        content=content,
+        data=document_data(language=language, content=content),
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
@@ -205,7 +205,7 @@ def test_sphinx_jinja_parser(
     test_document = write_document(
         language=language,
         directory=tmp_path,
-        content=jinja_content,
+        data=document_data(language=language, content=jinja_content),
     )
 
     jinja_parser = language.sphinx_jinja_parser_cls(evaluator=NoOpEvaluator())
