@@ -47,8 +47,6 @@ def test_group_all(language: MarkupLanguage, tmp_path: Path) -> None:
         example.evaluate()
 
     blocks = ["x = []", "x = [*x, 1]", "x = [*x, 2]"]
-    # join_markup inserts the language's separator between fragments; padding
-    # duplicates that separator so line numbers stay aligned with the source.
     separator = language.markup_separator * 2
     expected = separator.join(blocks) + "\n"
     assert document.namespace["blocks"] == [expected]
@@ -155,8 +153,6 @@ def test_group_all_no_pad(language: MarkupLanguage, tmp_path: Path) -> None:
         example.evaluate()
 
     blocks = ["x = []", "x = [*x, 1]", "x = [*x, 2]"]
-    # Groups are concatenated directly with the separator produced by
-    # ``join_markup``.
     expected = language.markup_separator.join(blocks) + "\n"
     assert document.namespace["blocks"] == [expected]
 
