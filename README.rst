@@ -128,7 +128,10 @@ This is useful for testing parsers that group multiple code blocks together.
     blocks = document.namespace[namespace_key]
     assert blocks == ["x = 1\n", "y = 2\n", "z = 3"]
 
-    temp_path.unlink()
+.. invisible-code-block: python
+
+   """Clean up the temporary document used in the example."""
+   temp_path.unlink()
 
 NoOpEvaluator
 ^^^^^^^^^^^^^
