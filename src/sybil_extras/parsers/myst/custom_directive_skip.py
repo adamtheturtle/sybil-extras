@@ -5,6 +5,7 @@ A custom directive skip parser for MyST.
 import re
 from collections.abc import Iterable
 
+from beartype import beartype
 from sybil import Document, Region
 from sybil.evaluators.skip import Skipper
 from sybil.parsers.abstract import AbstractSkipParser
@@ -14,6 +15,7 @@ from sybil.parsers.myst.lexers import (
 )
 
 
+@beartype
 class CustomDirectiveSkipParser:
     """
     A custom directive skip parser for MyST.

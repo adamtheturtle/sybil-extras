@@ -5,12 +5,14 @@ A parser for Sphinx jinja2 blocks in reST.
 import re
 from collections.abc import Iterable
 
+from beartype import beartype
 from sybil import Document, Region
 from sybil.parsers.abstract.lexers import LexerCollection
 from sybil.parsers.rest.lexers import DirectiveLexer
 from sybil.typing import Evaluator
 
 
+@beartype
 class SphinxJinja2Parser:
     """
     A parser for Sphinx jinja2 blocks in reST.

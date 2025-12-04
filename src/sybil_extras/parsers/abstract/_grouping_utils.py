@@ -4,11 +4,13 @@ Shared utilities for grouping parsers.
 
 from collections.abc import Sequence
 
+from beartype import beartype
 from sybil import Example, Region
 from sybil.region import Lexeme
 from sybil.typing import Evaluator
 
 
+@beartype
 def _combine_examples_text(
     examples: Sequence[Example],
     *,
@@ -51,6 +53,7 @@ def _combine_examples_text(
     )
 
 
+@beartype
 def has_source(example: Example) -> bool:
     """Check if an example has a source lexeme.
 
@@ -63,6 +66,7 @@ def has_source(example: Example) -> bool:
     return "source" in example.region.lexemes
 
 
+@beartype
 def create_combined_region(
     examples: Sequence[Example],
     *,
@@ -91,6 +95,7 @@ def create_combined_region(
     )
 
 
+@beartype
 def create_combined_example(
     examples: Sequence[Example],
     region: Region,

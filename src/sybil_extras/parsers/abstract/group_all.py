@@ -5,6 +5,7 @@ Abstract parser that groups all code blocks in a document.
 from collections import defaultdict
 from collections.abc import Iterable
 
+from beartype import beartype
 from sybil import Document, Example, Region
 from sybil.example import NotEvaluated
 from sybil.typing import Evaluator
@@ -16,6 +17,7 @@ from ._grouping_utils import (
 )
 
 
+@beartype
 class _GroupAllState:
     """
     State for grouping all examples in a document.
@@ -28,6 +30,7 @@ class _GroupAllState:
         self.examples: list[Example] = []
 
 
+@beartype
 class _GroupAllEvaluator:
     """
     Evaluator that collects all examples and evaluates them as one.
@@ -109,6 +112,7 @@ class _GroupAllEvaluator:
     _caller = __call__
 
 
+@beartype
 class AbstractGroupAllParser:
     """
     An abstract parser that groups all code blocks in a document without

@@ -6,6 +6,7 @@ from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from typing import Literal
 
+from beartype import beartype
 from sybil import Document, Example, Region
 from sybil.example import NotEvaluated
 from sybil.parsers.abstract.lexers import LexerCollection
@@ -18,6 +19,7 @@ from ._grouping_utils import (
 )
 
 
+@beartype
 class _GroupState:
     """
     Group state.
@@ -31,6 +33,7 @@ class _GroupState:
         self.examples: Sequence[Example] = []
 
 
+@beartype
 class _Grouper:
     """
     Group blocks of source code.
@@ -129,6 +132,7 @@ class _Grouper:
     _caller = __call__
 
 
+@beartype
 class AbstractGroupedSourceParser:
     """
     An abstract parser for grouping blocks of source code.

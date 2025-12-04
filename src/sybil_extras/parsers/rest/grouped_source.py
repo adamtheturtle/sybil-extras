@@ -4,6 +4,7 @@ A group parser for reST.
 
 import re
 
+from beartype import beartype
 from sybil.parsers.rest.lexers import DirectiveInCommentLexer
 from sybil.typing import Evaluator
 
@@ -12,6 +13,7 @@ from sybil_extras.parsers.abstract.grouped_source import (
 )
 
 
+@beartype
 class GroupedSourceParser(AbstractGroupedSourceParser):
     """
     A code block group parser for reST.
