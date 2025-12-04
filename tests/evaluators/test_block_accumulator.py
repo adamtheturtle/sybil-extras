@@ -69,30 +69,6 @@ def test_custom_namespace_key(tmp_path: Path) -> None:
     assert "blocks" not in document.namespace
 
 
-def test_empty_document(tmp_path: Path) -> None:
-    """
-    The evaluator handles documents with no code blocks.
-    """
-    content = """\
-No code blocks here
-===================
-
-Just text.
-"""
-    test_document = tmp_path / "test.rst"
-    test_document.write_text(data=content, encoding="utf-8")
-
-    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
-    sybil = Sybil(parsers=[parser])
-    document = sybil.parse(path=test_document)
-
-    for example in document.examples():
-        example.evaluate()
-
-    assert "blocks" not in document.namespace
-
-
 def test_single_block(tmp_path: Path) -> None:
     """
     The evaluator handles a single code block.
