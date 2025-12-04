@@ -2,20 +2,15 @@
 A group parser for MDX.
 """
 
-from __future__ import annotations
-
 import re
-from typing import TYPE_CHECKING
 
 from beartype import beartype
 from sybil.parsers.markdown.lexers import DirectiveInHTMLCommentLexer
+from sybil.typing import Evaluator
 
 from sybil_extras.parsers.abstract.grouped_source import (
     AbstractGroupedSourceParser,
 )
-
-if TYPE_CHECKING:
-    from sybil.typing import Evaluator
 
 
 @beartype

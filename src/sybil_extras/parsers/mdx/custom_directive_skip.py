@@ -2,20 +2,14 @@
 A custom directive skip parser for MDX.
 """
 
-from __future__ import annotations
-
 import re
-from typing import TYPE_CHECKING
+from collections.abc import Iterable
 
 from beartype import beartype
+from sybil import Document, Region
 from sybil.evaluators.skip import Skipper
 from sybil.parsers.abstract import AbstractSkipParser
 from sybil.parsers.markdown.lexers import DirectiveInHTMLCommentLexer
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable
-
-    from sybil import Document, Region
 
 
 @beartype

@@ -2,23 +2,17 @@
 A code block parser for MDX with attribute support.
 """
 
-from __future__ import annotations
-
 import re
-from typing import TYPE_CHECKING
+from collections.abc import Iterable
 
 from beartype import beartype
+from sybil import Document, Region
 from sybil.parsers.abstract import AbstractCodeBlockParser
 from sybil.parsers.markdown.lexers import (
     DirectiveInHTMLCommentLexer,
     RawFencedCodeBlockLexer,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable
-
-    from sybil import Document, Region
-    from sybil.typing import Evaluator
+from sybil.typing import Evaluator
 
 _INFO_LINE_PATTERN = re.compile(
     pattern=r"(?P<language>[^\s`]+)(?P<attributes>(?:[ \t]+[^\n]*?)?)$\n",
