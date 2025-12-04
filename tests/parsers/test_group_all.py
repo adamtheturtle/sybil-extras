@@ -24,7 +24,7 @@ def test_group_all(language: MarkupLanguage, tmp_path: Path) -> None:
             language.code_block_builder(code="x = [*x, 2]", language="python"),
         ]
     )
-    test_document = tmp_path / f"test{language.file_extension}"
+    test_document = tmp_path / "test"
     test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
@@ -61,7 +61,7 @@ def test_group_all_single_block(
     Grouping a single block preserves it.
     """
     content = language.code_block_builder(code="x = []", language="python")
-    test_document = tmp_path / f"test{language.file_extension}"
+    test_document = tmp_path / "test"
     test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
@@ -95,7 +95,7 @@ def test_group_all_empty_document(
     Empty documents do not raise errors.
     """
     content = "Empty document without code blocks."
-    test_document = tmp_path / f"test{language.file_extension}"
+    test_document = tmp_path / "test"
     test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
@@ -130,7 +130,7 @@ def test_group_all_no_pad(language: MarkupLanguage, tmp_path: Path) -> None:
             language.code_block_builder(code="x = [*x, 2]", language="python"),
         ]
     )
-    test_document = tmp_path / f"test{language.file_extension}"
+    test_document = tmp_path / "test"
     test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
@@ -176,7 +176,7 @@ def test_group_all_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
             language.code_block_builder(code="x = [*x, 2]", language="python"),
         ]
     )
-    test_document = tmp_path / f"test{language.file_extension}"
+    test_document = tmp_path / "test"
     test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",

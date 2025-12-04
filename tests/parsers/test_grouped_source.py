@@ -32,7 +32,7 @@ def test_group(language: MarkupLanguage, tmp_path: Path) -> None:
             language.directive_builder(directive="group", argument="end"),
         ]
     )
-    test_document = tmp_path / f"test{language.file_extension}"
+    test_document = tmp_path / "test"
     test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
@@ -76,7 +76,7 @@ def test_nothing_after_group(language: MarkupLanguage, tmp_path: Path) -> None:
             language.directive_builder(directive="group", argument="end"),
         ]
     )
-    test_document = tmp_path / f"test{language.file_extension}"
+    test_document = tmp_path / "test"
     test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
@@ -117,7 +117,7 @@ def test_empty_group(language: MarkupLanguage, tmp_path: Path) -> None:
             language.code_block_builder(code="x = [*x, 3]", language="python"),
         ]
     )
-    test_document = tmp_path / f"test{language.file_extension}"
+    test_document = tmp_path / "test"
     test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
@@ -161,7 +161,7 @@ def test_group_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
             language.code_block_builder(code="x = [*x, 3]", language="python"),
         ]
     )
-    test_document = tmp_path / f"test{language.file_extension}"
+    test_document = tmp_path / "test"
     test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
@@ -202,7 +202,7 @@ def test_no_argument(language: MarkupLanguage, tmp_path: Path) -> None:
             language.directive_builder(directive="group", argument="end"),
         ]
     )
-    test_document = tmp_path / f"test{language.file_extension}"
+    test_document = tmp_path / "test"
     test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
@@ -235,7 +235,7 @@ def test_malformed_argument(language: MarkupLanguage, tmp_path: Path) -> None:
             language.directive_builder(directive="group", argument="end"),
         ]
     )
-    test_document = tmp_path / f"test{language.file_extension}"
+    test_document = tmp_path / "test"
     test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
@@ -260,7 +260,7 @@ def test_end_only(language: MarkupLanguage, tmp_path: Path) -> None:
     An error is raised when an end directive has no matching start.
     """
     content = language.directive_builder(directive="group", argument="end")
-    test_document = tmp_path / f"test{language.file_extension}"
+    test_document = tmp_path / "test"
     test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
@@ -293,7 +293,7 @@ def test_start_after_start(language: MarkupLanguage, tmp_path: Path) -> None:
             language.directive_builder(directive="group", argument="start"),
         ]
     )
-    test_document = tmp_path / f"test{language.file_extension}"
+    test_document = tmp_path / "test"
     test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
@@ -339,7 +339,7 @@ def test_directive_name_not_regex_escaped(
             language.directive_builder(directive=directive, argument="end"),
         ]
     )
-    test_document = tmp_path / f"test{language.file_extension}"
+    test_document = tmp_path / "test"
     test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
@@ -385,7 +385,7 @@ def test_with_shell_command_evaluator(
             language.directive_builder(directive="group", argument="end"),
         ]
     )
-    test_document = tmp_path / f"test{language.file_extension}"
+    test_document = tmp_path / "test"
     test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
@@ -443,7 +443,7 @@ def test_no_pad_groups(language: MarkupLanguage, tmp_path: Path) -> None:
             language.directive_builder(directive="group", argument="end"),
         ]
     )
-    test_document = tmp_path / f"test{language.file_extension}"
+    test_document = tmp_path / "test"
     test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",

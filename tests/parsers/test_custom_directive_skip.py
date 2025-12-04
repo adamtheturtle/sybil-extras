@@ -27,7 +27,7 @@ def test_skip(language: MarkupLanguage, tmp_path: Path) -> None:
             language.code_block_builder(code="x = [*x, 3]", language="python"),
         ]
     )
-    test_document = tmp_path / f"test{language.file_extension}"
+    test_document = tmp_path / "test"
     test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
@@ -92,7 +92,7 @@ def test_directive_name_in_evaluate_error(
         directive="custom-skip",
         argument="end",
     )
-    test_document = tmp_path / f"test{language.file_extension}"
+    test_document = tmp_path / "test"
     test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
@@ -121,7 +121,7 @@ def test_directive_name_in_parse_error(
         directive="custom-skip",
         argument="!!!",
     )
-    test_document = tmp_path / f"test{language.file_extension}"
+    test_document = tmp_path / "test"
     test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
@@ -151,7 +151,7 @@ def test_directive_name_not_regex_escaped(
             language.code_block_builder(code="block = 1", language="python"),
         ]
     )
-    test_document = tmp_path / f"test{language.file_extension}"
+    test_document = tmp_path / "test"
     test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
