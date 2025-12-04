@@ -18,7 +18,10 @@ def document_data(language: MarkupLanguage, content: str) -> str:
 
     reStructuredText needs a blank line separating directives from
     following content, so it keeps the double newline while other
-    languages only get a single trailing newline.
+    languages only get a single trailing newline. This intentionally
+    differs from :func:`sybil_extras.languages._normalize_code`, which
+    dedents block content and would corrupt the indentation required in
+    the serialized markup.
     """
     if not content:
         return ""

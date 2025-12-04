@@ -2,29 +2,15 @@
 Custom directive skip parser tests shared across markup languages.
 """
 
-from collections.abc import Callable, Iterable
 from pathlib import Path
 
 import pytest
-from sybil import Document, Region, Sybil
+from sybil import Sybil
 from sybil.evaluators.python import PythonEvaluator
 from sybil.evaluators.skip import SkipState
 
 from sybil_extras.languages import MarkupLanguage
 from tests.helpers import document_data, join_markup
-
-
-def _code_block_parser(
-    *,
-    language: MarkupLanguage,
-) -> Callable[[Document], Iterable[Region]]:
-    """
-    Instantiate a Python code block parser for ``language``.
-    """
-    return language.code_block_parser_cls(
-        language="python",
-        evaluator=PythonEvaluator(),
-    )
 
 
 def test_skip(language: MarkupLanguage, tmp_path: Path) -> None:
@@ -45,7 +31,10 @@ def test_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     )
 
     skip_parser = language.skip_parser_cls(directive="custom-skip")
-    code_block_parser = _code_block_parser(language=language)
+    code_block_parser = language.code_block_parser_cls(
+        language="python",
+        evaluator=PythonEvaluator(),
+    )
 
     sybil = Sybil(parsers=[code_block_parser, skip_parser])
     document = sybil.parse(path=test_document)
@@ -163,7 +152,10 @@ def test_directive_name_not_regex_escaped(
         encoding="utf-8",
     )
 
-    code_block_parser = _code_block_parser(language=language)
+    code_block_parser = language.code_block_parser_cls(
+        language="python",
+        evaluator=PythonEvaluator(),
+    )
     skip_parser = language.skip_parser_cls(directive=directive)
     sybil = Sybil(parsers=[code_block_parser, skip_parser])
     document = sybil.parse(path=test_document)
