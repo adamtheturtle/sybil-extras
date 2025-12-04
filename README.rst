@@ -92,23 +92,40 @@ This is useful for testing parsers that group multiple code blocks together.
 .. code-block:: python
 
     """Use BlockAccumulatorEvaluator to accumulate code blocks."""
+    import tempfile
+    from pathlib import Path
 
     from sybil import Sybil
     from sybil.parsers.rest.codeblock import CodeBlockParser
 
     from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 
+    # Create a temporary file with example content
+    content = (
+        ".. code-block:: python\n\n"
+        "   x = 1\n\n"
+        ".. code-block:: python\n\n"
+        "   y = 2\n\n"
+        ".. code-block:: python\n\n"
+        "   z = 3\n"
+    )
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".rst", delete=False) as f:
+        f.write(content)
+        temp_path = Path(f.name)
+
     namespace_key = "blocks"
     evaluator = BlockAccumulatorEvaluator(namespace_key=namespace_key)
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
-    document = sybil.parse(path="example.rst")
+    document = sybil.parse(path=temp_path)
 
     for example in document.examples():
         example.evaluate()
 
     blocks = document.namespace[namespace_key]
     assert blocks == ["x = 1\n", "y = 2\n", "z = 3"]
+
+    temp_path.unlink()
 
 NoOpEvaluator
 ^^^^^^^^^^^^^
