@@ -2,6 +2,7 @@
 Tests for the languages module.
 """
 
+import textwrap
 from pathlib import Path
 
 import pytest
@@ -24,31 +25,37 @@ from sybil_extras.languages import (
     [
         pytest.param(
             MYST,
-            """\
-```python
-x = 1
-```
-""",
+            textwrap.dedent(
+                text="""\
+                ```python
+                x = 1
+                ```
+                """
+            ),
             {"x": 1},
             id="myst-code-block",
         ),
         pytest.param(
             RESTRUCTUREDTEXT,
-            """\
-.. code-block:: python
+            textwrap.dedent(
+                text="""\
+                .. code-block:: python
 
-   x = 2
-""",
+                   x = 2
+                """
+            ),
             {"x": 2},
             id="rest-code-block",
         ),
         pytest.param(
             MARKDOWN,
-            """\
-```python
-x = 3
-```
-""",
+            textwrap.dedent(
+                text="""\
+                ```python
+                x = 3
+                ```
+                """
+            ),
             {"x": 3},
             id="markdown-code-block",
         ),
@@ -85,35 +92,41 @@ def test_code_block_parser(
     [
         pytest.param(
             MYST,
-            """\
-% skip: next
+            textwrap.dedent(
+                text="""\
+                % skip: next
 
-```python
-x = 1
-```
-""",
+                ```python
+                x = 1
+                ```
+                """
+            ),
             id="myst-skip",
         ),
         pytest.param(
             RESTRUCTUREDTEXT,
-            """\
-.. skip: next
+            textwrap.dedent(
+                text="""\
+                .. skip: next
 
-.. code-block:: python
+                .. code-block:: python
 
-   x = 2
-""",
+                   x = 2
+                """
+            ),
             id="rest-skip",
         ),
         pytest.param(
             MARKDOWN,
-            """\
-<!--- skip: next -->
+            textwrap.dedent(
+                text="""\
+                <!--- skip: next -->
 
-```python
-x = 3
-```
-""",
+                ```python
+                x = 3
+                ```
+                """
+            ),
             id="markdown-skip",
         ),
     ],
@@ -150,55 +163,61 @@ def test_skip_parser(
     [
         pytest.param(
             MYST,
-            """\
-<!--- group: start -->
+            textwrap.dedent(
+                text="""\
+                <!--- group: start -->
 
-```python
-x = 1
-```
+                ```python
+                x = 1
+                ```
 
-```python
-x = x + 1
-```
+                ```python
+                x = x + 1
+                ```
 
-<!--- group: end -->
-""",
+                <!--- group: end -->
+                """
+            ),
             ["x = 1\n\n\n\nx = x + 1\n"],
             id="myst-grouped",
         ),
         pytest.param(
             RESTRUCTUREDTEXT,
-            """\
-.. group: start
+            textwrap.dedent(
+                text="""\
+                .. group: start
 
-.. code-block:: python
+                .. code-block:: python
 
-   x = 1
+                   x = 1
 
-.. code-block:: python
+                .. code-block:: python
 
-   x = x + 1
+                   x = x + 1
 
-.. group: end
-""",
+                .. group: end
+                """
+            ),
             ["x = 1\n\n\n\nx = x + 1\n"],
             id="rest-grouped",
         ),
         pytest.param(
             MARKDOWN,
-            """\
-<!--- group: start -->
+            textwrap.dedent(
+                text="""\
+                <!--- group: start -->
 
-```python
-x = 1
-```
+                ```python
+                x = 1
+                ```
 
-```python
-x = x + 1
-```
+                ```python
+                x = x + 1
+                ```
 
-<!--- group: end -->
-""",
+                <!--- group: end -->
+                """
+            ),
             ["x = 1\n\n\n\nx = x + 1\n"],
             id="markdown-grouped",
         ),
@@ -242,20 +261,24 @@ def test_group_parser(
     [
         pytest.param(
             MYST,
-            """\
-```{jinja}
-{{ 1 + 1 }}
-```
-""",
+            textwrap.dedent(
+                text="""\
+                ```{jinja}
+                {{ 1 + 1 }}
+                ```
+                """
+            ),
             id="myst-jinja",
         ),
         pytest.param(
             RESTRUCTUREDTEXT,
-            """\
-.. jinja::
+            textwrap.dedent(
+                text="""\
+                .. jinja::
 
-   {{ 1 + 1 }}
-""",
+                   {{ 1 + 1 }}
+                """
+            ),
             id="rest-jinja",
         ),
     ],
