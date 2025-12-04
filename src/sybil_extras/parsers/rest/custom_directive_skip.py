@@ -43,9 +43,8 @@ class CustomDirectiveSkipParser:
         """
         return self._abstract_skip_parser(document=document)
 
-    @property
-    def skipper(self) -> Skipper:
+    def get_skipper(self) -> Skipper:
         """
-        The skipper used by the parser.
+        Return the skipper used by the parser.
         """
         return self._abstract_skip_parser.skipper

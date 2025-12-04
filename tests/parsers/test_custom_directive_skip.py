@@ -55,9 +55,10 @@ def test_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     assert document.namespace["x"] == [3]
 
     skip_states: list[SkipState] = []
+    skipper = skip_parser.get_skipper()
     for example in document.examples():
         example.evaluate()
-        skip_states.append(skip_parser.skipper.state_for(example=example))
+        skip_states.append(skipper.state_for(example=example))
 
     expected_skip_states = [
         SkipState(
