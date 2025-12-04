@@ -258,7 +258,7 @@ repos:
 
       - id: ruff-check-fix-docs
         name: Ruff check fix docs
-        entry: uvx --python=3.13 doccmd --language=python --command="ruff check --fix" --group-marker=ruff-check-fix-docs
+        entry: uvx --python=3.13 doccmd --language=python --command="ruff check --fix"
         language: python
         types_or: [markdown, rst]
         additional_dependencies: [uv==0.9.5]
