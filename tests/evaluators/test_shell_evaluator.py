@@ -25,6 +25,7 @@ from sybil_extras.languages import (
     MARKDOWN,
     MDX,
     MYST,
+    MYST_PERCENT_COMMENTS,
     RESTRUCTUREDTEXT,
     MarkupLanguage,
 )
@@ -415,6 +416,16 @@ def test_write_to_file_new_content_trailing_newlines(
         ```
         """
     )
+    myst_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        ```{code} python
+        x = 2 + 2
+        assert x == 4
+        ```
+        """
+    )
     original_content = {
         RESTRUCTUREDTEXT: textwrap.dedent(
             text="""\
@@ -428,16 +439,8 @@ def test_write_to_file_new_content_trailing_newlines(
         ),
         MARKDOWN: markdown_content,
         MDX: markdown_content,
-        MYST: textwrap.dedent(
-            text="""\
-            Not in code block
-
-            ```{code} python
-            x = 2 + 2
-            assert x == 4
-            ```
-            """
-        ),
+        MYST: myst_content,
+        MYST_PERCENT_COMMENTS: myst_content,
     }[markup_language]
     source_file = tmp_path / "source_file.txt"
     source_file.write_text(data=original_content, encoding="utf-8")
@@ -473,6 +476,16 @@ def test_write_to_file_new_content_trailing_newlines(
         ```
         """
     )
+    myst_expected = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        ```{code} python
+        foobar
+
+        ```
+        """
+    )
     expected_content = {
         # There is no code block in reStructuredText that ends with multiple
         # newlines.
@@ -487,16 +500,8 @@ def test_write_to_file_new_content_trailing_newlines(
         ),
         MARKDOWN: markdown_expected,
         MDX: markdown_expected,
-        MYST: textwrap.dedent(
-            text="""\
-            Not in code block
-
-            ```{code} python
-            foobar
-
-            ```
-            """
-        ),
+        MYST: myst_expected,
+        MYST_PERCENT_COMMENTS: myst_expected,
     }[markup_language]
     if write_to_file:
         assert source_file_content == expected_content
@@ -527,6 +532,16 @@ def test_write_to_file_new_content_no_trailing_newlines(
         ```
         """
     )
+    myst_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        ```{code} python
+        x = 2 + 2
+        assert x == 4
+        ```
+        """
+    )
     original_content = {
         RESTRUCTUREDTEXT: textwrap.dedent(
             text="""\
@@ -540,16 +555,8 @@ def test_write_to_file_new_content_no_trailing_newlines(
         ),
         MARKDOWN: markdown_content,
         MDX: markdown_content,
-        MYST: textwrap.dedent(
-            text="""\
-            Not in code block
-
-            ```{code} python
-            x = 2 + 2
-            assert x == 4
-            ```
-            """
-        ),
+        MYST: myst_content,
+        MYST_PERCENT_COMMENTS: myst_content,
     }[markup_language]
     source_file = tmp_path / "source_file.txt"
     source_file.write_text(data=original_content, encoding="utf-8")
@@ -582,6 +589,15 @@ def test_write_to_file_new_content_no_trailing_newlines(
         ```
         """
     )
+    myst_expected = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        ```{code} python
+        foobar
+        ```
+        """
+    )
     expected_content = {
         # There is no code block in reStructuredText that ends with multiple
         # newlines.
@@ -596,15 +612,8 @@ def test_write_to_file_new_content_no_trailing_newlines(
         ),
         MARKDOWN: markdown_expected,
         MDX: markdown_expected,
-        MYST: textwrap.dedent(
-            text="""\
-            Not in code block
-
-            ```{code} python
-            foobar
-            ```
-            """
-        ),
+        MYST: myst_expected,
+        MYST_PERCENT_COMMENTS: myst_expected,
     }[markup_language]
     if write_to_file:
         assert source_file_content == expected_content
@@ -631,6 +640,16 @@ def test_write_to_file_indented_existing_block(
             ```
         """
     )
+    myst_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+            ```{code} python
+            x = 2 + 2
+            assert x == 4
+            ```
+        """
+    )
     original_content = {
         RESTRUCTUREDTEXT: textwrap.dedent(
             text="""\
@@ -644,16 +663,8 @@ def test_write_to_file_indented_existing_block(
         ),
         MARKDOWN: markdown_content,
         MDX: markdown_content,
-        MYST: textwrap.dedent(
-            text="""\
-            Not in code block
-
-                ```{code} python
-                x = 2 + 2
-                assert x == 4
-                ```
-            """
-        ),
+        MYST: myst_content,
+        MYST_PERCENT_COMMENTS: myst_content,
     }[markup_language]
     source_file = tmp_path / "source_file.txt"
     source_file.write_text(data=original_content, encoding="utf-8")
@@ -686,6 +697,15 @@ def test_write_to_file_indented_existing_block(
             ```
         """
     )
+    myst_expected = textwrap.dedent(
+        text="""\
+        Not in code block
+
+            ```{code} python
+            foobar
+            ```
+        """
+    )
     expected_content = {
         # There is no code block in reStructuredText that ends with multiple
         # newlines.
@@ -700,15 +720,8 @@ def test_write_to_file_indented_existing_block(
         ),
         MARKDOWN: markdown_expected,
         MDX: markdown_expected,
-        MYST: textwrap.dedent(
-            text="""\
-            Not in code block
-
-                ```{code} python
-                foobar
-                ```
-            """
-        ),
+        MYST: myst_expected,
+        MYST_PERCENT_COMMENTS: myst_expected,
     }[markup_language]
     assert source_file_content == expected_content
 
@@ -732,6 +745,16 @@ def test_write_to_file_indented_empty_existing_block(
         After code block
         """
     )
+    myst_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+                ```{code} python
+                ```
+
+        After code block
+        """
+    )
     original_content = {
         RESTRUCTUREDTEXT: textwrap.dedent(
             text="""\
@@ -744,16 +767,8 @@ def test_write_to_file_indented_empty_existing_block(
         ),
         MARKDOWN: markdown_content,
         MDX: markdown_content,
-        MYST: textwrap.dedent(
-            text="""\
-            Not in code block
-
-                    ```{code} python
-                    ```
-
-            After code block
-            """
-        ),
+        MYST: myst_content,
+        MYST_PERCENT_COMMENTS: myst_content,
     }[markup_language]
     source_file = tmp_path / "source_file.txt"
     source_file.write_text(data=original_content, encoding="utf-8")
@@ -788,6 +803,17 @@ def test_write_to_file_indented_empty_existing_block(
         After code block
         """
     )
+    myst_expected = textwrap.dedent(
+        text="""\
+        Not in code block
+
+                ```{code} python
+                foobar
+                ```
+
+        After code block
+        """
+    )
     expected_content = {
         # There is no code block in reStructuredText that ends with multiple
         # newlines.
@@ -804,17 +830,8 @@ def test_write_to_file_indented_empty_existing_block(
         ),
         MARKDOWN: markdown_expected,
         MDX: markdown_expected,
-        MYST: textwrap.dedent(
-            text="""\
-            Not in code block
-
-                    ```{code} python
-                    foobar
-                    ```
-
-            After code block
-            """
-        ),
+        MYST: myst_expected,
+        MYST_PERCENT_COMMENTS: myst_expected,
     }[markup_language]
     assert source_file_content == expected_content
 
@@ -1246,6 +1263,7 @@ def test_empty_code_block_write_content_to_file(
         MARKDOWN: markdown_content,
         MDX: markdown_content,
         MYST: myst_content,
+        MYST_PERCENT_COMMENTS: myst_content,
     }[markup_language]
     source_file = tmp_path / "source_file.txt"
     source_file.write_text(data=content, encoding="utf-8")
@@ -1282,6 +1300,18 @@ def test_empty_code_block_write_content_to_file(
         After empty code block
         """
     )
+    myst_expected = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        ```{code} python
+        foobar
+
+        ```
+
+        After empty code block
+        """
+    )
     expected_modified_content = {
         # There is no code block in reStructuredText that ends with multiple
         # newlines.
@@ -1298,18 +1328,8 @@ def test_empty_code_block_write_content_to_file(
         ),
         MARKDOWN: markdown_expected,
         MDX: markdown_expected,
-        MYST: textwrap.dedent(
-            text="""\
-            Not in code block
-
-            ```{code} python
-            foobar
-
-            ```
-
-            After empty code block
-            """
-        ),
+        MYST: myst_expected,
+        MYST_PERCENT_COMMENTS: myst_expected,
     }[markup_language]
 
     example.evaluate()
@@ -1372,6 +1392,7 @@ def test_empty_code_block_write_content_to_file_with_options(
     content = {
         RESTRUCTUREDTEXT: rst_content,
         MYST: myst_content,
+        MYST_PERCENT_COMMENTS: myst_content,
         MDX: mdx_content,
     }[markup_language]
     source_file = tmp_path / "source_file.txt"
@@ -1395,6 +1416,18 @@ def test_empty_code_block_write_content_to_file_with_options(
     document = sybil.parse(path=source_file)
     (example,) = document.examples()
 
+    myst_expected = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        ```{code} python
+        :emphasize-lines: 2,3
+        foobar
+        ```
+
+        After empty code block
+        """
+    )
     expected_modified_content = {
         # There is no code block in reStructuredText that ends with multiple
         # newlines.
@@ -1410,18 +1443,8 @@ def test_empty_code_block_write_content_to_file_with_options(
             After empty code block
             """
         ),
-        MYST: textwrap.dedent(
-            text="""\
-            Not in code block
-
-            ```{code} python
-            :emphasize-lines: 2,3
-            foobar
-            ```
-
-            After empty code block
-            """
-        ),
+        MYST: myst_expected,
+        MYST_PERCENT_COMMENTS: myst_expected,
         MDX: textwrap.dedent(
             text="""\
             Not in code block

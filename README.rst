@@ -362,9 +362,16 @@ This is useful for building tools that need to work consistently across multiple
     from sybil import Sybil
 
     from sybil_extras.evaluators.no_op import NoOpEvaluator
-    from sybil_extras.languages import MARKDOWN, MDX, MYST, RESTRUCTUREDTEXT
+    from sybil_extras.languages import (
+        MARKDOWN,
+        MDX,
+        MYST,
+        MYST_PERCENT_COMMENTS,
+        RESTRUCTUREDTEXT,
+    )
 
     assert MYST.name == "MyST"
+    assert MYST_PERCENT_COMMENTS.name == "MyST (percent comments)"
     assert MARKDOWN.name == "Markdown"
     assert MDX.name == "MDX"
     assert RESTRUCTUREDTEXT.name == "reStructuredText"
