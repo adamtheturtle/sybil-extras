@@ -77,6 +77,9 @@ def _rst_code_block(body: str) -> str:
     """
 
     def _indent(line: str) -> str:
+        """
+        Indent a line for inclusion in a code block.
+        """
         return f"    {line}" if line else ""
 
     indented_body = "\n".join(_indent(line=line) for line in body.splitlines())
@@ -129,7 +132,8 @@ class MarkupLanguage:
         Create a code block fragment.
         """
         if self._block_renderer is None:
-            raise ValueError("No code block renderer defined.")
+            msg = "No code block renderer defined."
+            raise ValueError(msg)
         return self._block_renderer(body.rstrip("\n"))
 
     def directive(self, directive: str) -> str:
@@ -137,14 +141,14 @@ class MarkupLanguage:
         Create a directive fragment.
         """
         if self._directive_renderer is None:
-            raise ValueError("This markup does not support directives.")
+            msg = "This markup does not support directives."
+            raise ValueError(msg)
         return self._directive_renderer(directive)
 
     def alternate_directive(self, directive: str) -> str | None:
         """
         Render an alternate directive string, if supported.
         """
-
         if self._alternate_directive_renderer is None:
             return None
         return self._alternate_directive_renderer(directive)
