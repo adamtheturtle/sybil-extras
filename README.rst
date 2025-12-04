@@ -108,6 +108,7 @@ This is useful for testing parsers that group multiple code blocks together.
         example.evaluate()
 
     blocks = document.namespace[namespace_key]
+    assert blocks == ["x = 1\n", "y = 2\n", "z = 3"]
 
 NoOpEvaluator
 ^^^^^^^^^^^^^
