@@ -21,7 +21,7 @@ class GroupedSourceParser(AbstractGroupedSourceParser):
 
     This parser supports two grouping methods:
     1. HTML comment directives (like Markdown): <!-- directive: start/end -->
-    2. MDX code block group attribute: ```python group="mygroup"
+    2. MDX code block group attribute: ```python group="my-group"
 
     The comment-based grouping takes precedence for explicit control,
     while the attribute-based grouping provides a more MDX-native approach.

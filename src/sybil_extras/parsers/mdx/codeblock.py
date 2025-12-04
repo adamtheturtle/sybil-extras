@@ -33,7 +33,7 @@ class CodeBlockParser:
     ) -> None:
         """
         Args:
-            language: The language to match (e.g., "python", "javascript").
+            language: The language to match (e.g., "python", "JavaScript").
                 If None, matches all languages.
             evaluator: The evaluator to use for evaluating the code block.
         """
@@ -87,8 +87,8 @@ class CodeBlockParser:
         """Parse attributes from the fence line.
 
         Supports formats like:
-        - title="hello.py"
-        - group="mygroup"
+        - title="hello.python"
+        - group="my-group"
         - key="value" key2="value2"
         """
         attributes: dict[str, str] = {}
