@@ -146,8 +146,9 @@ CustomDirectiveSkipParser
     from sybil.parsers.rest.codeblock import PythonCodeBlockParser
 
     # Similar parsers are available at
-    # sybil_extras.parsers.markdown.custom_directive_skip and
-    # sybil_extras.parsers.myst.custom_directive_skip.
+    # sybil_extras.parsers.markdown.custom_directive_skip,
+    # sybil_extras.parsers.myst.custom_directive_skip, and
+    # sybil_extras.parsers.mdx.custom_directive_skip.
     from sybil_extras.parsers.rest.custom_directive_skip import (
         CustomDirectiveSkipParser,
     )
@@ -181,8 +182,9 @@ GroupedSourceParser
     from sybil.parsers.rest.codeblock import PythonCodeBlockParser
 
     # Similar parsers are available at
-    # sybil_extras.parsers.markdown.grouped_source and
-    # sybil_extras.parsers.myst.grouped_source.
+    # sybil_extras.parsers.markdown.grouped_source,
+    # sybil_extras.parsers.myst.grouped_source, and
+    # sybil_extras.parsers.mdx.grouped_source.
     from sybil_extras.parsers.rest.grouped_source import GroupedSourceParser
 
 
@@ -271,8 +273,9 @@ GroupAllParser
     from sybil.parsers.rest.codeblock import PythonCodeBlockParser
 
     # Similar parsers are available at
-    # sybil_extras.parsers.markdown.group_all and
-    # sybil_extras.parsers.myst.group_all.
+    # sybil_extras.parsers.markdown.group_all,
+    # sybil_extras.parsers.myst.group_all, and
+    # sybil_extras.parsers.mdx.group_all.
     from sybil_extras.parsers.rest.group_all import GroupAllParser
 
 
@@ -342,6 +345,97 @@ This extracts the source, arguments and options from ``.. jinja::`` directive bl
     document = sybil.parse(path=Path("CHANGELOG.rst"))
     for item in document.examples():
         item.evaluate()
+
+MDX-Specific Parsers
+^^^^^^^^^^^^^^^^^^^^
+
+MDX (Markdown with JSX) support includes parsers specifically designed for Docusaurus and other MDX-based documentation systems.
+
+MDXCodeBlockParser
+~~~~~~~~~~~~~~~~~~
+
+Use the ``MDXCodeBlockParser`` to parse MDX code blocks with attributes like ``title`` and ``group``.
+
+This parser supports Docusaurus-style parametrized code blocks:
+
+.. code-block:: python
+
+    """Use MDXCodeBlockParser to parse MDX code blocks with attributes."""
+
+    from sybil import Sybil
+    from sybil.evaluators.python import PythonEvaluator
+
+    from sybil_extras.parsers.mdx.codeblock import CodeBlockParser
+
+    parser = CodeBlockParser(
+        language="python",
+        evaluator=PythonEvaluator(),
+    )
+    sybil = Sybil(parsers=[parser])
+
+    pytest_collect_file = sybil.pytest()
+
+Example MDX code block with attributes:
+
+.. code-block:: markdown
+
+    ```python title="hello.py" group="setup"
+    def hello():
+        print("Hello, world!")
+    ```
+
+GroupAttributeParser
+~~~~~~~~~~~~~~~~~~~~
+
+Use the ``GroupAttributeParser`` to group MDX code blocks by their ``group`` attribute.
+
+.. code-block:: python
+
+    """Use GroupAttributeParser to group MDX code blocks by attribute."""
+
+    import sys
+    from pathlib import Path
+
+    from sybil import Sybil
+    from sybil.example import Example
+
+    from sybil_extras.parsers.mdx.codeblock import CodeBlockParser
+    from sybil_extras.parsers.mdx.grouped_source import GroupAttributeParser
+
+
+    def evaluator(example: Example) -> None:
+        """Evaluate the code block by printing it."""
+        sys.stdout.write(example.parsed)
+
+
+    code_block_parser = CodeBlockParser(
+        language="python",
+        evaluator=evaluator,
+    )
+    group_parser = GroupAttributeParser(
+        evaluator=evaluator,
+        pad_groups=True,
+        language="python",
+    )
+
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
+
+    document = sybil.parse(path=Path("example.mdx"))
+
+    for item in document.examples():
+        item.evaluate()
+
+Example MDX with grouped blocks:
+
+.. code-block:: markdown
+
+    ```python group="my-group"
+    x = 1
+    ```
+
+    ```python group="my-group"
+    assert x == 1
+    ```
 
 Markup Languages
 ----------------

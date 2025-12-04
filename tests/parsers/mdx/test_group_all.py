@@ -1,0 +1,238 @@
+"""
+Tests for the MDX group all parser.
+"""
+
+from pathlib import Path
+
+from sybil import Sybil
+from sybil.example import Example
+
+from sybil_extras.parsers.mdx.codeblock import CodeBlockParser
+from sybil_extras.parsers.mdx.group_all import GroupAllParser
+
+
+def test_group_all_basic(tmp_path: Path) -> None:
+    """
+    Test that all code blocks are grouped into a single execution.
+    """
+    content = """\
+```python
+x = 1
+```
+
+```python
+y = 2
+```
+
+```python
+z = x + y
+assert z == 3
+```
+"""
+    test_document = tmp_path / "test.mdx"
+    test_document.write_text(data=content, encoding="utf-8")
+
+    collected_blocks: list[str] = []
+
+    def evaluator(example: Example) -> None:
+        """
+        Collect parsed code blocks.
+        """
+        collected_blocks.append(example.parsed)
+
+    code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
+    group_all_parser = GroupAllParser(
+        evaluator=evaluator,
+        pad_groups=True,
+    )
+
+    sybil = Sybil(parsers=[code_block_parser, group_all_parser])
+    document = sybil.parse(path=test_document)
+
+    for example in document.examples():
+        example.evaluate()
+
+    # GroupAllParser should combine all blocks into one
+    assert len(collected_blocks) == 1
+    combined = collected_blocks[0]
+    assert "x = 1" in combined
+    assert "y = 2" in combined
+    assert "z = x + y" in combined
+
+
+def test_group_all_evaluator_called(tmp_path: Path) -> None:
+    """Test that the evaluator is actually called when there are code blocks.
+
+    This ensures the evaluator code path is covered.
+    """
+    content = """\
+```python
+x = 1
+```
+"""
+    test_document = tmp_path / "test.mdx"
+    test_document.write_text(data=content, encoding="utf-8")
+
+    def evaluator(example: Example) -> None:
+        """
+        Mark that the evaluator was called.
+        """
+        example.document.namespace["called"] = True
+
+    code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
+    group_all_parser = GroupAllParser(
+        evaluator=evaluator,
+        pad_groups=True,
+    )
+
+    sybil = Sybil(parsers=[code_block_parser, group_all_parser])
+    document = sybil.parse(path=test_document)
+
+    for example in document.examples():
+        example.evaluate()
+
+    # Evaluator should have been called
+    assert document.namespace["called"] is True
+
+
+def test_group_all_with_no_padding(tmp_path: Path) -> None:
+    """
+    Test group all parser without padding between blocks.
+    """
+    content = """\
+```python
+def foo():
+    return 1
+```
+
+```python
+def bar():
+    return 2
+```
+
+```python
+result = foo() + bar()
+assert result == 3
+```
+"""
+    test_document = tmp_path / "test.mdx"
+    test_document.write_text(data=content, encoding="utf-8")
+
+    collected_blocks: list[str] = []
+
+    def evaluator(example: Example) -> None:
+        """
+        Collect parsed code blocks.
+        """
+        collected_blocks.append(example.parsed)
+
+    code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
+    group_all_parser = GroupAllParser(
+        evaluator=evaluator,
+        pad_groups=False,
+    )
+
+    sybil = Sybil(parsers=[code_block_parser, group_all_parser])
+    document = sybil.parse(path=test_document)
+
+    for example in document.examples():
+        example.evaluate()
+
+    # Should have one combined block
+    assert len(collected_blocks) == 1
+    combined = collected_blocks[0]
+    assert "def foo():" in combined
+    assert "def bar():" in combined
+    assert "result = foo() + bar()" in combined
+
+
+def test_group_all_multiple_languages(tmp_path: Path) -> None:
+    """
+    Test that group all works with multiple languages.
+    """
+    content = """\
+```python
+x = 1
+```
+
+```javascript
+const y = 2;
+```
+
+```python
+z = 3
+```
+"""
+    test_document = tmp_path / "test.mdx"
+    test_document.write_text(data=content, encoding="utf-8")
+
+    collected_blocks: list[str] = []
+
+    def evaluator(example: Example) -> None:
+        """
+        Collect all parsed code blocks.
+        """
+        collected_blocks.append(example.parsed)
+
+    # Parse only Python blocks
+    code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
+    group_all_parser = GroupAllParser(
+        evaluator=evaluator,
+        pad_groups=True,
+    )
+
+    sybil = Sybil(parsers=[code_block_parser, group_all_parser])
+    document = sybil.parse(path=test_document)
+
+    for example in document.examples():
+        example.evaluate()
+
+    # Should have one combined block with only Python blocks
+    assert len(collected_blocks) == 1
+    assert "x = 1" in collected_blocks[0]
+    assert "z = 3" in collected_blocks[0]
+    # JavaScript block should not be included
+    assert "const y" not in collected_blocks[0]
+
+
+def test_group_all_with_attributes(tmp_path: Path) -> None:
+    """
+    Test that group all works with MDX code blocks that have attributes.
+    """
+    content = """\
+```python title="setup.py"
+x = 1
+```
+
+```python title="test.py"
+assert x == 1
+```
+"""
+    test_document = tmp_path / "test.mdx"
+    test_document.write_text(data=content, encoding="utf-8")
+
+    collected_blocks: list[str] = []
+
+    def evaluator(example: Example) -> None:
+        """
+        Collect parsed code blocks.
+        """
+        collected_blocks.append(example.parsed)
+
+    code_block_parser = CodeBlockParser(language="python", evaluator=evaluator)
+    group_all_parser = GroupAllParser(
+        evaluator=evaluator,
+        pad_groups=True,
+    )
+
+    sybil = Sybil(parsers=[code_block_parser, group_all_parser])
+    document = sybil.parse(path=test_document)
+
+    for example in document.examples():
+        example.evaluate()
+
+    # Both blocks should be combined
+    assert len(collected_blocks) == 1
+    combined = collected_blocks[0]
+    assert "x = 1" in combined
+    assert "assert x == 1" in combined

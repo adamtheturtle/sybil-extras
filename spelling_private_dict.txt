@@ -1,3 +1,7 @@
+Docusaurus
+JSX
+MDX
+Pyright
 args
 beartype
 dedents
@@ -8,6 +12,7 @@ hardcode
 iff
 jinja
 lexeme
+lexing
 linter
 namespace
 ons
@@ -19,4 +24,5 @@ pytest
 rst
 stderr
 stdout
+ungrouped
 whitespace

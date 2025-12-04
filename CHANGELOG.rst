@@ -4,6 +4,11 @@ Changelog
 Next
 ----
 
+* Add MDX parser support for Docusaurus-style code blocks.
+* Add ``CodeBlockParser`` for MDX with attribute parsing (``title``, ``group``, etc.).
+* Add ``GroupAttributeParser`` for MDX to group code blocks by their ``group`` attribute.
+* Add ``CustomDirectiveSkipParser``, ``GroupAllParser``, and ``GroupedSourceParser`` for MDX.
+
 2025.12.04
 ----------
 
