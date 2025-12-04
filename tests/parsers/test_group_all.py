@@ -11,6 +11,7 @@ from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.languages import (
     MARKDOWN,
     MYST,
+    RESTRUCTUREDTEXT,
     MarkupLanguage,
 )
 
@@ -214,7 +215,11 @@ def test_group_all_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
         + language.markup_separator
     )
     num_skipped_newlines = full_skipped_section.count("\n")
-    adjustment = 1 if language in (MYST, MARKDOWN) else 0
+    adjustment = {
+        MARKDOWN: 1,
+        MYST: 1,
+        RESTRUCTUREDTEXT: 0,
+    }[language]
     skipped_lines = "\n" * (num_skipped_newlines + adjustment)
     expected = f"x = []{skipped_lines}x = [*x, 2]\n"
     assert document.namespace["blocks"] == [expected]
