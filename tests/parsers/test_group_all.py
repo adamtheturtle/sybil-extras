@@ -205,9 +205,6 @@ def test_group_all_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
 
     # Calculate the number of newlines spanned by the skip directive and
     # skipped block.
-    # The skipped section includes separators and content between the two
-    # combined blocks, plus the separator after the closing code block
-    # delimiter and the line spacing separator.
     full_skipped_section = (
         language.markup_separator
         + skip_directive
