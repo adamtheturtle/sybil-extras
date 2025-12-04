@@ -101,15 +101,19 @@ def _html_directive(text: str) -> str:
     return f"<!--- {text} -->"
 
 
+def _myst_percent_directive(text: str) -> str:
+    """
+    Render MyST percent-style directives.
+    """
+    return f"% {text}"
+
+
 class _UnsupportedSphinxJinja2Parser:
     """
     Placeholder parser for markups without sphinx-jinja2 support.
     """
 
     def __init__(self, *args: object) -> None: ...
-
-
-def _unsupported_alternate_directive_renderer(_: str) -> str: ...
 
 
 @dataclass(frozen=True)
@@ -130,9 +134,6 @@ class MarkupLanguage:
     custom_skip_parser_cls: type
     sphinx_jinja_parser_cls: type
     trailing_newline: bool = False
-    _alternate_directive_renderer: Callable[[str], str] = (
-        _unsupported_alternate_directive_renderer
-    )
 
     def code_block(self, body: str) -> str:
         """
@@ -145,21 +146,6 @@ class MarkupLanguage:
         Create a directive fragment.
         """
         return self._directive_renderer(directive)
-
-    def alternate_directive(self, directive: str) -> str:
-        """
-        Render an alternate directive string.
-        """
-        return self._alternate_directive_renderer(directive)
-
-    def supports_alternate_directive(self) -> bool:
-        """
-        Determine if this markup defines an alternate directive renderer.
-        """
-        return (
-            self._alternate_directive_renderer
-            is not _unsupported_alternate_directive_renderer
-        )
 
     def document(self, *parts: str) -> str:
         """
@@ -221,7 +207,20 @@ MARKUP_LANGUAGES: tuple[MarkupLanguage, ...] = (
         trailing_newline=True,
         _block_renderer=_markdown_code_block,
         _directive_renderer=_html_directive,
-        _alternate_directive_renderer=lambda directive: f"% {directive}",
+    ),
+    MarkupLanguage(
+        name="MyST (percent directives)",
+        extension="md",
+        code_block_parser_cls=MystCodeBlockParser,
+        python_code_block_parser_cls=MystPythonCodeBlockParser,
+        skip_parser_cls=MystSkipParser,
+        group_all_parser_cls=MystGroupAllParser,
+        grouped_source_parser_cls=MystGroupedSourceParser,
+        custom_skip_parser_cls=MystCustomSkipParser,
+        sphinx_jinja_parser_cls=MystSphinxJinja2Parser,
+        trailing_newline=True,
+        _block_renderer=_markdown_code_block,
+        _directive_renderer=_myst_percent_directive,
     ),
 )
 
