@@ -353,28 +353,27 @@ This is useful for building tools that need to work consistently across multiple
 
     """Use MarkupLanguage to work with different markup formats."""
 
+    from pathlib import Path
+
+    from sybil import Sybil
+
+    from sybil_extras.evaluators.no_op import NoOpEvaluator
     from sybil_extras.languages import MARKDOWN, MYST, RESTRUCTUREDTEXT
 
-    # Access predefined markup language configurations
-    print(MYST.name)  # "MyST"
-    print(RESTRUCTUREDTEXT.name)  # "reStructuredText"
-    print(MARKDOWN.name)  # "Markdown"
+    assert MYST.name == "MyST"
+    assert MARKDOWN.name == "Markdown"
+    assert RESTRUCTUREDTEXT.name == "reStructuredText"
 
-    # Each MarkupLanguage instance provides parser classes for that format
-    skip_parser = MYST.skip_parser_cls(directive="skip")
-    code_parser = MYST.code_block_parser_cls(language="python")
-    group_parser = MYST.group_parser_cls(
-        directive="group",
-        evaluator=lambda example: None,
-        pad_groups=True,
+    code_parser = RESTRUCTUREDTEXT.code_block_parser_cls(
+        language="python",
+        evaluator=NoOpEvaluator(),
     )
 
-    # Note: MARKDOWN.sphinx_jinja_parser_cls is None
-    # as Sphinx is not typically used with Markdown without MyST
-    if MYST.sphinx_jinja_parser_cls is not None:
-        jinja_parser = MYST.sphinx_jinja_parser_cls(
-            evaluator=lambda example: None,
-        )
+    sybil = Sybil(parsers=[code_parser])
+    document = sybil.parse(path=Path("README.rst"))
+
+    for example in document.examples():
+        example.evaluate()
 
 .. |Build Status| image:: https://github.com/adamtheturtle/sybil-extras/actions/workflows/ci.yml/badge.svg?branch=main
    :target: https://github.com/adamtheturtle/sybil-extras/actions
