@@ -12,6 +12,7 @@ from sybil.evaluators.python import PythonEvaluator
 from sybil_extras.evaluators.block_accumulator import (
     BlockAccumulatorEvaluator,
 )
+from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.languages import (
     MARKDOWN,
     MYST,
@@ -297,16 +298,10 @@ def test_sphinx_jinja_parser(
     test_document = tmp_path / f"test{extension}"
     test_document.write_text(data=jinja_content, encoding="utf-8")
 
-    def jinja_evaluator(example: object) -> None:
-        """
-        A simple evaluator for jinja blocks.
-        """
-
-    jinja_parser = language.sphinx_jinja_parser_cls(evaluator=jinja_evaluator)
+    jinja_parser = language.sphinx_jinja_parser_cls(evaluator=NoOpEvaluator())
     sybil = Sybil(parsers=[jinja_parser])
     document = sybil.parse(path=test_document)
 
-    # Just verify that the parser can parse the document
     examples = list(document.examples())
     assert len(examples) == 1
 
