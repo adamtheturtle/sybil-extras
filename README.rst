@@ -89,29 +89,32 @@ BlockAccumulatorEvaluator
 The ``BlockAccumulatorEvaluator`` accumulates parsed code block content in a list within the document's namespace.
 This is useful for testing parsers that group multiple code blocks together.
 
+.. invisible-code-block: python
+
+   """Create a temporary reStructuredText document for the example."""
+   import tempfile
+   from pathlib import Path
+
+   content = (
+       ".. code-block:: python\n\n"
+       "   x = 1\n\n"
+       ".. code-block:: python\n\n"
+       "   y = 2\n\n"
+       ".. code-block:: python\n\n"
+       "   z = 3\n"
+   )
+   with tempfile.NamedTemporaryFile(mode="w", suffix=".rst", delete=False) as f:
+       f.write(content)
+       temp_path = Path(f.name)
+
 .. code-block:: python
 
     """Use BlockAccumulatorEvaluator to accumulate code blocks."""
-    import tempfile
-    from pathlib import Path
 
     from sybil import Sybil
     from sybil.parsers.rest.codeblock import CodeBlockParser
 
     from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
-
-    # Create a temporary file with example content
-    content = (
-        ".. code-block:: python\n\n"
-        "   x = 1\n\n"
-        ".. code-block:: python\n\n"
-        "   y = 2\n\n"
-        ".. code-block:: python\n\n"
-        "   z = 3\n"
-    )
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".rst", delete=False) as f:
-        f.write(content)
-        temp_path = Path(f.name)
 
     namespace_key = "blocks"
     evaluator = BlockAccumulatorEvaluator(namespace_key=namespace_key)
