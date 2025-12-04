@@ -9,6 +9,8 @@ from sybil import Sybil
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.languages import (
+    MARKDOWN,
+    MYST,
     MarkupLanguage,
 )
 
@@ -212,10 +214,7 @@ def test_group_all_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
         + language.markup_separator
     )
     num_skipped_newlines = full_skipped_section.count("\n")
-    # Add 1 for MyST/Markdown to account for the newline after the first block
-    # RST doesn't need this adjustment
-    separator_newlines = len(language.markup_separator)
-    adjustment = 1 if separator_newlines == 1 else 0
+    adjustment = 1 if language in (MYST, MARKDOWN) else 0
     skipped_lines = "\n" * (num_skipped_newlines + adjustment)
     expected = f"x = []{skipped_lines}x = [*x, 2]\n"
     assert document.namespace["blocks"] == [expected]
