@@ -99,12 +99,18 @@ class GroupAttributeParser:
         if language:
             escaped_lang = re.escape(pattern=language)
             self._pattern = re.compile(
-                pattern=rf'^```{escaped_lang}\s+[^\n]*group="([^"]+)"[^\n]*\n(.*?)^```$',
+                pattern=(
+                    rf"^```{escaped_lang}[ \t]+[^\n]*"
+                    rf'group="([^"]+)"[^\n]*\n(.*?)^```$'
+                ),
                 flags=re.MULTILINE | re.DOTALL,
             )
         else:
             self._pattern = re.compile(
-                pattern=r'^```(\w+)\s+[^\n]*group="([^"]+)"[^\n]*\n(.*?)^```$',
+                pattern=(
+                    r"^```(\w+)[ \t]+[^\n]*"
+                    r'group="([^"]+)"[^\n]*\n(.*?)^```$'
+                ),
                 flags=re.MULTILINE | re.DOTALL,
             )
 
