@@ -107,6 +107,8 @@ This is useful for testing parsers that group multiple code blocks together.
        f.write(content)
        my_document = Path(f.name)
 
+   assert my_document.exists()
+
 .. code-block:: python
 
     """Use BlockAccumulatorEvaluator to accumulate code blocks."""
