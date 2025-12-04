@@ -3,48 +3,16 @@ Grouped source parser tests shared across markup languages.
 """
 
 import textwrap
-from collections.abc import Callable, Iterable
 from pathlib import Path
 
 import pytest
-from sybil import Document, Region, Sybil
-from sybil.typing import Evaluator
+from sybil import Sybil
 
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 from sybil_extras.languages import RESTRUCTUREDTEXT, MarkupLanguage
 from tests.helpers import join_markup, write_document
-
-
-def _code_block_parser(
-    *,
-    language: MarkupLanguage,
-    evaluator: Evaluator,
-) -> Callable[[Document], Iterable[Region]]:
-    """
-    Instantiate a language-aware code block parser.
-    """
-    return language.code_block_parser_cls(
-        language="python", evaluator=evaluator
-    )
-
-
-def _group_parser(
-    *,
-    language: MarkupLanguage,
-    evaluator: Evaluator,
-    pad_groups: bool,
-    directive: str = "group",
-) -> Callable[[Document], Iterable[Region]]:
-    """
-    Instantiate a grouped-source parser for ``language``.
-    """
-    return language.group_parser_cls(
-        directive=directive,
-        evaluator=evaluator,
-        pad_groups=pad_groups,
-    )
 
 
 def test_group(language: MarkupLanguage, tmp_path: Path) -> None:
@@ -70,13 +38,14 @@ def test_group(language: MarkupLanguage, tmp_path: Path) -> None:
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
-    group_parser = _group_parser(
-        language=language,
+    group_parser = language.group_parser_cls(
+        directive="group",
         evaluator=evaluator,
         pad_groups=True,
     )
-    code_block_parser = _code_block_parser(
-        language=language, evaluator=evaluator
+    code_block_parser = language.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
     )
 
     sybil = Sybil(parsers=[code_block_parser, group_parser])
@@ -111,13 +80,14 @@ def test_nothing_after_group(language: MarkupLanguage, tmp_path: Path) -> None:
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
-    group_parser = _group_parser(
-        language=language,
+    group_parser = language.group_parser_cls(
+        directive="group",
         evaluator=evaluator,
         pad_groups=True,
     )
-    code_block_parser = _code_block_parser(
-        language=language, evaluator=evaluator
+    code_block_parser = language.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
     )
 
     sybil = Sybil(parsers=[code_block_parser, group_parser])
@@ -149,13 +119,14 @@ def test_empty_group(language: MarkupLanguage, tmp_path: Path) -> None:
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
-    group_parser = _group_parser(
-        language=language,
+    group_parser = language.group_parser_cls(
+        directive="group",
         evaluator=evaluator,
         pad_groups=True,
     )
-    code_block_parser = _code_block_parser(
-        language=language, evaluator=evaluator
+    code_block_parser = language.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
     )
 
     sybil = Sybil(parsers=[code_block_parser, group_parser])
@@ -190,13 +161,14 @@ def test_group_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
-    group_parser = _group_parser(
-        language=language,
+    group_parser = language.group_parser_cls(
+        directive="group",
         evaluator=evaluator,
         pad_groups=True,
     )
-    code_block_parser = _code_block_parser(
-        language=language, evaluator=evaluator
+    code_block_parser = language.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
     )
     skip_parser = language.skip_parser_cls(directive="skip")
 
@@ -227,8 +199,8 @@ def test_no_argument(language: MarkupLanguage, tmp_path: Path) -> None:
         content=content,
     )
 
-    group_parser = _group_parser(
-        language=language,
+    group_parser = language.group_parser_cls(
+        directive="group",
         evaluator=NoOpEvaluator(),
         pad_groups=True,
     )
@@ -255,8 +227,8 @@ def test_malformed_argument(language: MarkupLanguage, tmp_path: Path) -> None:
         content=content,
     )
 
-    group_parser = _group_parser(
-        language=language,
+    group_parser = language.group_parser_cls(
+        directive="group",
         evaluator=NoOpEvaluator(),
         pad_groups=True,
     )
@@ -280,8 +252,8 @@ def test_end_only(language: MarkupLanguage, tmp_path: Path) -> None:
         content=content,
     )
 
-    group_parser = _group_parser(
-        language=language,
+    group_parser = language.group_parser_cls(
+        directive="group",
         evaluator=NoOpEvaluator(),
         pad_groups=True,
     )
@@ -311,8 +283,8 @@ def test_start_after_start(language: MarkupLanguage, tmp_path: Path) -> None:
         content=content,
     )
 
-    group_parser = _group_parser(
-        language=language,
+    group_parser = language.group_parser_cls(
+        directive="group",
         evaluator=NoOpEvaluator(),
         pad_groups=True,
     )
@@ -356,14 +328,14 @@ def test_directive_name_not_regex_escaped(
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
-    group_parser = _group_parser(
-        language=language,
+    group_parser = language.group_parser_cls(
+        directive=directive,
         evaluator=evaluator,
         pad_groups=True,
-        directive=directive,
     )
-    code_block_parser = _code_block_parser(
-        language=language, evaluator=evaluator
+    code_block_parser = language.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
     )
 
     sybil = Sybil(parsers=[code_block_parser, group_parser])
@@ -406,8 +378,8 @@ def test_with_shell_command_evaluator(
         write_to_file=False,
         use_pty=False,
     )
-    group_parser = _group_parser(
-        language=language,
+    group_parser = language.group_parser_cls(
+        directive="group",
         evaluator=shell_evaluator,
         pad_groups=True,
     )
@@ -462,8 +434,8 @@ def test_no_pad_groups(language: MarkupLanguage, tmp_path: Path) -> None:
         write_to_file=False,
         use_pty=False,
     )
-    group_parser = _group_parser(
-        language=language,
+    group_parser = language.group_parser_cls(
+        directive="group",
         evaluator=shell_evaluator,
         pad_groups=False,
     )
@@ -509,8 +481,8 @@ def test_rest_group_parser_handles_missing_trailing_newline(
     document_path.write_text(data=content, encoding="utf-8")
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
-    group_parser = _group_parser(
-        language=RESTRUCTUREDTEXT,
+    group_parser = RESTRUCTUREDTEXT.group_parser_cls(
+        directive="group",
         evaluator=evaluator,
         pad_groups=True,
     )

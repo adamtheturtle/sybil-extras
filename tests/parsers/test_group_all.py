@@ -2,11 +2,9 @@
 Group-all parser tests shared across markup languages.
 """
 
-from collections.abc import Callable, Iterable
 from pathlib import Path
 
-from sybil import Document, Region, Sybil
-from sybil.typing import Evaluator
+from sybil import Sybil
 
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
@@ -14,35 +12,6 @@ from sybil_extras.languages import (
     MarkupLanguage,
 )
 from tests.helpers import join_markup, write_document
-
-
-def _code_block_parser(
-    *,
-    language: MarkupLanguage,
-    evaluator: Evaluator | None,
-) -> Callable[[Document], Iterable[Region]]:
-    """
-    Instantiate a Python code block parser for ``language``.
-    """
-    return language.code_block_parser_cls(
-        language="python",
-        evaluator=evaluator,
-    )
-
-
-def _group_all_parser(
-    *,
-    language: MarkupLanguage,
-    evaluator: Evaluator,
-    pad_groups: bool,
-) -> Callable[[Document], Iterable[Region]]:
-    """
-    Instantiate a group-all parser for ``language``.
-    """
-    return language.group_all_parser_cls(
-        evaluator=evaluator,
-        pad_groups=pad_groups,
-    )
 
 
 def test_group_all(language: MarkupLanguage, tmp_path: Path) -> None:
@@ -61,13 +30,12 @@ def test_group_all(language: MarkupLanguage, tmp_path: Path) -> None:
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
-    group_all_parser = _group_all_parser(
-        language=language,
+    group_all_parser = language.group_all_parser_cls(
         evaluator=evaluator,
         pad_groups=True,
     )
-    code_block_parser = _code_block_parser(
-        language=language,
+    code_block_parser = language.code_block_parser_cls(
+        language="python",
         evaluator=evaluator,
     )
 
@@ -101,13 +69,12 @@ def test_group_all_single_block(
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
-    group_all_parser = _group_all_parser(
-        language=language,
+    group_all_parser = language.group_all_parser_cls(
         evaluator=evaluator,
         pad_groups=True,
     )
-    code_block_parser = _code_block_parser(
-        language=language,
+    code_block_parser = language.code_block_parser_cls(
+        language="python",
         evaluator=evaluator,
     )
 
@@ -135,13 +102,12 @@ def test_group_all_empty_document(
         content=content,
     )
 
-    group_all_parser = _group_all_parser(
-        language=language,
+    group_all_parser = language.group_all_parser_cls(
         evaluator=NoOpEvaluator(),
         pad_groups=True,
     )
-    code_block_parser = _code_block_parser(
-        language=language,
+    code_block_parser = language.code_block_parser_cls(
+        language="python",
         evaluator=None,
     )
 
@@ -170,13 +136,12 @@ def test_group_all_no_pad(language: MarkupLanguage, tmp_path: Path) -> None:
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
-    group_all_parser = _group_all_parser(
-        language=language,
+    group_all_parser = language.group_all_parser_cls(
         evaluator=evaluator,
         pad_groups=False,
     )
-    code_block_parser = _code_block_parser(
-        language=language,
+    code_block_parser = language.code_block_parser_cls(
+        language="python",
         evaluator=evaluator,
     )
 
@@ -210,13 +175,12 @@ def test_group_all_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
-    group_all_parser = _group_all_parser(
-        language=language,
+    group_all_parser = language.group_all_parser_cls(
         evaluator=evaluator,
         pad_groups=True,
     )
-    code_block_parser = _code_block_parser(
-        language=language,
+    code_block_parser = language.code_block_parser_cls(
+        language="python",
         evaluator=evaluator,
     )
     skip_parser = language.skip_parser_cls(directive="skip")
