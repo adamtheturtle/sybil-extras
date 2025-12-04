@@ -60,15 +60,15 @@ def test_group_all(markup_language: MarkupLanguage, tmp_path: Path) -> None:
         tmp_path=tmp_path,
         markup=markup_language,
         parts=[
-            markup_language.code_block("x = []"),
-            markup_language.code_block("x = [*x, 1]"),
-            markup_language.code_block("x = [*x, 2]"),
+            markup_language.code_block(body="x = []"),
+            markup_language.code_block(body="x = [*x, 1]"),
+            markup_language.code_block(body="x = [*x, 2]"),
         ],
-        parsers=[code_block_parser, group_all_parser],
+        parsers=[code_block_parser, group_all_parser],  # type: ignore[list-item]
     )
 
     expected = markup_language.expected_text(
-        "x = []\n\n\n\nx = [*x, 1]\n\n\n\nx = [*x, 2]",
+        text="x = []\n\n\n\nx = [*x, 1]\n\n\n\nx = [*x, 2]",
     )
     assert document.namespace["blocks"] == [expected]
     assert len(document.evaluators) == 0
@@ -90,12 +90,12 @@ def test_group_all_single_block(
     document = evaluate_document(
         tmp_path=tmp_path,
         markup=markup_language,
-        parts=[markup_language.code_block("x = []")],
-        parsers=[code_block_parser, group_all_parser],
+        parts=[markup_language.code_block(body="x = []")],
+        parsers=[code_block_parser, group_all_parser],  # type: ignore[list-item]
     )
 
     assert document.namespace["blocks"] == [
-        markup_language.expected_text("x = []"),
+        markup_language.expected_text(text="x = []"),
     ]
 
 
@@ -147,15 +147,15 @@ def test_group_all_no_pad(
         tmp_path=tmp_path,
         markup=markup_language,
         parts=[
-            markup_language.code_block("x = []"),
-            markup_language.code_block("x = [*x, 1]"),
-            markup_language.code_block("x = [*x, 2]"),
+            markup_language.code_block(body="x = []"),
+            markup_language.code_block(body="x = [*x, 1]"),
+            markup_language.code_block(body="x = [*x, 2]"),
         ],
-        parsers=[code_block_parser, group_all_parser],
+        parsers=[code_block_parser, group_all_parser],  # type: ignore[list-item]
     )
 
     expected = markup_language.expected_text(
-        "x = []\n\nx = [*x, 1]\n\nx = [*x, 2]",
+        text="x = []\n\nx = [*x, 1]\n\nx = [*x, 2]",
     )
     assert document.namespace["blocks"] == [expected]
 
@@ -173,21 +173,21 @@ def test_group_all_with_skip(
         evaluator=evaluator,
         pad_groups=True,
     )
-    skip_parser = markup_language.skip_parser_cls()
+    skip_parser = markup_language.skip_parser_cls(directive="skip")
 
     document = evaluate_document(
         tmp_path=tmp_path,
         markup=markup_language,
         parts=[
-            markup_language.code_block("x = []"),
-            markup_language.directive("skip: next"),
-            markup_language.code_block("x = [*x, 1]"),
-            markup_language.code_block("x = [*x, 2]"),
+            markup_language.code_block(body="x = []"),
+            markup_language.directive(directive="skip: next"),
+            markup_language.code_block(body="x = [*x, 1]"),
+            markup_language.code_block(body="x = [*x, 2]"),
         ],
-        parsers=[code_block_parser, skip_parser, group_all_parser],
+        parsers=[code_block_parser, skip_parser, group_all_parser],  # type: ignore[list-item]
     )
 
     expected = markup_language.expected_text(
-        "x = []\n\n\n\n\n\n\n\n\n\nx = [*x, 2]",
+        text="x = []\n\n\n\n\n\n\n\n\n\nx = [*x, 2]",
     )
     assert document.namespace["blocks"] == [expected]

@@ -64,6 +64,15 @@ from sybil_extras.parsers.rest.sphinx_jinja2 import (
     SphinxJinja2Parser as ReSTSphinxJinja2Parser,
 )
 
+from ._protocols import (
+    CodeBlockParser,
+    CustomDirectiveSkipParser,
+    GroupAllParser,
+    GroupedSourceParser,
+    SkipParser,
+    SphinxJinja2Parser,
+)
+
 
 def _rst_code_block(body: str) -> str:
     """
@@ -124,24 +133,26 @@ class MarkupLanguage:
 
     name: str
     extension: str
-    code_block_parser_cls: type
-    python_code_block_parser_cls: type
-    skip_parser_cls: type
-    group_all_parser_cls: type
-    grouped_source_parser_cls: type
+    code_block_parser_cls: type[CodeBlockParser]
+    python_code_block_parser_cls: type[CodeBlockParser]
+    skip_parser_cls: type[SkipParser]
+    group_all_parser_cls: type[GroupAllParser]
+    grouped_source_parser_cls: type[GroupedSourceParser]
     _block_renderer: Callable[[str], str]
     _directive_renderer: Callable[[str], str]
-    custom_skip_parser_cls: type
-    sphinx_jinja_parser_cls: type
+    custom_skip_parser_cls: type[CustomDirectiveSkipParser]
+    sphinx_jinja_parser_cls: (
+        type[SphinxJinja2Parser] | type[_UnsupportedSphinxJinja2Parser]
+    )
     trailing_newline: bool = False
 
-    def code_block(self, body: str) -> str:
+    def code_block(self, *, body: str) -> str:
         """
         Create a code block fragment.
         """
         return self._block_renderer(body.rstrip("\n"))
 
-    def directive(self, directive: str) -> str:
+    def directive(self, *, directive: str) -> str:
         """
         Create a directive fragment.
         """
@@ -156,7 +167,7 @@ class MarkupLanguage:
         ]
         return "\n\n".join(cleaned_parts) + "\n"
 
-    def expected_text(self, text: str) -> str:
+    def expected_text(self, *, text: str) -> str:
         """
         Adjust an expected string for markup quirks.
         """

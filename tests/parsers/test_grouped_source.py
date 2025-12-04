@@ -64,16 +64,16 @@ def test_group(markup_language: MarkupLanguage, tmp_path: Path) -> None:
         tmp_path=tmp_path,
         markup=markup_language,
         parts=[
-            markup_language.code_block("x = []"),
-            markup_language.directive("group: start"),
-            markup_language.code_block("x = [*x, 1]"),
-            markup_language.code_block("x = [*x, 2]"),
-            markup_language.directive("group: end"),
-            markup_language.code_block("x = [*x, 3]"),
-            markup_language.directive("group: start"),
-            markup_language.code_block("x = [*x, 4]"),
-            markup_language.code_block("x = [*x, 5]"),
-            markup_language.directive("group: end"),
+            markup_language.code_block(body="x = []"),
+            markup_language.directive(directive="group: start"),
+            markup_language.code_block(body="x = [*x, 1]"),
+            markup_language.code_block(body="x = [*x, 2]"),
+            markup_language.directive(directive="group: end"),
+            markup_language.code_block(body="x = [*x, 3]"),
+            markup_language.directive(directive="group: start"),
+            markup_language.code_block(body="x = [*x, 4]"),
+            markup_language.code_block(body="x = [*x, 5]"),
+            markup_language.directive(directive="group: end"),
         ],
         parsers=[code_block_parser, group_parser],
     )
@@ -107,11 +107,11 @@ def test_nothing_after_group(
         tmp_path=tmp_path,
         markup=markup_language,
         parts=[
-            markup_language.code_block("x = []"),
-            markup_language.directive("group: start"),
-            markup_language.code_block("x = [*x, 1]"),
-            markup_language.code_block("x = [*x, 2]"),
-            markup_language.directive("group: end"),
+            markup_language.code_block(body="x = []"),
+            markup_language.directive(directive="group: start"),
+            markup_language.code_block(body="x = [*x, 1]"),
+            markup_language.code_block(body="x = [*x, 2]"),
+            markup_language.directive(directive="group: end"),
         ],
         parsers=[code_block_parser, group_parser],
     )
@@ -141,17 +141,17 @@ def test_empty_group(markup_language: MarkupLanguage, tmp_path: Path) -> None:
         tmp_path=tmp_path,
         markup=markup_language,
         parts=[
-            markup_language.code_block("x = []"),
-            markup_language.directive("group: start"),
-            markup_language.directive("group: end"),
-            markup_language.code_block("x = [*x, 3]"),
+            markup_language.code_block(body="x = []"),
+            markup_language.directive(directive="group: start"),
+            markup_language.directive(directive="group: end"),
+            markup_language.code_block(body="x = [*x, 3]"),
         ],
         parsers=[code_block_parser, group_parser],
     )
 
     assert document.namespace["blocks"] == [
         "x = []\n",
-        markup_language.expected_text("x = [*x, 3]"),
+        markup_language.expected_text(text="x = [*x, 3]"),
     ]
 
 
@@ -171,7 +171,7 @@ def test_group_with_skip(
         language="python",
         evaluator=evaluator,
     )
-    skip_parser = markup_language.skip_parser_cls()
+    skip_parser = markup_language.skip_parser_cls(directive="skip")
 
     parsers = [code_block_parser, skip_parser, group_parser]
 
@@ -179,13 +179,13 @@ def test_group_with_skip(
         tmp_path=tmp_path,
         markup=markup_language,
         parts=[
-            markup_language.code_block("x = []"),
-            markup_language.directive("group: start"),
-            markup_language.code_block("x = [*x, 1]"),
-            markup_language.directive("skip: next"),
-            markup_language.code_block("x = [*x, 2]"),
-            markup_language.directive("group: end"),
-            markup_language.code_block("x = [*x, 3]"),
+            markup_language.code_block(body="x = []"),
+            markup_language.directive(directive="group: start"),
+            markup_language.code_block(body="x = [*x, 1]"),
+            markup_language.directive(directive="skip: next"),
+            markup_language.code_block(body="x = [*x, 2]"),
+            markup_language.directive(directive="group: end"),
+            markup_language.code_block(body="x = [*x, 3]"),
         ],
         parsers=parsers,
     )
@@ -193,7 +193,7 @@ def test_group_with_skip(
     assert document.namespace["blocks"] == [
         "x = []\n",
         "x = [*x, 1]\n",
-        markup_language.expected_text("x = [*x, 3]"),
+        markup_language.expected_text(text="x = [*x, 3]"),
     ]
 
 
@@ -208,13 +208,15 @@ def test_no_argument(markup_language: MarkupLanguage, tmp_path: Path) -> None:
         pad_groups=True,
     )
 
-    with pytest.raises(ValueError, match=r"missing arguments to group"):
+    with pytest.raises(
+        expected_exception=ValueError, match=r"missing arguments to group"
+    ):
         parse_document(
             tmp_path=tmp_path,
             markup=markup_language,
             parts=[
-                markup_language.directive(missing_arg),
-                markup_language.directive("group: end"),
+                markup_language.directive(directive=missing_arg),
+                markup_language.directive(directive="group: end"),
             ],
             parsers=[group_parser],
         )
@@ -233,15 +235,15 @@ def test_malformed_argument(
     )
 
     with pytest.raises(
-        ValueError,
+        expected_exception=ValueError,
         match=r"malformed arguments to group: 'not_start_or_end'",
     ):
         parse_document(
             tmp_path=tmp_path,
             markup=markup_language,
             parts=[
-                markup_language.directive("group: not_start_or_end"),
-                markup_language.directive("group: end"),
+                markup_language.directive(directive="group: not_start_or_end"),
+                markup_language.directive(directive="group: end"),
             ],
             parsers=[group_parser],
         )
@@ -260,12 +262,12 @@ def test_end_only(markup_language: MarkupLanguage, tmp_path: Path) -> None:
     document = parse_document(
         tmp_path=tmp_path,
         markup=markup_language,
-        parts=[markup_language.directive("group: end")],
+        parts=[markup_language.directive(directive="group: end")],
         parsers=[group_parser],
     )
     (example,) = document.examples()
     with pytest.raises(
-        ValueError,
+        expected_exception=ValueError,
         match=r"'group: end' must follow 'group: start'",
     ):
         example.evaluate()
@@ -288,8 +290,8 @@ def test_start_after_start(
         tmp_path=tmp_path,
         markup=markup_language,
         parts=[
-            markup_language.directive("group: start"),
-            markup_language.directive("group: start"),
+            markup_language.directive(directive="group: start"),
+            markup_language.directive(directive="group: start"),
         ],
         parsers=[group_parser],
     )
@@ -298,7 +300,7 @@ def test_start_after_start(
     first_start_example.evaluate()
 
     with pytest.raises(
-        ValueError,
+        expected_exception=ValueError,
         match=r"'group: start' must be followed by 'group: end'",
     ):
         second_start_example.evaluate()
@@ -328,16 +330,16 @@ def test_directive_name_not_regex_escaped(
         tmp_path=tmp_path,
         markup=markup_language,
         parts=[
-            markup_language.code_block("x = []"),
-            markup_language.directive(f"{directive_name}: start"),
-            markup_language.code_block("x = [*x, 1]"),
-            markup_language.code_block("x = [*x, 2]"),
-            markup_language.directive(f"{directive_name}: end"),
-            markup_language.code_block("x = [*x, 3]"),
-            markup_language.directive(f"{directive_name}: start"),
-            markup_language.code_block("x = [*x, 4]"),
-            markup_language.code_block("x = [*x, 5]"),
-            markup_language.directive(f"{directive_name}: end"),
+            markup_language.code_block(body="x = []"),
+            markup_language.directive(directive=f"{directive_name}: start"),
+            markup_language.code_block(body="x = [*x, 1]"),
+            markup_language.code_block(body="x = [*x, 2]"),
+            markup_language.directive(directive=f"{directive_name}: end"),
+            markup_language.code_block(body="x = [*x, 3]"),
+            markup_language.directive(directive=f"{directive_name}: start"),
+            markup_language.code_block(body="x = [*x, 4]"),
+            markup_language.code_block(body="x = [*x, 5]"),
+            markup_language.directive(directive=f"{directive_name}: end"),
         ],
         parsers=[code_block_parser, group_parser],
     )
@@ -395,10 +397,10 @@ def test_with_shell_command_evaluator(
         tmp_path=tmp_path,
         markup=markup_language,
         parts=[
-            markup_language.directive("group: start"),
-            markup_language.code_block("x = [*x, 1]"),
-            markup_language.code_block("x = [*x, 2]"),
-            markup_language.directive("group: end"),
+            markup_language.directive(directive="group: start"),
+            markup_language.code_block(body="x = [*x, 1]"),
+            markup_language.code_block(body="x = [*x, 2]"),
+            markup_language.directive(directive="group: end"),
         ],
         parsers=[code_block_parser, group_parser],
     )
@@ -437,10 +439,10 @@ def test_no_pad_groups(
         tmp_path=tmp_path,
         markup=markup_language,
         parts=[
-            markup_language.directive("group: start"),
-            markup_language.code_block("x = [*x, 1]"),
-            markup_language.code_block("x = [*x, 2]"),
-            markup_language.directive("group: end"),
+            markup_language.directive(directive="group: start"),
+            markup_language.code_block(body="x = [*x, 1]"),
+            markup_language.code_block(body="x = [*x, 2]"),
+            markup_language.directive(directive="group: end"),
         ],
         parsers=[code_block_parser, group_parser],
     )
