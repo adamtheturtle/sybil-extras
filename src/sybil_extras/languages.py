@@ -1,9 +1,11 @@
 """
-Tools for managing markup languages.
+Tools for managing markup languages and generating snippets.
 """
 
-from collections.abc import Iterable
+import textwrap
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Protocol, runtime_checkable
 
 import sybil.parsers.markdown
@@ -11,14 +13,18 @@ import sybil.parsers.myst
 import sybil.parsers.rest
 from beartype import beartype
 from sybil import Document, Region
+from sybil.evaluators.skip import Skipper
 from sybil.typing import Evaluator
 
 import sybil_extras.parsers.markdown.custom_directive_skip
+import sybil_extras.parsers.markdown.group_all
 import sybil_extras.parsers.markdown.grouped_source
 import sybil_extras.parsers.myst.custom_directive_skip
+import sybil_extras.parsers.myst.group_all
 import sybil_extras.parsers.myst.grouped_source
 import sybil_extras.parsers.myst.sphinx_jinja2
 import sybil_extras.parsers.rest.custom_directive_skip
+import sybil_extras.parsers.rest.group_all
 import sybil_extras.parsers.rest.grouped_source
 import sybil_extras.parsers.rest.sphinx_jinja2
 
@@ -68,6 +74,13 @@ class _SkipParser(Protocol):
         # for pyright to recognize this as a protocol.
         ...  # pylint: disable=unnecessary-ellipsis
 
+    @property
+    def skipper(self) -> Skipper:
+        """
+        Return the skipper managing skip state.
+        """
+        ...  # pylint: disable=unnecessary-ellipsis
+
 
 @runtime_checkable
 class _GroupedSourceParser(Protocol):
@@ -96,6 +109,100 @@ class _GroupedSourceParser(Protocol):
         # We disable a pylint warning here because the ellipsis is required
         # for pyright to recognize this as a protocol.
         ...  # pylint: disable=unnecessary-ellipsis
+
+
+@runtime_checkable
+class _GroupAllParser(Protocol):
+    """
+    A parser for grouping all code blocks in a document.
+    """
+
+    def __init__(
+        self,
+        *,
+        evaluator: Evaluator,
+        pad_groups: bool,
+    ) -> None:
+        """
+        Construct a parser that groups every code block.
+        """
+        ...  # pylint: disable=unnecessary-ellipsis
+
+    def __call__(self, document: Document) -> Iterable[Region]:
+        """
+        Call the group-all parser.
+        """
+        ...  # pylint: disable=unnecessary-ellipsis
+
+
+CodeBlockBuilder = Callable[[str, str], str]
+DirectiveBuilder = Callable[[str, str | None], str]
+JinjaBlockBuilder = Callable[[str], str]
+
+
+def _normalize_code(content: str) -> str:
+    """
+    Normalize code provided in tests into a block-friendly form.
+    """
+    normalized = textwrap.dedent(text=content).strip("\n")
+    if not normalized:
+        return ""
+    return f"{normalized}\n"
+
+
+def _markdown_code_block(code: str, language: str) -> str:
+    """
+    Build a Markdown/MyST code block.
+    """
+    normalized = _normalize_code(content=code)
+    return f"```{language}\n{normalized}```"
+
+
+def _rst_code_block(code: str, language: str) -> str:
+    """
+    Build a reStructuredText code block.
+    """
+    normalized = _normalize_code(content=code)
+    indented = (
+        textwrap.indent(text=normalized, prefix="   ") if normalized else ""
+    )
+    return f".. code-block:: {language}\n\n{indented}".rstrip()
+
+
+def _html_comment_directive(directive: str, argument: str | None) -> str:
+    """
+    Render a directive embedded in an HTML comment.
+    """
+    suffix = f": {argument}" if argument is not None else ""
+    return f"<!--- {directive}{suffix} -->"
+
+
+def _rst_directive(directive: str, argument: str | None) -> str:
+    """
+    Render a directive for reStructuredText documents.
+    """
+    if argument is None:
+        return f".. {directive}:"
+    return f".. {directive}: {argument}"
+
+
+def _myst_jinja_block(body: str) -> str:
+    """
+    Render a sphinx-jinja block for MyST.
+    """
+    normalized = _normalize_code(content=body)
+    return f"```{{jinja}}\n{normalized}```"
+
+
+def _rst_jinja_block(body: str) -> str:
+    """
+    Render a sphinx-jinja block for reStructuredText.
+    """
+    normalized = _normalize_code(content=body)
+    indented = (
+        textwrap.indent(text=normalized, prefix="   ") if normalized else ""
+    )
+    return f".. jinja::\n\n{indented}".rstrip()
 
 
 @runtime_checkable
@@ -133,34 +240,94 @@ class MarkupLanguage:
     """
 
     name: str
+    file_extension: str
     skip_parser_cls: type[_SkipParser]
     code_block_parser_cls: type[_CodeBlockParser]
     group_parser_cls: type[_GroupedSourceParser]
+    group_all_parser_cls: type[_GroupAllParser]
     sphinx_jinja_parser_cls: type[_SphinxJinja2Parser] | None
+    _code_block_builder: CodeBlockBuilder
+    _directive_builder: DirectiveBuilder
+    _jinja_block_builder: JinjaBlockBuilder | None
+
+    def document_name(self, stem: str = "test") -> str:
+        """
+        Return a filename for the given document stem.
+        """
+        return f"{stem}{self.file_extension}"
+
+    def document_path(self, directory: Path, stem: str = "test") -> Path:
+        """
+        Return a path inside ``directory`` using the language extension.
+        """
+        return directory / self.document_name(stem=stem)
+
+    def code_block(self, code: str, *, language: str = "python") -> str:
+        """
+        Create a code block for the markup language.
+        """
+        return self._code_block_builder(code, language)
+
+    def directive(self, directive: str, argument: str | None = None) -> str:
+        """
+        Create a directive for the markup language.
+        """
+        return self._directive_builder(directive, argument)
+
+    def jinja_block(self, body: str) -> str:
+        """
+        Create a sphinx-jinja block for the markup language.
+        """
+        if self._jinja_block_builder is None:
+            msg = f"{self.name} does not support sphinx-jinja blocks."
+            raise ValueError(msg)
+        return self._jinja_block_builder(body)
 
 
 MYST = MarkupLanguage(
     name="MyST",
+    file_extension=".md",
     skip_parser_cls=(
         sybil_extras.parsers.myst.custom_directive_skip.CustomDirectiveSkipParser
     ),
     code_block_parser_cls=sybil.parsers.myst.CodeBlockParser,
     group_parser_cls=sybil_extras.parsers.myst.grouped_source.GroupedSourceParser,
+    group_all_parser_cls=sybil_extras.parsers.myst.group_all.GroupAllParser,
     sphinx_jinja_parser_cls=sybil_extras.parsers.myst.sphinx_jinja2.SphinxJinja2Parser,
+    _code_block_builder=_markdown_code_block,
+    _directive_builder=_html_comment_directive,
+    _jinja_block_builder=_myst_jinja_block,
 )
 
 RESTRUCTUREDTEXT = MarkupLanguage(
     name="reStructuredText",
+    file_extension=".rst",
     skip_parser_cls=sybil_extras.parsers.rest.custom_directive_skip.CustomDirectiveSkipParser,
     code_block_parser_cls=sybil.parsers.rest.CodeBlockParser,
     group_parser_cls=sybil_extras.parsers.rest.grouped_source.GroupedSourceParser,
+    group_all_parser_cls=sybil_extras.parsers.rest.group_all.GroupAllParser,
     sphinx_jinja_parser_cls=sybil_extras.parsers.rest.sphinx_jinja2.SphinxJinja2Parser,
+    _code_block_builder=_rst_code_block,
+    _directive_builder=_rst_directive,
+    _jinja_block_builder=_rst_jinja_block,
 )
 
 MARKDOWN = MarkupLanguage(
     name="Markdown",
+    file_extension=".md",
     skip_parser_cls=sybil_extras.parsers.markdown.custom_directive_skip.CustomDirectiveSkipParser,
     code_block_parser_cls=sybil.parsers.markdown.CodeBlockParser,
     group_parser_cls=sybil_extras.parsers.markdown.grouped_source.GroupedSourceParser,
+    group_all_parser_cls=sybil_extras.parsers.markdown.group_all.GroupAllParser,
     sphinx_jinja_parser_cls=None,
+    _code_block_builder=_markdown_code_block,
+    _directive_builder=_html_comment_directive,
+    _jinja_block_builder=None,
+)
+
+
+ALL_LANGUAGES: tuple[MarkupLanguage, ...] = (
+    MYST,
+    RESTRUCTUREDTEXT,
+    MARKDOWN,
 )
