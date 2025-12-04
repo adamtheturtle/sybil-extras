@@ -4,6 +4,9 @@ Changelog
 Next
 ----
 
+2025.12.04
+----------
+
 * Add ``BlockAccumulatorEvaluator``.
 * Add ``languages`` module with ``MarkupLanguage`` dataclass and predefined instances (``MYST``, ``RESTRUCTUREDTEXT``, ``MARKDOWN``).
 
