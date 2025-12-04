@@ -1,3 +1,6 @@
+Docusaurus
+JSX
+MDX
 Pyright
 args
 beartype
@@ -7,6 +10,7 @@ formatters
 hardcode
 iff
 lexeme
+lexing
 linter
 namespace
 ons
@@ -17,4 +21,5 @@ pytest
 rst
 stderr
 stdout
+ungrouped
 whitespace
