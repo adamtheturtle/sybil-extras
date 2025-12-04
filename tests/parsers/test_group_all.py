@@ -199,8 +199,6 @@ def test_group_all_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     for example in document.examples():
         example.evaluate()
 
-    # Calculate the number of newlines spanned by the skip directive and
-    # skipped block.
     full_skipped_section = (
         language.markup_separator
         + skip_directive
