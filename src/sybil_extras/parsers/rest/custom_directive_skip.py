@@ -9,7 +9,10 @@ from beartype import beartype
 from sybil import Document, Region
 from sybil.evaluators.skip import Skipper
 from sybil.parsers.abstract import AbstractSkipParser
-from sybil.parsers.rest.lexers import DirectiveInCommentLexer
+
+from sybil_extras.parsers.rest._lexers import (
+    DirectiveInCommentLexerWithTrailingNewline,
+)
 
 
 @beartype
@@ -26,7 +29,9 @@ class CustomDirectiveSkipParser:
         # This matches the ``sybil.parsers.rest.SkipParser``, other than
         # it does not hardcode the directive "skip".
         lexers = [
-            DirectiveInCommentLexer(directive=re.escape(pattern=directive)),
+            DirectiveInCommentLexerWithTrailingNewline(
+                directive=re.escape(pattern=directive),
+            ),
         ]
         self._abstract_skip_parser = AbstractSkipParser(lexers=lexers)
         self._abstract_skip_parser.skipper = Skipper(directive=directive)

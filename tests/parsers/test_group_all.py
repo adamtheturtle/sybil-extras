@@ -2,29 +2,18 @@
 Group-all parser tests shared across markup languages.
 """
 
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
+from collections.abc import Callable, Iterable
+from pathlib import Path
 
 from sybil import Document, Region, Sybil
+from sybil.typing import Evaluator
 
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.languages import (
-    RESTRUCTUREDTEXT,
     MarkupLanguage,
 )
 from tests.helpers import join_markup, write_document
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
-    from pathlib import Path
-
-    from sybil.typing import Evaluator
-
-_PAD_SEPARATOR = "\n\n\n\n"
-_NO_PAD_SEPARATOR = "\n\n"
-_SKIP_GAP = "\n" * 10
 
 
 def _code_block_parser(
@@ -56,36 +45,6 @@ def _group_all_parser(
         evaluator=evaluator,
         pad_groups=pad_groups,
     )
-
-
-def _expected_padded(language: MarkupLanguage, blocks: list[str]) -> str:
-    """
-    Return the expected padded representation for ``blocks``.
-    """
-    result = _PAD_SEPARATOR.join(blocks)
-    if language is not RESTRUCTUREDTEXT:
-        result += "\n"
-    return result
-
-
-def _expected_no_pad(language: MarkupLanguage, blocks: list[str]) -> str:
-    """
-    Return the expected unpadded representation for ``blocks``.
-    """
-    result = _NO_PAD_SEPARATOR.join(blocks)
-    if language is not RESTRUCTUREDTEXT:
-        result += "\n"
-    return result
-
-
-def _expected_skip(language: MarkupLanguage) -> str:
-    """
-    Return the expected representation when a block is skipped.
-    """
-    result = f"x = []{_SKIP_GAP}x = [*x, 2]"
-    if language is not RESTRUCTUREDTEXT:
-        result += "\n"
-    return result
 
 
 def test_group_all(language: MarkupLanguage, tmp_path: Path) -> None:
@@ -120,10 +79,11 @@ def test_group_all(language: MarkupLanguage, tmp_path: Path) -> None:
     for example in document.examples():
         example.evaluate()
 
-    expected = _expected_padded(
-        language=language,
-        blocks=["x = []", "x = [*x, 1]", "x = [*x, 2]"],
-    )
+    blocks = ["x = []", "x = [*x, 1]", "x = [*x, 2]"]
+    # join_markup inserts one blank line (``\n\n``) between fragments; padding
+    # duplicates that blank line so line numbers stay aligned with the source.
+    separator = "\n\n" * 2
+    expected = separator.join(blocks) + "\n"
     assert document.namespace["blocks"] == [expected]
     assert len(document.evaluators) == 0
 
@@ -159,7 +119,7 @@ def test_group_all_single_block(
     for example in document.examples():
         example.evaluate()
 
-    expected = _expected_padded(language=language, blocks=["x = []"])
+    expected = "x = []\n"
     assert document.namespace["blocks"] == [expected]
 
 
@@ -228,10 +188,10 @@ def test_group_all_no_pad(language: MarkupLanguage, tmp_path: Path) -> None:
     for example in document.examples():
         example.evaluate()
 
-    expected = _expected_no_pad(
-        language=language,
-        blocks=["x = []", "x = [*x, 1]", "x = [*x, 2]"],
-    )
+    blocks = ["x = []", "x = [*x, 1]", "x = [*x, 2]"]
+    # Groups are concatenated directly with the blank line produced by
+    # ``join_markup``.
+    expected = "\n\n".join(blocks) + "\n"
     assert document.namespace["blocks"] == [expected]
 
 
@@ -269,5 +229,8 @@ def test_group_all_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     for example in document.examples():
         example.evaluate()
 
-    expected = _expected_skip(language=language)
+    # Skip directives (and the skipped block) span ten lines, so pad with the
+    # same number of newlines to keep downstream line numbers aligned.
+    skipped_lines = "\n" * 10
+    expected = f"x = []{skipped_lines}x = [*x, 2]\n"
     assert document.namespace["blocks"] == [expected]

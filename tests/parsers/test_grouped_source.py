@@ -13,7 +13,7 @@ from sybil.typing import Evaluator
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
-from sybil_extras.languages import MarkupLanguage
+from sybil_extras.languages import RESTRUCTUREDTEXT, MarkupLanguage
 from tests.helpers import join_markup, write_document
 
 
@@ -430,8 +430,12 @@ def test_with_shell_command_evaluator(
 
 
         x = [*x, 2]
-        """,
+            """,
     )
+    if language is RESTRUCTUREDTEXT:
+        expected_output_document_content = (
+            f"\n{expected_output_document_content}"
+        )
     assert output_document_content == expected_output_document_content
 
 
@@ -480,6 +484,47 @@ def test_no_pad_groups(language: MarkupLanguage, tmp_path: Path) -> None:
         x = [*x, 1]
 
         x = [*x, 2]
-        """,
+            """,
     )
+    if language is RESTRUCTUREDTEXT:
+        expected_output_document_content = (
+            f"\n{expected_output_document_content}"
+        )
     assert output_document_content == expected_output_document_content
+
+
+def test_rest_group_parser_handles_missing_trailing_newline(
+    tmp_path: Path,
+) -> None:
+    """
+    The reST group parser handles directives without trailing newlines.
+    """
+    content = join_markup(
+        RESTRUCTUREDTEXT.directive(directive="group", argument="start"),
+        RESTRUCTUREDTEXT.code_block(code="x = [*x, 1]"),
+        RESTRUCTUREDTEXT.code_block(code="x = [*x, 2]"),
+        RESTRUCTUREDTEXT.directive(directive="group", argument="end"),
+    )
+    document_path = RESTRUCTUREDTEXT.document_path(directory=tmp_path)
+    document_path.write_text(data=content, encoding="utf-8")
+
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
+    group_parser = _group_parser(
+        language=RESTRUCTUREDTEXT,
+        evaluator=evaluator,
+        pad_groups=True,
+    )
+    code_block_parser = RESTRUCTUREDTEXT.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
+
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
+    document = sybil.parse(path=document_path)
+
+    for example in document.examples():
+        example.evaluate()
+
+    assert document.namespace["blocks"] == [
+        "x = [*x, 1]\n\n\n\nx = [*x, 2]\n",
+    ]

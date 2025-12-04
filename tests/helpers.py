@@ -26,5 +26,11 @@ def write_document(
     Write ``content`` to ``directory`` using the language extension.
     """
     path = language.document_path(directory=directory, stem=stem)
-    path.write_text(data=content, encoding="utf-8")
+    if not content:
+        data = ""
+    else:
+        normalized = content.rstrip("\n")
+        suffix = "\n\n" if language.file_extension == ".rst" else "\n"
+        data = f"{normalized}{suffix}"
+    path.write_text(data=data, encoding="utf-8")
     return path

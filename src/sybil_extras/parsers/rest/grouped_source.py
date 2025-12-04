@@ -5,11 +5,13 @@ A group parser for reST.
 import re
 
 from beartype import beartype
-from sybil.parsers.rest.lexers import DirectiveInCommentLexer
 from sybil.typing import Evaluator
 
 from sybil_extras.parsers.abstract.grouped_source import (
     AbstractGroupedSourceParser,
+)
+from sybil_extras.parsers.rest._lexers import (
+    DirectiveInCommentLexerWithTrailingNewline,
 )
 
 
@@ -36,7 +38,9 @@ class GroupedSourceParser(AbstractGroupedSourceParser):
                 to not have a bunch of newlines in it, such as formatters.
         """
         lexers = [
-            DirectiveInCommentLexer(directive=re.escape(pattern=directive)),
+            DirectiveInCommentLexerWithTrailingNewline(
+                directive=re.escape(pattern=directive),
+            ),
         ]
         super().__init__(
             lexers=lexers,

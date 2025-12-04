@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 from sybil import Document, Region, Sybil
+from sybil.evaluators.python import PythonEvaluator
 from sybil.evaluators.skip import SkipState
 
 from sybil_extras.languages import MarkupLanguage
@@ -20,7 +21,10 @@ def _code_block_parser(
     """
     Instantiate a Python code block parser for ``language``.
     """
-    return language.code_block_parser_cls(language="python")
+    return language.code_block_parser_cls(
+        language="python",
+        evaluator=PythonEvaluator(),
+    )
 
 
 def test_skip(language: MarkupLanguage, tmp_path: Path) -> None:

@@ -6,7 +6,7 @@ import textwrap
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, TypeAlias, runtime_checkable
 
 import sybil.parsers.markdown
 import sybil.parsers.myst
@@ -80,6 +80,12 @@ class _SkipParser(Protocol):
         Return the skipper managing skip state.
         """
         ...  # pylint: disable=unnecessary-ellipsis
+
+
+if TYPE_CHECKING:
+    SkipParserType: TypeAlias = type[_SkipParser]
+else:  # pragma: no cover - runtime alias avoids Protocol issubclass checks.
+    SkipParserType: TypeAlias = type
 
 
 @runtime_checkable
@@ -248,7 +254,7 @@ class MarkupLanguage:
 
     name: str
     file_extension: str
-    skip_parser_cls: type[_SkipParser]
+    skip_parser_cls: SkipParserType
     code_block_parser_cls: type[_CodeBlockParser]
     group_parser_cls: type[_GroupedSourceParser]
     group_all_parser_cls: type[_GroupAllParser]

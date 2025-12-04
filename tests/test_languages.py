@@ -102,6 +102,45 @@ def test_skip_parser(
 @pytest.mark.parametrize(
     argnames=("language"),
     argvalues=[
+        pytest.param(MYST, id="myst-empty"),
+        pytest.param(RESTRUCTUREDTEXT, id="rest-empty"),
+        pytest.param(MARKDOWN, id="markdown-empty"),
+    ],
+)
+def test_code_block_empty(language: MarkupLanguage) -> None:
+    """
+    Code block builders handle empty content.
+    """
+    block = language.code_block(code="")
+    assert block
+
+
+@pytest.mark.parametrize(
+    argnames=("language"),
+    argvalues=[
+        pytest.param(MYST, id="myst-empty-doc"),
+        pytest.param(RESTRUCTUREDTEXT, id="rest-empty-doc"),
+        pytest.param(MARKDOWN, id="markdown-empty-doc"),
+    ],
+)
+def test_write_document_empty(
+    language: MarkupLanguage, tmp_path: Path
+) -> None:
+    """
+    Writing an empty document does not add trailing newlines.
+    """
+    path = write_document(
+        language=language,
+        directory=tmp_path,
+        content="",
+        stem="empty",
+    )
+    assert path.read_text(encoding="utf-8") == ""
+
+
+@pytest.mark.parametrize(
+    argnames=("language"),
+    argvalues=[
         pytest.param(MYST, id="myst-grouped"),
         pytest.param(RESTRUCTUREDTEXT, id="rest-grouped"),
         pytest.param(MARKDOWN, id="markdown-grouped"),
@@ -182,6 +221,11 @@ def test_markdown_no_sphinx_jinja() -> None:
     Test that Markdown does not have a sphinx-jinja parser.
     """
     assert MARKDOWN.sphinx_jinja_parser_cls is None
+    with pytest.raises(
+        expected_exception=ValueError,
+        match="does not support sphinx-jinja blocks",
+    ):
+        MARKDOWN.jinja_block(body="{{ 1 }}")
 
 
 def test_language_names() -> None:

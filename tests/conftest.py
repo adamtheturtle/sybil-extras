@@ -2,8 +2,6 @@
 Shared pytest fixtures for tests package.
 """
 
-from __future__ import annotations
-
 import pytest
 
 from sybil_extras.languages import ALL_LANGUAGES, MarkupLanguage
