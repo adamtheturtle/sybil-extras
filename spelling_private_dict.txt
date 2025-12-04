@@ -1,3 +1,4 @@
+MDX
 args
 beartype
 dedents
