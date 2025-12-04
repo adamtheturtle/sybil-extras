@@ -1,4 +1,3 @@
-Pyright
 args
 beartype
 env
@@ -6,6 +5,7 @@ formatter
 formatters
 hardcode
 iff
+jinja
 lexeme
 linter
 namespace
@@ -13,6 +13,7 @@ ons
 parametrize
 parsers
 pragma
+pyright
 pytest
 rst
 stderr

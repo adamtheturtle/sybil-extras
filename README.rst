@@ -343,6 +343,38 @@ This extracts the source, arguments and options from ``.. jinja::`` directive bl
     for item in document.examples():
         item.evaluate()
 
+Markup Languages
+----------------
+
+The ``languages`` module provides a ``MarkupLanguage`` dataclass and predefined instances for working with different markup formats.
+This is useful for building tools that need to work consistently across multiple markup languages.
+
+.. code-block:: python
+
+    """Use MarkupLanguage to work with different markup formats."""
+
+    from pathlib import Path
+
+    from sybil import Sybil
+
+    from sybil_extras.evaluators.no_op import NoOpEvaluator
+    from sybil_extras.languages import MARKDOWN, MYST, RESTRUCTUREDTEXT
+
+    assert MYST.name == "MyST"
+    assert MARKDOWN.name == "Markdown"
+    assert RESTRUCTUREDTEXT.name == "reStructuredText"
+
+    code_parser = RESTRUCTUREDTEXT.code_block_parser_cls(
+        language="python",
+        evaluator=NoOpEvaluator(),
+    )
+
+    sybil = Sybil(parsers=[code_parser])
+    document = sybil.parse(path=Path("README.rst"))
+
+    for example in document.examples():
+        example.evaluate()
+
 .. |Build Status| image:: https://github.com/adamtheturtle/sybil-extras/actions/workflows/ci.yml/badge.svg?branch=main
    :target: https://github.com/adamtheturtle/sybil-extras/actions
 .. |PyPI| image:: https://badge.fury.io/py/sybil-extras.svg
