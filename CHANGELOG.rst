@@ -4,6 +4,8 @@ Changelog
 Next
 ----
 
+* Add MDX markup language support (code blocks with attributes, custom skips, and grouping helpers).
+
 2025.12.04
 ----------
 
