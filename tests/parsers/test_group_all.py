@@ -19,6 +19,7 @@ def test_group_all(language: MarkupLanguage, tmp_path: Path) -> None:
     All code blocks are grouped into a single block.
     """
     content = join_markup(
+        language,
         language.code_block_builder(code="x = []", language="python"),
         language.code_block_builder(code="x = [*x, 1]", language="python"),
         language.code_block_builder(code="x = [*x, 2]", language="python"),
@@ -46,9 +47,9 @@ def test_group_all(language: MarkupLanguage, tmp_path: Path) -> None:
         example.evaluate()
 
     blocks = ["x = []", "x = [*x, 1]", "x = [*x, 2]"]
-    # join_markup inserts one blank line (``\n\n``) between fragments; padding
-    # duplicates that blank line so line numbers stay aligned with the source.
-    separator = "\n\n" * 2
+    # join_markup inserts the language's separator between fragments; padding
+    # duplicates that separator so line numbers stay aligned with the source.
+    separator = language.markup_separator * 2
     expected = separator.join(blocks) + "\n"
     assert document.namespace["blocks"] == [expected]
     assert len(document.evaluators) == 0
@@ -125,6 +126,7 @@ def test_group_all_no_pad(language: MarkupLanguage, tmp_path: Path) -> None:
     Groups can be combined without inserting extra padding.
     """
     content = join_markup(
+        language,
         language.code_block_builder(code="x = []", language="python"),
         language.code_block_builder(code="x = [*x, 1]", language="python"),
         language.code_block_builder(code="x = [*x, 2]", language="python"),
@@ -152,9 +154,9 @@ def test_group_all_no_pad(language: MarkupLanguage, tmp_path: Path) -> None:
         example.evaluate()
 
     blocks = ["x = []", "x = [*x, 1]", "x = [*x, 2]"]
-    # Groups are concatenated directly with the blank line produced by
+    # Groups are concatenated directly with the separator produced by
     # ``join_markup``.
-    expected = "\n\n".join(blocks) + "\n"
+    expected = language.markup_separator.join(blocks) + "\n"
     assert document.namespace["blocks"] == [expected]
 
 
@@ -163,6 +165,7 @@ def test_group_all_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     Skip directives are honored when grouping code blocks.
     """
     content = join_markup(
+        language,
         language.code_block_builder(code="x = []", language="python"),
         language.directive_builder(directive="skip", argument="next"),
         language.code_block_builder(code="x = [*x, 1]", language="python"),

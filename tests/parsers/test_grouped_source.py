@@ -20,6 +20,7 @@ def test_group(language: MarkupLanguage, tmp_path: Path) -> None:
     The group parser groups examples.
     """
     content = join_markup(
+        language,
         language.code_block_builder(code="x = []", language="python"),
         language.directive_builder(directive="group", argument="start"),
         language.code_block_builder(code="x = [*x, 1]", language="python"),
@@ -67,6 +68,7 @@ def test_nothing_after_group(language: MarkupLanguage, tmp_path: Path) -> None:
     Groups are handled even at the end of a document.
     """
     content = join_markup(
+        language,
         language.code_block_builder(code="x = []", language="python"),
         language.directive_builder(directive="group", argument="start"),
         language.code_block_builder(code="x = [*x, 1]", language="python"),
@@ -107,6 +109,7 @@ def test_empty_group(language: MarkupLanguage, tmp_path: Path) -> None:
     Empty groups are handled gracefully.
     """
     content = join_markup(
+        language,
         language.code_block_builder(code="x = []", language="python"),
         language.directive_builder(directive="group", argument="start"),
         language.directive_builder(directive="group", argument="end"),
@@ -146,6 +149,7 @@ def test_group_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     Skip directives are respected within a group.
     """
     content = join_markup(
+        language,
         language.code_block_builder(code="x = []", language="python"),
         language.directive_builder(directive="group", argument="start"),
         language.code_block_builder(code="x = [*x, 1]", language="python"),
@@ -190,6 +194,7 @@ def test_no_argument(language: MarkupLanguage, tmp_path: Path) -> None:
     An error is raised when a group directive has no arguments.
     """
     content = join_markup(
+        language,
         language.directive_builder(directive="group"),
         language.directive_builder(directive="group", argument="end"),
     )
@@ -218,6 +223,7 @@ def test_malformed_argument(language: MarkupLanguage, tmp_path: Path) -> None:
     An error is raised when the group directive argument is invalid.
     """
     content = join_markup(
+        language,
         language.directive_builder(
             directive="group",
             argument="not_start_or_end",
@@ -277,6 +283,7 @@ def test_start_after_start(language: MarkupLanguage, tmp_path: Path) -> None:
     An error is raised when start directives are nested improperly.
     """
     content = join_markup(
+        language,
         language.directive_builder(directive="group", argument="start"),
         language.directive_builder(directive="group", argument="start"),
     )
@@ -313,6 +320,7 @@ def test_directive_name_not_regex_escaped(
     """
     directive = "custom-group[has_square_brackets]"
     content = join_markup(
+        language,
         language.code_block_builder(code="x = []", language="python"),
         language.directive_builder(directive=directive, argument="start"),
         language.code_block_builder(code="x = [*x, 1]", language="python"),
@@ -363,6 +371,7 @@ def test_with_shell_command_evaluator(
     The group parser cooperates with the shell command evaluator.
     """
     content = join_markup(
+        language,
         language.directive_builder(directive="group", argument="start"),
         language.code_block_builder(code="x = [*x, 1]", language="python"),
         language.code_block_builder(code="x = [*x, 2]", language="python"),
@@ -419,6 +428,7 @@ def test_no_pad_groups(language: MarkupLanguage, tmp_path: Path) -> None:
     It is possible to avoid padding grouped code blocks.
     """
     content = join_markup(
+        language,
         language.directive_builder(directive="group", argument="start"),
         language.code_block_builder(code="x = [*x, 1]", language="python"),
         language.code_block_builder(code="x = [*x, 2]", language="python"),

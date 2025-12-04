@@ -2,10 +2,13 @@
 Helpers shared across tests.
 """
 
+from sybil_extras.languages import MarkupLanguage
 
-def join_markup(*parts: str) -> str:
+
+def join_markup(language: MarkupLanguage, *parts: str) -> str:
     """
-    Join markup fragments with blank lines, trimming edge newlines.
+    Join markup fragments using the language's separator, trimming edge
+    newlines.
     """
     cleaned_parts = [part.strip("\n") for part in parts if part]
-    return "\n\n".join(cleaned_parts)
+    return language.markup_separator.join(cleaned_parts)

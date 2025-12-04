@@ -75,6 +75,7 @@ def test_skip_parser(
     Test that each language's skip parser works correctly.
     """
     content = join_markup(
+        language,
         language.directive_builder(directive="skip", argument="next"),
         language.code_block_builder(code=f"x = {value}", language="python"),
     )
@@ -131,6 +132,7 @@ def test_group_parser(
     Test that each language's group parser works correctly.
     """
     content = join_markup(
+        language,
         language.directive_builder(directive="group", argument="start"),
         language.code_block_builder(code="x = 1", language="python"),
         language.code_block_builder(code="x = x + 1", language="python"),

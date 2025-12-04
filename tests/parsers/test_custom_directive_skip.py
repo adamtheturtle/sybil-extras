@@ -18,6 +18,7 @@ def test_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     The custom directive skip parser can be used to set skips.
     """
     content = join_markup(
+        language,
         "Example",
         language.code_block_builder(code="x = []", language="python"),
         language.directive_builder(directive="custom-skip", argument="next"),
@@ -143,6 +144,7 @@ def test_directive_name_not_regex_escaped(
     """
     directive = "custom-skip[has_square_brackets]"
     content = join_markup(
+        language,
         language.directive_builder(directive=directive, argument="next"),
         language.code_block_builder(code="block = 1", language="python"),
     )
