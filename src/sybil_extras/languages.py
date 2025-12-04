@@ -286,7 +286,7 @@ class MarkupLanguage:
 
     name: str
     file_extension: str
-    document_ending: str
+    markup_separator: str
     skip_parser_cls: type[_SkipParser]
     code_block_parser_cls: type[_CodeBlockParser]
     group_parser_cls: type[_GroupedSourceParser]
@@ -300,7 +300,7 @@ class MarkupLanguage:
 MYST = MarkupLanguage(
     name="MyST",
     file_extension=".md",
-    document_ending="\n",
+    markup_separator="\n\n",
     skip_parser_cls=(
         sybil_extras.parsers.myst.custom_directive_skip.CustomDirectiveSkipParser
     ),
@@ -316,7 +316,7 @@ MYST = MarkupLanguage(
 RESTRUCTUREDTEXT = MarkupLanguage(
     name="reStructuredText",
     file_extension=".rst",
-    document_ending="\n\n",
+    markup_separator="\n\n",
     skip_parser_cls=sybil_extras.parsers.rest.custom_directive_skip.CustomDirectiveSkipParser,
     code_block_parser_cls=sybil.parsers.rest.CodeBlockParser,
     group_parser_cls=sybil_extras.parsers.rest.grouped_source.GroupedSourceParser,
@@ -330,7 +330,7 @@ RESTRUCTUREDTEXT = MarkupLanguage(
 MARKDOWN = MarkupLanguage(
     name="Markdown",
     file_extension=".md",
-    document_ending="\n",
+    markup_separator="\n\n",
     skip_parser_cls=sybil_extras.parsers.markdown.custom_directive_skip.CustomDirectiveSkipParser,
     code_block_parser_cls=sybil.parsers.markdown.CodeBlockParser,
     group_parser_cls=sybil_extras.parsers.markdown.grouped_source.GroupedSourceParser,

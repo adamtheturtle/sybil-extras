@@ -26,7 +26,7 @@ def test_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=f"{content}{language.document_ending}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -91,7 +91,7 @@ def test_directive_name_in_evaluate_error(
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=f"{content}{language.document_ending}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -120,7 +120,7 @@ def test_directive_name_in_parse_error(
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=f"{content}{language.document_ending}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -148,7 +148,7 @@ def test_directive_name_not_regex_escaped(
     )
     test_document = tmp_path / f"test{language.file_extension}"
     test_document.write_text(
-        data=f"{content}{language.document_ending}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
