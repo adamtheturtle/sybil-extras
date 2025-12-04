@@ -2,9 +2,11 @@
 No-op Evaluator.
 """
 
+from beartype import beartype
 from sybil.example import Example
 
 
+@beartype
 class NoOpEvaluator:
     """An evaluator that does nothing.
 

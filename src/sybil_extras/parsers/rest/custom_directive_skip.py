@@ -5,12 +5,14 @@ A custom directive skip parser for reST.
 import re
 from collections.abc import Iterable
 
+from beartype import beartype
 from sybil import Document, Region
 from sybil.evaluators.skip import Skipper
 from sybil.parsers.abstract import AbstractSkipParser
 from sybil.parsers.rest.lexers import DirectiveInCommentLexer
 
 
+@beartype
 class CustomDirectiveSkipParser:
     """
     A custom directive skip parser for reST.
