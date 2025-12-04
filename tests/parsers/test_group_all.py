@@ -24,8 +24,6 @@ def _code_block_parser(
     """
     Instantiate a Python code block parser for ``language``.
     """
-    if evaluator is None:
-        return language.code_block_parser_cls(language="python")
     return language.code_block_parser_cls(
         language="python",
         evaluator=evaluator,
