@@ -355,7 +355,7 @@ def test_directive_name_not_regex_escaped(tmp_path: Path) -> None:
     test_document = tmp_path / "test.md"
     test_document.write_text(data=content, encoding="utf-8")
 
-    evaluator = BlockAccumulatorEvaluator()
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
 
     group_parser = GroupedSourceParser(
         directive="custom-group[has_square_brackets]",

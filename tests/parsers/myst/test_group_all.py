@@ -140,7 +140,7 @@ x = [*x, 2]
     test_document = tmp_path / "test.md"
     test_document.write_text(data=content, encoding="utf-8")
 
-    evaluator = BlockAccumulatorEvaluator()
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
 
     group_all_parser = GroupAllParser(
         evaluator=evaluator,
