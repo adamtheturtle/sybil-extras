@@ -47,7 +47,7 @@ def _combine_source_text(
         result_offset = first_source.offset
         result_line_offset = first_source.line_offset
     else:
-        result_text = str(first_source) if first_source else ""
+        result_text = str(object=first_source) if first_source else ""
         result_offset = first_region.start
         result_line_offset = 0
 
@@ -59,7 +59,7 @@ def _combine_source_text(
         if isinstance(source, Lexeme):
             current_text = source.text
         else:
-            current_text = str(source) if source else ""
+            current_text = str(object=source) if source else ""
 
         if pad_groups:
             current_line = document.text[: region.start].count("\n") + 1
