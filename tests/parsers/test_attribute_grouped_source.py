@@ -255,8 +255,9 @@ def test_attribute_group_pad_groups_false(tmp_path: Path) -> None:
     for example in document.examples():
         example.evaluate()
 
-    expected = "x = 1\n\ny = 2\n"
-    assert document.namespace["blocks"] == [expected]
+    expected_setup = "x = []\n\n\n\nx = [*x, 1]\n\n\n\n\n\n\n\nx = [*x, 2]\n"
+    expected_example = "y = []\n\n\n\n\n\n\n\ny = [*y, 10]\n"
+    assert document.namespace["blocks"] == [expected_setup, expected_example]
 
 
 def test_attribute_group_interleaved_groups(tmp_path: Path) -> None:
