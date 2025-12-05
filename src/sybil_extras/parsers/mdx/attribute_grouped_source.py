@@ -130,7 +130,7 @@ class AttributeGroupedSourceParser:
 
             yield Region(
                 start=regions[0].start,
-                end=regions[-1].end,
+                end=regions[0].end,
                 parsed=combined_source,
                 evaluator=self._evaluator,
                 lexemes=regions[0].lexemes,

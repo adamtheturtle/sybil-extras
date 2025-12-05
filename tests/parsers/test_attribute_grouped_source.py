@@ -295,7 +295,7 @@ def test_attribute_group_interleaved_groups(tmp_path: Path) -> None:
         code_block_parser=code_block_parser,
         evaluator=evaluator,
         attribute_name="group",
-        pad_groups=True,
+        pad_groups=False,
     )
 
     sybil = Sybil(parsers=[group_parser])
@@ -305,5 +305,6 @@ def test_attribute_group_interleaved_groups(tmp_path: Path) -> None:
     for example in document.examples():
         example.evaluate()
 
-    expected = "x = 1\n\ny = 2\n"
-    assert document.namespace["blocks"] == [expected]
+    expected_setup = "x = []\n\nx = [*x, 1]\n\nx = [*x, 2]\n"
+    expected_example = "y = []\n\ny = [*y, 10]\n"
+    assert document.namespace["blocks"] == [expected_setup, expected_example]
