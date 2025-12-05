@@ -16,6 +16,7 @@ from sybil_extras.languages import (
     MARKDOWN,
     MDX,
     MYST,
+    MYST_PERCENT_COMMENTS,
     RESTRUCTUREDTEXT,
     MarkupLanguage,
 )
@@ -25,9 +26,14 @@ from sybil_extras.languages import (
     argnames=("language", "value"),
     argvalues=[
         pytest.param(MYST, 1, id="myst-code-block"),
-        pytest.param(RESTRUCTUREDTEXT, 2, id="rest-code-block"),
-        pytest.param(MARKDOWN, 3, id="markdown-code-block"),
-        pytest.param(MDX, 4, id="mdx-code-block"),
+        pytest.param(
+            MYST_PERCENT_COMMENTS,
+            2,
+            id="myst-percent-code-block",
+        ),
+        pytest.param(RESTRUCTUREDTEXT, 3, id="rest-code-block"),
+        pytest.param(MARKDOWN, 4, id="markdown-code-block"),
+        pytest.param(MDX, 5, id="mdx-code-block"),
     ],
 )
 def test_code_block_parser(
@@ -63,9 +69,14 @@ def test_code_block_parser(
     argnames=("language", "value"),
     argvalues=[
         pytest.param(MYST, 1, id="myst-skip"),
-        pytest.param(RESTRUCTUREDTEXT, 2, id="rest-skip"),
-        pytest.param(MARKDOWN, 3, id="markdown-skip"),
-        pytest.param(MDX, 4, id="mdx-skip"),
+        pytest.param(
+            MYST_PERCENT_COMMENTS,
+            2,
+            id="myst-percent-skip",
+        ),
+        pytest.param(RESTRUCTUREDTEXT, 3, id="rest-skip"),
+        pytest.param(MARKDOWN, 4, id="markdown-skip"),
+        pytest.param(MDX, 5, id="mdx-skip"),
     ],
 )
 def test_skip_parser(
@@ -109,6 +120,7 @@ def test_skip_parser(
     argnames=("language"),
     argvalues=[
         pytest.param(MYST, id="myst-empty"),
+        pytest.param(MYST_PERCENT_COMMENTS, id="myst-percent-empty"),
         pytest.param(RESTRUCTUREDTEXT, id="rest-empty"),
         pytest.param(MARKDOWN, id="markdown-empty"),
         pytest.param(MDX, id="mdx-empty"),
@@ -126,6 +138,10 @@ def test_code_block_empty(language: MarkupLanguage) -> None:
     argnames=("language"),
     argvalues=[
         pytest.param(MYST, id="myst-grouped"),
+        pytest.param(
+            MYST_PERCENT_COMMENTS,
+            id="myst-percent-grouped",
+        ),
         pytest.param(RESTRUCTUREDTEXT, id="rest-grouped"),
         pytest.param(MARKDOWN, id="markdown-grouped"),
         pytest.param(MDX, id="mdx-grouped"),
@@ -181,6 +197,10 @@ def test_group_parser(
     argnames=("language"),
     argvalues=[
         pytest.param(MYST, id="myst-jinja"),
+        pytest.param(
+            MYST_PERCENT_COMMENTS,
+            id="myst-percent-jinja",
+        ),
         pytest.param(RESTRUCTUREDTEXT, id="rest-jinja"),
     ],
 )
@@ -224,6 +244,7 @@ def test_language_names() -> None:
     Test that languages have the expected names.
     """
     assert MYST.name == "MyST"
+    assert MYST_PERCENT_COMMENTS.name == "MyST (percent comments)"
     assert RESTRUCTUREDTEXT.name == "reStructuredText"
     assert MARKDOWN.name == "Markdown"
     assert MDX.name == "MDX"
