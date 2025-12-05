@@ -37,14 +37,12 @@ def _combine_source_text(
     Returns:
         The combined source text as a Lexeme.
     """
-    # Get the source text from the first region
     first_region = regions[0]
     first_source = first_region.lexemes["source"]
     result_text = first_source.text
     result_offset = first_source.offset
     result_line_offset = first_source.line_offset
 
-    # Track line numbers for padding calculation
     first_line = document.text[: first_region.start].count("\n") + 1
 
     for region in regions[1:]:
