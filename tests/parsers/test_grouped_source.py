@@ -313,15 +313,71 @@ def test_start_after_start(language: MarkupLanguage, tmp_path: Path) -> None:
     )
 
     sybil = Sybil(parsers=[group_parser])
+    with pytest.raises(
+        expected_exception=ValueError,
+        match="'group: start' was not followed by 'group: end'",
+    ):
+        sybil.parse(path=test_document)
+
+
+def test_start_only(language: MarkupLanguage, tmp_path: Path) -> None:
+    """
+    An error is raised when a group starts but doesn't end.
+    """
+    content = language.directive_builder(directive="group", argument="start")
+    test_document = tmp_path / "test"
+    test_document.write_text(
+        data=f"{content}{language.markup_separator}",
+        encoding="utf-8",
+    )
+
+    group_parser = language.group_parser_cls(
+        directive="group",
+        evaluator=NoOpEvaluator(),
+        pad_groups=True,
+    )
+
+    sybil = Sybil(parsers=[group_parser])
+    with pytest.raises(
+        expected_exception=ValueError,
+        match="'group: start' was not followed by 'group: end'",
+    ):
+        sybil.parse(path=test_document)
+
+
+def test_start_start_end(language: MarkupLanguage, tmp_path: Path) -> None:
+    """
+    An error is raised when start directives are nested with an end.
+    """
+    content = language.markup_separator.join(
+        [
+            language.directive_builder(directive="group", argument="start"),
+            language.directive_builder(directive="group", argument="start"),
+            language.directive_builder(directive="group", argument="end"),
+        ]
+    )
+    test_document = tmp_path / "test"
+    test_document.write_text(
+        data=f"{content}{language.markup_separator}",
+        encoding="utf-8",
+    )
+
+    group_parser = language.group_parser_cls(
+        directive="group",
+        evaluator=NoOpEvaluator(),
+        pad_groups=True,
+    )
+
+    sybil = Sybil(parsers=[group_parser])
     document = sybil.parse(path=test_document)
 
-    first_start_example, second_start_example = document.examples()
-    first_start_example.evaluate()
+    first_start, second_start, _end = document.examples()
+    first_start.evaluate()
     with pytest.raises(
         expected_exception=ValueError,
         match="'group: start' must be followed by 'group: end'",
     ):
-        second_start_example.evaluate()
+        second_start.evaluate()
 
 
 def test_directive_name_not_regex_escaped(
