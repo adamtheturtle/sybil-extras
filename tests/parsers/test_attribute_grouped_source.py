@@ -48,8 +48,8 @@ pp({"hello": "world"})
 
     # Should have one combined block
     assert len(document.namespace["blocks"]) == 1
-    assert "from pprint import pp" in document.namespace["blocks"][0]
-    assert 'pp({"hello": "world"})' in document.namespace["blocks"][0]
+    expected = 'from pprint import pp\n\n\n\n\n\npp({"hello": "world"})\n'
+    assert document.namespace["blocks"][0] == expected
 
 
 def test_attribute_group_multiple_groups(tmp_path: Path) -> None:
@@ -100,13 +100,12 @@ y = [*y, 10]
     assert len(document.namespace["blocks"]) == expected_num_blocks
 
     # First group "setup" - appears first in document
-    assert "x = []" in document.namespace["blocks"][0]
-    assert "x = [*x, 1]" in document.namespace["blocks"][0]
-    assert "x = [*x, 2]" in document.namespace["blocks"][0]
+    expected_setup = "x = []\n\n\n\nx = [*x, 1]\n\n\n\n\n\n\n\nx = [*x, 2]\n"
+    assert document.namespace["blocks"][0] == expected_setup
 
     # Second group "example" - appears second in document
-    assert "y = []" in document.namespace["blocks"][1]
-    assert "y = [*y, 10]" in document.namespace["blocks"][1]
+    expected_example = "y = []\n\n\n\n\n\n\n\ny = [*y, 10]\n"
+    assert document.namespace["blocks"][1] == expected_example
 
 
 def test_attribute_group_no_group_attribute(tmp_path: Path) -> None:
@@ -146,7 +145,7 @@ z = 3
 
     # Should have only one block (the one with group="example")
     assert len(document.namespace["blocks"]) == 1
-    assert "y = 2" in document.namespace["blocks"][0]
+    assert document.namespace["blocks"][0] == "y = 2\n"
 
 
 def test_attribute_group_custom_attribute_name(tmp_path: Path) -> None:
@@ -181,8 +180,8 @@ b = 2
         example.evaluate()
 
     assert len(document.namespace["blocks"]) == 1
-    assert "a = 1" in document.namespace["blocks"][0]
-    assert "b = 2" in document.namespace["blocks"][0]
+    expected = "a = 1\n\n\n\nb = 2\n"
+    assert document.namespace["blocks"][0] == expected
 
 
 def test_attribute_group_with_other_attributes(tmp_path: Path) -> None:
@@ -217,8 +216,8 @@ result = value * 2
         example.evaluate()
 
     assert len(document.namespace["blocks"]) == 1
-    assert "value = 7" in document.namespace["blocks"][0]
-    assert "result = value * 2" in document.namespace["blocks"][0]
+    expected = "value = 7\n\n\n\nresult = value * 2\n"
+    assert document.namespace["blocks"][0] == expected
 
 
 def test_attribute_group_pad_groups_false(tmp_path: Path) -> None:
@@ -257,10 +256,9 @@ y = 2
         example.evaluate()
 
     assert len(document.namespace["blocks"]) == 1
-    combined = document.namespace["blocks"][0]
-
-    # With pad_groups=False, should have minimal padding
-    assert "x = 1\n\ny = 2" in combined
+    # With pad_groups=False, should have minimal padding (single newline)
+    expected = "x = 1\n\ny = 2\n"
+    assert document.namespace["blocks"][0] == expected
 
 
 def test_attribute_group_empty_group(tmp_path: Path) -> None:
