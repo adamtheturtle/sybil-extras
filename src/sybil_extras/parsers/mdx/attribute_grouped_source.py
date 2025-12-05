@@ -123,9 +123,6 @@ class AttributeGroupedSourceParser:
 
         for region in self._code_block_parser(document):
             attributes: dict[str, str] = region.lexemes.get("attributes", {})
-            # attributes is always a dict from MDX CodeBlockParser
-            assert isinstance(attributes, dict)  # noqa: S101
-
             group_name: str | None = attributes.get(self._attribute_name)
             if not group_name:
                 continue
