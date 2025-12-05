@@ -40,7 +40,6 @@ def _combine_source_text(
     # Get the source text from the first region
     first_region = regions[0]
     first_source = first_region.lexemes["source"]
-    assert isinstance(first_source, Lexeme)  # noqa: S101
     result_text = first_source.text
     result_offset = first_source.offset
     result_line_offset = first_source.line_offset
