@@ -46,7 +46,6 @@ pp({"hello": "world"})
     for example in document.examples():
         example.evaluate()
 
-    # Should have one combined block
     assert len(document.namespace["blocks"]) == 1
     expected = 'from pprint import pp\n\n\n\n\n\npp({"hello": "world"})\n'
     assert document.namespace["blocks"][0] == expected
@@ -95,15 +94,12 @@ y = [*y, 10]
     for example in document.examples():
         example.evaluate()
 
-    # Should have two combined blocks (setup first, then example)
     expected_num_blocks = 2
     assert len(document.namespace["blocks"]) == expected_num_blocks
 
-    # First group "setup" - appears first in document
     expected_setup = "x = []\n\n\n\nx = [*x, 1]\n\n\n\n\n\n\n\nx = [*x, 2]\n"
     assert document.namespace["blocks"][0] == expected_setup
 
-    # Second group "example" - appears second in document
     expected_example = "y = []\n\n\n\n\n\n\n\ny = [*y, 10]\n"
     assert document.namespace["blocks"][1] == expected_example
 
@@ -143,7 +139,6 @@ z = 3
     for example in document.examples():
         example.evaluate()
 
-    # Should have only one block (the one with group="example")
     assert len(document.namespace["blocks"]) == 1
     assert document.namespace["blocks"][0] == "y = 2\n"
 
@@ -256,7 +251,6 @@ y = 2
         example.evaluate()
 
     assert len(document.namespace["blocks"]) == 1
-    # With pad_groups=False, should have minimal padding (single newline)
     expected = "x = 1\n\ny = 2\n"
     assert document.namespace["blocks"][0] == expected
 
@@ -285,9 +279,7 @@ x = 1
     sybil = Sybil(parsers=[group_parser])
     document = sybil.parse(path=test_document)
 
-    # No examples should be created since no blocks have the group attribute
     examples = list(document.examples())
     assert len(examples) == 0
 
-    # No grouped blocks, since no blocks have the group attribute
     assert document.namespace.get("blocks", []) == []
