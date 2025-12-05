@@ -72,18 +72,8 @@ def _combine_source_text(
 class AttributeGroupedSourceParser:
     """A parser for grouping MDX code blocks by attribute values.
 
-    This parser groups code blocks that have the same value for a specified
-    attribute (default: 'group'). For example:
-
-        ```python group="example1"
-        from pprint import pp
-        ```
-
-        ```python group="example1"
-        pp({"hello": "world"})
-        ```
-
-    Both blocks will be combined and evaluated as a single block.
+    This parser groups code blocks that have the same value for a
+    specified attribute (default: 'group').
     """
 
     def __init__(
