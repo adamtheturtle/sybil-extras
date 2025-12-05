@@ -330,7 +330,7 @@ MYST = MarkupLanguage(
 
 MYST_PERCENT_COMMENTS = MarkupLanguage(
     name="MyST (percent comments)",
-    markup_separator="\n",
+    markup_separator="\n\n",
     skip_parser_cls=(
         sybil_extras.parsers.myst.custom_directive_skip.CustomDirectiveSkipParser
     ),
