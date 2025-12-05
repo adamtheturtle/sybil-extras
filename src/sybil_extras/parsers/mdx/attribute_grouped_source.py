@@ -122,7 +122,7 @@ class AttributeGroupedSourceParser:
         regions_by_group: dict[str, list[Region]] = defaultdict(list)
 
         for region in self._code_block_parser(document):
-            attributes: dict[str, str] = region.lexemes.get("attributes", {})
+            attributes = region.lexemes.get("attributes", {})
             group_name: str | None = attributes.get(self._attribute_name)
             if not group_name:
                 continue
