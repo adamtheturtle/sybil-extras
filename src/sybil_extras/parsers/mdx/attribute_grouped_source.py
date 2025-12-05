@@ -50,7 +50,6 @@ def _combine_source_text(
 
     for region in regions[1:]:
         source = region.lexemes["source"]
-        assert isinstance(source, Lexeme)  # noqa: S101
         current_text = source.text
 
         if pad_groups:
