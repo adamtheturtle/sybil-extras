@@ -15,8 +15,8 @@ from sybil.typing import Evaluator
 
 @beartype
 def _combine_source_text(
-    regions: list[Region],
     *,
+    regions: list[Region],
     document: Document,
     pad_groups: bool,
 ) -> Lexeme:
