@@ -2,6 +2,7 @@
 Attribute-based grouped source parser tests for MDX.
 """
 
+import textwrap
 from pathlib import Path
 
 from sybil import Sybil
@@ -17,17 +18,19 @@ def test_attribute_group_single_group(tmp_path: Path) -> None:
     """
     The attribute group parser groups examples with the same group attribute.
     """
-    content = """
-```python group="example1"
-from pprint import pp
-```
+    content = textwrap.dedent(
+        text="""
+        ```python group="example1"
+        from pprint import pp
+        ```
 
-Some text in between.
+        Some text in between.
 
-```python group="example1"
-pp({"hello": "world"})
-```
-"""
+        ```python group="example1"
+        pp({"hello": "world"})
+        ```
+        """,
+    )
     test_document = tmp_path / "test.mdx"
     test_document.write_text(data=content, encoding="utf-8")
 
@@ -46,36 +49,37 @@ pp({"hello": "world"})
     for example in document.examples():
         example.evaluate()
 
-    assert len(document.namespace["blocks"]) == 1
     expected = 'from pprint import pp\n\n\n\n\n\npp({"hello": "world"})\n'
-    assert document.namespace["blocks"][0] == expected
+    assert document.namespace["blocks"] == [expected]
 
 
 def test_attribute_group_multiple_groups(tmp_path: Path) -> None:
     """
     Multiple groups are handled separately and in document order.
     """
-    content = """
-```python group="setup"
-x = []
-```
+    content = textwrap.dedent(
+        text="""
+        ```python group="setup"
+        x = []
+        ```
 
-```python group="setup"
-x = [*x, 1]
-```
+        ```python group="setup"
+        x = [*x, 1]
+        ```
 
-```python group="example"
-y = []
-```
+        ```python group="example"
+        y = []
+        ```
 
-```python group="setup"
-x = [*x, 2]
-```
+        ```python group="setup"
+        x = [*x, 2]
+        ```
 
-```python group="example"
-y = [*y, 10]
-```
-"""
+        ```python group="example"
+        y = [*y, 10]
+        ```
+        """,
+    )
     test_document = tmp_path / "test.mdx"
     test_document.write_text(data=content, encoding="utf-8")
 
@@ -94,33 +98,30 @@ y = [*y, 10]
     for example in document.examples():
         example.evaluate()
 
-    expected_num_blocks = 2
-    assert len(document.namespace["blocks"]) == expected_num_blocks
-
     expected_setup = "x = []\n\n\n\nx = [*x, 1]\n\n\n\n\n\n\n\nx = [*x, 2]\n"
-    assert document.namespace["blocks"][0] == expected_setup
-
     expected_example = "y = []\n\n\n\n\n\n\n\ny = [*y, 10]\n"
-    assert document.namespace["blocks"][1] == expected_example
+    assert document.namespace["blocks"] == [expected_setup, expected_example]
 
 
 def test_attribute_group_no_group_attribute(tmp_path: Path) -> None:
     """
     Code blocks without the group attribute are not grouped.
     """
-    content = """
-```python
-x = 1
-```
+    content = textwrap.dedent(
+        text="""
+        ```python
+        x = 1
+        ```
 
-```python group="example"
-y = 2
-```
+        ```python group="example"
+        y = 2
+        ```
 
-```python
-z = 3
-```
-"""
+        ```python
+        z = 3
+        ```
+        """,
+    )
     test_document = tmp_path / "test.mdx"
     test_document.write_text(data=content, encoding="utf-8")
 
@@ -139,23 +140,24 @@ z = 3
     for example in document.examples():
         example.evaluate()
 
-    assert len(document.namespace["blocks"]) == 1
-    assert document.namespace["blocks"][0] == "y = 2\n"
+    assert document.namespace["blocks"] == ["y = 2\n"]
 
 
 def test_attribute_group_custom_attribute_name(tmp_path: Path) -> None:
     """
     Custom attribute names can be used for grouping.
     """
-    content = """
-```python mygroup="test1"
-a = 1
-```
+    content = textwrap.dedent(
+        text="""
+        ```python mygroup="test1"
+        a = 1
+        ```
 
-```python mygroup="test1"
-b = 2
-```
-"""
+        ```python mygroup="test1"
+        b = 2
+        ```
+        """,
+    )
     test_document = tmp_path / "test.mdx"
     test_document.write_text(data=content, encoding="utf-8")
 
@@ -174,24 +176,25 @@ b = 2
     for example in document.examples():
         example.evaluate()
 
-    assert len(document.namespace["blocks"]) == 1
     expected = "a = 1\n\n\n\nb = 2\n"
-    assert document.namespace["blocks"][0] == expected
+    assert document.namespace["blocks"] == [expected]
 
 
 def test_attribute_group_with_other_attributes(tmp_path: Path) -> None:
     """
     Code blocks with multiple attributes still group correctly.
     """
-    content = """
-```python title="example.py" group="setup" showLineNumbers
-value = 7
-```
+    content = textwrap.dedent(
+        text="""
+        ```python title="example.py" group="setup" showLineNumbers
+        value = 7
+        ```
 
-```python group="setup" title="example2.py"
-result = value * 2
-```
-"""
+        ```python group="setup" title="example2.py"
+        result = value * 2
+        ```
+        """,
+    )
     test_document = tmp_path / "test.mdx"
     test_document.write_text(data=content, encoding="utf-8")
 
@@ -210,28 +213,29 @@ result = value * 2
     for example in document.examples():
         example.evaluate()
 
-    assert len(document.namespace["blocks"]) == 1
     expected = "value = 7\n\n\n\nresult = value * 2\n"
-    assert document.namespace["blocks"][0] == expected
+    assert document.namespace["blocks"] == [expected]
 
 
 def test_attribute_group_pad_groups_false(tmp_path: Path) -> None:
     """
     When pad_groups is False, groups are separated by single newlines.
     """
-    content = """
-```python group="test"
-x = 1
-```
+    content = textwrap.dedent(
+        text="""
+        ```python group="test"
+        x = 1
+        ```
 
-Text here.
+        Text here.
 
-More text.
+        More text.
 
-```python group="test"
-y = 2
-```
-"""
+        ```python group="test"
+        y = 2
+        ```
+        """,
+    )
     test_document = tmp_path / "test.mdx"
     test_document.write_text(data=content, encoding="utf-8")
 
@@ -250,6 +254,5 @@ y = 2
     for example in document.examples():
         example.evaluate()
 
-    assert len(document.namespace["blocks"]) == 1
     expected = "x = 1\n\ny = 2\n"
-    assert document.namespace["blocks"][0] == expected
+    assert document.namespace["blocks"] == [expected]
