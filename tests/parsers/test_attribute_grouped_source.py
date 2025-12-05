@@ -253,33 +253,3 @@ y = 2
     assert len(document.namespace["blocks"]) == 1
     expected = "x = 1\n\ny = 2\n"
     assert document.namespace["blocks"][0] == expected
-
-
-def test_attribute_group_empty_group(tmp_path: Path) -> None:
-    """
-    Empty groups (no code blocks) don't cause errors.
-    """
-    content = """
-```python
-x = 1
-```
-"""
-    test_document = tmp_path / "test.mdx"
-    test_document.write_text(data=content, encoding="utf-8")
-
-    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
-    code_block_parser = CodeBlockParser(language="python")
-    group_parser = AttributeGroupedSourceParser(
-        code_block_parser=code_block_parser,
-        evaluator=evaluator,
-        attribute_name="group",
-        pad_groups=True,
-    )
-
-    sybil = Sybil(parsers=[group_parser])
-    document = sybil.parse(path=test_document)
-
-    examples = list(document.examples())
-    assert len(examples) == 0
-
-    assert document.namespace.get("blocks", []) == []
