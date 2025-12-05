@@ -106,7 +106,6 @@ class AttributeGroupedSourceParser:
         1. Collect all code blocks and group them by attribute
         2. Yield combined regions for each group in document order
         """
-        # First, collect all code blocks and group them by attribute
         regions_by_group: dict[str, list[Region]] = defaultdict(list)
 
         for region in self._code_block_parser(document):
@@ -117,24 +116,18 @@ class AttributeGroupedSourceParser:
 
             regions_by_group[group_name].append(region)
 
-        # Now yield combined regions for each group in document order
-        # Sort groups by the start position of their first region
         sorted_groups = sorted(
             regions_by_group.items(),
             key=lambda item: item[1][0].start,
         )
 
         for _group_name, regions in sorted_groups:
-            # Combine the source code from the regions
             combined_source = _combine_source_text(
                 regions=regions,
                 document=document,
                 pad_groups=self._pad_groups,
             )
 
-            # Create a new region that doesn't overlap with others
-            # Use only the first region's position for start/end
-            # This ensures each group gets its own non-overlapping region
             yield Region(
                 start=regions[0].start,
                 end=regions[0].end,
