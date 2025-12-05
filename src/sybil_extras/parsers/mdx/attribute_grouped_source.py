@@ -128,6 +128,14 @@ class AttributeGroupedSourceParser:
                 pad_groups=self._pad_groups,
             )
 
+            # We use regions[0].end instead of regions[-1].end to avoid
+            # region overlap errors when groups are interleaved in the
+            # document.
+            #
+            # Sybil explicitly forbids overlapping regions to avoid ambiguity
+            # in which example "owns" a particular section of the document.
+            #
+            # This means that the region we yield has the wrong end position.
             yield Region(
                 start=regions[0].start,
                 end=regions[0].end,
