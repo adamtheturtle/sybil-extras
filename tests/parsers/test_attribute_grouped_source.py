@@ -287,8 +287,9 @@ x = 1
     sybil = Sybil(parsers=[group_parser])
     document = sybil.parse(path=test_document)
 
-    for example in document.examples():
-        example.evaluate()
+    # No examples should be created since no blocks have the group attribute
+    examples = list(document.examples())
+    assert len(examples) == 0
 
     # No grouped blocks, since no blocks have the group attribute
     assert document.namespace.get("blocks", []) == []

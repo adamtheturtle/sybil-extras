@@ -5,7 +5,7 @@ fenced code blocks, following Docusaurus conventions.
 """
 
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 
 from beartype import beartype
 from sybil import Document, Region
@@ -27,6 +27,7 @@ def _combine_source_text(
 
     Args:
         regions: The regions to combine (must have 'source' lexeme).
+            Must be non-empty.
         document: The document containing the regions.
         pad_groups: Whether to pad groups with empty lines.
             This is useful for error messages that reference line numbers.
@@ -36,30 +37,21 @@ def _combine_source_text(
     Returns:
         The combined source text as a Lexeme.
     """
-    if not regions:
-        return Lexeme(text="", offset=0, line_offset=0)
-
     # Get the source text from the first region
     first_region = regions[0]
-    first_source = first_region.lexemes.get("source", "")
-    if isinstance(first_source, Lexeme):
-        result_text = first_source.text
-        result_offset = first_source.offset
-        result_line_offset = first_source.line_offset
-    else:
-        result_text = str(object=first_source) if first_source else ""
-        result_offset = first_region.start
-        result_line_offset = 0
+    first_source = first_region.lexemes["source"]
+    assert isinstance(first_source, Lexeme)  # noqa: S101
+    result_text = first_source.text
+    result_offset = first_source.offset
+    result_line_offset = first_source.line_offset
 
     # Track line numbers for padding calculation
     first_line = document.text[: first_region.start].count("\n") + 1
 
     for region in regions[1:]:
-        source = region.lexemes.get("source", "")
-        if isinstance(source, Lexeme):
-            current_text = source.text
-        else:
-            current_text = str(object=source) if source else ""
+        source = region.lexemes["source"]
+        assert isinstance(source, Lexeme)  # noqa: S101
+        current_text = source.text
 
         if pad_groups:
             current_line = document.text[: region.start].count("\n") + 1
@@ -99,7 +91,7 @@ class AttributeGroupedSourceParser:
     def __init__(
         self,
         *,
-        code_block_parser: object,
+        code_block_parser: Callable[[Document], Iterable[Region]],
         evaluator: Evaluator,
         attribute_name: str = "group",
         pad_groups: bool = True,
@@ -132,11 +124,11 @@ class AttributeGroupedSourceParser:
         regions_by_group: dict[str, list[Region]] = defaultdict(list)
 
         for region in self._code_block_parser(document):
-            attributes = region.lexemes.get("attributes", {})
-            if not isinstance(attributes, dict):
-                continue
+            attributes: dict[str, str] = region.lexemes.get("attributes", {})
+            # attributes is always a dict from MDX CodeBlockParser
+            assert isinstance(attributes, dict)  # noqa: S101
 
-            group_name = attributes.get(self._attribute_name)
+            group_name: str | None = attributes.get(self._attribute_name)
             if not group_name:
                 continue
 
@@ -146,13 +138,10 @@ class AttributeGroupedSourceParser:
         # Sort groups by the start position of their first region
         sorted_groups = sorted(
             regions_by_group.items(),
-            key=lambda item: item[1][0].start if item[1] else 0,
+            key=lambda item: item[1][0].start,
         )
 
         for _group_name, regions in sorted_groups:
-            if not regions:
-                continue
-
             # Combine the source code from the regions
             combined_source = _combine_source_text(
                 regions=regions,
