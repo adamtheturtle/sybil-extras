@@ -5,12 +5,12 @@ fenced code blocks, following Docusaurus conventions.
 """
 
 from collections import defaultdict
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 
 from beartype import beartype
 from sybil import Document, Region
 from sybil.region import Lexeme
-from sybil.typing import Evaluator
+from sybil.typing import Evaluator, Parser
 
 
 @beartype
@@ -77,7 +77,7 @@ class AttributeGroupedSourceParser:
     def __init__(
         self,
         *,
-        code_block_parser: Callable[[Document], Iterable[Region]],
+        code_block_parser: Parser,
         evaluator: Evaluator,
         attribute_name: str,
         pad_groups: bool,
