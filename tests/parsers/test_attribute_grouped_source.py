@@ -259,21 +259,30 @@ def test_attribute_group_pad_groups_false(tmp_path: Path) -> None:
     assert document.namespace["blocks"] == [expected]
 
 
-def test_attribute_group_region_boundaries(tmp_path: Path) -> None:
+def test_attribute_group_interleaved_groups(tmp_path: Path) -> None:
     """
-    The combined region should span from the start of the first block to the
-    end of the last block in the group.
+    Groups can interleave.
     """
     content = textwrap.dedent(
         text="""
-        ```python group="test"
-        x = 1
+        ```python group="setup"
+        x = []
         ```
 
-        Some text in between.
+        ```python group="setup"
+        x = [*x, 1]
+        ```
 
-        ```python group="test"
-        y = 2
+        ```python group="example"
+        y = []
+        ```
+
+        ```python group="setup"
+        x = [*x, 2]
+        ```
+
+        ```python group="example"
+        y = [*y, 10]
         ```
         """,
     )
@@ -290,24 +299,11 @@ def test_attribute_group_region_boundaries(tmp_path: Path) -> None:
     )
 
     sybil = Sybil(parsers=[group_parser])
+
     document = sybil.parse(path=test_document)
 
-    (example,) = document.examples()
-    region = example.region
+    for example in document.examples():
+        example.evaluate()
 
-    region_text = document.text[region.start : region.end]
-
-    expected = textwrap.dedent(
-        text="""
-        ```python group="test"
-        x = 1
-        ```
-
-        Some text in between.
-
-        ```python group="test"
-        y = 2
-        ```""",
-    ).lstrip()
-
-    assert region_text == expected
+    expected = "x = 1\n\ny = 2\n"
+    assert document.namespace["blocks"] == [expected]
