@@ -55,7 +55,7 @@ def _combine_source_text(
 
         if pad_groups:
             current_line = document.text[: region.start].count("\n") + 1
-            existing_lines = result_text.count("\n") + 1
+            existing_lines = len(result_text.splitlines())
             padding_lines = current_line - first_line - existing_lines
         else:
             padding_lines = 1
