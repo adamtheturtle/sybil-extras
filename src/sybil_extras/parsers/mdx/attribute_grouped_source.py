@@ -81,8 +81,8 @@ class AttributeGroupedSourceParser:
         *,
         code_block_parser: Callable[[Document], Iterable[Region]],
         evaluator: Evaluator,
-        attribute_name: str = "group",
-        pad_groups: bool = True,
+        attribute_name: str,
+        pad_groups: bool,
     ) -> None:
         """
         Args:
