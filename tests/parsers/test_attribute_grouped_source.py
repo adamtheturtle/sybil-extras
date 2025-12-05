@@ -54,8 +54,9 @@ def test_attribute_group_single_group(tmp_path: Path) -> None:
 
 
 def test_attribute_group_multiple_groups(tmp_path: Path) -> None:
-    """
-    Multiple groups are handled separately and in document order.
+    """Multiple groups are handled separately and in document order.
+
+    Groups should not interleave to avoid region overlap issues.
     """
     content = textwrap.dedent(
         text="""
@@ -67,12 +68,12 @@ def test_attribute_group_multiple_groups(tmp_path: Path) -> None:
         x = [*x, 1]
         ```
 
-        ```python group="example"
-        y = []
-        ```
-
         ```python group="setup"
         x = [*x, 2]
+        ```
+
+        ```python group="example"
+        y = []
         ```
 
         ```python group="example"
@@ -98,8 +99,8 @@ def test_attribute_group_multiple_groups(tmp_path: Path) -> None:
     for example in document.examples():
         example.evaluate()
 
-    expected_setup = "x = []\n\n\n\nx = [*x, 1]\n\n\n\n\n\n\n\nx = [*x, 2]\n"
-    expected_example = "y = []\n\n\n\n\n\n\n\ny = [*y, 10]\n"
+    expected_setup = "x = []\n\n\n\nx = [*x, 1]\n\n\n\nx = [*x, 2]\n"
+    expected_example = "y = []\n\n\n\ny = [*y, 10]\n"
     assert document.namespace["blocks"] == [expected_setup, expected_example]
 
 
@@ -256,3 +257,57 @@ def test_attribute_group_pad_groups_false(tmp_path: Path) -> None:
 
     expected = "x = 1\n\ny = 2\n"
     assert document.namespace["blocks"] == [expected]
+
+
+def test_attribute_group_region_boundaries(tmp_path: Path) -> None:
+    """
+    The combined region should span from the start of the first block to the
+    end of the last block in the group.
+    """
+    content = textwrap.dedent(
+        text="""
+        ```python group="test"
+        x = 1
+        ```
+
+        Some text in between.
+
+        ```python group="test"
+        y = 2
+        ```
+        """,
+    )
+    test_document = tmp_path / "test.mdx"
+    test_document.write_text(data=content, encoding="utf-8")
+
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
+    code_block_parser = CodeBlockParser(language="python")
+    group_parser = AttributeGroupedSourceParser(
+        code_block_parser=code_block_parser,
+        evaluator=evaluator,
+        attribute_name="group",
+        pad_groups=True,
+    )
+
+    sybil = Sybil(parsers=[group_parser])
+    document = sybil.parse(path=test_document)
+
+    (example,) = document.examples()
+    region = example.region
+
+    region_text = document.text[region.start : region.end]
+
+    expected = textwrap.dedent(
+        text="""
+        ```python group="test"
+        x = 1
+        ```
+
+        Some text in between.
+
+        ```python group="test"
+        y = 2
+        ```""",
+    ).lstrip()
+
+    assert region_text == expected
