@@ -162,11 +162,13 @@ class AbstractGroupedSourceParser:
             directive=directive,
             pad_groups=pad_groups,
         )
+        self._directive = directive
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """
         Yield regions to evaluate, grouped by start and end comments.
         """
+        regions: list[Region] = []
         for lexed in self._lexers(document):
             arguments = lexed.lexemes["arguments"]
             if not arguments:
@@ -179,9 +181,21 @@ class AbstractGroupedSourceParser:
                 msg = f"malformed arguments to {directive}: {arguments!r}"
                 raise ValueError(msg)
 
-            yield Region(
-                start=lexed.start,
-                end=lexed.end,
-                parsed=arguments,
-                evaluator=self._grouper,
+            regions.append(
+                Region(
+                    start=lexed.start,
+                    end=lexed.end,
+                    parsed=arguments,
+                    evaluator=self._grouper,
+                )
             )
+
+        # Validate that the last directive isn't an unclosed "start"
+        if regions and regions[-1].parsed == "start":
+            msg = (
+                f"'{self._directive}: start' was not followed by "
+                f"'{self._directive}: end'"
+            )
+            raise ValueError(msg)
+
+        yield from regions
