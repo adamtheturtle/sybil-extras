@@ -308,3 +308,52 @@ def test_attribute_group_interleaved_groups(tmp_path: Path) -> None:
     expected_setup = "x = []\n\nx = [*x, 1]\n\nx = [*x, 2]\n"
     expected_example = "y = []\n\ny = [*y, 10]\n"
     assert document.namespace["blocks"] == [expected_setup, expected_example]
+
+
+def test_attribute_group_ungrouped_evaluator(tmp_path: Path) -> None:
+    """
+    Code blocks without the group attribute use the ungrouped_evaluator.
+    """
+    content = textwrap.dedent(
+        text="""
+        ```python
+        x = 1
+        ```
+
+        ```python group="example"
+        y = 2
+        ```
+
+        ```python group="example"
+        z = 3
+        ```
+
+        ```python
+        w = 4
+        ```
+        """,
+    )
+    test_document = tmp_path / "test.mdx"
+    test_document.write_text(data=content, encoding="utf-8")
+
+    grouped_evaluator = BlockAccumulatorEvaluator(namespace_key="grouped")
+    ungrouped_evaluator = BlockAccumulatorEvaluator(namespace_key="ungrouped")
+    code_block_parser = CodeBlockParser(language="python")
+    group_parser = AttributeGroupedSourceParser(
+        code_block_parser=code_block_parser,
+        evaluator=grouped_evaluator,
+        attribute_name="group",
+        pad_groups=False,
+        ungrouped_evaluator=ungrouped_evaluator,
+    )
+
+    sybil = Sybil(parsers=[group_parser])
+    document = sybil.parse(path=test_document)
+
+    for example in document.examples():
+        example.evaluate()
+
+    # Grouped blocks should be combined
+    assert document.namespace["grouped"] == ["y = 2\n\nz = 3\n"]
+    # Ungrouped blocks should be evaluated individually
+    assert document.namespace["ungrouped"] == ["x = 1\n", "w = 4\n"]
