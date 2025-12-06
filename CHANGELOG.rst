@@ -4,6 +4,8 @@ Changelog
 Next
 ----
 
+* Add ``AttributeGroupedSourceParser`` for grouping MDX code blocks by attribute values (e.g., ``group="example1"``), following Docusaurus conventions.
+
 2025.12.05.1
 ------------
 

@@ -190,7 +190,6 @@ class AbstractGroupedSourceParser:
                 )
             )
 
-        # Validate that the last directive isn't an unclosed "start"
         if regions and regions[-1].parsed == "start":
             msg = (
                 f"'{self._directive}: start' was not followed by "

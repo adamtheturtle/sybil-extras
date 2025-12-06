@@ -313,6 +313,84 @@ All code blocks in the document are automatically grouped together.
 
 Only code blocks parsed by another parser in the same Sybil instance will be grouped.
 
+AttributeGroupedSourceParser
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``AttributeGroupedSourceParser`` groups MDX code blocks by their ``group`` attribute value, following Docusaurus conventions.
+This is useful for MDX documentation where code blocks with the same group attribute should be combined and evaluated together.
+
+.. code-block:: python
+
+    """Use AttributeGroupedSourceParser to group MDX code blocks by attribute."""
+
+    import sys
+    from pathlib import Path
+
+    from sybil import Sybil
+    from sybil.example import Example
+
+    from sybil_extras.parsers.mdx.attribute_grouped_source import (
+        AttributeGroupedSourceParser,
+    )
+    from sybil_extras.parsers.mdx.codeblock import CodeBlockParser
+
+
+    def evaluator(example: Example) -> None:
+        """Evaluate the code block by printing it."""
+        sys.stdout.write(example.parsed)
+
+
+    code_block_parser = CodeBlockParser(language="python")
+    group_parser = AttributeGroupedSourceParser(
+        code_block_parser=code_block_parser,
+        evaluator=evaluator,
+        # The attribute name to use for grouping (default: "group")
+        attribute_name="group",
+        # Pad the groups with newlines so that the
+        # line number differences between blocks in the output match the
+        # line number differences in the source document.
+        # This is useful for error messages that reference line numbers.
+        # However, this is detrimental to commands that expect the file
+        # to not have a bunch of newlines in it, such as formatters.
+        pad_groups=True,
+    )
+
+    sybil = Sybil(parsers=[group_parser])
+
+    document = sybil.parse(path=Path("example.mdx"))
+
+    for item in document.examples():
+        # One evaluate call will evaluate a code block with the contents of all
+        # code blocks in the same group.
+        item.evaluate()
+
+This makes Sybil act as though all code blocks with the same ``group`` attribute value are a single code block,
+to be evaluated with the ``evaluator`` given to ``AttributeGroupedSourceParser``.
+
+An MDX example:
+
+.. code-block:: markdown
+
+   ```python group="example1"
+   from pprint import pp
+   ```
+
+   Some text in between.
+
+   ```python group="example1"
+   pp({"hello": "world"})
+   ```
+
+   ```python group="example2"
+   x = 1
+   ```
+
+In this example, the first two code blocks will be combined and evaluated as one block,
+while the third block (with ``group="example2"``) will be evaluated separately.
+
+Only code blocks with the ``group`` attribute (or custom attribute name) will be grouped.
+Code blocks without the attribute are ignored by this parser.
+
 SphinxJinja2Parser
 ^^^^^^^^^^^^^^^^^^
 
