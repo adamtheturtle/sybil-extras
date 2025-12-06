@@ -8,7 +8,7 @@ from pathlib import Path
 from sybil import Sybil
 
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
-from sybil_extras.parsers.mdx.attribute_grouped_source import (
+from sybil_extras.parsers.abstract.attribute_grouped_source import (
     AttributeGroupedSourceParser,
 )
 from sybil_extras.parsers.mdx.codeblock import CodeBlockParser

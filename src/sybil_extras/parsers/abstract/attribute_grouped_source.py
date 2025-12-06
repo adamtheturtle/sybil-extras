@@ -11,9 +11,7 @@ from beartype import beartype
 from sybil import Document, Example, Region
 from sybil.typing import Evaluator, Parser
 
-from sybil_extras.parsers.abstract._grouping_utils import (
-    create_combined_region,
-)
+from ._grouping_utils import create_combined_region
 
 
 @beartype
