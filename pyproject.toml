@@ -277,6 +277,7 @@ ignore = [
     "doc8.ini",
     "docs",
     "docs/**",
+    "example.mdx",
     "lint.mk",
     "readthedocs.yaml",
     "spelling_private_dict.txt",
