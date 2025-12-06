@@ -1,7 +1,7 @@
-"""An attribute-based group parser for MDX.
+"""An attribute-based group parser.
 
-This parser groups code blocks based on the 'group' attribute in MDX
-fenced code blocks, following Docusaurus conventions.
+This parser groups code blocks based on attribute values in fenced code
+blocks.
 """
 
 from collections import defaultdict
@@ -15,11 +15,11 @@ from ._grouping_utils import create_combined_region
 
 
 @beartype
-class AttributeGroupedSourceParser:
-    """A parser for grouping MDX code blocks by attribute values.
+class AbstractAttributeGroupedSourceParser:
+    """An abstract parser for grouping code blocks by attribute values.
 
     This parser groups code blocks that have the same value for a
-    specified attribute (default: 'group').
+    specified attribute.
     """
 
     def __init__(
@@ -32,11 +32,10 @@ class AttributeGroupedSourceParser:
     ) -> None:
         """
         Args:
-            code_block_parser: An MDX CodeBlockParser instance that parses
+            code_block_parser: A code block parser instance that parses
                 attributes.
             evaluator: The evaluator to use for evaluating the combined region.
-            attribute_name: The attribute name to use for grouping
-                (default: "group").
+            attribute_name: The attribute name to use for grouping.
             pad_groups: Whether to pad groups with empty lines.
                 This is useful for error messages that reference line numbers.
                 However, this is detrimental to commands that expect the file

@@ -329,7 +329,7 @@ This is useful for MDX documentation where code blocks with the same group attri
     from sybil import Sybil
     from sybil.example import Example
 
-    from sybil_extras.parsers.abstract.attribute_grouped_source import (
+    from sybil_extras.parsers.mdx.attribute_grouped_source import (
         AttributeGroupedSourceParser,
     )
     from sybil_extras.parsers.mdx.codeblock import CodeBlockParser
