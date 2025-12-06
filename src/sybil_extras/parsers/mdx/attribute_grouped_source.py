@@ -8,62 +8,12 @@ from collections import defaultdict
 from collections.abc import Iterable
 
 from beartype import beartype
-from sybil import Document, Region
-from sybil.region import Lexeme
+from sybil import Document, Example, Region
 from sybil.typing import Evaluator, Parser
 
-
-@beartype
-def _combine_source_text(
-    *,
-    regions: list[Region],
-    document: Document,
-    pad_groups: bool,
-) -> Lexeme:
-    """Combine source text from multiple regions.
-
-    Pad the regions with newlines to ensure that line numbers in
-    error messages match the line numbers in the source.
-
-    Args:
-        regions: The regions to combine (must have 'source' lexeme).
-            Must be non-empty.
-        document: The document containing the regions.
-        pad_groups: Whether to pad groups with empty lines.
-            This is useful for error messages that reference line numbers.
-            However, this is detrimental to commands that expect the file
-            to not have a bunch of newlines in it, such as formatters.
-
-    Returns:
-        The combined source text as a Lexeme.
-    """
-    first_region = regions[0]
-    first_source = first_region.lexemes["source"]
-    result_text = first_source.text
-    result_offset = first_source.offset
-    result_line_offset = first_source.line_offset
-
-    first_line = document.text[: first_region.start].count("\n") + 1
-
-    for region in regions[1:]:
-        source = region.lexemes["source"]
-        current_text = source.text
-
-        if pad_groups:
-            current_line = document.text[: region.start].count("\n") + 1
-            existing_lines = len(result_text.splitlines())
-            padding_lines = current_line - first_line - existing_lines
-        else:
-            padding_lines = 1
-
-        padding = "\n" * padding_lines
-        result_text = result_text + padding + current_text
-
-    return Lexeme(
-        text=result_text,
-        offset=result_offset,
-        line_offset=result_line_offset,
-    )
+from sybil_extras.parsers.abstract._grouping_utils import (
+    create_combined_region,
+)
 
 
 @beartype
@@ -106,7 +56,7 @@ class AttributeGroupedSourceParser:
         1. Collect all code blocks and group them by attribute
         2. Yield combined regions for each group in document order
         """
-        regions_by_group: dict[str, list[Region]] = defaultdict(list)
+        examples_by_group: dict[str, list[Example]] = defaultdict(list)
 
         for region in self._code_block_parser(document):
             attributes = region.lexemes.get("attributes", {})
@@ -114,32 +64,45 @@ class AttributeGroupedSourceParser:
             if not group_name:
                 continue
 
-            regions_by_group[group_name].append(region)
+            # Create an example from the region to collect metadata
+            source = region.lexemes["source"]
+            line = document.text[: region.start].count("\n") + 1
+            example = Example(
+                document=document,
+                line=line,
+                column=0,
+                region=region,
+                namespace={},
+            )
+            # Set the example's parsed to the source lexeme
+            example.parsed = source
+
+            examples_by_group[group_name].append(example)
 
         sorted_groups = sorted(
-            regions_by_group.items(),
-            key=lambda item: item[1][0].start,
+            examples_by_group.items(),
+            key=lambda item: item[1][0].region.start,
         )
 
-        for _group_name, regions in sorted_groups:
-            combined_source = _combine_source_text(
-                regions=regions,
-                document=document,
+        for _group_name, examples in sorted_groups:
+            combined_region = create_combined_region(
+                examples=examples,
+                evaluator=self._evaluator,
                 pad_groups=self._pad_groups,
             )
 
-            # We use regions[0].end instead of regions[-1].end to avoid
-            # region overlap errors when groups are interleaved in the
-            # document.
+            # We use examples[0].region.end instead of examples[-1].region.end
+            # to avoid region overlap errors when groups are interleaved in
+            # the document.
             #
             # Sybil explicitly forbids overlapping regions to avoid ambiguity
             # in which example "owns" a particular section of the document.
             #
             # This means that the region we yield has the wrong end position.
             yield Region(
-                start=regions[0].start,
-                end=regions[0].end,
-                parsed=combined_source,
-                evaluator=self._evaluator,
-                lexemes=regions[0].lexemes,
+                start=combined_region.start,
+                end=examples[0].region.end,
+                parsed=combined_region.parsed,
+                evaluator=combined_region.evaluator,
+                lexemes=combined_region.lexemes,
             )
