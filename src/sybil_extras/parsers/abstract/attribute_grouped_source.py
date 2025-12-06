@@ -15,6 +15,14 @@ from ._grouping_utils import create_combined_region
 
 
 @beartype
+def _first_example_start_offset(examples: list[Example]) -> int:
+    """
+    Get the character offset where this group first appears.
+    """
+    return examples[0].region.start
+
+
+@beartype
 class AbstractAttributeGroupedSourceParser:
     """An abstract parser for grouping code blocks by attribute values.
 
@@ -61,13 +69,20 @@ class AbstractAttributeGroupedSourceParser:
             if not group_name:
                 continue
 
-            # Create an example from the region to collect metadata
+            # Create an example from the region to collect metadata.
+            # We need line numbers for padding calculation in
+            # _combine_examples_text.
+            #
+            # Region only provides character offsets (start/end), but Example
+            # requires line/column numbers. We calculate these the same way
+            # Sybil does internally in Document.line_column().
             source = region.lexemes["source"]
-            line = document.text[: region.start].count("\n") + 1
+            line = document.text.count("\n", 0, region.start) + 1
+            column = region.start - document.text.rfind("\n", 0, region.start)
             example = Example(
                 document=document,
                 line=line,
-                column=0,
+                column=column,
                 region=region,
                 namespace={},
             )
@@ -77,11 +92,11 @@ class AbstractAttributeGroupedSourceParser:
             examples_by_group[group_name].append(example)
 
         sorted_groups = sorted(
-            examples_by_group.items(),
-            key=lambda item: item[1][0].region.start,
+            examples_by_group.values(),
+            key=_first_example_start_offset,
         )
 
-        for _group_name, examples in sorted_groups:
+        for examples in sorted_groups:
             combined_region = create_combined_region(
                 examples=examples,
                 evaluator=self._evaluator,
