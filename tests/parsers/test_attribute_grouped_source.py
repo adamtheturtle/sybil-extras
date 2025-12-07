@@ -8,6 +8,7 @@ from pathlib import Path
 from sybil import Sybil
 
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
+from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.parsers.mdx.attribute_grouped_source import (
     AttributeGroupedSourceParser,
 )
@@ -41,6 +42,7 @@ def test_attribute_group_single_group(tmp_path: Path) -> None:
         evaluator=evaluator,
         attribute_name="group",
         pad_groups=True,
+        ungrouped_evaluator=NoOpEvaluator(),
     )
 
     sybil = Sybil(parsers=[group_parser])
@@ -91,6 +93,7 @@ def test_attribute_group_multiple_groups(tmp_path: Path) -> None:
         evaluator=evaluator,
         attribute_name="group",
         pad_groups=True,
+        ungrouped_evaluator=NoOpEvaluator(),
     )
 
     sybil = Sybil(parsers=[group_parser])
@@ -133,6 +136,7 @@ def test_attribute_group_no_group_attribute(tmp_path: Path) -> None:
         evaluator=evaluator,
         attribute_name="group",
         pad_groups=True,
+        ungrouped_evaluator=NoOpEvaluator(),
     )
 
     sybil = Sybil(parsers=[group_parser])
@@ -169,6 +173,7 @@ def test_attribute_group_custom_attribute_name(tmp_path: Path) -> None:
         evaluator=evaluator,
         attribute_name="mygroup",
         pad_groups=True,
+        ungrouped_evaluator=NoOpEvaluator(),
     )
 
     sybil = Sybil(parsers=[group_parser])
@@ -206,6 +211,7 @@ def test_attribute_group_with_other_attributes(tmp_path: Path) -> None:
         evaluator=evaluator,
         attribute_name="group",
         pad_groups=True,
+        ungrouped_evaluator=NoOpEvaluator(),
     )
 
     sybil = Sybil(parsers=[group_parser])
@@ -247,6 +253,7 @@ def test_attribute_group_pad_groups_false(tmp_path: Path) -> None:
         evaluator=evaluator,
         attribute_name="group",
         pad_groups=False,
+        ungrouped_evaluator=NoOpEvaluator(),
     )
 
     sybil = Sybil(parsers=[group_parser])
@@ -296,6 +303,7 @@ def test_attribute_group_interleaved_groups(tmp_path: Path) -> None:
         evaluator=evaluator,
         attribute_name="group",
         pad_groups=False,
+        ungrouped_evaluator=NoOpEvaluator(),
     )
 
     sybil = Sybil(parsers=[group_parser])

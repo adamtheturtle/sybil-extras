@@ -37,7 +37,7 @@ class AbstractAttributeGroupedSourceParser:
         evaluator: Evaluator,
         attribute_name: str,
         pad_groups: bool,
-        ungrouped_evaluator: Evaluator | None = None,
+        ungrouped_evaluator: Evaluator,
     ) -> None:
         """
         Args:
@@ -50,8 +50,7 @@ class AbstractAttributeGroupedSourceParser:
                 However, this is detrimental to commands that expect the file
                 to not have a bunch of newlines in it, such as formatters.
             ungrouped_evaluator: The evaluator to use for code blocks that
-                don't have the grouping attribute. If not provided, ungrouped
-                blocks are ignored.
+                don't have the grouping attribute.
         """
         self._code_block_parser = code_block_parser
         self._evaluator = evaluator
@@ -73,16 +72,15 @@ class AbstractAttributeGroupedSourceParser:
             attributes = region.lexemes.get("attributes", {})
             group_name: str | None = attributes.get(self._attribute_name)
             if not group_name:
-                if self._ungrouped_evaluator is not None:
-                    ungrouped_regions.append(
-                        Region(
-                            start=region.start,
-                            end=region.end,
-                            parsed=region.parsed,
-                            evaluator=self._ungrouped_evaluator,
-                            lexemes=region.lexemes,
-                        )
+                ungrouped_regions.append(
+                    Region(
+                        start=region.start,
+                        end=region.end,
+                        parsed=region.parsed,
+                        evaluator=self._ungrouped_evaluator,
+                        lexemes=region.lexemes,
                     )
+                )
                 continue
 
             # Create an example from the region to collect metadata.
