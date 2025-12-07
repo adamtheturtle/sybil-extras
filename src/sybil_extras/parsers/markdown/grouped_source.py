@@ -45,4 +45,5 @@ class GroupedSourceParser(AbstractGroupedSourceParser):
             evaluator=evaluator,
             directive=directive,
             pad_groups=pad_groups,
+            markup_format="markdown",
         )

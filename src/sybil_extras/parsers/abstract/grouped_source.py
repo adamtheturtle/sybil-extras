@@ -145,6 +145,7 @@ class AbstractGroupedSourceParser:
         evaluator: Evaluator,
         directive: str,
         pad_groups: bool,
+        markup_format: str,
     ) -> None:
         """
         Args:
@@ -155,6 +156,8 @@ class AbstractGroupedSourceParser:
                 This is useful for error messages that reference line numbers.
                 However, this is detrimental to commands that expect the file
                 to not have a bunch of newlines in it, such as formatters.
+            markup_format: The markup format (e.g., "markdown",
+                "restructuredtext").
         """
         self._lexers: LexerCollection = LexerCollection(lexers)
         self._grouper: _Grouper = _Grouper(
@@ -163,6 +166,7 @@ class AbstractGroupedSourceParser:
             pad_groups=pad_groups,
         )
         self._directive = directive
+        self._markup_format = markup_format
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """
@@ -187,6 +191,7 @@ class AbstractGroupedSourceParser:
                     end=lexed.end,
                     parsed=arguments,
                     evaluator=self._grouper,
+                    lexemes={"markup_format": self._markup_format},
                 )
             )
 

@@ -80,6 +80,7 @@ class CodeBlockParser:
                 else ""
             )
             region.lexemes["attributes"] = parsed_attributes
+            region.lexemes["markup_format"] = "markdown"
             yield region
 
     @staticmethod

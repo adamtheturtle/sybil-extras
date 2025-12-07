@@ -61,18 +61,30 @@ def _get_modified_region_text(
         )
         replace_old_not_indented = example.parsed
         replace_new_prefix = ""
-    # This is a break of the abstraction, - we really should not have
-    # to know about markup language specifics here.
-    elif original_region_text.endswith("```"):
-        # Markdown or MyST
-        within_code_block_indent_prefix = code_block_indent_prefix
-        replace_old_not_indented = "\n"
-        replace_new_prefix = "\n"
     else:
-        # reStructuredText
-        within_code_block_indent_prefix = code_block_indent_prefix + "   "
-        replace_old_not_indented = "\n"
-        replace_new_prefix = "\n\n"
+        # Use markup format from lexemes to determine indentation rules
+        markup_format = example.region.lexemes.get("markup_format", "")
+        if markup_format in ("markdown", "myst"):
+            # Markdown or MyST
+            within_code_block_indent_prefix = code_block_indent_prefix
+            replace_old_not_indented = "\n"
+            replace_new_prefix = "\n"
+        elif markup_format == "restructuredtext":
+            # reStructuredText
+            within_code_block_indent_prefix = code_block_indent_prefix + "   "
+            replace_old_not_indented = "\n"
+            replace_new_prefix = "\n\n"
+        # Unknown format - fallback to heuristic detection
+        elif original_region_text.endswith("```"):
+            # Markdown or MyST
+            within_code_block_indent_prefix = code_block_indent_prefix
+            replace_old_not_indented = "\n"
+            replace_new_prefix = "\n"
+        else:
+            # reStructuredText
+            within_code_block_indent_prefix = code_block_indent_prefix + "   "
+            replace_old_not_indented = "\n"
+            replace_new_prefix = "\n\n"
 
     indented_example_parsed = textwrap.indent(
         text=replace_old_not_indented,
