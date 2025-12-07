@@ -37,6 +37,7 @@ class AbstractAttributeGroupedSourceParser:
         evaluator: Evaluator,
         attribute_name: str,
         pad_groups: bool,
+        ungrouped_evaluator: Evaluator,
     ) -> None:
         """
         Args:
@@ -48,11 +49,14 @@ class AbstractAttributeGroupedSourceParser:
                 This is useful for error messages that reference line numbers.
                 However, this is detrimental to commands that expect the file
                 to not have a bunch of newlines in it, such as formatters.
+            ungrouped_evaluator: The evaluator to use for code blocks that
+                don't have the grouping attribute.
         """
         self._code_block_parser = code_block_parser
         self._evaluator = evaluator
         self._attribute_name = attribute_name
         self._pad_groups = pad_groups
+        self._ungrouped_evaluator = ungrouped_evaluator
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """Parse the document and yield grouped regions.
@@ -62,11 +66,21 @@ class AbstractAttributeGroupedSourceParser:
         2. Yield combined regions for each group in document order
         """
         examples_by_group: dict[str, list[Example]] = defaultdict(list)
+        ungrouped_regions: list[Region] = []
 
         for region in self._code_block_parser(document):
             attributes = region.lexemes.get("attributes", {})
             group_name: str | None = attributes.get(self._attribute_name)
             if not group_name:
+                ungrouped_regions.append(
+                    Region(
+                        start=region.start,
+                        end=region.end,
+                        parsed=region.parsed,
+                        evaluator=self._ungrouped_evaluator,
+                        lexemes=region.lexemes,
+                    )
+                )
                 continue
 
             # Create an example from the region to collect metadata.
@@ -118,3 +132,6 @@ class AbstractAttributeGroupedSourceParser:
                 evaluator=combined_region.evaluator,
                 lexemes=combined_region.lexemes,
             )
+
+        # Yield ungrouped regions
+        yield from ungrouped_regions

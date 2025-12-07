@@ -8,6 +8,7 @@ from pathlib import Path
 from sybil import Sybil
 
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
+from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.parsers.mdx.attribute_grouped_source import (
     AttributeGroupedSourceParser,
 )
@@ -41,6 +42,7 @@ def test_attribute_group_single_group(tmp_path: Path) -> None:
         evaluator=evaluator,
         attribute_name="group",
         pad_groups=True,
+        ungrouped_evaluator=NoOpEvaluator(),
     )
 
     sybil = Sybil(parsers=[group_parser])
@@ -91,6 +93,7 @@ def test_attribute_group_multiple_groups(tmp_path: Path) -> None:
         evaluator=evaluator,
         attribute_name="group",
         pad_groups=True,
+        ungrouped_evaluator=NoOpEvaluator(),
     )
 
     sybil = Sybil(parsers=[group_parser])
@@ -133,6 +136,7 @@ def test_attribute_group_no_group_attribute(tmp_path: Path) -> None:
         evaluator=evaluator,
         attribute_name="group",
         pad_groups=True,
+        ungrouped_evaluator=NoOpEvaluator(),
     )
 
     sybil = Sybil(parsers=[group_parser])
@@ -169,6 +173,7 @@ def test_attribute_group_custom_attribute_name(tmp_path: Path) -> None:
         evaluator=evaluator,
         attribute_name="mygroup",
         pad_groups=True,
+        ungrouped_evaluator=NoOpEvaluator(),
     )
 
     sybil = Sybil(parsers=[group_parser])
@@ -206,6 +211,7 @@ def test_attribute_group_with_other_attributes(tmp_path: Path) -> None:
         evaluator=evaluator,
         attribute_name="group",
         pad_groups=True,
+        ungrouped_evaluator=NoOpEvaluator(),
     )
 
     sybil = Sybil(parsers=[group_parser])
@@ -247,6 +253,7 @@ def test_attribute_group_pad_groups_false(tmp_path: Path) -> None:
         evaluator=evaluator,
         attribute_name="group",
         pad_groups=False,
+        ungrouped_evaluator=NoOpEvaluator(),
     )
 
     sybil = Sybil(parsers=[group_parser])
@@ -296,6 +303,7 @@ def test_attribute_group_interleaved_groups(tmp_path: Path) -> None:
         evaluator=evaluator,
         attribute_name="group",
         pad_groups=False,
+        ungrouped_evaluator=NoOpEvaluator(),
     )
 
     sybil = Sybil(parsers=[group_parser])
@@ -308,3 +316,52 @@ def test_attribute_group_interleaved_groups(tmp_path: Path) -> None:
     expected_setup = "x = []\n\nx = [*x, 1]\n\nx = [*x, 2]\n"
     expected_example = "y = []\n\ny = [*y, 10]\n"
     assert document.namespace["blocks"] == [expected_setup, expected_example]
+
+
+def test_attribute_group_ungrouped_evaluator(tmp_path: Path) -> None:
+    """
+    Code blocks without the group attribute use the ungrouped_evaluator.
+    """
+    content = textwrap.dedent(
+        text="""
+        ```python
+        x = 1
+        ```
+
+        ```python group="example"
+        y = 2
+        ```
+
+        ```python group="example"
+        z = 3
+        ```
+
+        ```python
+        w = 4
+        ```
+        """,
+    )
+    test_document = tmp_path / "test.mdx"
+    test_document.write_text(data=content, encoding="utf-8")
+
+    grouped_evaluator = BlockAccumulatorEvaluator(namespace_key="grouped")
+    ungrouped_evaluator = BlockAccumulatorEvaluator(namespace_key="ungrouped")
+    code_block_parser = CodeBlockParser(language="python")
+    group_parser = AttributeGroupedSourceParser(
+        code_block_parser=code_block_parser,
+        evaluator=grouped_evaluator,
+        attribute_name="group",
+        pad_groups=False,
+        ungrouped_evaluator=ungrouped_evaluator,
+    )
+
+    sybil = Sybil(parsers=[group_parser])
+    document = sybil.parse(path=test_document)
+
+    for example in document.examples():
+        example.evaluate()
+
+    # Grouped blocks should be combined
+    assert document.namespace["grouped"] == ["y = 2\n\nz = 3\n"]
+    # Ungrouped blocks should be evaluated individually
+    assert document.namespace["ungrouped"] == ["x = 1\n", "w = 4\n"]

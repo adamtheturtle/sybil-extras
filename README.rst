@@ -329,6 +329,7 @@ This is useful for MDX documentation where code blocks with the same group attri
     from sybil import Sybil
     from sybil.example import Example
 
+    from sybil_extras.evaluators.no_op import NoOpEvaluator
     from sybil_extras.parsers.mdx.attribute_grouped_source import (
         AttributeGroupedSourceParser,
     )
@@ -353,6 +354,9 @@ This is useful for MDX documentation where code blocks with the same group attri
         # However, this is detrimental to commands that expect the file
         # to not have a bunch of newlines in it, such as formatters.
         pad_groups=True,
+        # The evaluator to use for code blocks that don't have the
+        # grouping attribute.
+        ungrouped_evaluator=NoOpEvaluator(),
     )
 
     sybil = Sybil(parsers=[group_parser])
@@ -388,8 +392,8 @@ An MDX example:
 In this example, the first two code blocks will be combined and evaluated as one block,
 while the third block (with ``group="example2"``) will be evaluated separately.
 
-Only code blocks with the ``group`` attribute (or custom attribute name) will be grouped.
-Code blocks without the attribute are ignored by this parser.
+Code blocks with the ``group`` attribute (or custom attribute name) will be grouped.
+Code blocks without the attribute are evaluated with the ``ungrouped_evaluator``.
 
 SphinxJinja2Parser
 ^^^^^^^^^^^^^^^^^^
