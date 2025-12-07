@@ -91,7 +91,9 @@ class AbstractAttributeGroupedSourceParser:
             # requires line/column numbers. We calculate these the same way
             # Sybil does internally in Document.line_column().
             source = region.lexemes["source"]
-            line = document.text.count("\n", 0, region.start) + 1
+            # Calculate line based on where the source content actually starts
+            source_start = region.start + source.offset
+            line = document.text.count("\n", 0, source_start) + 1
             column = region.start - document.text.rfind("\n", 0, region.start)
             example = Example(
                 document=document,
