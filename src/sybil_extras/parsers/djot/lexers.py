@@ -45,9 +45,11 @@ class DirectiveInDjotCommentLexer:
         # whitespace)
         pattern = (
             rf"^\s*\{{\%\s*(?P<directive>{directive})"
-            rf"(?:\s*:\s*(?P<arguments>{arguments}))?\s*\%\}}\s*$"
+            rf"(?:\s*:\s*(?P<arguments>{arguments}))?\s*\%\}}$"
         )
-        self.pattern = re.compile(pattern=pattern, flags=re.MULTILINE)
+        self.pattern: re.Pattern[str] = re.compile(
+            pattern=pattern, flags=re.MULTILINE
+        )
         self.mapping = mapping
 
     def __call__(self, document: Document) -> Iterable[Region]:

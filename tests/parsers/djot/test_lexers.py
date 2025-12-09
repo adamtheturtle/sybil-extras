@@ -40,7 +40,7 @@ def test_directive_without_argument() -> None:
     lexer = DirectiveInDjotCommentLexer(directive="skip")
     source_text = "{% skip %}\n"
 
-    expected_text = source_text
+    expected_text = "{% skip %}"
     expected_lexemes = {"directive": "skip", "arguments": ""}
 
     check_lexer(

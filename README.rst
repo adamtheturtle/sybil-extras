@@ -448,7 +448,7 @@ comments such as ``{% group: start %}``. This pairs well with
 
     check_lexer(
         lexer=lexer,
-        source_text="Before\\n{% group: start %}\\nAfter\\n",
+        source_text="Before\n{% group: start %}\nAfter\n",
         expected_text="{% group: start %}",
         expected_lexemes={"directive": "group", "arguments": "start"},
     )
