@@ -15,6 +15,7 @@ from sybil import Document, Region
 from sybil.evaluators.skip import Skipper
 from sybil.typing import Evaluator
 
+import sybil_extras.parsers.djot.codeblock
 import sybil_extras.parsers.djot.custom_directive_skip
 import sybil_extras.parsers.djot.group_all
 import sybil_extras.parsers.djot.grouped_source
@@ -401,7 +402,7 @@ DJOT = MarkupLanguage(
     name="Djot",
     markup_separator="\n",
     skip_parser_cls=sybil_extras.parsers.djot.custom_directive_skip.CustomDirectiveSkipParser,
-    code_block_parser_cls=sybil.parsers.markdown.CodeBlockParser,
+    code_block_parser_cls=sybil_extras.parsers.djot.codeblock.CodeBlockParser,
     group_parser_cls=sybil_extras.parsers.djot.grouped_source.GroupedSourceParser,
     group_all_parser_cls=sybil_extras.parsers.djot.group_all.GroupAllParser,
     sphinx_jinja_parser_cls=None,
