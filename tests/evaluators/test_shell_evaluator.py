@@ -22,6 +22,7 @@ from sybil.parsers.rest.codeblock import CodeBlockParser
 
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 from sybil_extras.languages import (
+    DJOT,
     MARKDOWN,
     MDX,
     MYST,
@@ -439,6 +440,7 @@ def test_write_to_file_new_content_trailing_newlines(
         ),
         MARKDOWN: markdown_content,
         MDX: markdown_content,
+        DJOT: markdown_content,
         MYST: myst_content,
         MYST_PERCENT_COMMENTS: myst_content,
     }[markup_language]
@@ -500,6 +502,7 @@ def test_write_to_file_new_content_trailing_newlines(
         ),
         MARKDOWN: markdown_expected,
         MDX: markdown_expected,
+        DJOT: markdown_expected,
         MYST: myst_expected,
         MYST_PERCENT_COMMENTS: myst_expected,
     }[markup_language]
@@ -555,6 +558,7 @@ def test_write_to_file_new_content_no_trailing_newlines(
         ),
         MARKDOWN: markdown_content,
         MDX: markdown_content,
+        DJOT: markdown_content,
         MYST: myst_content,
         MYST_PERCENT_COMMENTS: myst_content,
     }[markup_language]
@@ -612,6 +616,7 @@ def test_write_to_file_new_content_no_trailing_newlines(
         ),
         MARKDOWN: markdown_expected,
         MDX: markdown_expected,
+        DJOT: markdown_expected,
         MYST: myst_expected,
         MYST_PERCENT_COMMENTS: myst_expected,
     }[markup_language]
@@ -663,6 +668,7 @@ def test_write_to_file_indented_existing_block(
         ),
         MARKDOWN: markdown_content,
         MDX: markdown_content,
+        DJOT: markdown_content,
         MYST: myst_content,
         MYST_PERCENT_COMMENTS: myst_content,
     }[markup_language]
@@ -720,6 +726,7 @@ def test_write_to_file_indented_existing_block(
         ),
         MARKDOWN: markdown_expected,
         MDX: markdown_expected,
+        DJOT: markdown_expected,
         MYST: myst_expected,
         MYST_PERCENT_COMMENTS: myst_expected,
     }[markup_language]
@@ -767,6 +774,7 @@ def test_write_to_file_indented_empty_existing_block(
         ),
         MARKDOWN: markdown_content,
         MDX: markdown_content,
+        DJOT: markdown_content,
         MYST: myst_content,
         MYST_PERCENT_COMMENTS: myst_content,
     }[markup_language]
@@ -830,6 +838,7 @@ def test_write_to_file_indented_empty_existing_block(
         ),
         MARKDOWN: markdown_expected,
         MDX: markdown_expected,
+        DJOT: markdown_expected,
         MYST: myst_expected,
         MYST_PERCENT_COMMENTS: myst_expected,
     }[markup_language]
@@ -1262,6 +1271,7 @@ def test_empty_code_block_write_content_to_file(
         RESTRUCTUREDTEXT: rst_content,
         MARKDOWN: markdown_content,
         MDX: markdown_content,
+        DJOT: markdown_content,
         MYST: myst_content,
         MYST_PERCENT_COMMENTS: myst_content,
     }[markup_language]
@@ -1328,6 +1338,7 @@ def test_empty_code_block_write_content_to_file(
         ),
         MARKDOWN: markdown_expected,
         MDX: markdown_expected,
+        DJOT: markdown_expected,
         MYST: myst_expected,
         MYST_PERCENT_COMMENTS: myst_expected,
     }[markup_language]
@@ -1351,8 +1362,8 @@ def test_empty_code_block_write_content_to_file_with_options(
     It is possible to write content to an empty code block even if that code
     block has options.
     """
-    if markup_language is MARKDOWN:
-        # Markdown does not support code block options.
+    if markup_language in (MARKDOWN, DJOT):
+        # Markdown-like formats do not support code block options.
         return
 
     rst_content = textwrap.dedent(

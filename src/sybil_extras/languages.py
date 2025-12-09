@@ -15,6 +15,9 @@ from sybil import Document, Region
 from sybil.evaluators.skip import Skipper
 from sybil.typing import Evaluator
 
+import sybil_extras.parsers.djot.custom_directive_skip
+import sybil_extras.parsers.djot.group_all
+import sybil_extras.parsers.djot.grouped_source
 import sybil_extras.parsers.markdown.custom_directive_skip
 import sybil_extras.parsers.markdown.group_all
 import sybil_extras.parsers.markdown.grouped_source
@@ -246,6 +249,18 @@ def _rst_directive(
 
 
 @beartype
+def _djot_directive(
+    directive: str,
+    argument: str | None = None,
+) -> str:
+    """
+    Render a directive embedded in a djot comment.
+    """
+    suffix = f": {argument}" if argument is not None else ""
+    return f"{{% {directive}{suffix} %}}"
+
+
+@beartype
 def _myst_jinja_block(body: str) -> str:
     """
     Render a sphinx-jinja block for MyST.
@@ -382,10 +397,24 @@ MDX = MarkupLanguage(
     jinja_block_builder=None,
 )
 
+DJOT = MarkupLanguage(
+    name="Djot",
+    markup_separator="\n",
+    skip_parser_cls=sybil_extras.parsers.djot.custom_directive_skip.CustomDirectiveSkipParser,
+    code_block_parser_cls=sybil.parsers.markdown.CodeBlockParser,
+    group_parser_cls=sybil_extras.parsers.djot.grouped_source.GroupedSourceParser,
+    group_all_parser_cls=sybil_extras.parsers.djot.group_all.GroupAllParser,
+    sphinx_jinja_parser_cls=None,
+    code_block_builder=_markdown_code_block,
+    directive_builder=_djot_directive,
+    jinja_block_builder=None,
+)
+
 ALL_LANGUAGES: tuple[MarkupLanguage, ...] = (
     MYST,
     MYST_PERCENT_COMMENTS,
     RESTRUCTUREDTEXT,
     MARKDOWN,
     MDX,
+    DJOT,
 )

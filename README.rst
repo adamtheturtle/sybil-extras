@@ -429,6 +429,30 @@ This extracts the source, arguments and options from ``.. jinja::`` directive bl
     for item in document.examples():
         item.evaluate()
 
+Djot directive lexer
+^^^^^^^^^^^^^^^^^^^^
+
+Use ``DirectiveInDjotCommentLexer`` to extract directive information from djot
+comments such as ``{% group: start %}``. This pairs well with
+``sybil.testing.check_lexer`` for concise lexer tests.
+
+.. code-block:: python
+
+    """Lex djot directives and test them with check_lexer."""
+
+    from sybil.testing import check_lexer
+
+    from sybil_extras.parsers.djot.lexers import DirectiveInDjotCommentLexer
+
+    lexer = DirectiveInDjotCommentLexer(directive="group", arguments=r".+")
+
+    check_lexer(
+        lexer=lexer,
+        source_text="Before\n{% group: start %}\nAfter\n",
+        expected_text="{% group: start %}",
+        expected_lexemes={"directive": "group", "arguments": "start"},
+    )
+
 Markup Languages
 ----------------
 
