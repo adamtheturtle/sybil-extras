@@ -23,7 +23,7 @@ def test_fenced_code_block_outside_blockquote() -> None:
     A standard fenced code block is parsed.
     """
     (region,) = _parse(
-        dedent(
+        text=dedent(
             text="""\
             ```python
             x = 1
@@ -40,7 +40,7 @@ def test_code_block_in_blockquote_without_closing_fence() -> None:
     A Djot code block can be closed by the end of its blockquote.
     """
     (region,) = _parse(
-        dedent(
+        text=dedent(
             text="""\
             > ```python
             > x = 1

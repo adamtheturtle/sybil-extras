@@ -18,11 +18,11 @@ from sybil.region import Lexeme
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
-    from sybil.typing import Evaluator
+    from sybil.typing import Evaluator, Lexer
 
 FENCE = re.compile(
-    r"^(?P<prefix>[ \t]*(?:>[ \t]*)*)(?P<fence>`{3,}|~{3,})",
-    re.MULTILINE,
+    pattern=r"^(?P<prefix>[ \t]*(?:>[ \t]*)*)(?P<fence>`{3,}|~{3,})",
+    flags=re.MULTILINE,
 )
 
 
@@ -33,7 +33,9 @@ class DjotRawFencedCodeBlockLexer:
 
     def __init__(
         self,
-        info_pattern: Pattern[str] = re.compile(r"$\n", re.MULTILINE),
+        info_pattern: Pattern[str] = re.compile(
+            pattern=r"$\n", flags=re.MULTILINE
+        ),
         mapping: dict[str, str] | None = None,
     ) -> None:
         """
@@ -104,7 +106,7 @@ class DjotRawFencedCodeBlockLexer:
             default_end = closing.start()
 
         content = document.text[opening.end() : default_end]
-        info = self.info_pattern.match(content)
+        info = self.info_pattern.match(string=content)
         if info is None:
             return None
 
@@ -119,9 +121,9 @@ class DjotRawFencedCodeBlockLexer:
 
         lexemes = info.groupdict()
         lexemes["source"] = Lexeme(
-            strip_prefix(
-                document.text[opening.end() + info.end() : content_end],
-                opening.group("prefix"),
+            text=strip_prefix(
+                text=document.text[opening.end() + info.end() : content_end],
+                prefix=opening.group("prefix"),
             ),
             offset=len(opening.group(0)) + info.end(),
             line_offset=0,
@@ -133,8 +135,8 @@ class DjotRawFencedCodeBlockLexer:
 
         region_end = content_end if closing is None else closing.end()
         return Region(
-            opening.start(),
-            region_end,
+            start=opening.start(),
+            end=region_end,
             lexemes=lexemes,
         )
 
@@ -157,7 +159,9 @@ class DjotRawFencedCodeBlockLexer:
                 if candidate is None:
                     break
                 search_index = candidate.end()
-                if self.match_closes_existing(candidate, opening):
+                if self.match_closes_existing(
+                    current=candidate, existing=opening
+                ):
                     closing = candidate
                     break
 
@@ -186,7 +190,7 @@ class DjotFencedCodeBlockLexer(DjotRawFencedCodeBlockLexer):
         """
         super().__init__(
             info_pattern=re.compile(
-                rf"(?P<language>{language})$\n", re.MULTILINE
+                pattern=rf"(?P<language>{language})$\n", flags=re.MULTILINE
             ),
             mapping=mapping,
         )
@@ -206,7 +210,7 @@ class CodeBlockParser(AbstractCodeBlockParser):
             language: The language to match (for example ``python``).
             evaluator: The evaluator used for the parsed code block.
         """
-        lexers: Sequence = [
+        lexers: Sequence[Lexer] = [
             DjotFencedCodeBlockLexer(
                 language=r".+",
                 mapping={"language": "arguments", "source": "source"},
