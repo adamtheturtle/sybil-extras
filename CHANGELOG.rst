@@ -4,6 +4,8 @@ Changelog
 Next
 ----
 
+* Document the djot directive lexer and show testing with ``sybil.testing.check_lexer``.
+
 2025.12.07
 ----------
 
