@@ -21,10 +21,13 @@ class DirectiveInDjotCommentLexer:
     - ``arguments`` as a str
 
     Args:
-        directive: A str containing a regular expression pattern to match directive names.
-        arguments: A str containing a regular expression pattern to match directive arguments.
-        mapping: If provided, this is used to rename lexemes from the keys in the mapping
-                 to their values. Only mapped lexemes will be returned in any Region objects.
+        directive: A str containing a regular expression pattern to match
+            directive names.
+        arguments: A str containing a regular expression pattern to match
+            directive arguments.
+        mapping: If provided, this is used to rename lexemes from the keys in
+            the mapping to their values. Only mapped lexemes will be returned
+            in any Region objects.
     """
 
     def __init__(
@@ -38,19 +41,20 @@ class DirectiveInDjotCommentLexer:
         """
         # Pattern to match djot comments with directives
         # Format: {% directive: argument %} or {% directive %}
-        # The comment must be on its own line (with optional leading whitespace)
+        # The comment must be on its own line (with optional leading
+        # whitespace)
         pattern = (
             rf"^\s*\{{\%\s*(?P<directive>{directive})"
             rf"(?:\s*:\s*(?P<arguments>{arguments}))?\s*\%\}}\s*$"
         )
-        self.pattern = re.compile(pattern, re.MULTILINE)
+        self.pattern = re.compile(pattern=pattern, flags=re.MULTILINE)
         self.mapping = mapping
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """
         Yield regions for djot comment directives.
         """
-        for match in self.pattern.finditer(document.text):
+        for match in self.pattern.finditer(string=document.text):
             lexemes = match.groupdict()
             # Clean up the arguments - might be None if no colon was present
             if lexemes["arguments"] is not None:

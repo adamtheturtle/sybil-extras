@@ -1,0 +1,3 @@
+"""
+Djot parser test configuration.
+"""
