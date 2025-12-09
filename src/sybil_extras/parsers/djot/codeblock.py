@@ -18,6 +18,7 @@ from sybil.region import Lexeme
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
+    from sybil.parsers.abstract.lexers import LexerCollection
     from sybil.typing import Evaluator, Lexer
 
 FENCE = re.compile(
@@ -201,6 +202,8 @@ class CodeBlockParser(AbstractCodeBlockParser):
     """
     A parser for Djot fenced code blocks.
     """
+
+    lexers: LexerCollection
 
     def __init__(
         self, language: str | None = None, evaluator: Evaluator | None = None
