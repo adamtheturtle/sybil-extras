@@ -2,6 +2,7 @@ Djot
 Docusaurus
 EOF
 MDX
+Neorg
 args
 beartype
 blockquote
@@ -17,6 +18,7 @@ lexeme
 lexemes
 linter
 namespace
+norg
 ons
 parametrize
 parsers
