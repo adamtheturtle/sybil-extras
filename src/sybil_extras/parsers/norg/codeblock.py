@@ -40,17 +40,17 @@ class NorgVerbatimRangedTagLexer:
         """
         # Pattern to match opening tag: @code or @code python
         # Must be at start of line (with optional leading whitespace)
-        self.opening_pattern = re.compile(
+        self._opening_pattern = re.compile(
             pattern=rf"^\s*@code(?:\s+(?P<language>{language}))?$",
             flags=re.MULTILINE,
         )
         # Pattern to match closing tag: @end
         # Must be at start of line (with optional leading whitespace)
-        self.closing_pattern = re.compile(
+        self._closing_pattern = re.compile(
             pattern=r"^\s*@end$",
             flags=re.MULTILINE,
         )
-        self.mapping = mapping
+        self._mapping = mapping
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """
@@ -58,14 +58,14 @@ class NorgVerbatimRangedTagLexer:
         """
         index = 0
         while True:
-            opening = self.opening_pattern.search(
+            opening = self._opening_pattern.search(
                 string=document.text, pos=index
             )
             if opening is None:
                 break
 
             # Find the matching @end tag
-            closing = self.closing_pattern.search(
+            closing = self._closing_pattern.search(
                 string=document.text, pos=opening.end()
             )
             if closing is None:
@@ -101,10 +101,10 @@ class NorgVerbatimRangedTagLexer:
                 line_offset=0,
             )
 
-            if self.mapping:
+            if self._mapping:
                 lexemes = {
                     dest: lexemes[source]
-                    for source, dest in self.mapping.items()
+                    for source, dest in self._mapping.items()
                 }
 
             yield Region(
