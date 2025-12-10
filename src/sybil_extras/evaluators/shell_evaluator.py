@@ -22,41 +22,6 @@ from sybil_extras.evaluators.code_block_writer import CodeBlockWriterEvaluator
 
 
 @beartype
-def _count_leading_newlines(s: str) -> int:
-    """
-    Count the number of leading newlines in a string.
-    """
-    count = 0
-    non_newline_found = False
-    for char in s:
-        if char == "\n" and not non_newline_found:
-            count += 1
-        else:
-            non_newline_found = True
-    return count
-
-
-@beartype
-def _lstrip_newlines(input_string: str, number_of_newlines: int) -> str:
-    """
-    Removes a specified number of newlines from the start of the string.
-    """
-    num_leading_newlines = _count_leading_newlines(s=input_string)
-    lines_to_remove = min(num_leading_newlines, number_of_newlines)
-    return input_string[lines_to_remove:]
-
-
-@beartype
-def _lstrip_padding(content: str, padding_lines: int) -> str:
-    """
-    Remove leading newlines that were added as padding.
-    """
-    return _lstrip_newlines(
-        input_string=content, number_of_newlines=padding_lines
-    )
-
-
-@beartype
 @runtime_checkable
 class _ExampleModified(Protocol):
     """
@@ -167,6 +132,44 @@ def _run_command(
         stdout=None,
         stderr=None,
     )
+
+
+@beartype
+def _count_leading_newlines(s: str) -> int:
+    """Count the number of leading newlines in a string.
+
+    Args:
+        s: The input string.
+
+    Returns:
+        The number of leading newlines.
+    """
+    count = 0
+    non_newline_found = False
+    for char in s:
+        if char == "\n" and not non_newline_found:
+            count += 1
+        else:
+            non_newline_found = True
+    return count
+
+
+@beartype
+def _lstrip_newlines(input_string: str, number_of_newlines: int) -> str:
+    """Removes a specified number of newlines from the start of the string.
+
+    Args:
+        input_string: The input string to process.
+        number_of_newlines: The number of newlines to remove from the
+            start.
+
+    Returns:
+        The string with the specified number of leading newlines removed.
+        If fewer newlines exist, removes all of them.
+    """
+    num_leading_newlines = _count_leading_newlines(s=input_string)
+    lines_to_remove = min(num_leading_newlines, number_of_newlines)
+    return input_string[lines_to_remove:]
 
 
 @beartype
@@ -324,9 +327,9 @@ class _ShellCommandRunner:
             # While it is possible that a formatter added leading newlines,
             # we assume that this is not the case, and we remove any leading
             # newlines from the replacement which were added by the padding.
-            new_region_content = _lstrip_padding(
-                content=temp_file_content,
-                padding_lines=padding_line,
+            new_region_content = _lstrip_newlines(
+                input_string=temp_file_content,
+                number_of_newlines=padding_line,
             )
             example.document.namespace[_SHELL_EVALUATOR_NAMESPACE_KEY] = (
                 new_region_content
