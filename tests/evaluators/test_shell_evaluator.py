@@ -27,6 +27,7 @@ from sybil_extras.languages import (
     MDX,
     MYST,
     MYST_PERCENT_COMMENTS,
+    NORG,
     RESTRUCTUREDTEXT,
     MarkupLanguage,
 )
@@ -427,6 +428,16 @@ def test_write_to_file_new_content_trailing_newlines(
         ```
         """
     )
+    norg_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        @code python
+        x = 2 + 2
+        assert x == 4
+        @end
+        """
+    )
     original_content = {
         RESTRUCTUREDTEXT: textwrap.dedent(
             text="""\
@@ -441,6 +452,7 @@ def test_write_to_file_new_content_trailing_newlines(
         MARKDOWN: markdown_content,
         MDX: markdown_content,
         DJOT: markdown_content,
+        NORG: norg_content,
         MYST: myst_content,
         MYST_PERCENT_COMMENTS: myst_content,
     }[markup_language]
@@ -488,6 +500,16 @@ def test_write_to_file_new_content_trailing_newlines(
         ```
         """
     )
+    norg_expected = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        @code python
+        foobar
+
+        @end
+        """
+    )
     expected_content = {
         # There is no code block in reStructuredText that ends with multiple
         # newlines.
@@ -503,6 +525,7 @@ def test_write_to_file_new_content_trailing_newlines(
         MARKDOWN: markdown_expected,
         MDX: markdown_expected,
         DJOT: markdown_expected,
+        NORG: norg_expected,
         MYST: myst_expected,
         MYST_PERCENT_COMMENTS: myst_expected,
     }[markup_language]
@@ -545,6 +568,16 @@ def test_write_to_file_new_content_no_trailing_newlines(
         ```
         """
     )
+    norg_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        @code python
+        x = 2 + 2
+        assert x == 4
+        @end
+        """
+    )
     original_content = {
         RESTRUCTUREDTEXT: textwrap.dedent(
             text="""\
@@ -559,6 +592,7 @@ def test_write_to_file_new_content_no_trailing_newlines(
         MARKDOWN: markdown_content,
         MDX: markdown_content,
         DJOT: markdown_content,
+        NORG: norg_content,
         MYST: myst_content,
         MYST_PERCENT_COMMENTS: myst_content,
     }[markup_language]
@@ -602,6 +636,15 @@ def test_write_to_file_new_content_no_trailing_newlines(
         ```
         """
     )
+    norg_expected = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        @code python
+        foobar
+        @end
+        """
+    )
     expected_content = {
         # There is no code block in reStructuredText that ends with multiple
         # newlines.
@@ -617,6 +660,7 @@ def test_write_to_file_new_content_no_trailing_newlines(
         MARKDOWN: markdown_expected,
         MDX: markdown_expected,
         DJOT: markdown_expected,
+        NORG: norg_expected,
         MYST: myst_expected,
         MYST_PERCENT_COMMENTS: myst_expected,
     }[markup_language]
@@ -635,6 +679,10 @@ def test_write_to_file_indented_existing_block(
     """
     Changes are written to indented code blocks.
     """
+    if markup_language == NORG:
+        # Norg does not support indented code blocks in the same way.
+        return
+
     markdown_content = textwrap.dedent(
         text="""\
         Not in code block
@@ -655,6 +703,16 @@ def test_write_to_file_indented_existing_block(
             ```
         """
     )
+    norg_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+            @code python
+            x = 2 + 2
+            assert x == 4
+            @end
+        """
+    )
     original_content = {
         RESTRUCTUREDTEXT: textwrap.dedent(
             text="""\
@@ -669,6 +727,7 @@ def test_write_to_file_indented_existing_block(
         MARKDOWN: markdown_content,
         MDX: markdown_content,
         DJOT: markdown_content,
+        NORG: norg_content,
         MYST: myst_content,
         MYST_PERCENT_COMMENTS: myst_content,
     }[markup_language]
@@ -710,6 +769,15 @@ def test_write_to_file_indented_existing_block(
             ```{code} python
             foobar
             ```
+        """
+    )
+    norg_expected = textwrap.dedent(
+        text="""\
+        Not in code block
+
+            @code python
+            foobar
+            @end
         """
     )
     expected_content = {
@@ -727,6 +795,7 @@ def test_write_to_file_indented_existing_block(
         MARKDOWN: markdown_expected,
         MDX: markdown_expected,
         DJOT: markdown_expected,
+        NORG: norg_expected,
         MYST: myst_expected,
         MYST_PERCENT_COMMENTS: myst_expected,
     }[markup_language]
@@ -742,6 +811,10 @@ def test_write_to_file_indented_empty_existing_block(
     """
     Changes are written to indented code blocks.
     """
+    if markup_language == NORG:
+        # Norg does not support indented code blocks in the same way.
+        return
+
     markdown_content = textwrap.dedent(
         text="""\
         Not in code block
@@ -762,6 +835,16 @@ def test_write_to_file_indented_empty_existing_block(
         After code block
         """
     )
+    norg_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+                @code python
+                @end
+
+        After code block
+        """
+    )
     original_content = {
         RESTRUCTUREDTEXT: textwrap.dedent(
             text="""\
@@ -775,6 +858,7 @@ def test_write_to_file_indented_empty_existing_block(
         MARKDOWN: markdown_content,
         MDX: markdown_content,
         DJOT: markdown_content,
+        NORG: norg_content,
         MYST: myst_content,
         MYST_PERCENT_COMMENTS: myst_content,
     }[markup_language]
@@ -818,6 +902,17 @@ def test_write_to_file_indented_empty_existing_block(
                 ```{code} python
                 foobar
                 ```
+
+        After code block
+        """
+    )
+    norg_expected = textwrap.dedent(
+        text="""\
+        Not in code block
+
+                @code python
+                foobar
+                @end
 
         After code block
         """
@@ -839,6 +934,7 @@ def test_write_to_file_indented_empty_existing_block(
         MARKDOWN: markdown_expected,
         MDX: markdown_expected,
         DJOT: markdown_expected,
+        NORG: norg_expected,
         MYST: myst_expected,
         MYST_PERCENT_COMMENTS: myst_expected,
     }[markup_language]
@@ -1267,11 +1363,23 @@ def test_empty_code_block_write_content_to_file(
         """,
     )
 
+    norg_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        @code python
+        @end
+
+        After empty code block
+        """,
+    )
+
     content = {
         RESTRUCTUREDTEXT: rst_content,
         MARKDOWN: markdown_content,
         MDX: markdown_content,
         DJOT: markdown_content,
+        NORG: norg_content,
         MYST: myst_content,
         MYST_PERCENT_COMMENTS: myst_content,
     }[markup_language]
@@ -1322,6 +1430,19 @@ def test_empty_code_block_write_content_to_file(
         After empty code block
         """
     )
+    norg_expected = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        @code python
+
+           foobar
+
+        @end
+
+        After empty code block
+        """
+    )
     expected_modified_content = {
         # There is no code block in reStructuredText that ends with multiple
         # newlines.
@@ -1339,6 +1460,7 @@ def test_empty_code_block_write_content_to_file(
         MARKDOWN: markdown_expected,
         MDX: markdown_expected,
         DJOT: markdown_expected,
+        NORG: norg_expected,
         MYST: myst_expected,
         MYST_PERCENT_COMMENTS: myst_expected,
     }[markup_language]
@@ -1362,7 +1484,7 @@ def test_empty_code_block_write_content_to_file_with_options(
     It is possible to write content to an empty code block even if that code
     block has options.
     """
-    if markup_language in (MARKDOWN, DJOT):
+    if markup_language in (MARKDOWN, DJOT, NORG):
         # Markdown-like formats do not support code block options.
         return
 
