@@ -198,3 +198,14 @@ def test_nested_code_markers_in_content() -> None:
     )
 
     assert region.parsed == '# This is @code\nx = "@end"\n'
+
+
+def test_trailing_whitespace_after_end() -> None:
+    """
+    A code block with trailing whitespace after @end is parsed.
+    """
+    # Use a raw string to preserve the trailing spaces after @end
+    text = "@code python\nx = 1\n@end   \n"
+    (region,) = _parse(text=text)
+
+    assert region.parsed == "x = 1\n"
