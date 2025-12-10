@@ -20,6 +20,53 @@ FENCE = re.compile(
 )
 
 
+@beartype
+def _match_closes_existing(current: Match[str], existing: Match[str]) -> bool:
+    """
+    Determine whether the current fence closes the existing block.
+    """
+    current_fence = current.group("fence")
+    existing_fence = existing.group("fence")
+    same_type = current_fence[0] == existing_fence[0]
+    sufficient_length = len(current_fence) >= len(existing_fence)
+    same_prefix = current.group("prefix") == existing.group("prefix")
+    return same_type and sufficient_length and same_prefix
+
+
+@beartype
+def _find_container_end(
+    *,
+    opening: Match[str],
+    document: Document,
+    info_end: int,
+    default_end: int,
+) -> int:
+    """
+    Find where a block closes because its container ends.
+    """
+    prefix = opening.group("prefix")
+    if ">" not in prefix:
+        return default_end
+
+    index = opening.end() + info_end
+    if index >= default_end:
+        return default_end
+
+    text = document.text
+    while index < default_end:
+        line_end = text.find("\n", index, default_end)
+        if line_end == -1:
+            line_end = default_end
+        else:
+            line_end += 1
+        line = text[index:line_end]
+        if not line.startswith(prefix):
+            return index
+        index = line_end
+
+    return default_end
+
+
 class DjotRawFencedCodeBlockLexer:
     """
     A lexer for Djot fenced code blocks that respects block quote boundaries.
@@ -37,53 +84,6 @@ class DjotRawFencedCodeBlockLexer:
         """
         self.info_pattern = info_pattern
         self.mapping = mapping
-
-    @staticmethod
-    def match_closes_existing(
-        current: Match[str], existing: Match[str]
-    ) -> bool:
-        """
-        Determine whether the current fence closes the existing block.
-        """
-        current_fence = current.group("fence")
-        existing_fence = existing.group("fence")
-        same_type = current_fence[0] == existing_fence[0]
-        okay_length = len(current_fence) >= len(existing_fence)
-        same_prefix = current.group("prefix") == existing.group("prefix")
-        return same_type and okay_length and same_prefix
-
-    def _find_container_end(
-        self,
-        *,
-        opening: Match[str],
-        document: Document,
-        info_end: int,
-        default_end: int,
-    ) -> int:
-        """
-        Find where a block closes because its container ends.
-        """
-        prefix = opening.group("prefix")
-        if ">" not in prefix:
-            return default_end
-
-        index = opening.end() + info_end
-        if index >= default_end:
-            return default_end
-
-        text = document.text
-        while index < default_end:
-            line_end = text.find("\n", index, default_end)
-            if line_end == -1:
-                line_end = default_end
-            else:
-                line_end += 1
-            line = text[index:line_end]
-            if not line.startswith(prefix):
-                return index
-            index = line_end
-
-        return default_end
 
     def make_region(
         self,
@@ -105,7 +105,7 @@ class DjotRawFencedCodeBlockLexer:
             return None
 
         # Check container boundaries regardless of whether closing fence exists
-        container_end = self._find_container_end(
+        container_end = _find_container_end(
             opening=opening,
             document=document,
             info_end=info.end(),
@@ -155,9 +155,7 @@ class DjotRawFencedCodeBlockLexer:
                 if candidate is None:
                     break
                 search_index = candidate.end()
-                if self.match_closes_existing(
-                    current=candidate, existing=opening
-                ):
+                if _match_closes_existing(current=candidate, existing=opening):
                     closing = candidate
                     break
 

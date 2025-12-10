@@ -1,8 +1,10 @@
 Djot
 Docusaurus
+EOF
 MDX
 args
 beartype
+blockquote
 dedents
 djot
 env
