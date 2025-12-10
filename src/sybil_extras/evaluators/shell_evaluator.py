@@ -12,13 +12,16 @@ import uuid
 from collections.abc import Mapping, Sequence
 from io import BytesIO
 from pathlib import Path
-from typing import IO, Protocol, runtime_checkable
+from typing import IO, TYPE_CHECKING, Protocol, runtime_checkable
 
 from beartype import beartype
 from sybil import Example
 from sybil.evaluators.python import pad
 
 from sybil_extras.evaluators.code_block_writer import CodeBlockWriterEvaluator
+
+if TYPE_CHECKING:
+    from sybil.typing import Evaluator
 
 
 @beartype
@@ -418,7 +421,7 @@ class ShellCommandEvaluator:
         )
 
         if write_to_file:
-            self._evaluator = CodeBlockWriterEvaluator(
+            self._evaluator: Evaluator = CodeBlockWriterEvaluator(
                 evaluator=runner,
                 namespace_key=namespace_key,
                 encoding=encoding,
