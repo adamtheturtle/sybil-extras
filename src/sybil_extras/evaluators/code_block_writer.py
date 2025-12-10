@@ -229,7 +229,7 @@ class CodeBlockWriterEvaluator:
         If the wrapped evaluator raises an exception, modifications are
         still written before the exception is re-raised. This ensures
         that formatters or auto-fixers can update files even when other
-        checks (like linters) fail.
+        checks (like linter checks) fail.
         """
         exception_to_raise: Exception | None = None
         try:

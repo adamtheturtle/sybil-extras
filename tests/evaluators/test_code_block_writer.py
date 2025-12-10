@@ -141,6 +141,67 @@ def test_writes_modified_content(
     assert source_file.read_text(encoding="utf-8") == expected_content
 
 
+def test_writes_on_evaluator_exception(tmp_path: Path) -> None:
+    """When the wrapped evaluator raises an exception, modifications are still
+    written to the file before the exception is re-raised.
+
+    This is important for formatters that should update files even when
+    subsequent checks fail.
+    """
+    original_content = textwrap.dedent(
+        text="""\
+        ```python
+        original
+        ```
+        """
+    )
+    source_file = tmp_path / "source_file.md"
+    source_file.write_text(data=original_content, encoding="utf-8")
+
+    class FailingEvaluator:
+        """
+        An evaluator that modifies content then raises an exception.
+        """
+
+        def __init__(self, namespace_key: str) -> None:
+            """
+            Initialize the evaluator with a namespace key.
+            """
+            self._namespace_key = namespace_key
+
+        def __call__(self, example: Example) -> None:
+            """
+            Modify content then raise an exception.
+            """
+            example.document.namespace[self._namespace_key] = "modified"
+            msg = "Intentional failure"
+            raise RuntimeError(msg)
+
+    namespace_key = "modified_content"
+    failing_evaluator = FailingEvaluator(namespace_key=namespace_key)
+    writer_evaluator = CodeBlockWriterEvaluator(
+        evaluator=failing_evaluator,
+        namespace_key=namespace_key,
+    )
+
+    parser = MARKDOWN.code_block_parser_cls(
+        language="python",
+        evaluator=writer_evaluator,
+    )
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=source_file)
+    (example,) = document.examples()
+
+    with pytest.raises(expected_exception=RuntimeError, match="Intentional"):
+        example.evaluate()
+
+    # Despite the error, the file should have been updated
+    updated_content = source_file.read_text(encoding="utf-8")
+    assert updated_content != original_content
+    assert "modified" in updated_content
+
+
 def test_empty_code_block_write_content(
     tmp_path: Path,
     markup_language: MarkupLanguage,
