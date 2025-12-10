@@ -231,23 +231,19 @@ class CodeBlockWriterEvaluator:
         that formatters or auto-fixers can update files even when other
         checks (like linter checks) fail.
         """
-        exception_to_raise: Exception | None = None
         try:
             self._evaluator(example)
-        except Exception as exc:  # noqa: BLE001
-            exception_to_raise = exc
-
-        modified_content = example.document.namespace.get(self._namespace_key)
-        if modified_content is not None:
-            # Clear the namespace key to prevent stale data affecting
-            # subsequent examples.
-            del example.document.namespace[self._namespace_key]
-            if modified_content != example.parsed:
-                _overwrite_example_content(
-                    example=example,
-                    new_content=modified_content,
-                    encoding=self._encoding,
-                )
-
-        if exception_to_raise is not None:
-            raise exception_to_raise
+        finally:
+            modified_content = example.document.namespace.get(
+                self._namespace_key
+            )
+            if modified_content is not None:
+                # Clear the namespace key to prevent stale data affecting
+                # subsequent examples.
+                del example.document.namespace[self._namespace_key]
+                if modified_content != example.parsed:
+                    _overwrite_example_content(
+                        example=example,
+                        new_content=modified_content,
+                        encoding=self._encoding,
+                    )
