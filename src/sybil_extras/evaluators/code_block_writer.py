@@ -17,44 +17,6 @@ from sybil.typing import Evaluator
 
 
 @beartype
-def _count_leading_newlines(s: str) -> int:
-    """Count the number of leading newlines in a string.
-
-    Args:
-        s: The input string.
-
-    Returns:
-        The number of leading newlines.
-    """
-    count = 0
-    non_newline_found = False
-    for char in s:
-        if char == "\n" and not non_newline_found:
-            count += 1
-        else:
-            non_newline_found = True
-    return count
-
-
-@beartype
-def _lstrip_newlines(input_string: str, number_of_newlines: int) -> str:
-    """Removes a specified number of newlines from the start of the string.
-
-    Args:
-        input_string: The input string to process.
-        number_of_newlines: The number of newlines to remove from the
-            start.
-
-    Returns:
-        The string with the specified number of leading newlines removed.
-        If fewer newlines exist, removes all of them.
-    """
-    num_leading_newlines = _count_leading_newlines(s=input_string)
-    lines_to_remove = min(num_leading_newlines, number_of_newlines)
-    return input_string[lines_to_remove:]
-
-
-@beartype
 def _get_within_code_block_indentation_prefix(example: Example) -> str:
     """
     Get the indentation of the parsed code in the example.
@@ -176,7 +138,7 @@ def _get_modified_region_text(
 
 
 @beartype
-def overwrite_example_content(
+def _overwrite_example_content(
     *,
     example: Example,
     new_content: str,
@@ -226,26 +188,6 @@ def overwrite_example_content(
 
 
 @beartype
-def lstrip_padding(content: str, padding_lines: int) -> str:
-    """Remove leading newlines that were added as padding.
-
-    When content is padded with newlines (e.g., for line number alignment),
-    this function removes the specified number of leading newlines before
-    writing the content back to the source document.
-
-    Args:
-        content: The content to strip leading newlines from.
-        padding_lines: The number of leading newlines to remove.
-
-    Returns:
-        The content with the specified number of leading newlines removed.
-    """
-    return _lstrip_newlines(
-        input_string=content, number_of_newlines=padding_lines
-    )
-
-
-@beartype
 class CodeBlockWriterEvaluator:
     """An evaluator wrapper that writes modified content back to code blocks.
 
@@ -288,7 +230,7 @@ class CodeBlockWriterEvaluator:
 
         modified_content = example.document.namespace.get(self._namespace_key)
         if modified_content is not None and modified_content != example.parsed:
-            overwrite_example_content(
+            _overwrite_example_content(
                 example=example,
                 new_content=modified_content,
                 encoding=self._encoding,

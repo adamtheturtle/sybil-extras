@@ -18,10 +18,42 @@ from beartype import beartype
 from sybil import Example
 from sybil.evaluators.python import pad
 
-from sybil_extras.evaluators.code_block_writer import (
-    lstrip_padding,
-    overwrite_example_content,
-)
+from sybil_extras.evaluators.code_block_writer import CodeBlockWriterEvaluator
+
+
+@beartype
+def _count_leading_newlines(s: str) -> int:
+    """
+    Count the number of leading newlines in a string.
+    """
+    count = 0
+    non_newline_found = False
+    for char in s:
+        if char == "\n" and not non_newline_found:
+            count += 1
+        else:
+            non_newline_found = True
+    return count
+
+
+@beartype
+def _lstrip_newlines(input_string: str, number_of_newlines: int) -> str:
+    """
+    Removes a specified number of newlines from the start of the string.
+    """
+    num_leading_newlines = _count_leading_newlines(s=input_string)
+    lines_to_remove = min(num_leading_newlines, number_of_newlines)
+    return input_string[lines_to_remove:]
+
+
+@beartype
+def _lstrip_padding(content: str, padding_lines: int) -> str:
+    """
+    Remove leading newlines that were added as padding.
+    """
+    return _lstrip_newlines(
+        input_string=content, number_of_newlines=padding_lines
+    )
 
 
 @beartype
@@ -170,10 +202,13 @@ def _create_temp_file_path_for_example(
     return parent / f"{prefix}_{uuid.uuid4().hex[:4]}_{suffix}"
 
 
+_SHELL_EVALUATOR_NAMESPACE_KEY = "_shell_evaluator_modified_content"
+
+
 @beartype
-class ShellCommandEvaluator:
+class _ShellCommandRunner:
     """
-    Run a shell command on the example file.
+    Run a shell command on an example file (internal implementation).
     """
 
     def __init__(
@@ -184,49 +219,26 @@ class ShellCommandEvaluator:
         tempfile_suffixes: Sequence[str] = (),
         tempfile_name_prefix: str = "",
         newline: str | None = None,
-        # For some commands, padding is good: e.g. we want to see the error
-        # reported on the correct line for `mypy`. For others, padding is bad:
-        # e.g. `ruff format` expects the file to be formatted without a bunch
-        # of newlines at the start.
         pad_file: bool,
         write_to_file: bool,
         use_pty: bool,
         encoding: str | None = None,
         on_modify: _ExampleModified | None = None,
     ) -> None:
-        """Initialize the evaluator.
+        """Initialize the shell command runner.
 
         Args:
             args: The shell command to run.
             env: The environment variables to use when running the shell
                 command.
             tempfile_suffixes: The suffixes to use for the temporary file.
-                This is useful for commands that expect a specific file suffix.
-                For example `pre-commit` hooks which expect `.py` files.
             tempfile_name_prefix: The prefix to use for the temporary file.
-                This is useful for distinguishing files created by a user of
-                this evaluator from other files, e.g. for ignoring in linter
-                configurations.
             newline: The newline string to use for the temporary file.
-                If ``None``, use the system default.
             pad_file: Whether to pad the file with newlines at the start.
-                This is useful for error messages that report the line number.
-                However, this is detrimental to commands that expect the file
-                to not have a bunch of newlines at the start, such as
-                formatters.
-            write_to_file: Whether to write changes to the file. This is useful
-                for formatters.
+            write_to_file: Whether to write changes to the file.
             use_pty: Whether to use a pseudo-terminal for running commands.
-                This can be useful e.g. to get color output, but can also break
-                in some environments. Not supported on Windows.
-            encoding: The encoding to use reading documents which include a
-                given example, and for the temporary file. If ``None``,
-                use the system default.
-            on_modify: A callback to run when the example is modified by the
-                evaluator.
-
-        Raises:
-            ValueError: If pseudo-terminal is requested on Windows.
+            encoding: The encoding to use for the temporary file.
+            on_modify: A callback to run when the example is modified.
         """
         self._args = args
         self._env = env
@@ -312,14 +324,12 @@ class ShellCommandEvaluator:
             # While it is possible that a formatter added leading newlines,
             # we assume that this is not the case, and we remove any leading
             # newlines from the replacement which were added by the padding.
-            new_region_content = lstrip_padding(
+            new_region_content = _lstrip_padding(
                 content=temp_file_content,
                 padding_lines=padding_line,
             )
-            overwrite_example_content(
-                example=example,
-                new_content=new_region_content,
-                encoding=self._encoding,
+            example.document.namespace[_SHELL_EVALUATOR_NAMESPACE_KEY] = (
+                new_region_content
             )
 
         if result.returncode != 0:
@@ -329,3 +339,90 @@ class ShellCommandEvaluator:
                 output=result.stdout,
                 stderr=result.stderr,
             )
+
+
+@beartype
+class ShellCommandEvaluator:
+    """
+    Run a shell command on the example file.
+    """
+
+    def __init__(
+        self,
+        *,
+        args: Sequence[str | Path],
+        env: Mapping[str, str] | None = None,
+        tempfile_suffixes: Sequence[str] = (),
+        tempfile_name_prefix: str = "",
+        newline: str | None = None,
+        # For some commands, padding is good: e.g. we want to see the error
+        # reported on the correct line for `mypy`. For others, padding is bad:
+        # e.g. `ruff format` expects the file to be formatted without a bunch
+        # of newlines at the start.
+        pad_file: bool,
+        write_to_file: bool,
+        use_pty: bool,
+        encoding: str | None = None,
+        on_modify: _ExampleModified | None = None,
+    ) -> None:
+        """Initialize the evaluator.
+
+        Args:
+            args: The shell command to run.
+            env: The environment variables to use when running the shell
+                command.
+            tempfile_suffixes: The suffixes to use for the temporary file.
+                This is useful for commands that expect a specific file suffix.
+                For example `pre-commit` hooks which expect `.py` files.
+            tempfile_name_prefix: The prefix to use for the temporary file.
+                This is useful for distinguishing files created by a user of
+                this evaluator from other files, e.g. for ignoring in linter
+                configurations.
+            newline: The newline string to use for the temporary file.
+                If ``None``, use the system default.
+            pad_file: Whether to pad the file with newlines at the start.
+                This is useful for error messages that report the line number.
+                However, this is detrimental to commands that expect the file
+                to not have a bunch of newlines at the start, such as
+                formatters.
+            write_to_file: Whether to write changes to the file. This is useful
+                for formatters.
+            use_pty: Whether to use a pseudo-terminal for running commands.
+                This can be useful e.g. to get color output, but can also break
+                in some environments. Not supported on Windows.
+            encoding: The encoding to use reading documents which include a
+                given example, and for the temporary file. If ``None``,
+                use the system default.
+            on_modify: A callback to run when the example is modified by the
+                evaluator.
+
+        Raises:
+            ValueError: If pseudo-terminal is requested on Windows.
+        """
+        runner = _ShellCommandRunner(
+            args=args,
+            env=env,
+            tempfile_suffixes=tempfile_suffixes,
+            tempfile_name_prefix=tempfile_name_prefix,
+            newline=newline,
+            pad_file=pad_file,
+            write_to_file=write_to_file,
+            use_pty=use_pty,
+            encoding=encoding,
+            on_modify=on_modify,
+        )
+
+        if write_to_file:
+            self._evaluator = CodeBlockWriterEvaluator(
+                evaluator=runner,
+                namespace_key=_SHELL_EVALUATOR_NAMESPACE_KEY,
+                encoding=encoding,
+            )
+        else:
+            self._evaluator = runner
+
+    def __call__(self, example: Example) -> None:
+        """
+        Run the shell command on the example file.
+        """
+        self._evaluator(example)
