@@ -132,6 +132,43 @@ It is useful for testing and debugging parsers.
 
     pytest_collect_file = sybil.pytest()
 
+CodeBlockWriterEvaluator
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``CodeBlockWriterEvaluator`` wraps another evaluator and writes any modifications back to the source document.
+This is useful for building evaluators that transform code blocks, such as formatters or auto-fixers.
+
+The wrapped evaluator should store the modified content in ``example.document.namespace[namespace_key]`` for it to be written back.
+
+.. code-block:: python
+
+    """Use CodeBlockWriterEvaluator to write modifications back to code blocks."""
+
+    from sybil import Example, Sybil
+    from sybil.parsers.rest.codeblock import CodeBlockParser
+
+    from sybil_extras.evaluators.code_block_writer import CodeBlockWriterEvaluator
+
+
+    def formatting_evaluator(example: Example) -> None:
+        """Format the code and store the result for writing back."""
+        formatted_code = example.parsed.upper()
+        example.document.namespace["modified_content"] = formatted_code
+
+
+    writer_evaluator = CodeBlockWriterEvaluator(
+        evaluator=formatting_evaluator,
+        # The key in example.document.namespace where modified content is stored.
+        # Defaults to "modified_content".
+        namespace_key="modified_content",
+        # Optional encoding for writing files.
+        encoding=None,
+    )
+    parser = CodeBlockParser(language="python", evaluator=writer_evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    pytest_collect_file = sybil.pytest()
+
 Parsers
 -------
 
