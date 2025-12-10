@@ -253,7 +253,7 @@ def _get_within_code_block_indentation_prefix(example: Example) -> str:
         pattern=r"^(?P<prefix>[ \t]*(?:>[ \t]*)*)(?P<fence>`{3,})",
         flags=re.MULTILINE,
     )
-    fence_match = fence_pattern.match(region_text)
+    fence_match = fence_pattern.match(string=region_text)
     container_prefix = fence_match.group("prefix") if fence_match else ""
 
     region_lines = region_text.splitlines()
