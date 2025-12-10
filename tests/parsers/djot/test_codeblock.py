@@ -52,3 +52,24 @@ def test_code_block_in_blockquote_without_closing_fence() -> None:
     )
 
     assert region.parsed == "x = 1\ny = 2\n"
+
+
+def test_code_block_implicitly_closed_by_container_end() -> None:
+    """A code block without a closing fence is closed when its container ends.
+
+    This follows the djot spec: "A code block ... ends with ... the end of the
+    document or enclosing block, if no such line is encountered."
+    """
+    (region,) = _parse(
+        text=dedent(
+            text="""\
+            > ```python
+            > code in a
+            > block quote
+
+            Paragraph.
+            """,
+        )
+    )
+
+    assert region.parsed == "code in a\nblock quote\n"

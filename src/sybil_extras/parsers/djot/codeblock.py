@@ -2,27 +2,20 @@
 Code block parsing for Djot.
 """
 
-from __future__ import annotations
-
 import re
+from collections.abc import Iterable, Sequence
 from re import Match, Pattern
-from typing import TYPE_CHECKING
 
 from beartype import beartype
 from sybil import Document, Region
 from sybil.parsers.abstract import AbstractCodeBlockParser
-from sybil.parsers.abstract.lexers import strip_prefix
+from sybil.parsers.abstract.lexers import LexerCollection, strip_prefix
 from sybil.parsers.markdown.lexers import DirectiveInHTMLCommentLexer
 from sybil.region import Lexeme
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
-
-    from sybil.parsers.abstract.lexers import LexerCollection
-    from sybil.typing import Evaluator, Lexer
+from sybil.typing import Evaluator, Lexer
 
 FENCE = re.compile(
-    pattern=r"^(?P<prefix>[ \t]*(?:>[ \t]*)*)(?P<fence>`{3,}|~{3,})",
+    pattern=r"^(?P<prefix>[ \t]*(?:>[ \t]*)*)(?P<fence>`{3,})",
     flags=re.MULTILINE,
 )
 
