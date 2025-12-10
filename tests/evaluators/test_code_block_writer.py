@@ -8,6 +8,7 @@ from pathlib import Path
 from sybil import Example, Sybil
 
 from sybil_extras.evaluators.code_block_writer import CodeBlockWriterEvaluator
+from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.languages import (
     DJOT,
     MARKDOWN,
@@ -198,15 +199,7 @@ class TestCodeBlockWriterEvaluator:
         source_file.write_text(data=content, encoding="utf-8")
         original_mtime = source_file.stat().st_mtime
 
-        def no_modify_evaluator(example: Example) -> None:
-            """
-            Do not store modified content.
-            """
-            del example
-
-        writer_evaluator = CodeBlockWriterEvaluator(
-            evaluator=no_modify_evaluator
-        )
+        writer_evaluator = CodeBlockWriterEvaluator(evaluator=NoOpEvaluator())
         parser = MARKDOWN.code_block_parser_cls(
             language="python",
             evaluator=writer_evaluator,

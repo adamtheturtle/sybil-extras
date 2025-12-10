@@ -169,37 +169,6 @@ The wrapped evaluator should store the modified content in ``example.document.na
 
     pytest_collect_file = sybil.pytest()
 
-overwrite_example_content
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The ``overwrite_example_content`` function updates both the in-memory document and writes changes to disk.
-It handles the complexities of different markup formats (Markdown, MyST, Norg, reStructuredText) and adjusts the positions of subsequent regions in the document.
-
-.. code-block:: python
-
-    """Use overwrite_example_content to write new content to a code block."""
-
-    from pathlib import Path
-
-    from sybil import Sybil
-    from sybil.parsers.rest.codeblock import CodeBlockParser
-
-    from sybil_extras.evaluators.code_block_writer import overwrite_example_content
-    from sybil_extras.evaluators.no_op import NoOpEvaluator
-
-    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
-    sybil = Sybil(parsers=[parser])
-    document = sybil.parse(path=Path("README.rst"))
-
-    for example in document.examples():
-        new_content = example.parsed.upper()
-        overwrite_example_content(
-            example=example,
-            new_content=new_content,
-            # Optional encoding for writing the file.
-            encoding=None,
-        )
-
 Parsers
 -------
 

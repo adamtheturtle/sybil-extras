@@ -205,9 +205,6 @@ def _create_temp_file_path_for_example(
     return parent / f"{prefix}_{uuid.uuid4().hex[:4]}_{suffix}"
 
 
-_SHELL_EVALUATOR_NAMESPACE_KEY = "_shell_evaluator_modified_content"
-
-
 @beartype
 class _ShellCommandRunner:
     """
@@ -227,6 +224,7 @@ class _ShellCommandRunner:
         use_pty: bool,
         encoding: str | None = None,
         on_modify: _ExampleModified | None = None,
+        namespace_key: str = "",
     ) -> None:
         """Initialize the shell command runner.
 
@@ -242,6 +240,7 @@ class _ShellCommandRunner:
             use_pty: Whether to use a pseudo-terminal for running commands.
             encoding: The encoding to use for the temporary file.
             on_modify: A callback to run when the example is modified.
+            namespace_key: The key to store modified content in the namespace.
         """
         self._args = args
         self._env = env
@@ -253,6 +252,7 @@ class _ShellCommandRunner:
         self._use_pty = use_pty
         self._encoding = encoding
         self._on_modify = on_modify
+        self._namespace_key = namespace_key
 
     def __call__(self, example: Example) -> None:
         """
@@ -331,7 +331,7 @@ class _ShellCommandRunner:
                 input_string=temp_file_content,
                 number_of_newlines=padding_line,
             )
-            example.document.namespace[_SHELL_EVALUATOR_NAMESPACE_KEY] = (
+            example.document.namespace[self._namespace_key] = (
                 new_region_content
             )
 
@@ -402,6 +402,7 @@ class ShellCommandEvaluator:
         Raises:
             ValueError: If pseudo-terminal is requested on Windows.
         """
+        namespace_key = "_shell_evaluator_modified_content"
         runner = _ShellCommandRunner(
             args=args,
             env=env,
@@ -413,12 +414,13 @@ class ShellCommandEvaluator:
             use_pty=use_pty,
             encoding=encoding,
             on_modify=on_modify,
+            namespace_key=namespace_key,
         )
 
         if write_to_file:
             self._evaluator = CodeBlockWriterEvaluator(
                 evaluator=runner,
-                namespace_key=_SHELL_EVALUATOR_NAMESPACE_KEY,
+                namespace_key=namespace_key,
                 encoding=encoding,
             )
         else:
