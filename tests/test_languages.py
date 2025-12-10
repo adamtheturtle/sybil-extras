@@ -13,10 +13,12 @@ from sybil_extras.evaluators.block_accumulator import (
 )
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.languages import (
+    DJOT,
     MARKDOWN,
     MDX,
     MYST,
     MYST_PERCENT_COMMENTS,
+    NORG,
     RESTRUCTUREDTEXT,
     MarkupLanguage,
 )
@@ -34,6 +36,8 @@ from sybil_extras.languages import (
         pytest.param(RESTRUCTUREDTEXT, 3, id="rest-code-block"),
         pytest.param(MARKDOWN, 4, id="markdown-code-block"),
         pytest.param(MDX, 5, id="mdx-code-block"),
+        pytest.param(DJOT, 6, id="djot-code-block"),
+        pytest.param(NORG, 7, id="norg-code-block"),
     ],
 )
 def test_code_block_parser(
@@ -77,6 +81,8 @@ def test_code_block_parser(
         pytest.param(RESTRUCTUREDTEXT, 3, id="rest-skip"),
         pytest.param(MARKDOWN, 4, id="markdown-skip"),
         pytest.param(MDX, 5, id="mdx-skip"),
+        pytest.param(DJOT, 6, id="djot-skip"),
+        pytest.param(NORG, 7, id="norg-skip"),
     ],
 )
 def test_skip_parser(
@@ -124,6 +130,8 @@ def test_skip_parser(
         pytest.param(RESTRUCTUREDTEXT, id="rest-empty"),
         pytest.param(MARKDOWN, id="markdown-empty"),
         pytest.param(MDX, id="mdx-empty"),
+        pytest.param(DJOT, id="djot-empty"),
+        pytest.param(NORG, id="norg-empty"),
     ],
 )
 def test_code_block_empty(language: MarkupLanguage) -> None:
@@ -145,6 +153,8 @@ def test_code_block_empty(language: MarkupLanguage) -> None:
         pytest.param(RESTRUCTUREDTEXT, id="rest-grouped"),
         pytest.param(MARKDOWN, id="markdown-grouped"),
         pytest.param(MDX, id="mdx-grouped"),
+        pytest.param(DJOT, id="djot-grouped"),
+        pytest.param(NORG, id="norg-grouped"),
     ],
 )
 def test_group_parser(
@@ -234,7 +244,7 @@ def test_markdown_no_sphinx_jinja() -> None:
     """
     Test that Markdown-like formats do not have a sphinx-jinja parser.
     """
-    for language in (MARKDOWN, MDX):
+    for language in (MARKDOWN, MDX, DJOT, NORG):
         assert language.sphinx_jinja_parser_cls is None
         assert language.jinja_block_builder is None
 
@@ -248,6 +258,8 @@ def test_language_names() -> None:
     assert RESTRUCTUREDTEXT.name == "reStructuredText"
     assert MARKDOWN.name == "Markdown"
     assert MDX.name == "MDX"
+    assert DJOT.name == "Djot"
+    assert NORG.name == "Norg"
 
 
 def test_mdx_code_block_attributes(tmp_path: Path) -> None:

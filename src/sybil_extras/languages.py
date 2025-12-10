@@ -30,6 +30,10 @@ import sybil_extras.parsers.myst.custom_directive_skip
 import sybil_extras.parsers.myst.group_all
 import sybil_extras.parsers.myst.grouped_source
 import sybil_extras.parsers.myst.sphinx_jinja2
+import sybil_extras.parsers.norg.codeblock
+import sybil_extras.parsers.norg.custom_directive_skip
+import sybil_extras.parsers.norg.group_all
+import sybil_extras.parsers.norg.grouped_source
 import sybil_extras.parsers.rest.custom_directive_skip
 import sybil_extras.parsers.rest.group_all
 import sybil_extras.parsers.rest.grouped_source
@@ -262,6 +266,28 @@ def _djot_directive(
 
 
 @beartype
+def _norg_code_block(code: str, language: str) -> str:
+    """
+    Build a Norg verbatim ranged tag code block.
+    """
+    normalized = _normalize_code(content=code)
+    lang_param = f" {language}" if language else ""
+    return f"@code{lang_param}\n{normalized}@end"
+
+
+@beartype
+def _norg_directive(
+    directive: str,
+    argument: str | None = None,
+) -> str:
+    """
+    Render a directive embedded in a norg infirm tag.
+    """
+    suffix = f": {argument}" if argument is not None else ""
+    return f".{directive}{suffix}"
+
+
+@beartype
 def _myst_jinja_block(body: str) -> str:
     """
     Render a sphinx-jinja block for MyST.
@@ -411,6 +437,19 @@ DJOT = MarkupLanguage(
     jinja_block_builder=None,
 )
 
+NORG = MarkupLanguage(
+    name="Norg",
+    markup_separator="\n",
+    skip_parser_cls=sybil_extras.parsers.norg.custom_directive_skip.CustomDirectiveSkipParser,
+    code_block_parser_cls=sybil_extras.parsers.norg.codeblock.CodeBlockParser,
+    group_parser_cls=sybil_extras.parsers.norg.grouped_source.GroupedSourceParser,
+    group_all_parser_cls=sybil_extras.parsers.norg.group_all.GroupAllParser,
+    sphinx_jinja_parser_cls=None,
+    code_block_builder=_norg_code_block,
+    directive_builder=_norg_directive,
+    jinja_block_builder=None,
+)
+
 ALL_LANGUAGES: tuple[MarkupLanguage, ...] = (
     MYST,
     MYST_PERCENT_COMMENTS,
@@ -418,4 +457,5 @@ ALL_LANGUAGES: tuple[MarkupLanguage, ...] = (
     MARKDOWN,
     MDX,
     DJOT,
+    NORG,
 )

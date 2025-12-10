@@ -4,6 +4,8 @@ Changelog
 Next
 ----
 
+* Add Norg (Neorg) markup language support with code blocks, custom skips, and grouping helpers.
+
 2025.12.10
 ----------
 
