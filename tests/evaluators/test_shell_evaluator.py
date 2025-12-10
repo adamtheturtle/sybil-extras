@@ -1718,3 +1718,75 @@ def test_custom_on_modify_with_modification(
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
+
+
+def test_write_to_djot_quoted_code_block(
+    *,
+    use_pty_option: bool,
+    tmp_path: Path,
+) -> None:
+    """Changes are written to a Djot code block inside a block quote.
+
+    Djot supports two types of code blocks in block quotes:
+    1. With explicit closing fence (```): Standard fenced code block
+    2. Without closing fence: Code block implicitly closed by container end
+
+    Once https://github.com/simplistix/sybil/issues/160 is done, we can expand
+    this test to cover Markdown / MDX / MyST.
+    """
+    original_content = textwrap.dedent(
+        text="""\
+        Some text before
+
+        > ```python
+        > x = 2 + 2
+        > assert x == 4
+        > ```
+
+        Text between blocks
+
+        > ```python
+        > a = 1 + 1
+        > assert a == 2
+
+        Text after
+        """
+    )
+    djot_file = tmp_path / "test_document.example.djot"
+    djot_file.write_text(data=original_content, encoding="utf-8")
+
+    file_with_new_content = tmp_path / "new_file.txt"
+    new_content = "y = 5"
+    file_with_new_content.write_text(data=new_content, encoding="utf-8")
+    evaluator = ShellCommandEvaluator(
+        args=["cp", file_with_new_content],
+        pad_file=False,
+        write_to_file=True,
+        use_pty=use_pty_option,
+    )
+
+    parser = DJOT.code_block_parser_cls(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=djot_file)
+    (first_example, second_example) = document.examples()
+    first_example.evaluate()
+    second_example.evaluate()
+
+    expected_content = textwrap.dedent(
+        text="""\
+        Some text before
+
+        > ```python
+        > y = 5
+        > ```
+
+        Text between blocks
+
+        > ```python
+        > y = 5
+
+        Text after
+        """
+    )
+    actual_content = djot_file.read_text(encoding="utf-8")
+    assert actual_content == expected_content
