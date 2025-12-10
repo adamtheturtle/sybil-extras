@@ -1727,6 +1727,10 @@ def test_write_to_djot_quoted_code_block(
 ) -> None:
     """Changes are written to a Djot code block inside a block quote.
 
+    Djot supports two types of code blocks in block quotes:
+    1. With explicit closing fence (```): Standard fenced code block
+    2. Without closing fence: Code block implicitly closed by container end
+
     Once https://github.com/simplistix/sybil/issues/160 is done, we can expand
     this test to cover Markdown / MDX / MyST.
     """
@@ -1738,6 +1742,12 @@ def test_write_to_djot_quoted_code_block(
         > x = 2 + 2
         > assert x == 4
         > ```
+
+        Text between blocks
+
+        > ```python
+        > a = 1 + 1
+        > assert a == 2
 
         Text after
         """
@@ -1758,8 +1768,9 @@ def test_write_to_djot_quoted_code_block(
     parser = DJOT.code_block_parser_cls(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
     document = sybil.parse(path=djot_file)
-    (example,) = document.examples()
-    example.evaluate()
+    (first_example, second_example) = document.examples()
+    first_example.evaluate()
+    second_example.evaluate()
 
     expected_content = textwrap.dedent(
         text="""\
@@ -1768,6 +1779,11 @@ def test_write_to_djot_quoted_code_block(
         > ```python
         > y = 5
         > ```
+
+        Text between blocks
+
+        > ```python
+        > y = 5
 
         Text after
         """
