@@ -49,29 +49,6 @@ def fixture_use_pty_option(
     return use_pty
 
 
-@pytest.fixture(name="djot_quoted_file")
-def fixture_djot_quoted_file(tmp_path: Path) -> Path:
-    """
-    Fixture to create a temporary Djot file with a quoted code block.
-    """
-    # Djot code block inside a block quote
-    content = textwrap.dedent(
-        text="""\
-        Some text before
-
-        > ```python
-        > x = 2 + 2
-        > assert x == 4
-        > ```
-
-        Text after
-        """
-    )
-    test_document = tmp_path / "test_document.example.djot"
-    test_document.write_text(data=content, encoding="utf-8")
-    return test_document
-
-
 @pytest.fixture(name="rst_file")
 def fixture_rst_file(tmp_path: Path) -> Path:
     """
@@ -1745,15 +1722,29 @@ def test_custom_on_modify_with_modification(
 
 def test_write_to_djot_quoted_code_block(
     *,
-    djot_quoted_file: Path,
     use_pty_option: bool,
     tmp_path: Path,
 ) -> None:
     """Changes are written to a Djot code block inside a block quote.
 
-    This is a test for
-    https://github.com/adamtheturtle/doccmd/issues/648.
+    Once https://github.com/simplistix/sybil/issues/160 is done, we can expand
+    this test to cover Markdown / MDX / MyST.
     """
+    original_content = textwrap.dedent(
+        text="""\
+        Some text before
+
+        > ```python
+        > x = 2 + 2
+        > assert x == 4
+        > ```
+
+        Text after
+        """
+    )
+    djot_file = tmp_path / "test_document.example.djot"
+    djot_file.write_text(data=original_content, encoding="utf-8")
+
     file_with_new_content = tmp_path / "new_file.txt"
     new_content = "y = 5"
     file_with_new_content.write_text(data=new_content, encoding="utf-8")
@@ -1766,7 +1757,7 @@ def test_write_to_djot_quoted_code_block(
 
     parser = DJOT.code_block_parser_cls(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
-    document = sybil.parse(path=djot_quoted_file)
+    document = sybil.parse(path=djot_file)
     (example,) = document.examples()
     example.evaluate()
 
@@ -1781,5 +1772,5 @@ def test_write_to_djot_quoted_code_block(
         Text after
         """
     )
-    actual_content = djot_quoted_file.read_text(encoding="utf-8")
+    actual_content = djot_file.read_text(encoding="utf-8")
     assert actual_content == expected_content
