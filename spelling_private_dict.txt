@@ -5,6 +5,7 @@ MDX
 args
 beartype
 blockquote
+blockquotes
 dedents
 djot
 env
