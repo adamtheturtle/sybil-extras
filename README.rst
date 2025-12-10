@@ -429,6 +429,37 @@ This extracts the source, arguments and options from ``.. jinja::`` directive bl
     for item in document.examples():
         item.evaluate()
 
+Djot code block parser
+^^^^^^^^^^^^^^^^^^^^^^
+
+The djot ``CodeBlockParser`` correctly handles code blocks that are implicitly
+closed when their parent container ends, following the
+`djot specification <https://htmlpreview.github.io/?https://github.com/jgm/djot/blob/master/doc/syntax.html#code-block>`_.
+
+For example, a code block inside a blockquote without a closing fence:
+
+.. code-block:: text
+
+   > ```python
+   > code in a
+   > block quote
+
+   Paragraph.
+
+.. code-block:: python
+
+    """Use the djot CodeBlockParser for djot documents."""
+
+    from sybil import Sybil
+
+    from sybil_extras.evaluators.no_op import NoOpEvaluator
+    from sybil_extras.parsers.djot.codeblock import CodeBlockParser
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+
+    pytest_collect_file = sybil.pytest()
+
 Djot directive lexer
 ^^^^^^^^^^^^^^^^^^^^
 
