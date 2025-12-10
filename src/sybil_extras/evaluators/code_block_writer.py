@@ -224,10 +224,18 @@ class CodeBlockWriterEvaluator:
         self._encoding = encoding
 
     def __call__(self, example: Example) -> None:
+        """Run the wrapped evaluator and write any modifications back.
+
+        If the wrapped evaluator raises an exception, modifications are
+        still written before the exception is re-raised. This ensures
+        that formatters or auto-fixers can update files even when other
+        checks (like linters) fail.
         """
-        Run the wrapped evaluator and write any modifications back.
-        """
-        self._evaluator(example)
+        exception_to_raise: Exception | None = None
+        try:
+            self._evaluator(example)
+        except Exception as exc:  # noqa: BLE001
+            exception_to_raise = exc
 
         modified_content = example.document.namespace.get(self._namespace_key)
         if modified_content is not None:
@@ -240,3 +248,6 @@ class CodeBlockWriterEvaluator:
                     new_content=modified_content,
                     encoding=self._encoding,
                 )
+
+        if exception_to_raise is not None:
+            raise exception_to_raise

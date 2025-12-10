@@ -1077,3 +1077,47 @@ def test_custom_on_modify_with_modification(
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
+
+
+def test_write_to_file_on_command_failure(
+    *,
+    rst_file: Path,
+    use_pty_option: bool,
+    tmp_path: Path,
+) -> None:
+    """When write_to_file is True and the command fails, modifications are
+    still written to the file before the error is raised.
+
+    This is important for formatters that should update files even when
+    subsequent checks fail.
+    """
+    original_content = rst_file.read_text(encoding="utf-8")
+    file_with_new_content = tmp_path / "new_file.txt"
+    new_content = "modified_content"
+    file_with_new_content.write_text(data=new_content, encoding="utf-8")
+
+    # Command that modifies the file then exits with non-zero status
+    evaluator = ShellCommandEvaluator(
+        args=[
+            "sh",
+            "-c",
+            f'cp {file_with_new_content} "$1" && exit 1',
+            "_",
+        ],
+        pad_file=False,
+        write_to_file=True,
+        use_pty=use_pty_option,
+    )
+
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+
+    with pytest.raises(expected_exception=subprocess.CalledProcessError):
+        example.evaluate()
+
+    # Despite the error, the file should have been updated
+    updated_content = rst_file.read_text(encoding="utf-8")
+    assert updated_content != original_content
+    assert "modified_content" in updated_content
