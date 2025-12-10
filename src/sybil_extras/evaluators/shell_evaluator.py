@@ -5,6 +5,7 @@ An evaluator for running shell commands on example files.
 import contextlib
 import os
 import platform
+import re
 import subprocess
 import sys
 import textwrap
@@ -245,19 +246,46 @@ def _get_within_code_block_indentation_prefix(example: Example) -> str:
     region_text = example.document.text[
         example.region.start : example.region.end
     ]
+
+    # Extract blockquote/container prefix from the region text
+    # This handles Djot/Markdown blockquotes (lines starting with "> ")
+    fence_pattern = re.compile(
+        pattern=r"^(?P<prefix>[ \t]*(?:>[ \t]*)*)(?P<fence>`{3,})",
+        flags=re.MULTILINE,
+    )
+    fence_match = fence_pattern.match(region_text)
+    container_prefix = fence_match.group("prefix") if fence_match else ""
+
     region_lines = region_text.splitlines()
     region_lines_matching_first_line = [
-        line for line in region_lines if line.lstrip() == first_line.lstrip()
+        line
+        for line in region_lines
+        if line.removeprefix(container_prefix).lstrip() == first_line.lstrip()
     ]
     first_region_line_matching_first_line = region_lines_matching_first_line[0]
 
-    left_padding_region_line = len(
-        first_region_line_matching_first_line
-    ) - len(first_region_line_matching_first_line.lstrip())
+    # After removing the container prefix, calculate any additional indentation
+    line_without_container = (
+        first_region_line_matching_first_line.removeprefix(container_prefix)
+    )
+    left_padding_region_line = len(line_without_container) - len(
+        line_without_container.lstrip()
+    )
     left_padding_parsed_line = len(first_line) - len(first_line.lstrip())
-    indentation_length = left_padding_region_line - left_padding_parsed_line
-    indentation_character = first_region_line_matching_first_line[0]
-    return indentation_character * indentation_length
+    additional_indentation_length = (
+        left_padding_region_line - left_padding_parsed_line
+    )
+
+    # Build the full prefix: container prefix + additional indentation
+    if additional_indentation_length > 0 and line_without_container:
+        indentation_character = line_without_container[0]
+        additional_indentation = (
+            indentation_character * additional_indentation_length
+        )
+    else:
+        additional_indentation = ""
+
+    return container_prefix + additional_indentation
 
 
 @beartype
