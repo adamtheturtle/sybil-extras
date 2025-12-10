@@ -9,7 +9,7 @@ from re import Match, Pattern
 from beartype import beartype
 from sybil import Document, Region
 from sybil.parsers.abstract import AbstractCodeBlockParser
-from sybil.parsers.abstract.lexers import LexerCollection, strip_prefix
+from sybil.parsers.abstract.lexers import strip_prefix
 from sybil.parsers.markdown.lexers import DirectiveInHTMLCommentLexer
 from sybil.region import Lexeme
 from sybil.typing import Evaluator, Lexer
@@ -191,12 +191,10 @@ class DjotFencedCodeBlockLexer(DjotRawFencedCodeBlockLexer):
 
 
 @beartype
-class CodeBlockParser(AbstractCodeBlockParser):
+class CodeBlockParser:
     """
     A parser for Djot fenced code blocks.
     """
-
-    lexers: LexerCollection
 
     def __init__(
         self, language: str | None = None, evaluator: Evaluator | None = None
@@ -216,8 +214,14 @@ class CodeBlockParser(AbstractCodeBlockParser):
                 arguments=".+",
             ),
         ]
-        super().__init__(
+        self._parser = AbstractCodeBlockParser(
             lexers=lexers,
             language=language,
             evaluator=evaluator,
         )
+
+    def __call__(self, document: Document) -> Iterable[Region]:
+        """
+        Yield regions for Djot code blocks.
+        """
+        return self._parser(document)
