@@ -68,6 +68,11 @@ def _get_modified_region_text(
         within_code_block_indent_prefix = code_block_indent_prefix
         replace_old_not_indented = "\n"
         replace_new_prefix = "\n"
+    elif original_region_text.rstrip().endswith("@end"):
+        # Norg
+        within_code_block_indent_prefix = code_block_indent_prefix
+        replace_old_not_indented = "\n"
+        replace_new_prefix = "\n"
     else:
         # reStructuredText
         within_code_block_indent_prefix = code_block_indent_prefix + "   "

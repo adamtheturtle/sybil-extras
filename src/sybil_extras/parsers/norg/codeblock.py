@@ -40,8 +40,9 @@ class NorgVerbatimRangedTagLexer:
         """
         # Pattern to match opening tag: @code or @code python
         # Must be at start of line (with optional leading whitespace)
+        # Use [^\S\n]+ instead of \s+ to avoid matching newlines
         self._opening_pattern = re.compile(
-            pattern=rf"^\s*@code(?:\s+(?P<language>{language}))?$",
+            pattern=rf"^\s*@code(?:[^\S\n]+(?P<language>{language}))?$",
             flags=re.MULTILINE,
         )
         # Pattern to match closing tag: @end
@@ -73,14 +74,12 @@ class NorgVerbatimRangedTagLexer:
                 index = opening.end()
                 continue
 
-            # Extract the content between tags
-            content_start = opening.end()
-            # Skip the newline after the opening tag if present
-            if (
-                content_start < len(document.text)
-                and document.text[content_start] == "\n"
-            ):
-                content_start += 1
+            # Extract the content between tags.
+            # Skip the newline after the opening tag. Since the opening
+            # pattern ends with $ (matching before newline) and we found a
+            # closing tag after opening.end(), there is always a newline at
+            # opening.end().
+            content_start = opening.end() + 1
 
             content_end = closing.start()
             source_text = document.text[content_start:content_end]

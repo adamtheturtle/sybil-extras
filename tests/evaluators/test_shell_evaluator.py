@@ -1435,8 +1435,7 @@ def test_empty_code_block_write_content_to_file(
         Not in code block
 
         @code python
-
-           foobar
+        foobar
 
         @end
 
