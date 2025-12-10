@@ -265,6 +265,6 @@ def test_fence_with_non_matching_closer() -> None:
     )
     (region,) = _parse(text=text)
 
-    # The non-blockquote ``` doesn't close the blockquote ``` block
-    # The prefix "> " is stripped, leaving just the backticks
-    assert region.parsed == "code\n`\n"
+    # The line without "> " prefix ends the container, so the code block
+    # ends before the ``` line (which is outside the blockquote)
+    assert region.parsed == "code\n"

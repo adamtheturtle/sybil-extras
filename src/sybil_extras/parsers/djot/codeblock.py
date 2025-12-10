@@ -104,14 +104,16 @@ class DjotRawFencedCodeBlockLexer:
         if info is None:
             return None
 
-        content_end = default_end
-        if closing is None:
-            content_end = self._find_container_end(
-                opening=opening,
-                document=document,
-                info_end=info.end(),
-                default_end=default_end,
-            )
+        # Check container boundaries regardless of whether closing fence exists
+        container_end = self._find_container_end(
+            opening=opening,
+            document=document,
+            info_end=info.end(),
+            default_end=default_end,
+        )
+
+        # Use the earlier of container end or closing fence
+        content_end = container_end
 
         lexemes = info.groupdict()
         lexemes["source"] = Lexeme(
@@ -197,7 +199,10 @@ class CodeBlockParser:
     """
 
     def __init__(
-        self, language: str | None = None, evaluator: Evaluator | None = None
+        self,
+        *,
+        language: str | None = None,
+        evaluator: Evaluator | None = None,
     ) -> None:
         """
         Args:
