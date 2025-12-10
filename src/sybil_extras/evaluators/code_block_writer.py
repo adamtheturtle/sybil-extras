@@ -197,7 +197,7 @@ class CodeBlockWriterEvaluator:
     or auto-fixers.
 
     The wrapped evaluator should store the modified content in
-    ``example.namespace[namespace_key]`` for it to be written back.
+    ``example.document.namespace[namespace_key]`` for it to be written back.
     """
 
     def __init__(
@@ -211,9 +211,10 @@ class CodeBlockWriterEvaluator:
 
         Args:
             evaluator: The evaluator to wrap. This evaluator should store
-                modified content in ``example.namespace[namespace_key]``
-                if changes should be written back.
-            namespace_key: The key in ``example.namespace`` where the
+                modified content in
+                ``example.document.namespace[namespace_key]`` if changes
+                should be written back.
+            namespace_key: The key in ``example.document.namespace`` where the
                 wrapped evaluator stores modified content.
             encoding: The encoding to use when writing files. If ``None``,
                 use the system default.
@@ -229,11 +230,13 @@ class CodeBlockWriterEvaluator:
         self._evaluator(example)
 
         modified_content = example.document.namespace.get(self._namespace_key)
-        if modified_content is not None and modified_content != example.parsed:
-            _overwrite_example_content(
-                example=example,
-                new_content=modified_content,
-                encoding=self._encoding,
-            )
-            # Clear the namespace key after writing
+        if modified_content is not None:
+            # Clear the namespace key to prevent stale data affecting
+            # subsequent examples.
             del example.document.namespace[self._namespace_key]
+            if modified_content != example.parsed:
+                _overwrite_example_content(
+                    example=example,
+                    new_content=modified_content,
+                    encoding=self._encoding,
+                )
