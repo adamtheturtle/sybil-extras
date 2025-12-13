@@ -38,7 +38,7 @@ def count_expected_code_blocks(examples: Iterable[Example]) -> int:
         if (
             isinstance(parsed, tuple)
             and parsed
-            and parsed[0] in ("next", "start", "end")
+            and parsed[0] in {"next", "start", "end"}
         ):
             if parsed[0] == "next":
                 skip_next = True

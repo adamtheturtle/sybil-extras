@@ -120,6 +120,7 @@ class _Grouper:
 
     def register_group(
         self,
+        *,
         document: Document,
         group_id: int,
         start_position: int,
