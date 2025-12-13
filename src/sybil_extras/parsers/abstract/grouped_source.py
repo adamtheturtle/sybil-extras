@@ -2,7 +2,6 @@
 An abstract parser for grouping blocks of source code.
 """
 
-import re
 import threading
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
@@ -56,7 +55,7 @@ class _GroupMarker:
     # Store the boundaries so code blocks can determine membership
     start_position: int
     end_position: int
-    # Track how many code blocks are expected in this group
+    # Number of code blocks expected in this group
     expected_code_blocks: int
 
 
@@ -223,15 +222,9 @@ class _Grouper:
             if marker.action == "start":
                 return
 
-            # Wait until all expected code blocks have been collected.
-            # Use a timeout to handle cases where some blocks are skipped
-            # and will never be collected.
-            timeout_seconds = 0.1
+            # Wait until all expected code blocks have been collected
             while state.collected_count < state.expected_code_blocks:
-                if not state.ready.wait(timeout=timeout_seconds):
-                    # Timeout - proceed with what we have (some blocks may
-                    # have been skipped)
-                    break
+                state.ready.wait()
 
             try:
                 if state.examples:
@@ -276,7 +269,6 @@ class _Grouper:
             if has_source(example=example):
                 state.examples.append(example)
                 state.collected_count += 1
-                # Signal that a code block has been collected
                 state.ready.notify_all()
                 return
 
@@ -382,21 +374,53 @@ class AbstractGroupedSourceParser:
                 )
                 raise ValueError(msg)
 
-            # Count code blocks in this group's range by scanning document.
-            # This is a heuristic used to know when all code blocks have been
-            # collected before processing the group.
-            group_text = document.text[start_end:end_start]
-            # Count triple backticks (divided by 2 since each block has
-            # open + close), or code-block directives
-            backtick_count = len(re.findall(r"```", group_text))
-            directive_count = len(
-                re.findall(
-                    r"\.\. code-block::|@code\b|#\+begin_src",
-                    group_text,
-                    re.IGNORECASE,
-                )
+            # Count code blocks in this group by examining existing examples.
+            # At parse time, previous parsers have already added their regions
+            # to the document, so we can count examples that fall within our
+            # group boundaries.
+            #
+            # We also need to account for skip directives. Skip markers have
+            # parsed values like ('next', None) or ('start', None).
+            examples_in_group = [
+                ex
+                for ex in document.examples()
+                if start_start < ex.region.start < end_end
+            ]
+
+            # Count how many code blocks will be skipped.
+            # Process examples in position order since skip directives
+            # only affect examples that come AFTER them.
+            examples_sorted = sorted(
+                examples_in_group,
+                key=lambda ex: ex.region.start,
             )
-            expected_code_blocks = backtick_count // 2 + directive_count
+            skipped_count = 0
+            skip_next = False
+            in_skip_range = False
+            for ex in examples_sorted:
+                is_skip_marker = (
+                    isinstance(ex.parsed, tuple) and len(ex.parsed) >= 1
+                )
+                if is_skip_marker:
+                    action = ex.parsed[0]
+                    if action == "next":
+                        skip_next = True
+                    elif action == "start":
+                        in_skip_range = True
+                    elif action == "end":
+                        in_skip_range = False
+                # This is a code block
+                elif skip_next or in_skip_range:
+                    skipped_count += 1
+                    skip_next = False
+
+            # Count non-skip examples minus those that will be skipped
+            non_skip_examples = [
+                ex
+                for ex in examples_in_group
+                if not (isinstance(ex.parsed, tuple) and len(ex.parsed) >= 1)
+            ]
+            expected_code_blocks = len(non_skip_examples) - skipped_count
 
             # Register group boundaries at parse time
             self._grouper.register_group(

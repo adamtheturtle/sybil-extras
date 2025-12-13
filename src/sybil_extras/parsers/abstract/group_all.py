@@ -2,7 +2,6 @@
 Abstract parser that groups all code blocks in a document.
 """
 
-import re
 import threading
 from collections.abc import Iterable
 
@@ -82,7 +81,6 @@ class _GroupAllEvaluator:
             if has_source(example=example):
                 state.examples.append(example)
                 state.collected_count += 1
-                # Signal that a code block has been collected
                 state.ready.notify_all()
                 return
 
@@ -95,15 +93,9 @@ class _GroupAllEvaluator:
         state = self._document_state[example.document]
 
         with state.ready:
-            # Wait until all expected code blocks have been collected.
-            # Use a timeout to handle cases where some blocks are skipped
-            # and will never be collected.
-            timeout_seconds = 0.1
+            # Wait until all expected code blocks have been collected
             while state.collected_count < state.expected_code_blocks:
-                if not state.ready.wait(timeout=timeout_seconds):
-                    # Timeout - proceed with what we have (some blocks may
-                    # have been skipped)
-                    break
+                state.ready.wait()
 
             if not state.examples:
                 # No examples to group, do nothing
@@ -182,20 +174,46 @@ class AbstractGroupAllParser:
         Yield a single region at the end of the document to trigger
         finalization.
         """
-        # Count code blocks in the document.
-        # This is a heuristic used to know when all code blocks have been
-        # collected before processing the group.
-        # Count triple backticks (divided by 2 since each block has
-        # open + close), or code-block directives
-        backtick_count = len(re.findall(r"```", document.text))
-        directive_count = len(
-            re.findall(
-                r"\.\. code-block::|@code\b|#\+begin_src",
-                document.text,
-                re.IGNORECASE,
-            )
+        # Count code blocks by examining existing examples.
+        # At parse time, previous parsers have already added their regions.
+        #
+        # We also need to account for skip directives. Skip markers have
+        # parsed values like ('next', None) or ('start', None).
+        # Process examples in position order since skip directives
+        # only affect examples that come AFTER them.
+        examples_sorted = sorted(
+            document.examples(),
+            key=lambda ex: ex.region.start,
         )
-        expected_code_blocks = backtick_count // 2 + directive_count
+
+        # Count how many code blocks will be skipped
+        skipped_count = 0
+        skip_next = False
+        in_skip_range = False
+        for ex in examples_sorted:
+            is_skip_marker = (
+                isinstance(ex.parsed, tuple) and len(ex.parsed) >= 1
+            )
+            if is_skip_marker:
+                action = ex.parsed[0]
+                if action == "next":
+                    skip_next = True
+                elif action == "start":
+                    in_skip_range = True
+                elif action == "end":
+                    in_skip_range = False
+            # This is a code block
+            elif skip_next or in_skip_range:
+                skipped_count += 1
+                skip_next = False
+
+        # Count non-skip examples minus those that will be skipped
+        non_skip_examples = [
+            ex
+            for ex in examples_sorted
+            if not (isinstance(ex.parsed, tuple) and len(ex.parsed) >= 1)
+        ]
+        expected_code_blocks = len(non_skip_examples) - skipped_count
 
         # Register the document at parse time
         self._evaluator.register_document(
