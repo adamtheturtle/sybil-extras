@@ -282,14 +282,12 @@ def test_end_only(language: MarkupLanguage, tmp_path: Path) -> None:
     )
 
     sybil = Sybil(parsers=[group_parser])
-    document = sybil.parse(path=test_document)
-
-    (example,) = document.examples()
+    # Error is raised at parse time since we validate structure upfront
     with pytest.raises(
         expected_exception=ValueError,
         match="'group: end' must follow 'group: start'",
     ):
-        example.evaluate()
+        sybil.parse(path=test_document)
 
 
 def test_start_after_start(language: MarkupLanguage, tmp_path: Path) -> None:
@@ -371,15 +369,12 @@ def test_start_start_end(language: MarkupLanguage, tmp_path: Path) -> None:
     )
 
     sybil = Sybil(parsers=[group_parser])
-    document = sybil.parse(path=test_document)
-
-    first_start, second_start, _end = document.examples()
-    first_start.evaluate()
+    # Error is raised at parse time since we validate structure upfront
     with pytest.raises(
         expected_exception=ValueError,
-        match="'group: start' must be followed by 'group: end'",
+        match="'group: start' was not followed by 'group: end'",
     ):
-        second_start.evaluate()
+        sybil.parse(path=test_document)
 
 
 def test_directive_name_not_regex_escaped(
