@@ -505,11 +505,9 @@ def test_state_cleanup_on_evaluator_failure(
     """
     content = language.markup_separator.join(
         [
-            # First group: will fail because the shell command exits with 1
             language.directive_builder(directive="group", argument="start"),
             language.code_block_builder(code="exit 1", language="bash"),
             language.directive_builder(directive="group", argument="end"),
-            # Second group: should succeed if state is properly cleaned up
             language.directive_builder(directive="group", argument="start"),
             language.code_block_builder(code="exit 0", language="bash"),
             language.directive_builder(directive="group", argument="end"),
@@ -538,30 +536,13 @@ def test_state_cleanup_on_evaluator_failure(
     document = sybil.parse(path=test_document)
 
     examples = list(document.examples())
-    # Examples are:
-    # 0: group start
-    # 1: code block (exit 1)
-    # 2: group end  <- this will raise CalledProcessError
-    # 3: group start
-    # 4: code block (exit 0)
-    # 5: group end
 
-    # Evaluate the first group's start - this pushes the grouper as evaluator
     examples[0].evaluate()
-
-    # Evaluate the code block - grouper intercepts and accumulates it
     examples[1].evaluate()
 
-    # Evaluate the first group's end - this runs the shell command which fails
     with pytest.raises(expected_exception=subprocess.CalledProcessError):
         examples[2].evaluate()
 
-    # Now try to evaluate the second group.
-    # If state cleanup is broken, this will raise a ValueError about
-    # "'group: start' must be followed by 'group: end'" because the
-    # state still thinks we're in the middle of the first group.
-
-    # This should NOT raise - the state should have been cleaned up
     examples[3].evaluate()
     examples[4].evaluate()
     examples[5].evaluate()
