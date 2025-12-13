@@ -561,9 +561,8 @@ def test_thread_safety(language: MarkupLanguage, tmp_path: Path) -> None:
     concurrently.
 
     This test ensures that shared state in _Grouper does not cause race
-    conditions when multiple threads evaluate examples from the same document.
-
-    See: https://github.com/adamtheturtle/sybil-extras/issues/624
+    conditions when multiple threads evaluate examples from the same
+    document.
     """
     content = language.markup_separator.join(
         [
