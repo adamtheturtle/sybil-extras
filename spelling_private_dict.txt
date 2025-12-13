@@ -4,6 +4,7 @@ EOF
 MDX
 Neorg
 args
+atomicity
 beartype
 blockquote
 blockquotes

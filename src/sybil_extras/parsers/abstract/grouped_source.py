@@ -14,6 +14,7 @@ from sybil.parsers.abstract.lexers import LexerCollection
 from sybil.typing import Evaluator, Lexer
 
 from ._grouping_utils import (
+    count_expected_code_blocks,
     create_combined_example,
     create_combined_region,
     has_source,
@@ -55,6 +56,8 @@ class _GroupMarker:
     # Store the boundaries so code blocks can determine membership
     start_position: int
     end_position: int
+    # Number of code blocks expected in this group
+    expected_code_blocks: int
 
 
 @beartype
@@ -63,14 +66,23 @@ class _GroupState:
     State for a single group.
     """
 
-    def __init__(self, *, start_position: int, end_position: int) -> None:
+    def __init__(
+        self,
+        *,
+        start_position: int,
+        end_position: int,
+        expected_code_blocks: int,
+    ) -> None:
         """
         Initialize the group state.
         """
         self.start_position = start_position
         self.end_position = end_position
+        self.expected_code_blocks = expected_code_blocks
         self.examples: list[Example] = []
         self.lock = threading.Lock()
+        self.ready = threading.Condition(lock=self.lock)
+        self.collected_count = 0
 
 
 @beartype
@@ -108,18 +120,20 @@ class _Grouper:
 
     def register_group(
         self,
+        *,
         document: Document,
         group_id: int,
         start_position: int,
         end_position: int,
+        expected_code_blocks: int,
     ) -> None:
         """Register a group's boundaries for later membership lookup.
 
         Called at parse time, not evaluation time.
 
-        Both locks are held together to ensure atomic registration. This
-        prevents a race condition where another thread could find the
-        boundary but fail to find the corresponding state.
+        Both locks are held together to ensure atomicity - a boundary
+        and its corresponding state must be registered together without
+        a gap that could be exploited by another thread.
         """
         with self._group_boundaries_lock, self._group_state_lock:
             if document not in self._group_boundaries:
@@ -135,6 +149,7 @@ class _Grouper:
             self._group_state[key] = _GroupState(
                 start_position=start_position,
                 end_position=end_position,
+                expected_code_blocks=expected_code_blocks,
             )
 
     def _find_containing_group_and_state(
@@ -208,9 +223,13 @@ class _Grouper:
             group_id=marker.group_id,
         )
 
-        with state.lock:
+        with state.ready:
             if marker.action == "start":
                 return
+
+            # Wait until all expected code blocks have been collected
+            while state.collected_count < state.expected_code_blocks:
+                state.ready.wait()
 
             try:
                 if state.examples:
@@ -251,9 +270,11 @@ class _Grouper:
         if state is None:
             raise NotEvaluated
 
-        with state.lock:
+        with state.ready:
             if has_source(example=example):
                 state.examples.append(example)
+                state.collected_count += 1
+                state.ready.notify_all()
                 return
 
         raise NotEvaluated
@@ -358,12 +379,26 @@ class AbstractGroupedSourceParser:
                 )
                 raise ValueError(msg)
 
+            # Count code blocks in this group by examining existing examples.
+            # At parse time, previous parsers have already added their regions
+            # to the document, so we can count examples that fall within our
+            # group boundaries.
+            examples_in_group = (
+                ex
+                for ex in document.examples()
+                if start_start < ex.region.start < end_end
+            )
+            expected_code_blocks = count_expected_code_blocks(
+                examples=examples_in_group,
+            )
+
             # Register group boundaries at parse time
             self._grouper.register_group(
                 document=document,
                 group_id=group_id,
                 start_position=start_start,
                 end_position=end_end,
+                expected_code_blocks=expected_code_blocks,
             )
 
             # Create markers with group boundaries
@@ -372,12 +407,14 @@ class AbstractGroupedSourceParser:
                 group_id=group_id,
                 start_position=start_start,
                 end_position=end_end,
+                expected_code_blocks=expected_code_blocks,
             )
             end_marker = _GroupMarker(
                 action="end",
                 group_id=group_id,
                 start_position=start_start,
                 end_position=end_end,
+                expected_code_blocks=expected_code_blocks,
             )
 
             regions.append(
