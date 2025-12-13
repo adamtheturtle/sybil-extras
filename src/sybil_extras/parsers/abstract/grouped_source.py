@@ -101,7 +101,6 @@ class _Grouper:
             self._group_boundaries[document].append(
                 (group_id, start_position, end_position)
             )
-        # Pre-create the group state
         key = (document, group_id)
         with self._group_state_lock:
             self._group_state[key] = _GroupState(
