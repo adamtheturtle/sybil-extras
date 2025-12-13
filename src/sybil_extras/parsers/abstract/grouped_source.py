@@ -46,7 +46,6 @@ class _GroupState:
         """
         self.start_pos = start_pos
         self.end_pos = end_pos
-        self.end_evaluated: bool = False
         self.examples: list[Example] = []
         self.lock = threading.Lock()
 
@@ -181,8 +180,6 @@ class _Grouper:
             if marker.action == "start":
                 return
 
-            state.end_evaluated = True
-
             try:
                 if state.examples:
                     # Sort examples by their position in the document to ensure
@@ -223,7 +220,7 @@ class _Grouper:
         state = self._get_group_state(example.document, group_id)
 
         with state.lock:
-            if not state.end_evaluated and has_source(example=example):
+            if has_source(example=example):
                 state.examples.append(example)
                 return
 
