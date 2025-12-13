@@ -648,15 +648,12 @@ def test_multiple_groups_concurrent_evaluation(
     document = sybil.parse(path=test_document)
 
     examples: list[Example] = list(document.examples())
-    # Examples order: start1, code1a, code1b, end1, start2, code2a, code2b, end2
     start1, code1a, code1b, end1, start2, code2a, code2b, end2 = examples
 
     # Evaluate start markers first (required ordering)
     start1.evaluate()
     start2.evaluate()
 
-    # Evaluate all code blocks concurrently - this is the key race condition test
-    # Multiple groups' code blocks being processed in parallel
     def evaluate(ex: Example) -> None:
         ex.evaluate()
 
@@ -683,12 +680,8 @@ def test_evaluation_order_independence(
     language: MarkupLanguage,
     tmp_path: Path,
 ) -> None:
-    """Examples can be evaluated out of order and still produce correct
-    results.
-
-    This tests the position-based group membership: code blocks are
-    assigned to groups based on their position in the document, not the
-    order in which they are evaluated.
+    """
+    Examples can be evaluated out of order and still produce correct results.
     """
     content = language.markup_separator.join(
         [
