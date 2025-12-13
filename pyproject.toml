@@ -36,7 +36,7 @@ dynamic = [
     "version",
 ]
 dependencies = [
-    "beartype>=0.19.0",
+    "beartype>=0.22.9",
     "sybil>=9.3.0",
 ]
 optional-dependencies.dev = [
