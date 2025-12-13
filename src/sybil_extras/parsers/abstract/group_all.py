@@ -2,6 +2,7 @@
 Abstract parser that groups all code blocks in a document.
 """
 
+import threading
 from collections import defaultdict
 from collections.abc import Iterable
 
@@ -28,6 +29,7 @@ class _GroupAllState:
         Initialize the group all state.
         """
         self.examples: list[Example] = []
+        self.lock = threading.Lock()
 
 
 @beartype
@@ -61,9 +63,11 @@ class _GroupAllEvaluator:
         Collect an example to be grouped.
         """
         state = self._document_state[example.document]
-        if has_source(example=example):
-            state.examples.append(example)
-            return
+
+        with state.lock:
+            if has_source(example=example):
+                state.examples.append(example)
+                return
 
         raise NotEvaluated
 
@@ -73,27 +77,34 @@ class _GroupAllEvaluator:
         """
         state = self._document_state[example.document]
 
-        if not state.examples:
-            # No examples to group, do nothing
+        with state.lock:
+            if not state.examples:
+                # No examples to group, do nothing
+                example.document.pop_evaluator(evaluator=self)
+                del self._document_state[example.document]
+                return
+
+            # Sort examples by their position in the document to ensure
+            # correct order regardless of evaluation order (thread-safety)
+            sorted_examples = sorted(
+                state.examples,
+                key=lambda ex: ex.region.start,
+            )
+            region = create_combined_region(
+                examples=sorted_examples,
+                evaluator=self._evaluator,
+                pad_groups=self._pad_groups,
+            )
+            new_example = create_combined_example(
+                examples=sorted_examples,
+                region=region,
+            )
+            self._evaluator(new_example)
+
             example.document.pop_evaluator(evaluator=self)
+            # Clean up document state to prevent memory leaks when reusing
+            # parser instances across multiple documents.
             del self._document_state[example.document]
-            return
-
-        region = create_combined_region(
-            examples=state.examples,
-            evaluator=self._evaluator,
-            pad_groups=self._pad_groups,
-        )
-        new_example = create_combined_example(
-            examples=state.examples,
-            region=region,
-        )
-        self._evaluator(new_example)
-
-        example.document.pop_evaluator(evaluator=self)
-        # Clean up document state to prevent memory leaks when reusing
-        # parser instances across multiple documents.
-        del self._document_state[example.document]
 
     def __call__(self, example: Example) -> None:
         """

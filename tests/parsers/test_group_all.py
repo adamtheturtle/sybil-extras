@@ -2,9 +2,10 @@
 Group-all parser tests shared across markup languages.
 """
 
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from sybil import Sybil
+from sybil import Example, Sybil
 
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
@@ -157,6 +158,56 @@ def test_group_all_no_pad(language: MarkupLanguage, tmp_path: Path) -> None:
     blocks = ["x = []", "x = [*x, 1]", "x = [*x, 2]"]
     # When pad_groups=False, blocks are separated by 2 newlines (1 blank line)
     padding = "\n\n"
+    expected = padding.join(blocks) + "\n"
+    assert document.namespace["blocks"] == [expected]
+
+
+def test_thread_safety(language: MarkupLanguage, tmp_path: Path) -> None:
+    """
+    The group-all parser is thread-safe when examples are evaluated
+    concurrently.
+    """
+    content = language.markup_separator.join(
+        [
+            language.code_block_builder(code="x = [*x, 1]", language="python"),
+            language.code_block_builder(code="x = [*x, 2]", language="python"),
+            language.code_block_builder(code="x = [*x, 3]", language="python"),
+        ]
+    )
+    test_document = tmp_path / "test"
+    test_document.write_text(
+        data=f"{content}{language.markup_separator}",
+        encoding="utf-8",
+    )
+
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
+    group_all_parser = language.group_all_parser_cls(
+        evaluator=evaluator,
+        pad_groups=True,
+    )
+    code_block_parser = language.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
+
+    sybil = Sybil(parsers=[code_block_parser, group_all_parser])
+    document = sybil.parse(path=test_document)
+
+    examples: list[Example] = list(document.examples())
+
+    def evaluate(ex: Example) -> None:
+        """
+        Evaluate the example.
+        """
+        ex.evaluate()
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        list(executor.map(evaluate, examples))
+
+    blocks = ["x = [*x, 1]", "x = [*x, 2]", "x = [*x, 3]"]
+    separator_newlines = len(language.markup_separator)
+    padding_newlines = separator_newlines + 2
+    padding = "\n" * padding_newlines
     expected = padding.join(blocks) + "\n"
     assert document.namespace["blocks"] == [expected]
 

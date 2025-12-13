@@ -2,6 +2,7 @@
 An abstract parser for grouping blocks of source code.
 """
 
+import threading
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from typing import Literal
@@ -30,7 +31,8 @@ class _GroupState:
         Initialize the group state.
         """
         self.last_action: Literal["start", "end"] | None = None
-        self.examples: Sequence[Example] = []
+        self.examples: list[Example] = []
+        self.lock = threading.Lock()
 
 
 @beartype
@@ -69,39 +71,47 @@ class _Grouper:
         state = self._document_state[example.document]
         action = example.parsed
 
-        if action == "start":
-            if state.last_action == "start":
+        with state.lock:
+            if action == "start":
+                if state.last_action == "start":
+                    msg = (
+                        f"'{self._directive}: start' "
+                        f"must be followed by '{self._directive}: end'"
+                    )
+                    raise ValueError(msg)
+                example.document.push_evaluator(evaluator=self)
+                state.last_action = action
+                return
+
+            if state.last_action != "start":
                 msg = (
-                    f"'{self._directive}: start' "
-                    f"must be followed by '{self._directive}: end'"
+                    f"'{self._directive}: {action}' "
+                    f"must follow '{self._directive}: start'"
                 )
                 raise ValueError(msg)
-            example.document.push_evaluator(evaluator=self)
-            state.last_action = action
-            return
 
-        if state.last_action != "start":
-            msg = (
-                f"'{self._directive}: {action}' "
-                f"must follow '{self._directive}: start'"
-            )
-            raise ValueError(msg)
-
-        try:
-            if state.examples:
-                region = create_combined_region(
-                    examples=state.examples,
-                    evaluator=self._evaluator,
-                    pad_groups=self._pad_groups,
-                )
-                new_example = create_combined_example(
-                    examples=state.examples,
-                    region=region,
-                )
-                self._evaluator(new_example)
-        finally:
-            example.document.pop_evaluator(evaluator=self)
-            del self._document_state[example.document]
+            try:
+                if state.examples:
+                    # Sort examples by their position in the document to ensure
+                    # correct order regardless of evaluation order
+                    # (for thread-safety).
+                    sorted_examples = sorted(
+                        state.examples,
+                        key=lambda ex: ex.region.start,
+                    )
+                    region = create_combined_region(
+                        examples=sorted_examples,
+                        evaluator=self._evaluator,
+                        pad_groups=self._pad_groups,
+                    )
+                    new_example = create_combined_example(
+                        examples=sorted_examples,
+                        region=region,
+                    )
+                    self._evaluator(new_example)
+            finally:
+                example.document.pop_evaluator(evaluator=self)
+                del self._document_state[example.document]
 
     def _evaluate_other_example(self, example: Example) -> None:
         """
@@ -109,9 +119,10 @@ class _Grouper:
         """
         state = self._document_state[example.document]
 
-        if has_source(example=example):
-            state.examples = [*state.examples, example]
-            return
+        with state.lock:
+            if has_source(example=example):
+                state.examples = [*state.examples, example]
+                return
 
         raise NotEvaluated
 
