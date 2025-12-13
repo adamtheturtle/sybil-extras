@@ -553,7 +553,7 @@ def test_state_cleanup_on_evaluator_failure(
     examples[1].evaluate()
 
     # Evaluate the first group's end - this runs the shell command which fails
-    with pytest.raises(subprocess.CalledProcessError):
+    with pytest.raises(expected_exception=subprocess.CalledProcessError):
         examples[2].evaluate()
 
     # Now try to evaluate the second group.
