@@ -1,5 +1,5 @@
 """
-A group parser for reST.
+An abstract parser for grouping blocks of source code.
 """
 
 from collections import defaultdict
