@@ -280,9 +280,7 @@ def test_region_end_respects_container_boundary_with_closing_fence() -> None:
     When a code block opens in one blockquote but lacks a closing fence within
     that container, and a matching fence appears in a *separate* blockquote
     after an empty line, the region should end at the container boundary, not
-    extend to include the second blockquote's fence.
-
-    See: https://github.com/adamtheturtle/sybil-extras/issues/617
+    extend to include the fence from the second blockquote.
     """
     text = dedent(
         text="""\
