@@ -366,7 +366,7 @@ class AbstractGroupedSourceParser:
 
             if marker_index + 1 >= len(markers):
                 msg = (
-                    f"'{self._directive}: start' was not followed by "
+                    f"'{self._directive}: start' must be followed by "
                     f"'{self._directive}: end'"
                 )
                 raise ValueError(msg)
@@ -375,7 +375,7 @@ class AbstractGroupedSourceParser:
             if end_action != "end":
                 msg = (
                     f"'{self._directive}: start' "
-                    f"was not followed by '{self._directive}: end'"
+                    f"must be followed by '{self._directive}: end'"
                 )
                 raise ValueError(msg)
 
