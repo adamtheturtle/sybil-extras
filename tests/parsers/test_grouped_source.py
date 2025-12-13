@@ -655,6 +655,9 @@ def test_multiple_groups_concurrent_evaluation(
     start2.evaluate()
 
     def evaluate(ex: Example) -> None:
+        """
+        Evaluate an example.
+        """
         ex.evaluate()
 
     code_blocks = [code1a, code1b, code2a, code2b]
