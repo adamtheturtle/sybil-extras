@@ -46,7 +46,6 @@ class _GroupState:
         """
         self.start_pos = start_pos
         self.end_pos = end_pos
-        self.start_evaluated: bool = False
         self.end_evaluated: bool = False
         self.examples: list[Example] = []
         self.lock = threading.Lock()
@@ -180,7 +179,6 @@ class _Grouper:
 
         with state.lock:
             if marker.action == "start":
-                state.start_evaluated = True
                 return
 
             state.end_evaluated = True
