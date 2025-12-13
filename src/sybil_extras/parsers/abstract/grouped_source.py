@@ -3,8 +3,8 @@ An abstract parser for grouping blocks of source code.
 """
 
 import threading
-from collections import defaultdict
 from collections.abc import Iterable, Sequence
+from dataclasses import dataclass
 from typing import Literal
 
 from beartype import beartype
@@ -21,16 +21,54 @@ from ._grouping_utils import (
 
 
 @beartype
-class _GroupState:
+@dataclass(frozen=True)
+class _GroupStateKey:
     """
-    Group state.
+    Key for looking up group state.
     """
 
-    def __init__(self) -> None:
+    document: Document
+    group_id: int
+
+
+@beartype
+@dataclass
+class _GroupBoundary:
+    """
+    Boundary information for a group.
+    """
+
+    group_id: int
+    start_position: int
+    end_position: int
+
+
+@beartype
+@dataclass
+class _GroupMarker:
+    """
+    A marker for a group start or end.
+    """
+
+    action: Literal["start", "end"]
+    group_id: int
+    # Store the boundaries so code blocks can determine membership
+    start_position: int
+    end_position: int
+
+
+@beartype
+class _GroupState:
+    """
+    State for a single group.
+    """
+
+    def __init__(self, *, start_position: int, end_position: int) -> None:
         """
         Initialize the group state.
         """
-        self.last_action: Literal["start", "end"] | None = None
+        self.start_position = start_position
+        self.end_position = end_position
         self.examples: list[Example] = []
         self.lock = threading.Lock()
 
@@ -57,38 +95,119 @@ class _Grouper:
                 However, this is detrimental to commands that expect the file
                 to not have a bunch of newlines in it, such as formatters.
         """
-        self._document_state: dict[Document, _GroupState] = defaultdict(
-            _GroupState
-        )
+        # State is keyed by _GroupStateKey to allow multiple groups
+        # in the same document to be processed in parallel.
+        self._group_state: dict[_GroupStateKey, _GroupState] = {}
+        self._group_state_lock = threading.Lock()
         self._evaluator = evaluator
         self._directive = directive
         self._pad_groups = pad_groups
+        # Track group boundaries per document for determining membership
+        self._group_boundaries: dict[Document, list[_GroupBoundary]] = {}
+        self._group_boundaries_lock = threading.Lock()
+
+    def register_group(
+        self,
+        document: Document,
+        group_id: int,
+        start_position: int,
+        end_position: int,
+    ) -> None:
+        """Register a group's boundaries for later membership lookup.
+
+        Called at parse time, not evaluation time.
+        """
+        with self._group_boundaries_lock:
+            if document not in self._group_boundaries:
+                self._group_boundaries[document] = []
+            self._group_boundaries[document].append(
+                _GroupBoundary(
+                    group_id=group_id,
+                    start_position=start_position,
+                    end_position=end_position,
+                )
+            )
+        key = _GroupStateKey(document=document, group_id=group_id)
+        with self._group_state_lock:
+            self._group_state[key] = _GroupState(
+                start_position=start_position,
+                end_position=end_position,
+            )
+
+    def _find_containing_group_and_state(
+        self,
+        document: Document,
+        position: int,
+    ) -> _GroupState | None:
+        """Find which group contains the given position and return its state.
+
+        This method atomically checks boundaries and retrieves state
+        while holding both locks. This prevents a TOCTOU race where
+        cleanup could delete the state between finding the group
+        boundary and retrieving the state.
+        """
+        with self._group_boundaries_lock, self._group_state_lock:
+            boundaries = self._group_boundaries.get(document, [])
+            for boundary in boundaries:
+                if boundary.start_position < position < boundary.end_position:
+                    key = _GroupStateKey(
+                        document=document,
+                        group_id=boundary.group_id,
+                    )
+                    return self._group_state[key]
+        return None
+
+    def _get_group_state(
+        self,
+        document: Document,
+        group_id: int,
+    ) -> _GroupState:
+        """
+        Get the state for a specific group.
+        """
+        key = _GroupStateKey(document=document, group_id=group_id)
+        with self._group_state_lock:
+            return self._group_state[key]
+
+    def _cleanup_group_state(
+        self,
+        document: Document,
+        group_id: int,
+    ) -> None:
+        """Clean up the state for a specific group.
+
+        This method atomically cleans up both state and boundaries, and
+        calls pop_evaluator if this was the last group in the document.
+        Both locks are held together to prevent race conditions where
+        multiple threads could both see an empty boundary list and call
+        pop_evaluator.
+        """
+        key = _GroupStateKey(document=document, group_id=group_id)
+        # Hold both locks to ensure atomic cleanup and pop_evaluator call
+        with self._group_boundaries_lock, self._group_state_lock:
+            del self._group_state[key]
+            self._group_boundaries[document] = [
+                boundary
+                for boundary in self._group_boundaries[document]
+                if boundary.group_id != group_id
+            ]
+            if not self._group_boundaries[document]:
+                del self._group_boundaries[document]
+                document.pop_evaluator(evaluator=self)
 
     def _evaluate_grouper_example(self, example: Example) -> None:
         """
         Evaluate a grouper marker.
         """
-        state = self._document_state[example.document]
-        action = example.parsed
+        marker: _GroupMarker = example.parsed
+        state = self._get_group_state(
+            document=example.document,
+            group_id=marker.group_id,
+        )
 
         with state.lock:
-            if action == "start":
-                if state.last_action == "start":
-                    msg = (
-                        f"'{self._directive}: start' "
-                        f"must be followed by '{self._directive}: end'"
-                    )
-                    raise ValueError(msg)
-                example.document.push_evaluator(evaluator=self)
-                state.last_action = action
+            if marker.action == "start":
                 return
-
-            if state.last_action != "start":
-                msg = (
-                    f"'{self._directive}: {action}' "
-                    f"must follow '{self._directive}: start'"
-                )
-                raise ValueError(msg)
 
             try:
                 if state.examples:
@@ -110,18 +229,28 @@ class _Grouper:
                     )
                     self._evaluator(new_example)
             finally:
-                example.document.pop_evaluator(evaluator=self)
-                del self._document_state[example.document]
+                self._cleanup_group_state(
+                    document=example.document,
+                    group_id=marker.group_id,
+                )
 
     def _evaluate_other_example(self, example: Example) -> None:
+        """Evaluate an example that is not a group example.
+
+        Determine group membership based on position.
         """
-        Evaluate an example that is not a group example.
-        """
-        state = self._document_state[example.document]
+        # Atomically find group and get state to avoid TOCTOU race
+        state = self._find_containing_group_and_state(
+            document=example.document,
+            position=example.region.start,
+        )
+
+        if state is None:
+            raise NotEvaluated
 
         with state.lock:
             if has_source(example=example):
-                state.examples = [*state.examples, example]
+                state.examples.append(example)
                 return
 
         raise NotEvaluated
@@ -179,7 +308,8 @@ class AbstractGroupedSourceParser:
         """
         Yield regions to evaluate, grouped by start and end comments.
         """
-        regions: list[Region] = []
+        # First pass: collect all start/end markers
+        markers: list[tuple[int, int, str]] = []  # (start, end, action)
         for lexed in self._lexers(document):
             arguments = lexed.lexemes["arguments"]
             if not arguments:
@@ -192,20 +322,83 @@ class AbstractGroupedSourceParser:
                 msg = f"malformed arguments to {directive}: {arguments!r}"
                 raise ValueError(msg)
 
+            markers.append((lexed.start, lexed.end, arguments))
+
+        if not markers:
+            return
+
+        # Validate and pair up start/end markers, register groups
+        regions: list[Region] = []
+        group_id = 0
+        marker_index = 0
+        while marker_index < len(markers):
+            start_start, start_end, start_action = markers[marker_index]
+            if start_action != "start":
+                msg = (
+                    f"'{self._directive}: {start_action}' "
+                    f"must follow '{self._directive}: start'"
+                )
+                raise ValueError(msg)
+
+            if marker_index + 1 >= len(markers):
+                msg = (
+                    f"'{self._directive}: start' was not followed by "
+                    f"'{self._directive}: end'"
+                )
+                raise ValueError(msg)
+
+            end_start, end_end, end_action = markers[marker_index + 1]
+            if end_action != "end":
+                msg = (
+                    f"'{self._directive}: start' "
+                    f"was not followed by '{self._directive}: end'"
+                )
+                raise ValueError(msg)
+
+            # Register group boundaries at parse time
+            self._grouper.register_group(
+                document=document,
+                group_id=group_id,
+                start_position=start_start,
+                end_position=end_end,
+            )
+
+            # Create markers with group boundaries
+            start_marker = _GroupMarker(
+                action="start",
+                group_id=group_id,
+                start_position=start_start,
+                end_position=end_end,
+            )
+            end_marker = _GroupMarker(
+                action="end",
+                group_id=group_id,
+                start_position=start_start,
+                end_position=end_end,
+            )
+
             regions.append(
                 Region(
-                    start=lexed.start,
-                    end=lexed.end,
-                    parsed=arguments,
+                    start=start_start,
+                    end=start_end,
+                    parsed=start_marker,
+                    evaluator=self._grouper,
+                )
+            )
+            regions.append(
+                Region(
+                    start=end_start,
+                    end=end_end,
+                    parsed=end_marker,
                     evaluator=self._grouper,
                 )
             )
 
-        if regions and regions[-1].parsed == "start":
-            msg = (
-                f"'{self._directive}: start' was not followed by "
-                f"'{self._directive}: end'"
-            )
-            raise ValueError(msg)
+            group_id += 1
+            marker_index += 2
+
+        # Push evaluator at parse time (like group_all does)
+        # This ensures all code blocks go through the grouper
+        document.push_evaluator(evaluator=self._grouper)
 
         yield from regions

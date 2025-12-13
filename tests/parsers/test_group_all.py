@@ -270,6 +270,62 @@ def test_group_all_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     assert document.namespace["blocks"] == [expected]
 
 
+def test_evaluation_order_independence(
+    language: MarkupLanguage,
+    tmp_path: Path,
+) -> None:
+    """Examples can be evaluated out of order and still produce correct
+    results.
+
+    Code blocks are sorted by their position in the document regardless
+    of the order in which they are evaluated.
+    """
+    content = language.markup_separator.join(
+        [
+            language.code_block_builder(code="x = [1]", language="python"),
+            language.code_block_builder(code="x = [*x, 2]", language="python"),
+            language.code_block_builder(code="x = [*x, 3]", language="python"),
+        ]
+    )
+    test_document = tmp_path / "test"
+    test_document.write_text(
+        data=f"{content}{language.markup_separator}",
+        encoding="utf-8",
+    )
+
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
+    group_all_parser = language.group_all_parser_cls(
+        evaluator=evaluator,
+        pad_groups=True,
+    )
+    code_block_parser = language.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
+
+    sybil = Sybil(parsers=[code_block_parser, group_all_parser])
+    document = sybil.parse(path=test_document)
+
+    examples: list[Example] = list(document.examples())
+    # Order: code1, code2, code3, finalize
+    code1, code2, code3, finalize = examples
+
+    # Evaluate in a different order: code3, code1, code2, finalize
+    code3.evaluate()
+    code1.evaluate()
+    code2.evaluate()
+    finalize.evaluate()
+
+    blocks = ["x = [1]", "x = [*x, 2]", "x = [*x, 3]"]
+    separator_newlines = len(language.markup_separator)
+    padding_newlines = separator_newlines + 2
+    padding = "\n" * padding_newlines
+    expected = padding.join(blocks) + "\n"
+
+    # Despite out-of-order evaluation, the result should be sorted by position
+    assert document.namespace["blocks"] == [expected]
+
+
 def test_state_cleanup_on_evaluator_failure(
     language: MarkupLanguage,
     tmp_path: Path,
