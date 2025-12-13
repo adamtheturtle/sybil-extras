@@ -656,7 +656,7 @@ def test_multiple_groups_concurrent_evaluation(
 
     def evaluate(ex: Example) -> None:
         """
-        Evaluate the example.
+        Evaluate an example.
         """
         ex.evaluate()
 
@@ -823,3 +823,72 @@ def test_no_pad_groups(language: MarkupLanguage, tmp_path: Path) -> None:
         f"{leading_padding}x = [*x, 1]\n\nx = [*x, 2]\n"
     )
     assert output_document_content == expected_output_document_content
+
+
+def test_end_marker_waits_for_code_blocks(
+    language: MarkupLanguage,
+    tmp_path: Path,
+) -> None:
+    """The end marker waits for all code blocks to be collected.
+
+    This tests the fix for a race condition where the end marker could
+    be evaluated before all code blocks were collected, resulting in
+    incomplete groups. The end marker now waits until all expected code
+    blocks have been collected before processing the group.
+    """
+    content = language.markup_separator.join(
+        [
+            language.directive_builder(directive="group", argument="start"),
+            language.code_block_builder(code="x = [1]", language="python"),
+            language.code_block_builder(code="x = [*x, 2]", language="python"),
+            language.directive_builder(directive="group", argument="end"),
+        ]
+    )
+    test_document = tmp_path / "test"
+    test_document.write_text(
+        data=f"{content}{language.markup_separator}",
+        encoding="utf-8",
+    )
+
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
+    group_parser = language.group_parser_cls(
+        directive="group",
+        evaluator=evaluator,
+        pad_groups=True,
+    )
+    code_block_parser = language.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
+
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
+    document = sybil.parse(path=test_document)
+
+    examples: list[Example] = list(document.examples())
+    start, code1, code2, end = examples
+
+    # Evaluate start marker first
+    start.evaluate()
+
+    # Evaluate end marker AND code blocks concurrently.
+    # Without the fix, the end marker could complete before code blocks
+    # are collected, resulting in an empty or partial group.
+    # With the fix, the end marker waits for all code blocks.
+    def evaluate(ex: Example) -> None:
+        """
+        Evaluate the example.
+        """
+        ex.evaluate()
+
+    # Run all three concurrently - end marker should wait for code blocks
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        list(executor.map(evaluate, [end, code1, code2]))
+
+    separator_newlines = len(language.markup_separator)
+    padding_newlines = separator_newlines + 1
+    padding = "\n" * padding_newlines
+
+    # Both code blocks should be in the group, properly combined
+    assert document.namespace["blocks"] == [
+        f"x = [1]\n{padding}x = [*x, 2]\n",
+    ]

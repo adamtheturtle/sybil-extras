@@ -369,3 +369,66 @@ def test_state_cleanup_on_evaluator_failure(
 
     # The evaluator should have been popped even though the evaluator failed
     assert len(document.evaluators) == 0
+
+
+def test_finalize_waits_for_code_blocks(
+    language: MarkupLanguage,
+    tmp_path: Path,
+) -> None:
+    """The finalize marker waits for all code blocks to be collected.
+
+    This tests the fix for a race condition where the finalize marker
+    could be evaluated before all code blocks were collected, resulting
+    in incomplete groups. The finalize marker now waits until all
+    expected code blocks have been collected before processing.
+    """
+    content = language.markup_separator.join(
+        [
+            language.code_block_builder(code="x = [1]", language="python"),
+            language.code_block_builder(code="x = [*x, 2]", language="python"),
+        ]
+    )
+    test_document = tmp_path / "test"
+    test_document.write_text(
+        data=f"{content}{language.markup_separator}",
+        encoding="utf-8",
+    )
+
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
+    group_all_parser = language.group_all_parser_cls(
+        evaluator=evaluator,
+        pad_groups=True,
+    )
+    code_block_parser = language.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
+
+    sybil = Sybil(parsers=[code_block_parser, group_all_parser])
+    document = sybil.parse(path=test_document)
+
+    examples: list[Example] = list(document.examples())
+    code1, code2, finalize = examples
+
+    # Evaluate finalize marker AND code blocks concurrently.
+    # Without the fix, the finalize marker could complete before code blocks
+    # are collected, resulting in an empty or partial group.
+    # With the fix, the finalize marker waits for all code blocks.
+    def evaluate(ex: Example) -> None:
+        """
+        Evaluate the example.
+        """
+        ex.evaluate()
+
+    # Run all three concurrently - finalize should wait for code blocks
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        list(executor.map(evaluate, [finalize, code1, code2]))
+
+    separator_newlines = len(language.markup_separator)
+    padding_newlines = separator_newlines + 2
+    padding = "\n" * padding_newlines
+
+    # Both code blocks should be in the group, properly combined
+    assert document.namespace["blocks"] == [
+        f"x = [1]{padding}x = [*x, 2]\n",
+    ]
