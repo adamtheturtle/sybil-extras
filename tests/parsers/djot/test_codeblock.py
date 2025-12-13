@@ -297,7 +297,7 @@ def test_region_end_respects_container_boundary_with_closing_fence() -> None:
     # The content is correctly parsed (container ends at empty line)
     assert region.parsed == "x = 1\n"
 
-    # The region should end where the container ends (after "x = 1\n"),
+    # The region should end where the container ends (after "> x = 1\n"),
     # not extend to include the closing fence in the separate blockquote.
-    # The first blockquote ends at position 21 (after "> x = 1\n").
-    assert region.end == 21
+    expected_region_text = "> ```python\n> x = 1\n"
+    assert text[region.start : region.end] == expected_region_text

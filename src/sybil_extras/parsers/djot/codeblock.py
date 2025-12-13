@@ -129,7 +129,12 @@ class DjotRawFencedCodeBlockLexer:
                 dest: lexemes[source] for source, dest in self.mapping.items()
             }
 
-        region_end = content_end if closing is None else closing.end()
+        # If the container ended before the closing fence, use content_end.
+        # Otherwise, include the closing fence in the region.
+        if closing is None or content_end < closing.start():
+            region_end = content_end
+        else:
+            region_end = closing.end()
         return Region(
             start=opening.start(),
             end=region_end,
