@@ -603,6 +603,183 @@ def test_thread_safety(language: MarkupLanguage, tmp_path: Path) -> None:
     ]
 
 
+def test_multiple_groups_concurrent_evaluation(
+    language: MarkupLanguage,
+    tmp_path: Path,
+) -> None:
+    """Multiple groups in the same document can be evaluated concurrently.
+
+    This tests the core race condition fix where multiple groups in the
+    same document are processed in parallel without interfering with
+    each other. The code blocks within groups can be evaluated
+    concurrently, but start/end markers must be evaluated in order
+    (start before end).
+    """
+    content = language.markup_separator.join(
+        [
+            language.directive_builder(directive="group", argument="start"),
+            language.code_block_builder(code="x = [1]", language="python"),
+            language.code_block_builder(code="x = [*x, 2]", language="python"),
+            language.directive_builder(directive="group", argument="end"),
+            language.directive_builder(directive="group", argument="start"),
+            language.code_block_builder(code="y = [3]", language="python"),
+            language.code_block_builder(code="y = [*y, 4]", language="python"),
+            language.directive_builder(directive="group", argument="end"),
+        ]
+    )
+    test_document = tmp_path / "test"
+    test_document.write_text(
+        data=f"{content}{language.markup_separator}",
+        encoding="utf-8",
+    )
+
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
+    group_parser = language.group_parser_cls(
+        directive="group",
+        evaluator=evaluator,
+        pad_groups=True,
+    )
+    code_block_parser = language.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
+
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
+    document = sybil.parse(path=test_document)
+
+    examples: list[Example] = list(document.examples())
+    # Examples order: start1, code1a, code1b, end1, start2, code2a, code2b, end2
+    start1, code1a, code1b, end1, start2, code2a, code2b, end2 = examples
+
+    # Evaluate start markers first (required ordering)
+    start1.evaluate()
+    start2.evaluate()
+
+    # Evaluate all code blocks concurrently - this is the key race condition test
+    # Multiple groups' code blocks being processed in parallel
+    def evaluate(ex: Example) -> None:
+        ex.evaluate()
+
+    code_blocks = [code1a, code1b, code2a, code2b]
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        list(executor.map(evaluate, code_blocks))
+
+    # Evaluate end markers (required ordering after start)
+    end1.evaluate()
+    end2.evaluate()
+
+    separator_newlines = len(language.markup_separator)
+    padding_newlines = separator_newlines + 1
+    padding = "\n" * padding_newlines
+
+    # Both groups should have been evaluated correctly
+    assert document.namespace["blocks"] == [
+        f"x = [1]\n{padding}x = [*x, 2]\n",
+        f"y = [3]\n{padding}y = [*y, 4]\n",
+    ]
+
+
+def test_evaluation_order_independence(
+    language: MarkupLanguage,
+    tmp_path: Path,
+) -> None:
+    """Examples can be evaluated out of order and still produce correct
+    results.
+
+    This tests the position-based group membership: code blocks are
+    assigned to groups based on their position in the document, not the
+    order in which they are evaluated.
+    """
+    content = language.markup_separator.join(
+        [
+            language.directive_builder(directive="group", argument="start"),
+            language.code_block_builder(code="x = [1]", language="python"),
+            language.code_block_builder(code="x = [*x, 2]", language="python"),
+            language.directive_builder(directive="group", argument="end"),
+        ]
+    )
+    test_document = tmp_path / "test"
+    test_document.write_text(
+        data=f"{content}{language.markup_separator}",
+        encoding="utf-8",
+    )
+
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
+    group_parser = language.group_parser_cls(
+        directive="group",
+        evaluator=evaluator,
+        pad_groups=True,
+    )
+    code_block_parser = language.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
+
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
+    document = sybil.parse(path=test_document)
+
+    examples: list[Example] = list(document.examples())
+    # Order: start, code1, code2, end
+    start, code1, code2, end = examples
+
+    # Evaluate in a different order: code2, start, code1, end
+    code2.evaluate()
+    start.evaluate()
+    code1.evaluate()
+    end.evaluate()
+
+    separator_newlines = len(language.markup_separator)
+    padding_newlines = separator_newlines + 1
+    padding = "\n" * padding_newlines
+
+    # Despite out-of-order evaluation, the result should be sorted by position
+    assert document.namespace["blocks"] == [
+        f"x = [1]\n{padding}x = [*x, 2]\n",
+    ]
+
+
+def test_no_group_directives(language: MarkupLanguage, tmp_path: Path) -> None:
+    """The group parser handles documents with no group directives.
+
+    When a document has code blocks but no group directives, the group
+    parser should not affect the document.
+    """
+    content = language.markup_separator.join(
+        [
+            language.code_block_builder(code="x = [1]", language="python"),
+            language.code_block_builder(code="x = [*x, 2]", language="python"),
+        ]
+    )
+    test_document = tmp_path / "test"
+    test_document.write_text(
+        data=f"{content}{language.markup_separator}",
+        encoding="utf-8",
+    )
+
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
+    group_parser = language.group_parser_cls(
+        directive="group",
+        evaluator=evaluator,
+        pad_groups=True,
+    )
+    code_block_parser = language.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
+
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
+    document = sybil.parse(path=test_document)
+
+    for example in document.examples():
+        example.evaluate()
+
+    # Code blocks are evaluated individually, not grouped
+    assert document.namespace["blocks"] == [
+        "x = [1]\n",
+        "x = [*x, 2]\n",
+    ]
+
+
 def test_no_pad_groups(language: MarkupLanguage, tmp_path: Path) -> None:
     """
     It is possible to avoid padding grouped code blocks.
