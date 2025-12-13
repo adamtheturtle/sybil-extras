@@ -2,6 +2,7 @@
 An abstract parser for grouping blocks of source code.
 """
 
+import re
 import threading
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
@@ -21,14 +22,19 @@ from ._grouping_utils import (
 
 
 @beartype
-@dataclass(frozen=True)
-class _GroupStateKey:
+@dataclass
+class _GroupMarker:
     """
-    Key for looking up group state.
+    A marker for a group start or end.
     """
 
-    document: Document
+    action: Literal["start", "end"]
     group_id: int
+    # Store the boundaries so code blocks can determine membership
+    start_pos: int
+    end_pos: int
+    # Track how many code blocks are expected in this group
+    expected_code_blocks: int
 
 
 @beartype
@@ -39,22 +45,8 @@ class _GroupBoundary:
     """
 
     group_id: int
-    start_position: int
-    end_position: int
-
-
-@beartype
-@dataclass
-class _GroupMarker:
-    """
-    A marker for a group start or end.
-    """
-
-    action: Literal["start", "end"]
-    group_id: int
-    # Store the boundaries so code blocks can determine membership
-    start_position: int
-    end_position: int
+    start_pos: int
+    end_pos: int
 
 
 @beartype
@@ -63,14 +55,23 @@ class _GroupState:
     State for a single group.
     """
 
-    def __init__(self, *, start_position: int, end_position: int) -> None:
+    def __init__(
+        self,
+        *,
+        start_pos: int,
+        end_pos: int,
+        expected_code_blocks: int,
+    ) -> None:
         """
         Initialize the group state.
         """
-        self.start_position = start_position
-        self.end_position = end_position
+        self.start_pos = start_pos
+        self.end_pos = end_pos
+        self.expected_code_blocks = expected_code_blocks
         self.examples: list[Example] = []
         self.lock = threading.Lock()
+        self.ready = threading.Condition(self.lock)
+        self.collected_count = 0
 
 
 @beartype
@@ -95,9 +96,9 @@ class _Grouper:
                 However, this is detrimental to commands that expect the file
                 to not have a bunch of newlines in it, such as formatters.
         """
-        # State is keyed by _GroupStateKey to allow multiple groups
+        # State is keyed by (document, group_id) to allow multiple groups
         # in the same document to be processed in parallel.
-        self._group_state: dict[_GroupStateKey, _GroupState] = {}
+        self._group_state: dict[tuple[Document, int], _GroupState] = {}
         self._group_state_lock = threading.Lock()
         self._evaluator = evaluator
         self._directive = directive
@@ -105,112 +106,128 @@ class _Grouper:
         # Track group boundaries per document for determining membership
         self._group_boundaries: dict[Document, list[_GroupBoundary]] = {}
         self._group_boundaries_lock = threading.Lock()
+        # Track active groups per document for cleanup
+        self._active_group_count: dict[Document, int] = {}
+        self._active_group_lock = threading.Lock()
 
     def register_group(
         self,
         document: Document,
         group_id: int,
-        start_position: int,
-        end_position: int,
+        start_pos: int,
+        end_pos: int,
+        expected_code_blocks: int,
     ) -> None:
         """Register a group's boundaries for later membership lookup.
 
         Called at parse time, not evaluation time.
-
-        Both locks are held together to ensure atomic registration. This
-        prevents a race condition where another thread could find the
-        boundary but fail to find the corresponding state.
         """
-        with self._group_boundaries_lock, self._group_state_lock:
+        boundary = _GroupBoundary(
+            group_id=group_id,
+            start_pos=start_pos,
+            end_pos=end_pos,
+        )
+        with self._group_boundaries_lock:
             if document not in self._group_boundaries:
                 self._group_boundaries[document] = []
-            self._group_boundaries[document].append(
-                _GroupBoundary(
-                    group_id=group_id,
-                    start_position=start_position,
-                    end_position=end_position,
+            self._group_boundaries[document].append(boundary)
+        # Pre-create the group state
+        key = (document, group_id)
+        with self._group_state_lock:
+            if key not in self._group_state:
+                self._group_state[key] = _GroupState(
+                    start_pos=start_pos,
+                    end_pos=end_pos,
+                    expected_code_blocks=expected_code_blocks,
                 )
-            )
-            key = _GroupStateKey(document=document, group_id=group_id)
-            self._group_state[key] = _GroupState(
-                start_position=start_position,
-                end_position=end_position,
+        # Track active group count
+        with self._active_group_lock:
+            self._active_group_count[document] = (
+                self._active_group_count.get(document, 0) + 1
             )
 
-    def _find_containing_group_and_state(
+    def _find_containing_group(
         self,
         document: Document,
         position: int,
-    ) -> _GroupState | None:
-        """Find which group contains the given position and return its state.
-
-        This method atomically checks boundaries and retrieves state
-        while holding both locks. This prevents a TOCTOU race where
-        cleanup could delete the state between finding the group
-        boundary and retrieving the state.
+    ) -> int | None:
         """
-        with self._group_boundaries_lock, self._group_state_lock:
+        Find which group contains the given position.
+        """
+        with self._group_boundaries_lock:
             boundaries = self._group_boundaries.get(document, [])
             for boundary in boundaries:
-                if boundary.start_position < position < boundary.end_position:
-                    key = _GroupStateKey(
-                        document=document,
-                        group_id=boundary.group_id,
-                    )
-                    return self._group_state[key]
+                if boundary.start_pos < position < boundary.end_pos:
+                    return boundary.group_id
         return None
 
     def _get_group_state(
         self,
         document: Document,
         group_id: int,
-    ) -> _GroupState:
+    ) -> _GroupState | None:
         """
-        Get the state for a specific group.
+        Get the state for a specific group if it exists.
         """
-        key = _GroupStateKey(document=document, group_id=group_id)
+        key = (document, group_id)
         with self._group_state_lock:
-            return self._group_state[key]
+            return self._group_state.get(key)
 
     def _cleanup_group_state(
         self,
         document: Document,
         group_id: int,
     ) -> None:
-        """Clean up the state for a specific group.
-
-        This method atomically cleans up both state and boundaries, and
-        calls pop_evaluator if this was the last group in the document.
-        Both locks are held together to prevent race conditions where
-        multiple threads could both see an empty boundary list and call
-        pop_evaluator.
         """
-        key = _GroupStateKey(document=document, group_id=group_id)
-        # Hold both locks to ensure atomic cleanup and pop_evaluator call
-        with self._group_boundaries_lock, self._group_state_lock:
-            del self._group_state[key]
-            self._group_boundaries[document] = [
-                boundary
-                for boundary in self._group_boundaries[document]
-                if boundary.group_id != group_id
-            ]
-            if not self._group_boundaries[document]:
-                del self._group_boundaries[document]
-                document.pop_evaluator(evaluator=self)
+        Clean up the state for a specific group.
+        """
+        key = (document, group_id)
+        with self._group_state_lock:
+            if key in self._group_state:
+                del self._group_state[key]
+        with self._group_boundaries_lock:
+            if document in self._group_boundaries:
+                self._group_boundaries[document] = [
+                    boundary
+                    for boundary in self._group_boundaries[document]
+                    if boundary.group_id != group_id
+                ]
+                if not self._group_boundaries[document]:
+                    del self._group_boundaries[document]
+        # Track active group count and pop evaluator when done
+        with self._active_group_lock:
+            if document in self._active_group_count:
+                self._active_group_count[document] -= 1
+                if self._active_group_count[document] <= 0:
+                    del self._active_group_count[document]
+                    document.pop_evaluator(evaluator=self)
 
     def _evaluate_grouper_example(self, example: Example) -> None:
         """
         Evaluate a grouper marker.
         """
         marker: _GroupMarker = example.parsed
-        state = self._get_group_state(
-            document=example.document,
-            group_id=marker.group_id,
-        )
 
-        with state.lock:
-            if marker.action == "start":
-                return
+        if marker.action == "start":
+            # Start markers don't need to do anything - group is already
+            # registered at parse time
+            return
+
+        # End marker - wait for all code blocks to be collected, then process
+        state = self._get_group_state(example.document, marker.group_id)
+        if state is None:
+            return
+
+        with state.ready:
+            # Wait until all expected code blocks have been collected.
+            # Use a timeout to handle cases where some blocks are skipped
+            # and will never be collected.
+            timeout_seconds = 0.1
+            while state.collected_count < state.expected_code_blocks:
+                if not state.ready.wait(timeout=timeout_seconds):
+                    # Timeout - proceed with what we have (some blocks may
+                    # have been skipped)
+                    break
 
             try:
                 if state.examples:
@@ -232,28 +249,32 @@ class _Grouper:
                     )
                     self._evaluator(new_example)
             finally:
-                self._cleanup_group_state(
-                    document=example.document,
-                    group_id=marker.group_id,
-                )
+                self._cleanup_group_state(example.document, marker.group_id)
 
     def _evaluate_other_example(self, example: Example) -> None:
         """Evaluate an example that is not a group example.
 
         Determine group membership based on position.
         """
-        # Atomically find group and get state to avoid TOCTOU race
-        state = self._find_containing_group_and_state(
-            document=example.document,
-            position=example.region.start,
+        # Find which group contains this example based on position
+        group_id = self._find_containing_group(
+            example.document,
+            example.region.start,
         )
 
+        if group_id is None:
+            raise NotEvaluated
+
+        state = self._get_group_state(example.document, group_id)
         if state is None:
             raise NotEvaluated
 
-        with state.lock:
+        with state.ready:
             if has_source(example=example):
                 state.examples.append(example)
+                state.collected_count += 1
+                # Signal that a code block has been collected
+                state.ready.notify_all()
                 return
 
         raise NotEvaluated
@@ -333,9 +354,9 @@ class AbstractGroupedSourceParser:
         # Validate and pair up start/end markers, register groups
         regions: list[Region] = []
         group_id = 0
-        marker_index = 0
-        while marker_index < len(markers):
-            start_start, start_end, start_action = markers[marker_index]
+        i = 0
+        while i < len(markers):
+            start_start, start_end, start_action = markers[i]
             if start_action != "start":
                 msg = (
                     f"'{self._directive}: {start_action}' "
@@ -343,41 +364,60 @@ class AbstractGroupedSourceParser:
                 )
                 raise ValueError(msg)
 
-            if marker_index + 1 >= len(markers):
+            if i + 1 >= len(markers):
                 msg = (
                     f"'{self._directive}: start' was not followed by "
                     f"'{self._directive}: end'"
                 )
                 raise ValueError(msg)
 
-            end_start, end_end, end_action = markers[marker_index + 1]
+            end_start, end_end, end_action = markers[i + 1]
             if end_action != "end":
                 msg = (
-                    f"'{self._directive}: start' "
-                    f"was not followed by '{self._directive}: end'"
+                    f"'{self._directive}: start' was not followed by "
+                    f"'{self._directive}: end'"
                 )
                 raise ValueError(msg)
+
+            # Count code blocks in this group's range by scanning document
+            # We look for patterns that indicate code blocks
+            group_text = document.text[start_end:end_start]
+            # Count occurrences of code block markers
+            # This is a heuristic - we count triple backticks (divided by 2
+            # since each block has open + close), or code-block directives
+            backtick_count = len(re.findall(r"```", group_text))
+            directive_count = len(
+                re.findall(
+                    r"\.\. code-block::|@code\b|#\+begin_src",
+                    group_text,
+                    re.IGNORECASE,
+                )
+            )
+            code_block_count = backtick_count // 2 + directive_count
 
             # Register group boundaries at parse time
             self._grouper.register_group(
                 document=document,
                 group_id=group_id,
-                start_position=start_start,
-                end_position=end_end,
+                start_pos=start_start,
+                end_pos=end_end,
+                expected_code_blocks=code_block_count,
             )
 
             # Create markers with group boundaries
             start_marker = _GroupMarker(
                 action="start",
                 group_id=group_id,
-                start_position=start_start,
-                end_position=end_end,
+                start_pos=start_start,
+                end_pos=end_end,
+                expected_code_blocks=code_block_count,
             )
             end_marker = _GroupMarker(
                 action="end",
                 group_id=group_id,
-                start_position=start_start,
-                end_position=end_end,
+                start_pos=start_start,
+                end_pos=end_end,
+                expected_code_blocks=code_block_count,
             )
 
             regions.append(
@@ -398,7 +438,7 @@ class AbstractGroupedSourceParser:
             )
 
             group_id += 1
-            marker_index += 2
+            i += 2
 
         # Push evaluator at parse time (like group_all does)
         # This ensures all code blocks go through the grouper

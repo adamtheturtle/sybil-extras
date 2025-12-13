@@ -656,7 +656,7 @@ def test_multiple_groups_concurrent_evaluation(
 
     def evaluate(ex: Example) -> None:
         """
-        Evaluate an example.
+        Evaluate the example.
         """
         ex.evaluate()
 
