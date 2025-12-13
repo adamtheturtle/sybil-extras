@@ -14,6 +14,7 @@ from sybil.parsers.abstract.lexers import LexerCollection
 from sybil.typing import Evaluator, Lexer
 
 from ._grouping_utils import (
+    count_expected_code_blocks,
     create_combined_example,
     create_combined_region,
     has_source,
@@ -80,7 +81,7 @@ class _GroupState:
         self.expected_code_blocks = expected_code_blocks
         self.examples: list[Example] = []
         self.lock = threading.Lock()
-        self.ready = threading.Condition(self.lock)
+        self.ready = threading.Condition(lock=self.lock)
         self.collected_count = 0
 
 
@@ -378,49 +379,14 @@ class AbstractGroupedSourceParser:
             # At parse time, previous parsers have already added their regions
             # to the document, so we can count examples that fall within our
             # group boundaries.
-            #
-            # We also need to account for skip directives. Skip markers have
-            # parsed values like ('next', None) or ('start', None).
-            examples_in_group = [
+            examples_in_group = (
                 ex
                 for ex in document.examples()
                 if start_start < ex.region.start < end_end
-            ]
-
-            # Count how many code blocks will be skipped.
-            # Process examples in position order since skip directives
-            # only affect examples that come AFTER them.
-            examples_sorted = sorted(
-                examples_in_group,
-                key=lambda ex: ex.region.start,
             )
-            skipped_count = 0
-            skip_next = False
-            in_skip_range = False
-            for ex in examples_sorted:
-                is_skip_marker = (
-                    isinstance(ex.parsed, tuple) and len(ex.parsed) >= 1
-                )
-                if is_skip_marker:
-                    action = ex.parsed[0]
-                    if action == "next":
-                        skip_next = True
-                    elif action == "start":
-                        in_skip_range = True
-                    elif action == "end":
-                        in_skip_range = False
-                # This is a code block
-                elif skip_next or in_skip_range:
-                    skipped_count += 1
-                    skip_next = False
-
-            # Count non-skip examples minus those that will be skipped
-            non_skip_examples = [
-                ex
-                for ex in examples_in_group
-                if not (isinstance(ex.parsed, tuple) and len(ex.parsed) >= 1)
-            ]
-            expected_code_blocks = len(non_skip_examples) - skipped_count
+            expected_code_blocks = count_expected_code_blocks(
+                examples=examples_in_group,
+            )
 
             # Register group boundaries at parse time
             self._grouper.register_group(

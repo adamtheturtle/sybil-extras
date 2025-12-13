@@ -2,12 +2,53 @@
 Shared utilities for grouping parsers.
 """
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 
 from beartype import beartype
 from sybil import Example, Region
 from sybil.region import Lexeme
 from sybil.typing import Evaluator
+
+
+@beartype
+def count_expected_code_blocks(examples: Iterable[Example]) -> int:
+    """Count the expected number of code blocks, accounting for skip markers.
+
+    Skip directives (like 'skip: next' or 'skip: start/end') only affect
+    examples that come AFTER them, so we must process in position order.
+
+    Skip markers have parsed values like ('next', None) or ('start', None).
+
+    Args:
+        examples: The examples to count.
+
+    Returns:
+        The number of code blocks expected to be collected.
+    """
+    examples_sorted = sorted(examples, key=lambda ex: ex.region.start)
+
+    skipped_count = 0
+    skip_next = False
+    in_skip_range = False
+    non_skip_count = 0
+
+    for ex in examples_sorted:
+        is_skip_marker = isinstance(ex.parsed, tuple) and len(ex.parsed) >= 1
+        if is_skip_marker:
+            action = ex.parsed[0]
+            if action == "next":
+                skip_next = True
+            elif action == "start":
+                in_skip_range = True
+            elif action == "end":
+                in_skip_range = False
+        else:
+            non_skip_count += 1
+            if skip_next or in_skip_range:
+                skipped_count += 1
+                skip_next = False
+
+    return non_skip_count - skipped_count
 
 
 @beartype

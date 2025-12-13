@@ -11,6 +11,7 @@ from sybil.example import NotEvaluated
 from sybil.typing import Evaluator
 
 from ._grouping_utils import (
+    count_expected_code_blocks,
     create_combined_example,
     create_combined_region,
     has_source,
@@ -30,7 +31,7 @@ class _GroupAllState:
         self.expected_code_blocks = expected_code_blocks
         self.examples: list[Example] = []
         self.lock = threading.Lock()
-        self.ready = threading.Condition(self.lock)
+        self.ready = threading.Condition(lock=self.lock)
         self.collected_count = 0
 
 
@@ -176,44 +177,9 @@ class AbstractGroupAllParser:
         """
         # Count code blocks by examining existing examples.
         # At parse time, previous parsers have already added their regions.
-        #
-        # We also need to account for skip directives. Skip markers have
-        # parsed values like ('next', None) or ('start', None).
-        # Process examples in position order since skip directives
-        # only affect examples that come AFTER them.
-        examples_sorted = sorted(
-            document.examples(),
-            key=lambda ex: ex.region.start,
+        expected_code_blocks = count_expected_code_blocks(
+            examples=document.examples(),
         )
-
-        # Count how many code blocks will be skipped
-        skipped_count = 0
-        skip_next = False
-        in_skip_range = False
-        for ex in examples_sorted:
-            is_skip_marker = (
-                isinstance(ex.parsed, tuple) and len(ex.parsed) >= 1
-            )
-            if is_skip_marker:
-                action = ex.parsed[0]
-                if action == "next":
-                    skip_next = True
-                elif action == "start":
-                    in_skip_range = True
-                elif action == "end":
-                    in_skip_range = False
-            # This is a code block
-            elif skip_next or in_skip_range:
-                skipped_count += 1
-                skip_next = False
-
-        # Count non-skip examples minus those that will be skipped
-        non_skip_examples = [
-            ex
-            for ex in examples_sorted
-            if not (isinstance(ex.parsed, tuple) and len(ex.parsed) >= 1)
-        ]
-        expected_code_blocks = len(non_skip_examples) - skipped_count
 
         # Register the document at parse time
         self._evaluator.register_document(
