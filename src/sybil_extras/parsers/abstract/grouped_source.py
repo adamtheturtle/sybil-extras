@@ -180,21 +180,8 @@ class _Grouper:
 
         with state.lock:
             if marker.action == "start":
-                if state.start_evaluated:
-                    msg = (
-                        f"'{self._directive}: start' "
-                        f"was not followed by '{self._directive}: end'"
-                    )
-                    raise ValueError(msg)
                 state.start_evaluated = True
                 return
-
-            if not state.start_evaluated:
-                msg = (
-                    f"'{self._directive}: {marker.action}' "
-                    f"must follow '{self._directive}: start'"
-                )
-                raise ValueError(msg)
 
             state.end_evaluated = True
 
