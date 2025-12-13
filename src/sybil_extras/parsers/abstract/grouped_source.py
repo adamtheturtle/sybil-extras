@@ -21,6 +21,29 @@ from ._grouping_utils import (
 
 
 @beartype
+@dataclass(frozen=True)
+class _GroupStateKey:
+    """
+    Key for looking up group state.
+    """
+
+    document: Document
+    group_id: int
+
+
+@beartype
+@dataclass
+class _GroupBoundary:
+    """
+    Boundary information for a group.
+    """
+
+    group_id: int
+    start_position: int
+    end_position: int
+
+
+@beartype
 @dataclass
 class _GroupMarker:
     """
@@ -72,16 +95,15 @@ class _Grouper:
                 However, this is detrimental to commands that expect the file
                 to not have a bunch of newlines in it, such as formatters.
         """
-        # State is keyed by (document, group_id) to allow multiple groups
+        # State is keyed by _GroupStateKey to allow multiple groups
         # in the same document to be processed in parallel.
-        self._group_state: dict[tuple[Document, int], _GroupState] = {}
+        self._group_state: dict[_GroupStateKey, _GroupState] = {}
         self._group_state_lock = threading.Lock()
         self._evaluator = evaluator
         self._directive = directive
         self._pad_groups = pad_groups
         # Track group boundaries per document for determining membership
-        # Maps document -> list of (group_id, start_position, end_position)
-        self._group_boundaries: dict[Document, list[tuple[int, int, int]]] = {}
+        self._group_boundaries: dict[Document, list[_GroupBoundary]] = {}
         self._group_boundaries_lock = threading.Lock()
 
     def register_group(
@@ -99,9 +121,13 @@ class _Grouper:
             if document not in self._group_boundaries:
                 self._group_boundaries[document] = []
             self._group_boundaries[document].append(
-                (group_id, start_position, end_position)
+                _GroupBoundary(
+                    group_id=group_id,
+                    start_position=start_position,
+                    end_position=end_position,
+                )
             )
-        key = (document, group_id)
+        key = _GroupStateKey(document=document, group_id=group_id)
         with self._group_state_lock:
             self._group_state[key] = _GroupState(
                 start_position=start_position,
@@ -118,9 +144,9 @@ class _Grouper:
         """
         with self._group_boundaries_lock:
             boundaries = self._group_boundaries.get(document, [])
-            for group_id, start_position, end_position in boundaries:
-                if start_position < position < end_position:
-                    return group_id
+            for boundary in boundaries:
+                if boundary.start_position < position < boundary.end_position:
+                    return boundary.group_id
         return None
 
     def _get_group_state(
@@ -131,7 +157,7 @@ class _Grouper:
         """
         Get the state for a specific group.
         """
-        key = (document, group_id)
+        key = _GroupStateKey(document=document, group_id=group_id)
         with self._group_state_lock:
             return self._group_state[key]
 
@@ -143,14 +169,14 @@ class _Grouper:
         """
         Clean up the state for a specific group.
         """
-        key = (document, group_id)
+        key = _GroupStateKey(document=document, group_id=group_id)
         with self._group_state_lock:
             del self._group_state[key]
         with self._group_boundaries_lock:
             self._group_boundaries[document] = [
                 boundary
                 for boundary in self._group_boundaries[document]
-                if boundary[0] != group_id
+                if boundary.group_id != group_id
             ]
             if not self._group_boundaries[document]:
                 del self._group_boundaries[document]
