@@ -2,13 +2,16 @@
 Group-all parser tests shared across markup languages.
 """
 
+import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+import pytest
 from sybil import Example, Sybil
 
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
+from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 from sybil_extras.languages import (
     MarkupLanguage,
 )
@@ -265,3 +268,48 @@ def test_group_all_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     skipped_lines = "\n" * (num_newlines_between + 2)
     expected = f"x = []{skipped_lines}x = [*x, 2]\n"
     assert document.namespace["blocks"] == [expected]
+
+
+def test_state_cleanup_on_evaluator_failure(
+    language: MarkupLanguage,
+    tmp_path: Path,
+) -> None:
+    """When an evaluator raises an exception, the group-all state is cleaned
+    up.
+
+    This ensures that pop_evaluator is called even when the evaluator
+    fails, so the document's evaluator stack is properly cleaned up.
+    """
+    content = language.code_block_builder(code="exit 1", language="bash")
+    test_document = tmp_path / "test"
+    test_document.write_text(
+        data=f"{content}{language.markup_separator}",
+        encoding="utf-8",
+    )
+
+    shell_evaluator = ShellCommandEvaluator(
+        args=["sh"],
+        pad_file=False,
+        write_to_file=False,
+        use_pty=False,
+    )
+    group_all_parser = language.group_all_parser_cls(
+        evaluator=shell_evaluator,
+        pad_groups=False,
+    )
+    code_block_parser = language.code_block_parser_cls(language="bash")
+
+    sybil = Sybil(parsers=[code_block_parser, group_all_parser])
+    document = sybil.parse(path=test_document)
+
+    code_block_example, finalize_example = document.examples()
+
+    # Evaluate the code block (gets collected)
+    code_block_example.evaluate()
+
+    # Evaluate the finalize marker (will fail due to exit 1)
+    with pytest.raises(expected_exception=subprocess.CalledProcessError):
+        finalize_example.evaluate()
+
+    # The evaluator should have been popped even though the evaluator failed
+    assert len(document.evaluators) == 0
