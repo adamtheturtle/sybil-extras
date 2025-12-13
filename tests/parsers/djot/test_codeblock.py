@@ -268,3 +268,34 @@ def test_fence_with_non_matching_closer() -> None:
     # The line without "> " prefix ends the container, so the code block
     # ends before the ``` line (which is outside the blockquote)
     assert region.parsed == "code\n"
+
+
+def test_region_end_respects_container_boundary_with_closing_fence() -> None:
+    """Test that region end respects container boundary even when closing fence
+    exists in a separate container.
+
+    Per the Djot spec, "a code block closes...or the end of the document or
+    enclosing block, if no such line is encountered."
+
+    When a code block opens in one blockquote but lacks a closing fence within
+    that container, and a matching fence appears in a *separate* blockquote
+    after an empty line, the region should end at the container boundary, not
+    extend to include the fence from the second blockquote.
+    """
+    text = dedent(
+        text="""\
+        > ```python
+        > x = 1
+
+        > ```
+        """,
+    )
+    (region,) = _parse(text=text)
+
+    # The content is correctly parsed (container ends at empty line)
+    assert region.parsed == "x = 1\n"
+
+    # The region should end where the container ends (after "> x = 1\n"),
+    # not extend to include the closing fence in the separate blockquote.
+    expected_region_text = "> ```python\n> x = 1\n"
+    assert text[region.start : region.end] == expected_region_text
