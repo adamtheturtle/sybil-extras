@@ -298,9 +298,9 @@ class AbstractGroupedSourceParser:
         # Validate and pair up start/end markers, register groups
         regions: list[Region] = []
         group_id = 0
-        i = 0
-        while i < len(markers):
-            start_start, start_end, start_action = markers[i]
+        marker_index = 0
+        while marker_index < len(markers):
+            start_start, start_end, start_action = markers[marker_index]
             if start_action != "start":
                 msg = (
                     f"'{self._directive}: {start_action}' "
@@ -308,14 +308,14 @@ class AbstractGroupedSourceParser:
                 )
                 raise ValueError(msg)
 
-            if i + 1 >= len(markers):
+            if marker_index + 1 >= len(markers):
                 msg = (
                     f"'{self._directive}: start' was not followed by "
                     f"'{self._directive}: end'"
                 )
                 raise ValueError(msg)
 
-            end_start, end_end, end_action = markers[i + 1]
+            end_start, end_end, end_action = markers[marker_index + 1]
             if end_action != "end":
                 msg = (
                     f"'{self._directive}: start' "
@@ -363,7 +363,7 @@ class AbstractGroupedSourceParser:
             )
 
             group_id += 1
-            i += 2
+            marker_index += 2
 
         # Push evaluator at parse time (like group_all does)
         # This ensures all code blocks go through the grouper
