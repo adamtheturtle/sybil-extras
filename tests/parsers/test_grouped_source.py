@@ -2,6 +2,7 @@
 Grouped source parser tests shared across markup languages.
 """
 
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -490,6 +491,80 @@ def test_with_shell_command_evaluator(
         f"{leading_padding}x = [*x, 1]\n{block_padding}x = [*x, 2]\n"
     )
     assert output_document_content == expected_output_document_content
+
+
+def test_state_cleanup_on_evaluator_failure(
+    language: MarkupLanguage,
+    tmp_path: Path,
+) -> None:
+    """When an evaluator raises an exception, the grouper state is cleaned up.
+
+    This ensures that subsequent groups in the same document can be
+    evaluated without getting misleading errors about mismatched
+    start/end directives.
+    """
+    content = language.markup_separator.join(
+        [
+            # First group: will fail because the shell command exits with 1
+            language.directive_builder(directive="group", argument="start"),
+            language.code_block_builder(code="exit 1", language="bash"),
+            language.directive_builder(directive="group", argument="end"),
+            # Second group: should succeed if state is properly cleaned up
+            language.directive_builder(directive="group", argument="start"),
+            language.code_block_builder(code="exit 0", language="bash"),
+            language.directive_builder(directive="group", argument="end"),
+        ]
+    )
+    test_document = tmp_path / "test"
+    test_document.write_text(
+        data=f"{content}{language.markup_separator}",
+        encoding="utf-8",
+    )
+
+    shell_evaluator = ShellCommandEvaluator(
+        args=["sh"],
+        pad_file=False,
+        write_to_file=False,
+        use_pty=False,
+    )
+    group_parser = language.group_parser_cls(
+        directive="group",
+        evaluator=shell_evaluator,
+        pad_groups=False,
+    )
+    code_block_parser = language.code_block_parser_cls(language="bash")
+
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
+    document = sybil.parse(path=test_document)
+
+    examples = list(document.examples())
+    # Examples are:
+    # 0: group start
+    # 1: code block (exit 1)
+    # 2: group end  <- this will raise CalledProcessError
+    # 3: group start
+    # 4: code block (exit 0)
+    # 5: group end
+
+    # Evaluate the first group's start - this pushes the grouper as evaluator
+    examples[0].evaluate()
+
+    # Evaluate the code block - grouper intercepts and accumulates it
+    examples[1].evaluate()
+
+    # Evaluate the first group's end - this runs the shell command which fails
+    with pytest.raises(subprocess.CalledProcessError):
+        examples[2].evaluate()
+
+    # Now try to evaluate the second group.
+    # If state cleanup is broken, this will raise a ValueError about
+    # "'group: start' must be followed by 'group: end'" because the
+    # state still thinks we're in the middle of the first group.
+
+    # This should NOT raise - the state should have been cleaned up
+    examples[3].evaluate()
+    examples[4].evaluate()
+    examples[5].evaluate()
 
 
 def test_no_pad_groups(language: MarkupLanguage, tmp_path: Path) -> None:
