@@ -129,8 +129,12 @@ class _Grouper:
         """Register a group's boundaries for later membership lookup.
 
         Called at parse time, not evaluation time.
+
+        Both locks are held together to ensure atomicity - a boundary
+        and its corresponding state must be registered together without
+        a gap that could be exploited by another thread.
         """
-        with self._group_boundaries_lock:
+        with self._group_boundaries_lock, self._group_state_lock:
             if document not in self._group_boundaries:
                 self._group_boundaries[document] = []
             self._group_boundaries[document].append(
@@ -140,8 +144,7 @@ class _Grouper:
                     end_position=end_position,
                 )
             )
-        key = _GroupStateKey(document=document, group_id=group_id)
-        with self._group_state_lock:
+            key = _GroupStateKey(document=document, group_id=group_id)
             self._group_state[key] = _GroupState(
                 start_position=start_position,
                 end_position=end_position,
