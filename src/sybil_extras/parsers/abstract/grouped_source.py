@@ -171,7 +171,10 @@ class _Grouper:
         Evaluate a grouper marker.
         """
         marker: _GroupMarker = example.parsed
-        state = self._get_group_state(example.document, marker.group_id)
+        state = self._get_group_state(
+            document=example.document,
+            group_id=marker.group_id,
+        )
 
         with state.lock:
             if marker.action == "start":
@@ -197,8 +200,11 @@ class _Grouper:
                     )
                     self._evaluator(new_example)
             finally:
-                self._cleanup_group_state(example.document, marker.group_id)
-                self._cleanup_document(example.document)
+                self._cleanup_group_state(
+                    document=example.document,
+                    group_id=marker.group_id,
+                )
+                self._cleanup_document(document=example.document)
 
     def _evaluate_other_example(self, example: Example) -> None:
         """Evaluate an example that is not a group example.
@@ -207,14 +213,17 @@ class _Grouper:
         """
         # Find which group contains this example based on position
         group_id = self._find_containing_group(
-            example.document,
-            example.region.start,
+            document=example.document,
+            position=example.region.start,
         )
 
         if group_id is None:
             raise NotEvaluated
 
-        state = self._get_group_state(example.document, group_id)
+        state = self._get_group_state(
+            document=example.document,
+            group_id=group_id,
+        )
 
         with state.lock:
             if has_source(example=example):
