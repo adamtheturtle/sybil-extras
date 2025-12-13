@@ -178,16 +178,14 @@ class _Grouper:
         marker: _GroupMarker = example.parsed
         state = self._get_group_state(example.document, marker.group_id)
 
-        if state is None:  # pragma: no cover
+        if state is None:
             # This shouldn't happen if register_group was called properly
             msg = f"Group {marker.group_id} not registered"
             raise ValueError(msg)
 
         with state.lock:
             if marker.action == "start":
-                # This error is now caught at parse time, but kept as
-                # defensive check
-                if state.start_evaluated:  # pragma: no cover
+                if state.start_evaluated:
                     msg = (
                         f"'{self._directive}: start' "
                         f"was not followed by '{self._directive}: end'"
@@ -196,9 +194,7 @@ class _Grouper:
                 state.start_evaluated = True
                 return
 
-            # This error is now caught at parse time, but kept as
-            # defensive check
-            if not state.start_evaluated:  # pragma: no cover
+            if not state.start_evaluated:
                 msg = (
                     f"'{self._directive}: {marker.action}' "
                     f"must follow '{self._directive}: start'"
@@ -245,7 +241,7 @@ class _Grouper:
             raise NotEvaluated
 
         state = self._get_group_state(example.document, group_id)
-        if state is None:  # pragma: no cover
+        if state is None:
             raise NotEvaluated
 
         with state.lock:
