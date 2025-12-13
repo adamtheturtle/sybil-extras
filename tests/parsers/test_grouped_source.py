@@ -535,17 +535,24 @@ def test_state_cleanup_on_evaluator_failure(
     sybil = Sybil(parsers=[code_block_parser, group_parser])
     document = sybil.parse(path=test_document)
 
-    examples = list(document.examples())
+    (
+        first_group_start,
+        first_code_block,
+        first_group_end,
+        second_group_start,
+        second_code_block,
+        second_group_end,
+    ) = document.examples()
 
-    examples[0].evaluate()
-    examples[1].evaluate()
+    first_group_start.evaluate()
+    first_code_block.evaluate()
 
     with pytest.raises(expected_exception=subprocess.CalledProcessError):
-        examples[2].evaluate()
+        first_group_end.evaluate()
 
-    examples[3].evaluate()
-    examples[4].evaluate()
-    examples[5].evaluate()
+    second_group_start.evaluate()
+    second_code_block.evaluate()
+    second_group_end.evaluate()
 
 
 def test_no_pad_groups(language: MarkupLanguage, tmp_path: Path) -> None:
