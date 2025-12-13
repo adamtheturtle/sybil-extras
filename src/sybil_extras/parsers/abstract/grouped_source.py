@@ -30,8 +30,8 @@ class _GroupMarker:
     action: Literal["start", "end"]
     group_id: int
     # Store the boundaries so code blocks can determine membership
-    start_pos: int
-    end_pos: int
+    start_position: int
+    end_position: int
 
 
 @beartype
@@ -40,12 +40,12 @@ class _GroupState:
     State for a single group.
     """
 
-    def __init__(self, *, start_pos: int, end_pos: int) -> None:
+    def __init__(self, *, start_position: int, end_position: int) -> None:
         """
         Initialize the group state.
         """
-        self.start_pos = start_pos
-        self.end_pos = end_pos
+        self.start_position = start_position
+        self.end_position = end_position
         self.examples: list[Example] = []
         self.lock = threading.Lock()
 
@@ -80,7 +80,7 @@ class _Grouper:
         self._directive = directive
         self._pad_groups = pad_groups
         # Track group boundaries per document for determining membership
-        # Maps document -> list of (group_id, start_pos, end_pos)
+        # Maps document -> list of (group_id, start_position, end_position)
         self._group_boundaries: dict[Document, list[tuple[int, int, int]]] = {}
         self._group_boundaries_lock = threading.Lock()
 
@@ -88,8 +88,8 @@ class _Grouper:
         self,
         document: Document,
         group_id: int,
-        start_pos: int,
-        end_pos: int,
+        start_position: int,
+        end_position: int,
     ) -> None:
         """Register a group's boundaries for later membership lookup.
 
@@ -99,14 +99,14 @@ class _Grouper:
             if document not in self._group_boundaries:
                 self._group_boundaries[document] = []
             self._group_boundaries[document].append(
-                (group_id, start_pos, end_pos)
+                (group_id, start_position, end_position)
             )
         # Pre-create the group state
         key = (document, group_id)
         with self._group_state_lock:
             self._group_state[key] = _GroupState(
-                start_pos=start_pos,
-                end_pos=end_pos,
+                start_position=start_position,
+                end_position=end_position,
             )
 
     def _find_containing_group(
@@ -119,8 +119,8 @@ class _Grouper:
         """
         with self._group_boundaries_lock:
             boundaries = self._group_boundaries.get(document, [])
-            for group_id, start_pos, end_pos in boundaries:
-                if start_pos < position < end_pos:
+            for group_id, start_position, end_position in boundaries:
+                if start_position < position < end_position:
                     return group_id
         return None
 
@@ -149,7 +149,9 @@ class _Grouper:
             del self._group_state[key]
         with self._group_boundaries_lock:
             self._group_boundaries[document] = [
-                b for b in self._group_boundaries[document] if b[0] != group_id
+                boundary
+                for boundary in self._group_boundaries[document]
+                if boundary[0] != group_id
             ]
             if not self._group_boundaries[document]:
                 del self._group_boundaries[document]
@@ -325,22 +327,22 @@ class AbstractGroupedSourceParser:
             self._grouper.register_group(
                 document=document,
                 group_id=group_id,
-                start_pos=start_start,
-                end_pos=end_end,
+                start_position=start_start,
+                end_position=end_end,
             )
 
             # Create markers with group boundaries
             start_marker = _GroupMarker(
                 action="start",
                 group_id=group_id,
-                start_pos=start_start,
-                end_pos=end_end,
+                start_position=start_start,
+                end_position=end_end,
             )
             end_marker = _GroupMarker(
                 action="end",
                 group_id=group_id,
-                start_pos=start_start,
-                end_pos=end_end,
+                start_position=start_start,
+                end_position=end_end,
             )
 
             regions.append(
