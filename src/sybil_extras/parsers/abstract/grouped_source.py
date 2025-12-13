@@ -134,19 +134,27 @@ class _Grouper:
                 end_position=end_position,
             )
 
-    def _find_containing_group(
+    def _find_containing_group_and_state(
         self,
         document: Document,
         position: int,
-    ) -> int | None:
+    ) -> _GroupState | None:
+        """Find which group contains the given position and return its state.
+
+        This method atomically checks boundaries and retrieves state
+        while holding both locks. This prevents a TOCTOU race where
+        cleanup could delete the state between finding the group
+        boundary and retrieving the state.
         """
-        Find which group contains the given position, if any.
-        """
-        with self._group_boundaries_lock:
+        with self._group_boundaries_lock, self._group_state_lock:
             boundaries = self._group_boundaries.get(document, [])
             for boundary in boundaries:
                 if boundary.start_position < position < boundary.end_position:
-                    return boundary.group_id
+                    key = _GroupStateKey(
+                        document=document,
+                        group_id=boundary.group_id,
+                    )
+                    return self._group_state[key]
         return None
 
     def _get_group_state(
@@ -166,13 +174,18 @@ class _Grouper:
         document: Document,
         group_id: int,
     ) -> None:
-        """
-        Clean up the state for a specific group.
+        """Clean up the state for a specific group.
+
+        This method atomically cleans up both state and boundaries, and
+        calls pop_evaluator if this was the last group in the document.
+        Both locks are held together to prevent race conditions where
+        multiple threads could both see an empty boundary list and call
+        pop_evaluator.
         """
         key = _GroupStateKey(document=document, group_id=group_id)
-        with self._group_state_lock:
+        # Hold both locks to ensure atomic cleanup and pop_evaluator call
+        with self._group_boundaries_lock, self._group_state_lock:
             del self._group_state[key]
-        with self._group_boundaries_lock:
             self._group_boundaries[document] = [
                 boundary
                 for boundary in self._group_boundaries[document]
@@ -180,15 +193,6 @@ class _Grouper:
             ]
             if not self._group_boundaries[document]:
                 del self._group_boundaries[document]
-
-    def _cleanup_document(self, document: Document) -> None:
-        """Clean up all state for a document.
-
-        Called when the last group in the document is finalized.
-        """
-        with self._group_boundaries_lock:
-            remaining = self._group_boundaries.get(document, [])
-            if not remaining:
                 document.pop_evaluator(evaluator=self)
 
     def _evaluate_grouper_example(self, example: Example) -> None:
@@ -229,26 +233,20 @@ class _Grouper:
                     document=example.document,
                     group_id=marker.group_id,
                 )
-                self._cleanup_document(document=example.document)
 
     def _evaluate_other_example(self, example: Example) -> None:
         """Evaluate an example that is not a group example.
 
         Determine group membership based on position.
         """
-        # Find which group contains this example based on position
-        group_id = self._find_containing_group(
+        # Atomically find group and get state to avoid TOCTOU race
+        state = self._find_containing_group_and_state(
             document=example.document,
             position=example.region.start,
         )
 
-        if group_id is None:
+        if state is None:
             raise NotEvaluated
-
-        state = self._get_group_state(
-            document=example.document,
-            group_id=group_id,
-        )
 
         with state.lock:
             if has_source(example=example):
