@@ -131,13 +131,13 @@ class _Grouper:
         self,
         document: Document,
         group_id: int,
-    ) -> _GroupState | None:
+    ) -> _GroupState:
         """
-        Get the state for a specific group if it exists.
+        Get the state for a specific group.
         """
         key = (document, group_id)
         with self._group_state_lock:
-            return self._group_state.get(key)
+            return self._group_state[key]
 
     def _cleanup_group_state(
         self,
@@ -177,11 +177,6 @@ class _Grouper:
         """
         marker: _GroupMarker = example.parsed
         state = self._get_group_state(example.document, marker.group_id)
-
-        if state is None:
-            # This shouldn't happen if register_group was called properly
-            msg = f"Group {marker.group_id} not registered"
-            raise ValueError(msg)
 
         with state.lock:
             if marker.action == "start":
@@ -241,8 +236,6 @@ class _Grouper:
             raise NotEvaluated
 
         state = self._get_group_state(example.document, group_id)
-        if state is None:
-            raise NotEvaluated
 
         with state.lock:
             if not state.end_evaluated and has_source(example=example):
