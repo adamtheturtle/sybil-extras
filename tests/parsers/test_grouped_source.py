@@ -557,12 +557,8 @@ def test_state_cleanup_on_evaluator_failure(
 
 
 def test_thread_safety(language: MarkupLanguage, tmp_path: Path) -> None:
-    """The group parser is thread-safe when examples are evaluated
-    concurrently.
-
-    This test ensures that shared state in _Grouper does not cause race
-    conditions when multiple threads evaluate examples from the same
-    document.
+    """
+    The group parser is thread-safe when examples are evaluated concurrently.
     """
     content = language.markup_separator.join(
         [

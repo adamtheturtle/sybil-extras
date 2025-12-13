@@ -163,12 +163,9 @@ def test_group_all_no_pad(language: MarkupLanguage, tmp_path: Path) -> None:
 
 
 def test_thread_safety(language: MarkupLanguage, tmp_path: Path) -> None:
-    """The group-all parser is thread-safe when examples are evaluated
+    """
+    The group-all parser is thread-safe when examples are evaluated
     concurrently.
-
-    This test ensures that shared state in _GroupAllEvaluator does not
-    cause race conditions when multiple threads evaluate examples from
-    the same document.
     """
     content = language.markup_separator.join(
         [
