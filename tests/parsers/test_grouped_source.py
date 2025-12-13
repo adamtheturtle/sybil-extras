@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
-from sybil import Sybil
+from sybil import Example, Sybil
 
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
@@ -593,10 +593,16 @@ def test_thread_safety(language: MarkupLanguage, tmp_path: Path) -> None:
     sybil = Sybil(parsers=[code_block_parser, group_parser])
     document = sybil.parse(path=test_document)
 
-    examples = list(document.examples())
+    examples: list[Example] = list(document.examples())
+
+    def evaluate(ex: Example) -> None:
+        """
+        Evaluate the example.
+        """
+        ex.evaluate()
 
     with ThreadPoolExecutor(max_workers=4) as executor:
-        list(executor.map(lambda ex: ex.evaluate(), examples))
+        list(executor.map(evaluate, examples))
 
     separator_newlines = len(language.markup_separator)
     padding_newlines = separator_newlines + 1
