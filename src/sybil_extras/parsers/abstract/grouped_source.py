@@ -87,21 +87,21 @@ class _Grouper:
             )
             raise ValueError(msg)
 
-        if state.examples:
-            region = create_combined_region(
-                examples=state.examples,
-                evaluator=self._evaluator,
-                pad_groups=self._pad_groups,
-            )
-            new_example = create_combined_example(
-                examples=state.examples,
-                region=region,
-            )
-            self._evaluator(new_example)
-
-        example.document.pop_evaluator(evaluator=self)
-        del self._document_state[example.document]
-        state.last_action = action
+        try:
+            if state.examples:
+                region = create_combined_region(
+                    examples=state.examples,
+                    evaluator=self._evaluator,
+                    pad_groups=self._pad_groups,
+                )
+                new_example = create_combined_example(
+                    examples=state.examples,
+                    region=region,
+                )
+                self._evaluator(new_example)
+        finally:
+            example.document.pop_evaluator(evaluator=self)
+            del self._document_state[example.document]
 
     def _evaluate_other_example(self, example: Example) -> None:
         """
