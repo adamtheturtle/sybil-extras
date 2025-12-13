@@ -104,11 +104,10 @@ class _Grouper:
         # Pre-create the group state
         key = (document, group_id)
         with self._group_state_lock:
-            if key not in self._group_state:
-                self._group_state[key] = _GroupState(
-                    start_pos=start_pos,
-                    end_pos=end_pos,
-                )
+            self._group_state[key] = _GroupState(
+                start_pos=start_pos,
+                end_pos=end_pos,
+            )
 
     def _find_containing_group(
         self,
@@ -147,17 +146,13 @@ class _Grouper:
         """
         key = (document, group_id)
         with self._group_state_lock:
-            if key in self._group_state:
-                del self._group_state[key]
+            del self._group_state[key]
         with self._group_boundaries_lock:
-            if document in self._group_boundaries:
-                self._group_boundaries[document] = [
-                    b
-                    for b in self._group_boundaries[document]
-                    if b[0] != group_id
-                ]
-                if not self._group_boundaries[document]:
-                    del self._group_boundaries[document]
+            self._group_boundaries[document] = [
+                b for b in self._group_boundaries[document] if b[0] != group_id
+            ]
+            if not self._group_boundaries[document]:
+                del self._group_boundaries[document]
 
     def _cleanup_document(self, document: Document) -> None:
         """Clean up all state for a document.
