@@ -90,21 +90,22 @@ class _GroupAllEvaluator:
                 state.examples,
                 key=lambda ex: ex.region.start,
             )
-            region = create_combined_region(
-                examples=sorted_examples,
-                evaluator=self._evaluator,
-                pad_groups=self._pad_groups,
-            )
-            new_example = create_combined_example(
-                examples=sorted_examples,
-                region=region,
-            )
-            self._evaluator(new_example)
-
-            example.document.pop_evaluator(evaluator=self)
-            # Clean up document state to prevent memory leaks when reusing
-            # parser instances across multiple documents.
-            del self._document_state[example.document]
+            try:
+                region = create_combined_region(
+                    examples=sorted_examples,
+                    evaluator=self._evaluator,
+                    pad_groups=self._pad_groups,
+                )
+                new_example = create_combined_example(
+                    examples=sorted_examples,
+                    region=region,
+                )
+                self._evaluator(new_example)
+            finally:
+                example.document.pop_evaluator(evaluator=self)
+                # Clean up document state to prevent memory leaks when reusing
+                # parser instances across multiple documents.
+                del self._document_state[example.document]
 
     def __call__(self, example: Example) -> None:
         """
