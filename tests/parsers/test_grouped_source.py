@@ -367,7 +367,7 @@ def test_start_after_start(language: MarkupLanguage, tmp_path: Path) -> None:
     sybil = Sybil(parsers=[group_parser])
     with pytest.raises(
         expected_exception=ValueError,
-        match="'group: start' was not followed by 'group: end'",
+        match="'group: start' must be followed by 'group: end'",
     ):
         sybil.parse(path=test_document)
 
@@ -392,7 +392,7 @@ def test_start_only(language: MarkupLanguage, tmp_path: Path) -> None:
     sybil = Sybil(parsers=[group_parser])
     with pytest.raises(
         expected_exception=ValueError,
-        match="'group: start' was not followed by 'group: end'",
+        match="'group: start' must be followed by 'group: end'",
     ):
         sybil.parse(path=test_document)
 
@@ -424,7 +424,7 @@ def test_start_start_end(language: MarkupLanguage, tmp_path: Path) -> None:
     # Error is raised at parse time since we validate structure upfront
     with pytest.raises(
         expected_exception=ValueError,
-        match="'group: start' was not followed by 'group: end'",
+        match="'group: start' must be followed by 'group: end'",
     ):
         sybil.parse(path=test_document)
 
