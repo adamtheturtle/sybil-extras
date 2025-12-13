@@ -201,6 +201,58 @@ def test_group_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     ]
 
 
+def test_group_with_skip_range(
+    language: MarkupLanguage, tmp_path: Path
+) -> None:
+    """
+    Skip start/end ranges are respected within a group.
+    """
+    content = language.markup_separator.join(
+        [
+            language.code_block_builder(code="x = []", language="python"),
+            language.directive_builder(directive="group", argument="start"),
+            language.code_block_builder(code="x = [*x, 1]", language="python"),
+            language.directive_builder(directive="skip", argument="start"),
+            language.code_block_builder(code="x = [*x, 2]", language="python"),
+            language.code_block_builder(code="x = [*x, 3]", language="python"),
+            language.directive_builder(directive="skip", argument="end"),
+            language.code_block_builder(code="x = [*x, 4]", language="python"),
+            language.directive_builder(directive="group", argument="end"),
+            language.code_block_builder(code="x = [*x, 5]", language="python"),
+        ]
+    )
+    test_document = tmp_path / "test"
+    test_document.write_text(
+        data=f"{content}{language.markup_separator}",
+        encoding="utf-8",
+    )
+
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
+    group_parser = language.group_parser_cls(
+        directive="group",
+        evaluator=evaluator,
+        pad_groups=False,
+    )
+    code_block_parser = language.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
+    skip_parser = language.skip_parser_cls(directive="skip")
+
+    sybil = Sybil(parsers=[code_block_parser, skip_parser, group_parser])
+    document = sybil.parse(path=test_document)
+
+    for example in document.examples():
+        example.evaluate()
+
+    # Blocks 2 and 3 are skipped by the skip range
+    assert document.namespace["blocks"] == [
+        "x = []\n",
+        "x = [*x, 1]\n\nx = [*x, 4]\n",
+        "x = [*x, 5]\n",
+    ]
+
+
 def test_no_argument(language: MarkupLanguage, tmp_path: Path) -> None:
     """
     An error is raised when a group directive has no arguments.

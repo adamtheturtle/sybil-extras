@@ -33,7 +33,7 @@ def count_expected_code_blocks(examples: Iterable[Example]) -> int:
     non_skip_count = 0
 
     for ex in examples_sorted:
-        parsed: object = ex.parsed
+        parsed: tuple[str, str, str] | None = ex.parsed
         if isinstance(parsed, tuple) and parsed:
             if parsed[0] == "next":
                 skip_next = True
