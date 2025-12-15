@@ -254,6 +254,18 @@ def _rst_directive(
 
 
 @beartype
+def _jsx_comment_directive(
+    directive: str,
+    argument: str | None = None,
+) -> str:
+    """
+    Render a directive embedded in a JSX comment.
+    """
+    suffix = f": {argument}" if argument is not None else ""
+    return f"{{/* {directive}{suffix} */}}"
+
+
+@beartype
 def _djot_directive(
     directive: str,
     argument: str | None = None,
@@ -424,6 +436,19 @@ MDX = MarkupLanguage(
     jinja_block_builder=None,
 )
 
+MDX_JSX_COMMENTS = MarkupLanguage(
+    name="MDX (JSX comments)",
+    markup_separator="\n",
+    skip_parser_cls=sybil_extras.parsers.mdx.custom_directive_skip.CustomDirectiveSkipParser,
+    code_block_parser_cls=sybil_extras.parsers.mdx.codeblock.CodeBlockParser,
+    group_parser_cls=sybil_extras.parsers.mdx.grouped_source.GroupedSourceParser,
+    group_all_parser_cls=sybil_extras.parsers.mdx.group_all.GroupAllParser,
+    sphinx_jinja_parser_cls=None,
+    code_block_builder=_markdown_code_block,
+    directive_builder=_jsx_comment_directive,
+    jinja_block_builder=None,
+)
+
 DJOT = MarkupLanguage(
     name="Djot",
     markup_separator="\n",
@@ -456,6 +481,7 @@ ALL_LANGUAGES: tuple[MarkupLanguage, ...] = (
     RESTRUCTUREDTEXT,
     MARKDOWN,
     MDX,
+    MDX_JSX_COMMENTS,
     DJOT,
     NORG,
 )
