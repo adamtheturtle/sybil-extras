@@ -19,7 +19,7 @@ from sybil_extras.languages import (
     MYST,
     NORG,
     RESTRUCTUREDTEXT,
-    DirectiveStyle,
+    DirectiveBuilder,
     MarkupLanguage,
 )
 
@@ -65,22 +65,22 @@ def test_code_block_parser(
 
 
 def test_skip_parser(
-    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
     """
     Test that each language's skip parser works correctly.
     """
-    language, directive_style = language_directive_style
-    content = directive_style.markup_separator.join(
+    language, directive_builder = language_directive_builder
+    content = language.markup_separator.join(
         [
-            directive_style.builder(directive="skip", argument="next"),
+            directive_builder(directive="skip", argument="next"),
             language.code_block_builder(code="x = 1", language="python"),
         ]
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{directive_style.markup_separator}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -119,24 +119,24 @@ def test_code_block_empty(language: MarkupLanguage) -> None:
 
 
 def test_group_parser(
-    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
     """
     Test that each language's group parser works correctly.
     """
-    language, directive_style = language_directive_style
-    content = directive_style.markup_separator.join(
+    language, directive_builder = language_directive_builder
+    content = language.markup_separator.join(
         [
-            directive_style.builder(directive="group", argument="start"),
+            directive_builder(directive="group", argument="start"),
             language.code_block_builder(code="x = 1", language="python"),
             language.code_block_builder(code="x = x + 1", language="python"),
-            directive_style.builder(directive="group", argument="end"),
+            directive_builder(directive="group", argument="end"),
         ]
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{directive_style.markup_separator}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -157,7 +157,7 @@ def test_group_parser(
     for example in document.examples():
         example.evaluate()
 
-    separator_newlines = len(directive_style.markup_separator)
+    separator_newlines = len(language.markup_separator)
     padding_newlines = separator_newlines + 1
     padding = "\n" * padding_newlines
 

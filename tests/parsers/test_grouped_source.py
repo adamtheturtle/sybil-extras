@@ -12,34 +12,34 @@ from sybil import Example, Sybil
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
-from sybil_extras.languages import DirectiveStyle, MarkupLanguage
+from sybil_extras.languages import DirectiveBuilder, MarkupLanguage
 
 
 def test_group(
-    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
     """
     The group parser groups examples.
     """
-    language, directive_style = language_directive_style
-    content = directive_style.markup_separator.join(
+    language, directive_builder = language_directive_builder
+    content = language.markup_separator.join(
         [
             language.code_block_builder(code="x = []", language="python"),
-            directive_style.builder(directive="group", argument="start"),
+            directive_builder(directive="group", argument="start"),
             language.code_block_builder(code="x = [*x, 1]", language="python"),
             language.code_block_builder(code="x = [*x, 2]", language="python"),
-            directive_style.builder(directive="group", argument="end"),
+            directive_builder(directive="group", argument="end"),
             language.code_block_builder(code="x = [*x, 3]", language="python"),
-            directive_style.builder(directive="group", argument="start"),
+            directive_builder(directive="group", argument="start"),
             language.code_block_builder(code="x = [*x, 4]", language="python"),
             language.code_block_builder(code="x = [*x, 5]", language="python"),
-            directive_style.builder(directive="group", argument="end"),
+            directive_builder(directive="group", argument="end"),
         ]
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{directive_style.markup_separator}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -60,7 +60,7 @@ def test_group(
     for example in document.examples():
         example.evaluate()
 
-    separator_newlines = len(directive_style.markup_separator)
+    separator_newlines = len(language.markup_separator)
     padding_newlines = separator_newlines + 1
     padding = "\n" * padding_newlines
 
@@ -73,25 +73,25 @@ def test_group(
 
 
 def test_nothing_after_group(
-    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
     """
     Groups are handled even at the end of a document.
     """
-    language, directive_style = language_directive_style
-    content = directive_style.markup_separator.join(
+    language, directive_builder = language_directive_builder
+    content = language.markup_separator.join(
         [
             language.code_block_builder(code="x = []", language="python"),
-            directive_style.builder(directive="group", argument="start"),
+            directive_builder(directive="group", argument="start"),
             language.code_block_builder(code="x = [*x, 1]", language="python"),
             language.code_block_builder(code="x = [*x, 2]", language="python"),
-            directive_style.builder(directive="group", argument="end"),
+            directive_builder(directive="group", argument="end"),
         ]
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{directive_style.markup_separator}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -112,7 +112,7 @@ def test_nothing_after_group(
     for example in document.examples():
         example.evaluate()
 
-    separator_newlines = len(directive_style.markup_separator)
+    separator_newlines = len(language.markup_separator)
     padding_newlines = separator_newlines + 1
     padding = "\n" * padding_newlines
 
@@ -123,24 +123,24 @@ def test_nothing_after_group(
 
 
 def test_empty_group(
-    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
     """
     Empty groups are handled gracefully.
     """
-    language, directive_style = language_directive_style
-    content = directive_style.markup_separator.join(
+    language, directive_builder = language_directive_builder
+    content = language.markup_separator.join(
         [
             language.code_block_builder(code="x = []", language="python"),
-            directive_style.builder(directive="group", argument="start"),
-            directive_style.builder(directive="group", argument="end"),
+            directive_builder(directive="group", argument="start"),
+            directive_builder(directive="group", argument="end"),
             language.code_block_builder(code="x = [*x, 3]", language="python"),
         ]
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{directive_style.markup_separator}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -168,27 +168,27 @@ def test_empty_group(
 
 
 def test_group_with_skip(
-    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
     """
     Skip directives are respected within a group.
     """
-    language, directive_style = language_directive_style
-    content = directive_style.markup_separator.join(
+    language, directive_builder = language_directive_builder
+    content = language.markup_separator.join(
         [
             language.code_block_builder(code="x = []", language="python"),
-            directive_style.builder(directive="group", argument="start"),
+            directive_builder(directive="group", argument="start"),
             language.code_block_builder(code="x = [*x, 1]", language="python"),
-            directive_style.builder(directive="skip", argument="next"),
+            directive_builder(directive="skip", argument="next"),
             language.code_block_builder(code="x = [*x, 2]", language="python"),
-            directive_style.builder(directive="group", argument="end"),
+            directive_builder(directive="group", argument="end"),
             language.code_block_builder(code="x = [*x, 3]", language="python"),
         ]
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{directive_style.markup_separator}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -218,30 +218,30 @@ def test_group_with_skip(
 
 
 def test_group_with_skip_range(
-    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
     """
     Skip start/end ranges are respected within a group.
     """
-    language, directive_style = language_directive_style
-    content = directive_style.markup_separator.join(
+    language, directive_builder = language_directive_builder
+    content = language.markup_separator.join(
         [
             language.code_block_builder(code="x = []", language="python"),
-            directive_style.builder(directive="group", argument="start"),
+            directive_builder(directive="group", argument="start"),
             language.code_block_builder(code="x = [*x, 1]", language="python"),
-            directive_style.builder(directive="skip", argument="start"),
+            directive_builder(directive="skip", argument="start"),
             language.code_block_builder(code="x = [*x, 2]", language="python"),
             language.code_block_builder(code="x = [*x, 3]", language="python"),
-            directive_style.builder(directive="skip", argument="end"),
+            directive_builder(directive="skip", argument="end"),
             language.code_block_builder(code="x = [*x, 4]", language="python"),
-            directive_style.builder(directive="group", argument="end"),
+            directive_builder(directive="group", argument="end"),
             language.code_block_builder(code="x = [*x, 5]", language="python"),
         ]
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{directive_style.markup_separator}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -272,22 +272,22 @@ def test_group_with_skip_range(
 
 
 def test_no_argument(
-    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
     """
     An error is raised when a group directive has no arguments.
     """
-    language, directive_style = language_directive_style
-    content = directive_style.markup_separator.join(
+    language, directive_builder = language_directive_builder
+    content = language.markup_separator.join(
         [
-            directive_style.builder(directive="group"),
-            directive_style.builder(directive="group", argument="end"),
+            directive_builder(directive="group"),
+            directive_builder(directive="group", argument="end"),
         ]
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{directive_style.markup_separator}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -306,25 +306,25 @@ def test_no_argument(
 
 
 def test_malformed_argument(
-    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
     """
     An error is raised when the group directive argument is invalid.
     """
-    language, directive_style = language_directive_style
-    content = directive_style.markup_separator.join(
+    language, directive_builder = language_directive_builder
+    content = language.markup_separator.join(
         [
-            directive_style.builder(
+            directive_builder(
                 directive="group",
                 argument="not_start_or_end",
             ),
-            directive_style.builder(directive="group", argument="end"),
+            directive_builder(directive="group", argument="end"),
         ]
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{directive_style.markup_separator}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -343,17 +343,17 @@ def test_malformed_argument(
 
 
 def test_end_only(
-    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
     """
     An error is raised when an end directive has no matching start.
     """
-    language, directive_style = language_directive_style
-    content = directive_style.builder(directive="group", argument="end")
+    language, directive_builder = language_directive_builder
+    content = directive_builder(directive="group", argument="end")
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{directive_style.markup_separator}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -373,22 +373,22 @@ def test_end_only(
 
 
 def test_start_after_start(
-    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
     """
     An error is raised when start directives are nested improperly.
     """
-    language, directive_style = language_directive_style
-    content = directive_style.markup_separator.join(
+    language, directive_builder = language_directive_builder
+    content = language.markup_separator.join(
         [
-            directive_style.builder(directive="group", argument="start"),
-            directive_style.builder(directive="group", argument="start"),
+            directive_builder(directive="group", argument="start"),
+            directive_builder(directive="group", argument="start"),
         ]
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{directive_style.markup_separator}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -407,17 +407,17 @@ def test_start_after_start(
 
 
 def test_start_only(
-    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
     """
     An error is raised when a group starts but doesn't end.
     """
-    language, directive_style = language_directive_style
-    content = directive_style.builder(directive="group", argument="start")
+    language, directive_builder = language_directive_builder
+    content = directive_builder(directive="group", argument="start")
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{directive_style.markup_separator}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -436,23 +436,23 @@ def test_start_only(
 
 
 def test_start_start_end(
-    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
     """
     An error is raised when start directives are nested with an end.
     """
-    language, directive_style = language_directive_style
-    content = directive_style.markup_separator.join(
+    language, directive_builder = language_directive_builder
+    content = language.markup_separator.join(
         [
-            directive_style.builder(directive="group", argument="start"),
-            directive_style.builder(directive="group", argument="start"),
-            directive_style.builder(directive="group", argument="end"),
+            directive_builder(directive="group", argument="start"),
+            directive_builder(directive="group", argument="start"),
+            directive_builder(directive="group", argument="end"),
         ]
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{directive_style.markup_separator}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -472,31 +472,31 @@ def test_start_start_end(
 
 
 def test_directive_name_not_regex_escaped(
-    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
     """
     Directive names containing regex characters are matched literally.
     """
-    language, directive_style = language_directive_style
+    language, directive_builder = language_directive_builder
     directive = "custom-group[has_square_brackets]"
-    content = directive_style.markup_separator.join(
+    content = language.markup_separator.join(
         [
             language.code_block_builder(code="x = []", language="python"),
-            directive_style.builder(directive=directive, argument="start"),
+            directive_builder(directive=directive, argument="start"),
             language.code_block_builder(code="x = [*x, 1]", language="python"),
             language.code_block_builder(code="x = [*x, 2]", language="python"),
-            directive_style.builder(directive=directive, argument="end"),
+            directive_builder(directive=directive, argument="end"),
             language.code_block_builder(code="x = [*x, 3]", language="python"),
-            directive_style.builder(directive=directive, argument="start"),
+            directive_builder(directive=directive, argument="start"),
             language.code_block_builder(code="x = [*x, 4]", language="python"),
             language.code_block_builder(code="x = [*x, 5]", language="python"),
-            directive_style.builder(directive=directive, argument="end"),
+            directive_builder(directive=directive, argument="end"),
         ]
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{directive_style.markup_separator}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -517,7 +517,7 @@ def test_directive_name_not_regex_escaped(
     for example in document.examples():
         example.evaluate()
 
-    separator_newlines = len(directive_style.markup_separator)
+    separator_newlines = len(language.markup_separator)
     padding_newlines = separator_newlines + 1
     padding = "\n" * padding_newlines
 
@@ -530,24 +530,24 @@ def test_directive_name_not_regex_escaped(
 
 
 def test_with_shell_command_evaluator(
-    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
     """
     The group parser cooperates with the shell command evaluator.
     """
-    language, directive_style = language_directive_style
-    content = directive_style.markup_separator.join(
+    language, directive_builder = language_directive_builder
+    content = language.markup_separator.join(
         [
-            directive_style.builder(directive="group", argument="start"),
+            directive_builder(directive="group", argument="start"),
             language.code_block_builder(code="x = [*x, 1]", language="python"),
             language.code_block_builder(code="x = [*x, 2]", language="python"),
-            directive_style.builder(directive="group", argument="end"),
+            directive_builder(directive="group", argument="end"),
         ]
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{directive_style.markup_separator}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -573,7 +573,7 @@ def test_with_shell_command_evaluator(
 
     output_document_content = output_document.read_text(encoding="utf-8")
 
-    separator_newlines = len(directive_style.markup_separator)
+    separator_newlines = len(language.markup_separator)
     padding_newlines = separator_newlines + 1
 
     leading_padding = "\n" * (separator_newlines * 2)
@@ -586,7 +586,7 @@ def test_with_shell_command_evaluator(
 
 
 def test_state_cleanup_on_evaluator_failure(
-    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
     """When an evaluator raises an exception, the grouper state is cleaned up.
@@ -595,20 +595,20 @@ def test_state_cleanup_on_evaluator_failure(
     evaluated without getting misleading errors about mismatched
     start/end directives.
     """
-    language, directive_style = language_directive_style
-    content = directive_style.markup_separator.join(
+    language, directive_builder = language_directive_builder
+    content = language.markup_separator.join(
         [
-            directive_style.builder(directive="group", argument="start"),
+            directive_builder(directive="group", argument="start"),
             language.code_block_builder(code="exit 1", language="bash"),
-            directive_style.builder(directive="group", argument="end"),
-            directive_style.builder(directive="group", argument="start"),
+            directive_builder(directive="group", argument="end"),
+            directive_builder(directive="group", argument="start"),
             language.code_block_builder(code="exit 0", language="bash"),
-            directive_style.builder(directive="group", argument="end"),
+            directive_builder(directive="group", argument="end"),
         ]
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{directive_style.markup_separator}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -649,24 +649,24 @@ def test_state_cleanup_on_evaluator_failure(
 
 
 def test_thread_safety(
-    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
     """
     The group parser is thread-safe when examples are evaluated concurrently.
     """
-    language, directive_style = language_directive_style
-    content = directive_style.markup_separator.join(
+    language, directive_builder = language_directive_builder
+    content = language.markup_separator.join(
         [
-            directive_style.builder(directive="group", argument="start"),
+            directive_builder(directive="group", argument="start"),
             language.code_block_builder(code="x = [*x, 1]", language="python"),
             language.code_block_builder(code="x = [*x, 2]", language="python"),
-            directive_style.builder(directive="group", argument="end"),
+            directive_builder(directive="group", argument="end"),
         ]
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{directive_style.markup_separator}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -695,7 +695,7 @@ def test_thread_safety(
     with ThreadPoolExecutor(max_workers=4) as executor:
         list(executor.map(evaluate, examples))
 
-    separator_newlines = len(directive_style.markup_separator)
+    separator_newlines = len(language.markup_separator)
     padding_newlines = separator_newlines + 1
     padding = "\n" * padding_newlines
 
@@ -705,7 +705,7 @@ def test_thread_safety(
 
 
 def test_multiple_groups_concurrent_evaluation(
-    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
     """Multiple groups in the same document can be evaluated concurrently.
@@ -716,22 +716,22 @@ def test_multiple_groups_concurrent_evaluation(
     concurrently, but start/end markers must be evaluated in order
     (start before end).
     """
-    language, directive_style = language_directive_style
-    content = directive_style.markup_separator.join(
+    language, directive_builder = language_directive_builder
+    content = language.markup_separator.join(
         [
-            directive_style.builder(directive="group", argument="start"),
+            directive_builder(directive="group", argument="start"),
             language.code_block_builder(code="x = [1]", language="python"),
             language.code_block_builder(code="x = [*x, 2]", language="python"),
-            directive_style.builder(directive="group", argument="end"),
-            directive_style.builder(directive="group", argument="start"),
+            directive_builder(directive="group", argument="end"),
+            directive_builder(directive="group", argument="start"),
             language.code_block_builder(code="y = [3]", language="python"),
             language.code_block_builder(code="y = [*y, 4]", language="python"),
-            directive_style.builder(directive="group", argument="end"),
+            directive_builder(directive="group", argument="end"),
         ]
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{directive_style.markup_separator}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -770,7 +770,7 @@ def test_multiple_groups_concurrent_evaluation(
     end1.evaluate()
     end2.evaluate()
 
-    separator_newlines = len(directive_style.markup_separator)
+    separator_newlines = len(language.markup_separator)
     padding_newlines = separator_newlines + 1
     padding = "\n" * padding_newlines
 
@@ -782,24 +782,24 @@ def test_multiple_groups_concurrent_evaluation(
 
 
 def test_evaluation_order_independence(
-    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
     """
     Examples can be evaluated out of order and still produce correct results.
     """
-    language, directive_style = language_directive_style
-    content = directive_style.markup_separator.join(
+    language, directive_builder = language_directive_builder
+    content = language.markup_separator.join(
         [
-            directive_style.builder(directive="group", argument="start"),
+            directive_builder(directive="group", argument="start"),
             language.code_block_builder(code="x = [1]", language="python"),
             language.code_block_builder(code="x = [*x, 2]", language="python"),
-            directive_style.builder(directive="group", argument="end"),
+            directive_builder(directive="group", argument="end"),
         ]
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{directive_style.markup_separator}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -827,7 +827,7 @@ def test_evaluation_order_independence(
     code1.evaluate()
     end.evaluate()
 
-    separator_newlines = len(directive_style.markup_separator)
+    separator_newlines = len(language.markup_separator)
     padding_newlines = separator_newlines + 1
     padding = "\n" * padding_newlines
 
@@ -838,7 +838,7 @@ def test_evaluation_order_independence(
 
 
 def test_no_group_directives(
-    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
     """The group parser handles documents with no group directives.
@@ -846,8 +846,8 @@ def test_no_group_directives(
     When a document has code blocks but no group directives, the group
     parser should not affect the document.
     """
-    language, directive_style = language_directive_style
-    content = directive_style.markup_separator.join(
+    language, _directive_builder = language_directive_builder
+    content = language.markup_separator.join(
         [
             language.code_block_builder(code="x = [1]", language="python"),
             language.code_block_builder(code="x = [*x, 2]", language="python"),
@@ -855,7 +855,7 @@ def test_no_group_directives(
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{directive_style.markup_separator}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -884,24 +884,24 @@ def test_no_group_directives(
 
 
 def test_no_pad_groups(
-    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
     """
     It is possible to avoid padding grouped code blocks.
     """
-    language, directive_style = language_directive_style
-    content = directive_style.markup_separator.join(
+    language, directive_builder = language_directive_builder
+    content = language.markup_separator.join(
         [
-            directive_style.builder(directive="group", argument="start"),
+            directive_builder(directive="group", argument="start"),
             language.code_block_builder(code="x = [*x, 1]", language="python"),
             language.code_block_builder(code="x = [*x, 2]", language="python"),
-            directive_style.builder(directive="group", argument="end"),
+            directive_builder(directive="group", argument="end"),
         ]
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{directive_style.markup_separator}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -927,7 +927,7 @@ def test_no_pad_groups(
 
     output_document_content = output_document.read_text(encoding="utf-8")
 
-    separator_newlines = len(directive_style.markup_separator)
+    separator_newlines = len(language.markup_separator)
     leading_padding = "\n" * (separator_newlines * 2)
 
     expected_output_document_content = (
@@ -937,7 +937,7 @@ def test_no_pad_groups(
 
 
 def test_end_marker_waits_for_code_blocks(
-    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
     """The end marker waits for all code blocks to be collected.
@@ -947,18 +947,18 @@ def test_end_marker_waits_for_code_blocks(
     incomplete groups. The end marker now waits until all expected code
     blocks have been collected before processing the group.
     """
-    language, directive_style = language_directive_style
-    content = directive_style.markup_separator.join(
+    language, directive_builder = language_directive_builder
+    content = language.markup_separator.join(
         [
-            directive_style.builder(directive="group", argument="start"),
+            directive_builder(directive="group", argument="start"),
             language.code_block_builder(code="x = [1]", language="python"),
             language.code_block_builder(code="x = [*x, 2]", language="python"),
-            directive_style.builder(directive="group", argument="end"),
+            directive_builder(directive="group", argument="end"),
         ]
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{directive_style.markup_separator}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -996,7 +996,7 @@ def test_end_marker_waits_for_code_blocks(
     with ThreadPoolExecutor(max_workers=3) as executor:
         list(executor.map(evaluate, [end, code1, code2]))
 
-    separator_newlines = len(directive_style.markup_separator)
+    separator_newlines = len(language.markup_separator)
     padding_newlines = separator_newlines + 1
     padding = "\n" * padding_newlines
 

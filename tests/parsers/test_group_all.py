@@ -13,7 +13,7 @@ from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 from sybil_extras.languages import (
-    DirectiveStyle,
+    DirectiveBuilder,
     MarkupLanguage,
 )
 
@@ -217,19 +217,19 @@ def test_thread_safety(language: MarkupLanguage, tmp_path: Path) -> None:
 
 
 def test_group_all_with_skip(
-    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
     """
     Skip directives are honored when grouping code blocks.
     """
-    language, directive_style = language_directive_style
-    skip_directive = directive_style.builder(directive="skip", argument="next")
+    language, directive_builder = language_directive_builder
+    skip_directive = directive_builder(directive="skip", argument="next")
     skipped_block = language.code_block_builder(
         code="x = [*x, 1]", language="python"
     )
 
-    content = directive_style.markup_separator.join(
+    content = language.markup_separator.join(
         [
             language.code_block_builder(code="x = []", language="python"),
             skip_directive,
@@ -239,7 +239,7 @@ def test_group_all_with_skip(
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{directive_style.markup_separator}",
+        data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
 
@@ -261,11 +261,11 @@ def test_group_all_with_skip(
         example.evaluate()
 
     content_between_blocks = (
-        directive_style.markup_separator
+        language.markup_separator
         + skip_directive
-        + directive_style.markup_separator
+        + language.markup_separator
         + skipped_block
-        + directive_style.markup_separator
+        + language.markup_separator
     )
     num_newlines_between = content_between_blocks.count("\n")
     skipped_lines = "\n" * (num_newlines_between + 2)

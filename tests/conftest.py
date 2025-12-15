@@ -6,20 +6,22 @@ import pytest
 
 from sybil_extras.languages import (
     ALL_LANGUAGES,
-    DirectiveStyle,
+    DirectiveBuilder,
     MarkupLanguage,
 )
 
 LANGUAGE_IDS = tuple(language.name for language in ALL_LANGUAGES)
 
-LANGUAGE_DIRECTIVE_STYLE_PARAMS = [
-    (lang, style) for lang in ALL_LANGUAGES for style in lang.directive_styles
+LANGUAGE_DIRECTIVE_BUILDER_PARAMS = [
+    (lang, builder)
+    for lang in ALL_LANGUAGES
+    for builder in lang.directive_builders
 ]
 
-LANGUAGE_DIRECTIVE_STYLE_IDS = [
+LANGUAGE_DIRECTIVE_BUILDER_IDS = [
     f"{lang.name}-directive-{i}"
     for lang in ALL_LANGUAGES
-    for i, _ in enumerate(lang.directive_styles)
+    for i, _ in enumerate(lang.directive_builders)
 ]
 
 
@@ -45,21 +47,19 @@ def fixture_markup_language(request: pytest.FixtureRequest) -> MarkupLanguage:
     Provide each supported markup language.
     """
     language = request.param
-    if not isinstance(language, MarkupLanguage):  # pragma: no cover
-        message = "Unexpected markup language fixture parameter"
-        raise TypeError(message)
+    assert isinstance(language, MarkupLanguage)
     return language
 
 
 @pytest.fixture(
-    name="language_directive_style",
-    params=LANGUAGE_DIRECTIVE_STYLE_PARAMS,
-    ids=LANGUAGE_DIRECTIVE_STYLE_IDS,
+    name="language_directive_builder",
+    params=LANGUAGE_DIRECTIVE_BUILDER_PARAMS,
+    ids=LANGUAGE_DIRECTIVE_BUILDER_IDS,
 )
-def fixture_language_directive_style(
+def fixture_language_directive_builder(
     request: pytest.FixtureRequest,
-) -> tuple[MarkupLanguage, DirectiveStyle]:
-    """Provide each (language, directive_style) combination.
+) -> tuple[MarkupLanguage, DirectiveBuilder]:
+    """Provide each (language, directive_builder) combination.
 
     This allows testing all directive styles for languages that support
     multiple comment syntaxes (e.g., MyST with HTML and percent
