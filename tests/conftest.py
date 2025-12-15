@@ -64,8 +64,5 @@ def fixture_language_directive_builder(
     multiple comment syntaxes (e.g., MyST with HTML and percent
     comments).
     """
-    param = request.param
-    if not isinstance(param, tuple):  # pragma: no cover
-        message = "Unexpected fixture parameter type"
-        raise TypeError(message)
+    param: tuple[MarkupLanguage, DirectiveBuilder] = request.param
     return param
