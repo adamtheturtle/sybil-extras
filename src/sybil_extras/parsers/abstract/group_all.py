@@ -1,5 +1,10 @@
-"""
-Abstract parser that groups all code blocks in a document.
+"""Abstract parser that groups all code blocks in a document.
+
+At parse time, code blocks are separate examples. However, grouped
+examples must be combined and evaluated together in document order.
+Since test runners may evaluate examples concurrently, locking is
+required to ensure the end marker waits for all code blocks to be
+collected before combining them.
 """
 
 import threading
