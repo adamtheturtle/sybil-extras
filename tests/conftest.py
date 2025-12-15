@@ -46,8 +46,7 @@ def fixture_markup_language(request: pytest.FixtureRequest) -> MarkupLanguage:
     """
     Provide each supported markup language.
     """
-    language = request.param
-    assert isinstance(language, MarkupLanguage)
+    language: MarkupLanguage = request.param
     return language
 
 
