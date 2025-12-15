@@ -14,6 +14,8 @@ from sybil.parsers.markdown.lexers import (
 )
 from sybil.typing import Evaluator, Lexer
 
+from sybil_extras.parsers.mdx.lexers import DirectiveInJSXCommentLexer
+
 _INFO_LINE_PATTERN = re.compile(
     pattern=r"(?P<language>[^\s`]+)(?P<attributes>(?:[ \t]+[^\n]*?)?)$\n",
     flags=re.MULTILINE,
@@ -48,6 +50,7 @@ class CodeBlockParser:
             language: The language to match (for example ``python``).
             evaluator: The evaluator used for the parsed code block.
         """
+        invisible_code_directive = r"(invisible-)?code(-block)?"
         lexers: list[Lexer] = [
             RawFencedCodeBlockLexer(
                 info_pattern=_INFO_LINE_PATTERN,
@@ -58,7 +61,11 @@ class CodeBlockParser:
                 },
             ),
             DirectiveInHTMLCommentLexer(
-                directive=r"(invisible-)?code(-block)?",
+                directive=invisible_code_directive,
+                arguments=".+",
+            ),
+            DirectiveInJSXCommentLexer(
+                directive=invisible_code_directive,
                 arguments=".+",
             ),
         ]

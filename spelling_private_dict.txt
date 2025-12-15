@@ -1,6 +1,7 @@
 Djot
 Docusaurus
 EOF
+JSX
 MDX
 Neorg
 args
@@ -19,6 +20,7 @@ jinja
 lexeme
 lexemes
 linter
+mdx
 namespace
 norg
 ons
