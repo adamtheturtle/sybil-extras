@@ -185,6 +185,17 @@ class JinjaBlockBuilder(Protocol):
 
 
 @beartype
+@dataclass(frozen=True)
+class DirectiveStyle:
+    """
+    A directive style with its builder and required markup separator.
+    """
+
+    builder: DirectiveBuilder
+    markup_separator: str
+
+
+@beartype
 def _normalize_code(content: str) -> str:
     """
     Normalize code provided in tests into a block-friendly form.
@@ -356,20 +367,25 @@ class MarkupLanguage:
     """
 
     name: str
-    markup_separator: str
     skip_parser_cls: type[_SkipParser]
     code_block_parser_cls: type[_CodeBlockParser]
     group_parser_cls: type[_GroupedSourceParser]
     group_all_parser_cls: type[_GroupAllParser]
     sphinx_jinja_parser_cls: type[_SphinxJinja2Parser] | None
     code_block_builder: CodeBlockBuilder
-    directive_builder: DirectiveBuilder
+    directive_styles: tuple[DirectiveStyle, ...]
     jinja_block_builder: JinjaBlockBuilder | None
+
+    @property
+    def markup_separator(self) -> str:
+        """
+        Return the default markup separator (from the first directive style).
+        """
+        return self.directive_styles[0].markup_separator
 
 
 MYST = MarkupLanguage(
     name="MyST",
-    markup_separator="\n",
     skip_parser_cls=(
         sybil_extras.parsers.myst.custom_directive_skip.CustomDirectiveSkipParser
     ),
@@ -378,110 +394,92 @@ MYST = MarkupLanguage(
     group_all_parser_cls=sybil_extras.parsers.myst.group_all.GroupAllParser,
     sphinx_jinja_parser_cls=sybil_extras.parsers.myst.sphinx_jinja2.SphinxJinja2Parser,
     code_block_builder=_markdown_code_block,
-    directive_builder=_html_comment_directive,
-    jinja_block_builder=_myst_jinja_block,
-)
-
-MYST_PERCENT_COMMENTS = MarkupLanguage(
-    name="MyST (percent comments)",
-    markup_separator="\n\n",
-    skip_parser_cls=(
-        sybil_extras.parsers.myst.custom_directive_skip.CustomDirectiveSkipParser
+    directive_styles=(
+        DirectiveStyle(builder=_html_comment_directive, markup_separator="\n"),
+        DirectiveStyle(
+            builder=_percent_comment_directive,
+            markup_separator="\n\n",
+        ),
     ),
-    code_block_parser_cls=sybil.parsers.myst.CodeBlockParser,
-    group_parser_cls=sybil_extras.parsers.myst.grouped_source.GroupedSourceParser,
-    group_all_parser_cls=sybil_extras.parsers.myst.group_all.GroupAllParser,
-    sphinx_jinja_parser_cls=sybil_extras.parsers.myst.sphinx_jinja2.SphinxJinja2Parser,
-    code_block_builder=_markdown_code_block,
-    directive_builder=_percent_comment_directive,
     jinja_block_builder=_myst_jinja_block,
 )
 
 RESTRUCTUREDTEXT = MarkupLanguage(
     name="reStructuredText",
-    markup_separator="\n\n",
     skip_parser_cls=sybil_extras.parsers.rest.custom_directive_skip.CustomDirectiveSkipParser,
     code_block_parser_cls=sybil.parsers.rest.CodeBlockParser,
     group_parser_cls=sybil_extras.parsers.rest.grouped_source.GroupedSourceParser,
     group_all_parser_cls=sybil_extras.parsers.rest.group_all.GroupAllParser,
     sphinx_jinja_parser_cls=sybil_extras.parsers.rest.sphinx_jinja2.SphinxJinja2Parser,
     code_block_builder=_rst_code_block,
-    directive_builder=_rst_directive,
+    directive_styles=(
+        DirectiveStyle(builder=_rst_directive, markup_separator="\n\n"),
+    ),
     jinja_block_builder=_rst_jinja_block,
 )
 
 MARKDOWN = MarkupLanguage(
     name="Markdown",
-    markup_separator="\n",
     skip_parser_cls=sybil_extras.parsers.markdown.custom_directive_skip.CustomDirectiveSkipParser,
     code_block_parser_cls=sybil.parsers.markdown.CodeBlockParser,
     group_parser_cls=sybil_extras.parsers.markdown.grouped_source.GroupedSourceParser,
     group_all_parser_cls=sybil_extras.parsers.markdown.group_all.GroupAllParser,
     sphinx_jinja_parser_cls=None,
     code_block_builder=_markdown_code_block,
-    directive_builder=_html_comment_directive,
+    directive_styles=(
+        DirectiveStyle(builder=_html_comment_directive, markup_separator="\n"),
+    ),
     jinja_block_builder=None,
 )
 
 MDX = MarkupLanguage(
     name="MDX",
-    markup_separator="\n",
     skip_parser_cls=sybil_extras.parsers.mdx.custom_directive_skip.CustomDirectiveSkipParser,
     code_block_parser_cls=sybil_extras.parsers.mdx.codeblock.CodeBlockParser,
     group_parser_cls=sybil_extras.parsers.mdx.grouped_source.GroupedSourceParser,
     group_all_parser_cls=sybil_extras.parsers.mdx.group_all.GroupAllParser,
     sphinx_jinja_parser_cls=None,
     code_block_builder=_markdown_code_block,
-    directive_builder=_html_comment_directive,
-    jinja_block_builder=None,
-)
-
-MDX_JSX_COMMENTS = MarkupLanguage(
-    name="MDX (JSX comments)",
-    markup_separator="\n",
-    skip_parser_cls=sybil_extras.parsers.mdx.custom_directive_skip.CustomDirectiveSkipParser,
-    code_block_parser_cls=sybil_extras.parsers.mdx.codeblock.CodeBlockParser,
-    group_parser_cls=sybil_extras.parsers.mdx.grouped_source.GroupedSourceParser,
-    group_all_parser_cls=sybil_extras.parsers.mdx.group_all.GroupAllParser,
-    sphinx_jinja_parser_cls=None,
-    code_block_builder=_markdown_code_block,
-    directive_builder=_jsx_comment_directive,
+    directive_styles=(
+        DirectiveStyle(builder=_html_comment_directive, markup_separator="\n"),
+        DirectiveStyle(builder=_jsx_comment_directive, markup_separator="\n"),
+    ),
     jinja_block_builder=None,
 )
 
 DJOT = MarkupLanguage(
     name="Djot",
-    markup_separator="\n",
     skip_parser_cls=sybil_extras.parsers.djot.custom_directive_skip.CustomDirectiveSkipParser,
     code_block_parser_cls=sybil_extras.parsers.djot.codeblock.CodeBlockParser,
     group_parser_cls=sybil_extras.parsers.djot.grouped_source.GroupedSourceParser,
     group_all_parser_cls=sybil_extras.parsers.djot.group_all.GroupAllParser,
     sphinx_jinja_parser_cls=None,
     code_block_builder=_markdown_code_block,
-    directive_builder=_djot_directive,
+    directive_styles=(
+        DirectiveStyle(builder=_djot_directive, markup_separator="\n"),
+    ),
     jinja_block_builder=None,
 )
 
 NORG = MarkupLanguage(
     name="Norg",
-    markup_separator="\n",
     skip_parser_cls=sybil_extras.parsers.norg.custom_directive_skip.CustomDirectiveSkipParser,
     code_block_parser_cls=sybil_extras.parsers.norg.codeblock.CodeBlockParser,
     group_parser_cls=sybil_extras.parsers.norg.grouped_source.GroupedSourceParser,
     group_all_parser_cls=sybil_extras.parsers.norg.group_all.GroupAllParser,
     sphinx_jinja_parser_cls=None,
     code_block_builder=_norg_code_block,
-    directive_builder=_norg_directive,
+    directive_styles=(
+        DirectiveStyle(builder=_norg_directive, markup_separator="\n"),
+    ),
     jinja_block_builder=None,
 )
 
 ALL_LANGUAGES: tuple[MarkupLanguage, ...] = (
     MYST,
-    MYST_PERCENT_COMMENTS,
     RESTRUCTUREDTEXT,
     MARKDOWN,
     MDX,
-    MDX_JSX_COMMENTS,
     DJOT,
     NORG,
 )

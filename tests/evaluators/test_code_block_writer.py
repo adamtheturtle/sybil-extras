@@ -14,9 +14,7 @@ from sybil_extras.languages import (
     DJOT,
     MARKDOWN,
     MDX,
-    MDX_JSX_COMMENTS,
     MYST,
-    MYST_PERCENT_COMMENTS,
     NORG,
     RESTRUCTUREDTEXT,
     MarkupLanguage,
@@ -69,11 +67,9 @@ def test_writes_modified_content(
         ),
         MARKDOWN: markdown_content,
         MDX: markdown_content,
-        MDX_JSX_COMMENTS: markdown_content,
         DJOT: markdown_content,
         NORG: norg_content,
         MYST: myst_content,
-        MYST_PERCENT_COMMENTS: myst_content,
     }[markup_language]
 
     source_file = tmp_path / "source_file.txt"
@@ -134,11 +130,9 @@ def test_writes_modified_content(
         ),
         MARKDOWN: markdown_expected,
         MDX: markdown_expected,
-        MDX_JSX_COMMENTS: markdown_expected,
         DJOT: markdown_expected,
         NORG: norg_expected,
         MYST: myst_expected,
-        MYST_PERCENT_COMMENTS: myst_expected,
     }[markup_language]
 
     assert source_file.read_text(encoding="utf-8") == expected_content
@@ -258,11 +252,9 @@ def test_empty_code_block_write_content(
         RESTRUCTUREDTEXT: rst_content,
         MARKDOWN: markdown_content,
         MDX: markdown_content,
-        MDX_JSX_COMMENTS: markdown_content,
         DJOT: markdown_content,
         NORG: norg_content,
         MYST: myst_content,
-        MYST_PERCENT_COMMENTS: myst_content,
     }[markup_language]
     source_file = tmp_path / "source_file.txt"
     source_file.write_text(data=content, encoding="utf-8")
@@ -337,11 +329,9 @@ def test_empty_code_block_write_content(
         ),
         MARKDOWN: markdown_expected,
         MDX: markdown_expected,
-        MDX_JSX_COMMENTS: markdown_expected,
         DJOT: markdown_expected,
         NORG: norg_expected,
         MYST: myst_expected,
-        MYST_PERCENT_COMMENTS: myst_expected,
     }[markup_language]
 
     example.evaluate()
@@ -397,9 +387,7 @@ def test_empty_code_block_with_options(
     content = {
         RESTRUCTUREDTEXT: rst_content,
         MYST: myst_content,
-        MYST_PERCENT_COMMENTS: myst_content,
         MDX: mdx_content,
-        MDX_JSX_COMMENTS: mdx_content,
     }[markup_language]
     source_file = tmp_path / "source_file.txt"
     source_file.write_text(data=content, encoding="utf-8")
@@ -446,19 +434,7 @@ def test_empty_code_block_with_options(
             """
         ),
         MYST: myst_expected,
-        MYST_PERCENT_COMMENTS: myst_expected,
         MDX: textwrap.dedent(
-            text="""\
-            Not in code block
-
-            ```python title="example.py"
-            foobar
-            ```
-
-            After empty code block
-            """
-        ),
-        MDX_JSX_COMMENTS: textwrap.dedent(
             text="""\
             Not in code block
 
@@ -798,11 +774,9 @@ def test_indented_existing_block(
         ),
         MARKDOWN: markdown_content,
         MDX: markdown_content,
-        MDX_JSX_COMMENTS: markdown_content,
         DJOT: markdown_content,
         NORG: norg_content,
         MYST: myst_content,
-        MYST_PERCENT_COMMENTS: myst_content,
     }[markup_language]
     source_file = tmp_path / "source_file.txt"
     source_file.write_text(data=original_content, encoding="utf-8")
@@ -864,11 +838,9 @@ def test_indented_existing_block(
         ),
         MARKDOWN: markdown_expected,
         MDX: markdown_expected,
-        MDX_JSX_COMMENTS: markdown_expected,
         DJOT: markdown_expected,
         NORG: norg_expected,
         MYST: myst_expected,
-        MYST_PERCENT_COMMENTS: myst_expected,
     }[markup_language]
     assert source_file_content == expected_content
 
@@ -926,11 +898,9 @@ def test_indented_empty_existing_block(
         ),
         MARKDOWN: markdown_content,
         MDX: markdown_content,
-        MDX_JSX_COMMENTS: markdown_content,
         DJOT: markdown_content,
         NORG: norg_content,
         MYST: myst_content,
-        MYST_PERCENT_COMMENTS: myst_content,
     }[markup_language]
     source_file = tmp_path / "source_file.txt"
     source_file.write_text(data=original_content, encoding="utf-8")
@@ -1000,11 +970,9 @@ def test_indented_empty_existing_block(
         ),
         MARKDOWN: markdown_expected,
         MDX: markdown_expected,
-        MDX_JSX_COMMENTS: markdown_expected,
         DJOT: markdown_expected,
         NORG: norg_expected,
         MYST: myst_expected,
-        MYST_PERCENT_COMMENTS: myst_expected,
     }[markup_language]
     assert source_file_content == expected_content
 

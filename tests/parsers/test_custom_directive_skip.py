@@ -9,27 +9,29 @@ from sybil import Sybil
 from sybil.evaluators.python import PythonEvaluator
 from sybil.evaluators.skip import SkipState
 
-from sybil_extras.languages import MarkupLanguage
+from sybil_extras.languages import DirectiveStyle, MarkupLanguage
 
 
-def test_skip(language: MarkupLanguage, tmp_path: Path) -> None:
+def test_skip(
+    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
+    tmp_path: Path,
+) -> None:
     """
     The custom directive skip parser can be used to set skips.
     """
-    content = language.markup_separator.join(
+    language, directive_style = language_directive_style
+    content = directive_style.markup_separator.join(
         [
             "Example",
             language.code_block_builder(code="x = []", language="python"),
-            language.directive_builder(
-                directive="custom-skip", argument="next"
-            ),
+            directive_style.builder(directive="custom-skip", argument="next"),
             language.code_block_builder(code="x = [*x, 2]", language="python"),
             language.code_block_builder(code="x = [*x, 3]", language="python"),
         ]
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{language.markup_separator}",
+        data=f"{content}{directive_style.markup_separator}",
         encoding="utf-8",
     )
 
@@ -82,19 +84,20 @@ def test_skip(language: MarkupLanguage, tmp_path: Path) -> None:
 
 
 def test_directive_name_in_evaluate_error(
-    language: MarkupLanguage,
+    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
     tmp_path: Path,
 ) -> None:
     """
     The directive name is included in evaluation errors.
     """
-    content = language.directive_builder(
+    language, directive_style = language_directive_style
+    content = directive_style.builder(
         directive="custom-skip",
         argument="end",
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{language.markup_separator}",
+        data=f"{content}{directive_style.markup_separator}",
         encoding="utf-8",
     )
 
@@ -111,19 +114,20 @@ def test_directive_name_in_evaluate_error(
 
 
 def test_directive_name_in_parse_error(
-    language: MarkupLanguage,
+    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
     tmp_path: Path,
 ) -> None:
     """
     The directive name is included in parsing errors.
     """
-    content = language.directive_builder(
+    language, directive_style = language_directive_style
+    content = directive_style.builder(
         directive="custom-skip",
         argument="!!!",
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{language.markup_separator}",
+        data=f"{content}{directive_style.markup_separator}",
         encoding="utf-8",
     )
 
@@ -138,22 +142,23 @@ def test_directive_name_in_parse_error(
 
 
 def test_directive_name_not_regex_escaped(
-    language: MarkupLanguage,
+    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
     tmp_path: Path,
 ) -> None:
     """
     Directive names containing regex characters are matched literally.
     """
+    language, directive_style = language_directive_style
     directive = "custom-skip[has_square_brackets]"
-    content = language.markup_separator.join(
+    content = directive_style.markup_separator.join(
         [
-            language.directive_builder(directive=directive, argument="next"),
+            directive_style.builder(directive=directive, argument="next"),
             language.code_block_builder(code="block = 1", language="python"),
         ]
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{language.markup_separator}",
+        data=f"{content}{directive_style.markup_separator}",
         encoding="utf-8",
     )
 

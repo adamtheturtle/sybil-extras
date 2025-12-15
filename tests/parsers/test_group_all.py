@@ -13,6 +13,7 @@ from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 from sybil_extras.languages import (
+    DirectiveStyle,
     MarkupLanguage,
 )
 
@@ -215,18 +216,20 @@ def test_thread_safety(language: MarkupLanguage, tmp_path: Path) -> None:
     assert document.namespace["blocks"] == [expected]
 
 
-def test_group_all_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
+def test_group_all_with_skip(
+    language_directive_style: tuple[MarkupLanguage, DirectiveStyle],
+    tmp_path: Path,
+) -> None:
     """
     Skip directives are honored when grouping code blocks.
     """
-    skip_directive = language.directive_builder(
-        directive="skip", argument="next"
-    )
+    language, directive_style = language_directive_style
+    skip_directive = directive_style.builder(directive="skip", argument="next")
     skipped_block = language.code_block_builder(
         code="x = [*x, 1]", language="python"
     )
 
-    content = language.markup_separator.join(
+    content = directive_style.markup_separator.join(
         [
             language.code_block_builder(code="x = []", language="python"),
             skip_directive,
@@ -236,7 +239,7 @@ def test_group_all_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
     )
     test_document = tmp_path / "test"
     test_document.write_text(
-        data=f"{content}{language.markup_separator}",
+        data=f"{content}{directive_style.markup_separator}",
         encoding="utf-8",
     )
 
@@ -258,11 +261,11 @@ def test_group_all_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
         example.evaluate()
 
     content_between_blocks = (
-        language.markup_separator
+        directive_style.markup_separator
         + skip_directive
-        + language.markup_separator
+        + directive_style.markup_separator
         + skipped_block
-        + language.markup_separator
+        + directive_style.markup_separator
     )
     num_newlines_between = content_between_blocks.count("\n")
     skipped_lines = "\n" * (num_newlines_between + 2)

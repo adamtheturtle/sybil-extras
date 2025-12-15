@@ -541,18 +541,21 @@ This is useful for building tools that need to work consistently across multiple
         MARKDOWN,
         MDX,
         MYST,
-        MYST_PERCENT_COMMENTS,
         NORG,
         RESTRUCTUREDTEXT,
     )
 
     assert MYST.name == "MyST"
-    assert MYST_PERCENT_COMMENTS.name == "MyST (percent comments)"
     assert MARKDOWN.name == "Markdown"
     assert MDX.name == "MDX"
     assert DJOT.name == "Djot"
     assert NORG.name == "Norg"
     assert RESTRUCTUREDTEXT.name == "reStructuredText"
+
+    # Each language has one or more directive styles with their markup separators
+    for directive_style in MYST.directive_styles:
+        _ = directive_style.builder(directive="skip", argument="next")
+        _ = directive_style.markup_separator
 
     code_parser = RESTRUCTUREDTEXT.code_block_parser_cls(
         language="python",
