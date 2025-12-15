@@ -19,9 +19,9 @@ LANGUAGE_DIRECTIVE_BUILDER_PARAMS = [
 ]
 
 LANGUAGE_DIRECTIVE_BUILDER_IDS = [
-    f"{lang.name}-directive-{i}"
+    f"{lang.name}-directive-{index}"
     for lang in ALL_LANGUAGES
-    for i, _ in enumerate(lang.directive_builders)
+    for index, _ in enumerate(iterable=lang.directive_builders)
 ]
 
 
