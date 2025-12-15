@@ -541,13 +541,11 @@ This is useful for building tools that need to work consistently across multiple
         MARKDOWN,
         MDX,
         MYST,
-        MYST_PERCENT_COMMENTS,
         NORG,
         RESTRUCTUREDTEXT,
     )
 
     assert MYST.name == "MyST"
-    assert MYST_PERCENT_COMMENTS.name == "MyST (percent comments)"
     assert MARKDOWN.name == "Markdown"
     assert MDX.name == "MDX"
     assert DJOT.name == "Djot"

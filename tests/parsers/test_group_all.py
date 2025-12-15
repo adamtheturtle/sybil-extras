@@ -13,6 +13,7 @@ from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 from sybil_extras.languages import (
+    DirectiveBuilder,
     MarkupLanguage,
 )
 
@@ -215,13 +216,15 @@ def test_thread_safety(language: MarkupLanguage, tmp_path: Path) -> None:
     assert document.namespace["blocks"] == [expected]
 
 
-def test_group_all_with_skip(language: MarkupLanguage, tmp_path: Path) -> None:
+def test_group_all_with_skip(
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
+    tmp_path: Path,
+) -> None:
     """
     Skip directives are honored when grouping code blocks.
     """
-    skip_directive = language.directive_builder(
-        directive="skip", argument="next"
-    )
+    language, directive_builder = language_directive_builder
+    skip_directive = directive_builder(directive="skip", argument="next")
     skipped_block = language.code_block_builder(
         code="x = [*x, 1]", language="python"
     )

@@ -33,5 +33,6 @@ rst
 stderr
 stdout
 str
+syntaxes
 ungrouped
 whitespace
