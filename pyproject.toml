@@ -286,6 +286,7 @@ ignore = [
     "tests",
     "tests-pylintrc",
     "tests/**",
+    "zizmor.yml",
 ]
 
 [tool.deptry]
