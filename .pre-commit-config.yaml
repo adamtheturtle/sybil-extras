@@ -3,7 +3,7 @@ fail_fast: true
 
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
-default_install_hook_types: [pre-commit, pre-push, commit-msg]
+default_install_hook_types: [pre-commit, pre-push]
 
 ci:
   # We use system Python, with required dependencies specified in pyproject.toml.
