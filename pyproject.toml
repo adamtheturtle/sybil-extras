@@ -40,7 +40,7 @@ dependencies = [
     "sybil>=9.3.0",
 ]
 optional-dependencies.dev = [
-    "actionlint-py==1.7.9.24",
+    "actionlint-py==1.7.10.24",
     "charset-normalizer==3.4.4",
     "check-manifest==0.51",
     "click==8.3.1",
@@ -50,7 +50,7 @@ optional-dependencies.dev = [
     "interrogate==1.7.0",
     "mypy[faster-cache]==1.19.1",
     "mypy-strict-kwargs==2025.4.3",
-    "pre-commit==4.5.1",
+    "prek==0.2.25",
     "pydocstyle==6.3",
     "pylint[spelling]==4.0.4",
     "pylint-per-file-ignores==3.2.0",
@@ -68,10 +68,11 @@ optional-dependencies.dev = [
     "shfmt-py==3.12.0.2",
     "sphinx-lint==1.0.2",
     "sybil==9.3.0",
-    "ty==0.0.5",
-    "uv==0.9.18",
+    "ty==0.0.8",
+    "uv==0.9.21",
     "vulture==2.14",
     "yamlfix==1.19.1",
+    "zizmor==1.19.0",
 ]
 optional-dependencies.release = [ "check-wheel-contents==0.6.3" ]
 urls.Source = "https://github.com/adamtheturtle/sybil-extras"
@@ -286,6 +287,7 @@ ignore = [
     "tests",
     "tests-pylintrc",
     "tests/**",
+    "zizmor.yml",
 ]
 
 [tool.deptry]
