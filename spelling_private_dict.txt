@@ -3,6 +3,7 @@ Docusaurus
 EOF
 JSX
 MDX
+MarkdownIt
 Neorg
 args
 atomicity

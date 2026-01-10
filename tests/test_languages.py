@@ -15,6 +15,7 @@ from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.languages import (
     DJOT,
     MARKDOWN,
+    MARKDOWN_IT,
     MDX,
     MYST,
     NORG,
@@ -30,6 +31,7 @@ from sybil_extras.languages import (
         pytest.param(MYST, 1, id="myst-code-block"),
         pytest.param(RESTRUCTUREDTEXT, 2, id="rest-code-block"),
         pytest.param(MARKDOWN, 3, id="markdown-code-block"),
+        pytest.param(MARKDOWN_IT, 7, id="markdown-it-code-block"),
         pytest.param(MDX, 4, id="mdx-code-block"),
         pytest.param(DJOT, 5, id="djot-code-block"),
         pytest.param(NORG, 6, id="norg-code-block"),

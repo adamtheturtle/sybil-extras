@@ -1,4 +1,4 @@
-"""A custom directive skip parser for Markdown.
+"""A custom directive skip parser for Markdown using the MarkdownIt library.
 
 This parser uses the MarkdownIt library instead of regex.
 """
@@ -11,7 +11,7 @@ from sybil import Document, Region
 from sybil.evaluators.skip import Skipper
 from sybil.parsers.abstract import AbstractSkipParser
 
-from sybil_extras.parsers.markdown.lexers import DirectiveInHTMLCommentLexer
+from sybil_extras.parsers.markdown_it.lexers import DirectiveInHTMLCommentLexer
 
 
 @beartype

@@ -1,4 +1,4 @@
-"""A group parser for Markdown.
+"""A group parser for Markdown using the MarkdownIt library.
 
 This parser uses the MarkdownIt library instead of regex.
 """
@@ -11,7 +11,7 @@ from sybil.typing import Evaluator
 from sybil_extras.parsers.abstract.grouped_source import (
     AbstractGroupedSourceParser,
 )
-from sybil_extras.parsers.markdown.lexers import DirectiveInHTMLCommentLexer
+from sybil_extras.parsers.markdown_it.lexers import DirectiveInHTMLCommentLexer
 
 
 @beartype

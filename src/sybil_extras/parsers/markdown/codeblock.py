@@ -1,0 +1,120 @@
+"""A code block parser for Markdown using the MarkdownIt library.
+
+This parser uses a proper Markdown parsing library instead of regex.
+"""
+
+from collections.abc import Iterable
+
+from beartype import beartype
+from markdown_it import MarkdownIt
+from sybil import Document, Lexeme, Region
+from sybil.typing import Evaluator
+
+
+def _line_offsets(*, text: str) -> list[int]:
+    """Return the character offset of each line in the text.
+
+    The returned list has one entry per line, where entry[i] is the
+    character position where line i starts.
+    """
+    offsets = [0]
+    for i, char in enumerate(iterable=text):
+        if char == "\n":
+            offsets.append(i + 1)
+    return offsets
+
+
+@beartype
+class CodeBlockParser:
+    """A parser for Markdown fenced code blocks using the MarkdownIt library.
+
+    This parser uses a proper Markdown parsing library instead of regex
+    to find and parse fenced code blocks.
+
+    Args:
+        language: The language that this parser should look for.
+        evaluator: The evaluator to use for evaluating code blocks in the
+            specified language.
+    """
+
+    def __init__(
+        self,
+        language: str | None = None,
+        evaluator: Evaluator | None = None,
+    ) -> None:
+        """
+        Initialize the parser.
+        """
+        self._language = language
+        self._evaluator = evaluator
+
+    def __call__(self, document: Document) -> Iterable[Region]:
+        """
+        Parse the document and yield regions for each fenced code block.
+        """
+        md = MarkdownIt()
+        # Disable the indented code block rule so that fenced code blocks
+        # inside indented sections are still recognized as fences.
+        # This matches Sybil's regex-based behavior which allows fenced
+        # code blocks with a whitespace prefix.
+        md.disable(names="code")
+        tokens = md.parse(src=document.text)
+        line_offsets = _line_offsets(text=document.text)
+
+        for token in tokens:
+            if token.type != "fence":
+                continue
+
+            # token.map gives us [start_line, end_line) (0-indexed)
+            if token.map is None:
+                continue
+
+            # Filter by language if specified
+            if self._language is not None and token.info != self._language:
+                continue
+
+            start_line, end_line = token.map
+
+            # Calculate character positions
+            region_start = line_offsets[start_line]
+
+            # end_line is exclusive in MarkdownIt, pointing to the line
+            # after the closing fence. We want the region to end at the end
+            # of the closing fence line, not including the trailing newline.
+            # This matches Sybil's regex-based behavior.
+            if end_line < len(line_offsets):
+                # Get the start of the line after the block
+                next_line_start = line_offsets[end_line]
+                # The region end excludes the trailing newline after the
+                # closing fence. This matches Sybil's regex-based behavior.
+                region_end = next_line_start - 1
+            else:
+                region_end = len(document.text)
+
+            # The source content is in token.content
+            # We need to calculate the offset within the region where
+            # the source starts. The region starts with the opening fence
+            # line (e.g., "```python\n"), so the source starts after that.
+            opening_fence_line = document.text[
+                region_start : line_offsets[start_line + 1]
+            ]
+            source_offset = len(opening_fence_line)
+
+            source = Lexeme(
+                text=token.content,
+                offset=source_offset,
+                line_offset=0,  # Match Sybil's behavior
+            )
+
+            lexemes = {
+                "language": token.info,
+                "source": source,
+            }
+
+            yield Region(
+                start=region_start,
+                end=region_end,
+                parsed=source,
+                evaluator=self._evaluator,
+                lexemes=lexemes,
+            )
