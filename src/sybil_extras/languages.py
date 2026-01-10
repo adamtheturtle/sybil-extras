@@ -7,7 +7,6 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
-import sybil.parsers.markdown
 import sybil.parsers.myst
 import sybil.parsers.rest
 from beartype import beartype
@@ -19,6 +18,7 @@ import sybil_extras.parsers.djot.codeblock
 import sybil_extras.parsers.djot.custom_directive_skip
 import sybil_extras.parsers.djot.group_all
 import sybil_extras.parsers.djot.grouped_source
+import sybil_extras.parsers.markdown.codeblock
 import sybil_extras.parsers.markdown.custom_directive_skip
 import sybil_extras.parsers.markdown.group_all
 import sybil_extras.parsers.markdown.grouped_source
@@ -399,7 +399,7 @@ MARKDOWN = MarkupLanguage(
     name="Markdown",
     markup_separator="\n",
     skip_parser_cls=sybil_extras.parsers.markdown.custom_directive_skip.CustomDirectiveSkipParser,
-    code_block_parser_cls=sybil.parsers.markdown.CodeBlockParser,
+    code_block_parser_cls=sybil_extras.parsers.markdown.codeblock.CodeBlockParser,
     group_parser_cls=sybil_extras.parsers.markdown.grouped_source.GroupedSourceParser,
     group_all_parser_cls=sybil_extras.parsers.markdown.group_all.GroupAllParser,
     sphinx_jinja_parser_cls=None,
