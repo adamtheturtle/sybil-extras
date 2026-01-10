@@ -13,6 +13,7 @@ from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.languages import (
     DJOT,
     MARKDOWN,
+    MARKDOWN_IT,
     MDX,
     MYST,
     NORG,
@@ -66,6 +67,7 @@ def test_writes_modified_content(
             """
         ),
         MARKDOWN: markdown_content,
+        MARKDOWN_IT: markdown_content,
         MDX: markdown_content,
         DJOT: markdown_content,
         NORG: norg_content,
@@ -129,6 +131,7 @@ def test_writes_modified_content(
             """
         ),
         MARKDOWN: markdown_expected,
+        MARKDOWN_IT: markdown_expected,
         MDX: markdown_expected,
         DJOT: markdown_expected,
         NORG: norg_expected,
@@ -251,6 +254,7 @@ def test_empty_code_block_write_content(
     content = {
         RESTRUCTUREDTEXT: rst_content,
         MARKDOWN: markdown_content,
+        MARKDOWN_IT: markdown_content,
         MDX: markdown_content,
         DJOT: markdown_content,
         NORG: norg_content,
@@ -328,6 +332,7 @@ def test_empty_code_block_write_content(
             """
         ),
         MARKDOWN: markdown_expected,
+        MARKDOWN_IT: markdown_expected,
         MDX: markdown_expected,
         DJOT: markdown_expected,
         NORG: norg_expected,
@@ -346,7 +351,7 @@ def test_empty_code_block_with_options(
     It is possible to write content to an empty code block even if that code
     block has options.
     """
-    if markup_language in (MARKDOWN, DJOT, NORG):
+    if markup_language in (MARKDOWN, MARKDOWN_IT, DJOT, NORG):
         # Markdown-like formats do not support code block options.
         return
 
@@ -773,6 +778,7 @@ def test_indented_existing_block(
             """
         ),
         MARKDOWN: markdown_content,
+        MARKDOWN_IT: markdown_content,
         MDX: markdown_content,
         DJOT: markdown_content,
         NORG: norg_content,
@@ -837,6 +843,7 @@ def test_indented_existing_block(
             """
         ),
         MARKDOWN: markdown_expected,
+        MARKDOWN_IT: markdown_expected,
         MDX: markdown_expected,
         DJOT: markdown_expected,
         NORG: norg_expected,
@@ -897,6 +904,7 @@ def test_indented_empty_existing_block(
             """
         ),
         MARKDOWN: markdown_content,
+        MARKDOWN_IT: markdown_content,
         MDX: markdown_content,
         DJOT: markdown_content,
         NORG: norg_content,
@@ -969,6 +977,7 @@ def test_indented_empty_existing_block(
             """
         ),
         MARKDOWN: markdown_expected,
+        MARKDOWN_IT: markdown_expected,
         MDX: markdown_expected,
         DJOT: markdown_expected,
         NORG: norg_expected,

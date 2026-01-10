@@ -24,6 +24,7 @@ from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 from sybil_extras.languages import (
     DJOT,
     MARKDOWN,
+    MARKDOWN_IT,
     MDX,
     MYST,
     NORG,
@@ -449,6 +450,7 @@ def test_write_to_file_new_content_trailing_newlines(
             """
         ),
         MARKDOWN: markdown_content,
+        MARKDOWN_IT: markdown_content,
         MDX: markdown_content,
         DJOT: markdown_content,
         NORG: norg_content,
@@ -521,6 +523,7 @@ def test_write_to_file_new_content_trailing_newlines(
             """
         ),
         MARKDOWN: markdown_expected,
+        MARKDOWN_IT: markdown_expected,
         MDX: markdown_expected,
         DJOT: markdown_expected,
         NORG: norg_expected,
@@ -587,6 +590,7 @@ def test_write_to_file_new_content_no_trailing_newlines(
             """
         ),
         MARKDOWN: markdown_content,
+        MARKDOWN_IT: markdown_content,
         MDX: markdown_content,
         DJOT: markdown_content,
         NORG: norg_content,
@@ -654,6 +658,7 @@ def test_write_to_file_new_content_no_trailing_newlines(
             """
         ),
         MARKDOWN: markdown_expected,
+        MARKDOWN_IT: markdown_expected,
         MDX: markdown_expected,
         DJOT: markdown_expected,
         NORG: norg_expected,

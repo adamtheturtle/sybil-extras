@@ -7,6 +7,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
+import sybil.parsers.markdown
 import sybil.parsers.myst
 import sybil.parsers.rest
 from beartype import beartype
@@ -18,10 +19,13 @@ import sybil_extras.parsers.djot.codeblock
 import sybil_extras.parsers.djot.custom_directive_skip
 import sybil_extras.parsers.djot.group_all
 import sybil_extras.parsers.djot.grouped_source
-import sybil_extras.parsers.markdown.codeblock
 import sybil_extras.parsers.markdown.custom_directive_skip
 import sybil_extras.parsers.markdown.group_all
 import sybil_extras.parsers.markdown.grouped_source
+import sybil_extras.parsers.markdown_it.codeblock
+import sybil_extras.parsers.markdown_it.custom_directive_skip
+import sybil_extras.parsers.markdown_it.group_all
+import sybil_extras.parsers.markdown_it.grouped_source
 import sybil_extras.parsers.mdx.codeblock
 import sybil_extras.parsers.mdx.custom_directive_skip
 import sybil_extras.parsers.mdx.group_all
@@ -399,9 +403,22 @@ MARKDOWN = MarkupLanguage(
     name="Markdown",
     markup_separator="\n",
     skip_parser_cls=sybil_extras.parsers.markdown.custom_directive_skip.CustomDirectiveSkipParser,
-    code_block_parser_cls=sybil_extras.parsers.markdown.codeblock.CodeBlockParser,
+    code_block_parser_cls=sybil.parsers.markdown.CodeBlockParser,
     group_parser_cls=sybil_extras.parsers.markdown.grouped_source.GroupedSourceParser,
     group_all_parser_cls=sybil_extras.parsers.markdown.group_all.GroupAllParser,
+    sphinx_jinja_parser_cls=None,
+    code_block_builder=_markdown_code_block,
+    directive_builders=(_html_comment_directive,),
+    jinja_block_builder=None,
+)
+
+MARKDOWN_IT = MarkupLanguage(
+    name="MarkdownIt",
+    markup_separator="\n",
+    skip_parser_cls=sybil_extras.parsers.markdown_it.custom_directive_skip.CustomDirectiveSkipParser,
+    code_block_parser_cls=sybil_extras.parsers.markdown_it.codeblock.CodeBlockParser,
+    group_parser_cls=sybil_extras.parsers.markdown_it.grouped_source.GroupedSourceParser,
+    group_all_parser_cls=sybil_extras.parsers.markdown_it.group_all.GroupAllParser,
     sphinx_jinja_parser_cls=None,
     code_block_builder=_markdown_code_block,
     directive_builders=(_html_comment_directive,),
@@ -451,6 +468,7 @@ ALL_LANGUAGES: tuple[MarkupLanguage, ...] = (
     MYST,
     RESTRUCTUREDTEXT,
     MARKDOWN,
+    MARKDOWN_IT,
     MDX,
     DJOT,
     NORG,
