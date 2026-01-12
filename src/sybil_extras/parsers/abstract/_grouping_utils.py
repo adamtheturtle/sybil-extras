@@ -58,6 +58,20 @@ def count_expected_code_blocks(examples: Iterable[Example]) -> int:
     return non_skip_count - skipped_count
 
 
+def _get_text(parsed: Lexeme | str) -> str:
+    """Get text from a parsed value, which may be a Lexeme or a string.
+
+    Args:
+        parsed: The parsed value from an example.
+
+    Returns:
+        The text content.
+    """
+    if isinstance(parsed, Lexeme):
+        return parsed.text
+    return parsed
+
+
 @beartype
 def _combine_examples_text(
     examples: Sequence[Example],
@@ -79,25 +93,30 @@ def _combine_examples_text(
     Returns:
         The combined text.
     """
-    result = examples[0].parsed
+    first_parsed = examples[0].parsed
+    if isinstance(first_parsed, Lexeme):
+        result_text = first_parsed.text
+        result_offset = first_parsed.offset
+        result_line_offset = first_parsed.line_offset
+    else:
+        result_text = str(object=first_parsed)
+        result_offset = examples[0].region.start
+        result_line_offset = 0
+
     for example in examples[1:]:
-        existing_lines = len(result.text.splitlines())
+        existing_lines = len(result_text.splitlines())
         if pad_groups:
             padding_lines = example.line - examples[0].line - existing_lines
         else:
             padding_lines = 1
 
         padding = "\n" * padding_lines
-        result = Lexeme(
-            text=result.text + padding + example.parsed,
-            offset=result.offset,
-            line_offset=result.line_offset,
-        )
+        result_text = result_text + padding + _get_text(parsed=example.parsed)
 
     return Lexeme(
-        text=result.text,
-        offset=result.offset,
-        line_offset=result.line_offset,
+        text=result_text,
+        offset=result_offset,
+        line_offset=result_line_offset,
     )
 
 

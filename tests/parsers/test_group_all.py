@@ -445,11 +445,6 @@ def test_custom_parser_with_string_parsed_value(
 ) -> None:
     """Custom parsers that set parsed to a string instead of a Lexeme work.
 
-    This tests the fix for issue #616 where _combine_examples_text
-    assumed that example.parsed is always a Lexeme object. When custom
-    parsers provide plain strings, this caused an AttributeError when
-    accessing .text on the string.
-
     Custom parsers may set parsed to a plain string while still
     providing a 'source' lexeme. The grouping logic should handle both
     Lexeme objects and plain strings.
