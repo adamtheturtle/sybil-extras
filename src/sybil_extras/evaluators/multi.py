@@ -27,6 +27,6 @@ class MultiEvaluator:
         """
         for evaluator in self._evaluators:
             result = evaluator(example)
-            if result:
+            if result is not None:
                 return result
         return None
