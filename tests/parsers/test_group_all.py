@@ -3,11 +3,12 @@ Group-all parser tests shared across markup languages.
 """
 
 import subprocess
+from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
-from sybil import Example, Sybil
+from sybil import Document, Example, Region, Sybil
 
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
@@ -435,3 +436,74 @@ def test_finalize_waits_for_code_blocks(
     assert document.namespace["blocks"] == [
         f"x = [1]{padding}x = [*x, 2]\n",
     ]
+
+
+def test_examples_without_source_lexeme(
+    language: MarkupLanguage,
+    tmp_path: Path,
+) -> None:
+    """Examples without a source lexeme do not cause a deadlock.
+
+    This tests the fix for a bug where count_expected_code_blocks
+    counted all non-skip examples, but collect only processed examples
+    with a source lexeme. This mismatch caused finalize to wait
+    indefinitely for examples that would never arrive.
+
+    Custom parsers may create examples without source lexemes. If these
+    examples are counted but never collected, the finalize marker will
+    wait forever.
+    """
+    content = language.code_block_builder(code="x = [1]", language="python")
+    test_document = tmp_path / "test"
+    test_document.write_text(
+        data=f"{content}{language.markup_separator}",
+        encoding="utf-8",
+    )
+
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
+    group_all_parser = language.group_all_parser_cls(
+        evaluator=evaluator,
+        pad_groups=True,
+    )
+    code_block_parser = language.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
+
+    # Create a custom parser that yields a region without a source lexeme.
+    # This simulates parsers that create examples which should not be
+    # collected by the group-all parser.
+    def custom_parser_without_source(document: Document) -> Iterable[Region]:
+        """
+        A parser that creates an example without a source lexeme.
+        """
+        # Place the region at the end of the document to avoid overlap
+        # with the code block.
+        doc_end = len(document.text)
+        yield Region(
+            start=doc_end - 1,
+            end=doc_end,
+            parsed="custom_parsed_value",  # Not a skip tuple
+            evaluator=NoOpEvaluator(),
+            lexemes={},  # No source lexeme
+        )
+
+    sybil = Sybil(
+        parsers=[
+            code_block_parser,
+            custom_parser_without_source,
+            group_all_parser,
+        ]
+    )
+    document = sybil.parse(path=test_document)
+
+    # Evaluate all examples - this should not deadlock.
+    # Without the fix, count_expected_code_blocks would count 2 examples
+    # (the code block + custom example), but collect would only process
+    # the code block (which has a source lexeme), causing finalize to
+    # wait forever for an example that will never arrive.
+    for example in document.examples():
+        example.evaluate()
+
+    # Verify the code block was collected correctly
+    assert document.namespace["blocks"] == ["x = [1]\n"]
