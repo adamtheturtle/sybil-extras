@@ -1,25 +1,22 @@
-"""A group parser for Markdown.
-
-This parser uses the MarkdownIt library instead of regex.
+"""
+A group parser for Markdown.
 """
 
 import re
 
 from beartype import beartype
+from sybil.parsers.markdown.lexers import DirectiveInHTMLCommentLexer
 from sybil.typing import Evaluator
 
 from sybil_extras.parsers.abstract.grouped_source import (
     AbstractGroupedSourceParser,
 )
-from sybil_extras.parsers.markdown.lexers import DirectiveInHTMLCommentLexer
 
 
 @beartype
 class GroupedSourceParser(AbstractGroupedSourceParser):
-    """A code block group parser for Markdown.
-
-    This parser uses the MarkdownIt library to find HTML comments
-    containing group directives.
+    """
+    A code block group parser for Markdown.
     """
 
     def __init__(

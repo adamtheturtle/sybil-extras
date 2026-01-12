@@ -4,6 +4,8 @@ Changelog
 Next
 ----
 
+* Add ``markdown_it`` parser module using the ``markdown-it-py`` library for more accurate Markdown parsing.
+
 2026.01.12
 ----------
 

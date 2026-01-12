@@ -1,6 +1,5 @@
-"""A custom directive skip parser for Markdown.
-
-This parser uses the MarkdownIt library instead of regex.
+"""
+A custom directive skip parser for Markdown.
 """
 
 import re
@@ -10,16 +9,13 @@ from beartype import beartype
 from sybil import Document, Region
 from sybil.evaluators.skip import Skipper
 from sybil.parsers.abstract import AbstractSkipParser
-
-from sybil_extras.parsers.markdown.lexers import DirectiveInHTMLCommentLexer
+from sybil.parsers.markdown.lexers import DirectiveInHTMLCommentLexer
 
 
 @beartype
 class CustomDirectiveSkipParser:
-    """A custom directive skip parser for Markdown.
-
-    This parser uses the MarkdownIt library to find HTML comments
-    containing skip directives.
+    """
+    A custom directive skip parser for Markdown.
     """
 
     def __init__(self, directive: str) -> None:
@@ -27,6 +23,8 @@ class CustomDirectiveSkipParser:
         Args:
             directive: The name of the directive to use for skipping.
         """
+        # This matches the ``sybil.parsers.markdown.SkipParser``, other than
+        # it does not hardcode the directive "skip".
         lexers = [
             DirectiveInHTMLCommentLexer(directive=re.escape(pattern=directive))
         ]
