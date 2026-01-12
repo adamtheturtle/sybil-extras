@@ -1,0 +1,53 @@
+"""
+Tests for the markdown_it lexers.
+"""
+
+from pathlib import Path
+
+from sybil import Sybil
+from sybil.evaluators.python import PythonEvaluator
+
+from sybil_extras.parsers.markdown_it.codeblock import CodeBlockParser
+from sybil_extras.parsers.markdown_it.custom_directive_skip import (
+    CustomDirectiveSkipParser,
+)
+
+
+class TestDirectiveInHTMLCommentLexer:
+    """
+    Tests for DirectiveInHTMLCommentLexer.
+    """
+
+    def test_directive_in_indented_section(self, tmp_path: Path) -> None:
+        """HTML comment directives in indented sections should be recognized.
+
+        The DirectiveInHTMLCommentLexer should disable the indented code
+        block rule (like CodeBlockParser does) so that HTML comments in
+        indented sections are not treated as code block content.
+        """
+        # Indented skip directive followed by a code block
+        content = """\
+    <!--- custom-skip: next -->
+
+```python
+x = 1
+```
+"""
+        test_file = tmp_path / "test.md"
+        test_file.write_text(data=content, encoding="utf-8")
+
+        skip_parser = CustomDirectiveSkipParser(directive="custom-skip")
+        code_parser = CodeBlockParser(
+            language="python",
+            evaluator=PythonEvaluator(),
+        )
+        sybil = Sybil(parsers=[code_parser, skip_parser])
+        document = sybil.parse(path=test_file)
+
+        # Evaluate all examples
+        for example in document.examples():
+            example.evaluate()
+
+        # The skip directive should have been recognized and the code block
+        # should have been skipped, so x should not be in the namespace
+        assert "x" not in document.namespace

@@ -55,13 +55,14 @@ class DirectiveInHTMLCommentLexer:
         """
         # Build a pattern to match the directive inside the HTML comment
         # The pattern matches:
+        # - Optional leading whitespace (for indented comments)
         # - Optional semicolon and whitespace at the start
         # - The directive name
         # - Optional colon
         # - Optional whitespace
         # - The arguments
         self._directive_pattern = re.compile(
-            pattern=rf"^<!--+\s*(?:;\s*)?(?P<directive>{directive})"
+            pattern=rf"^[ \t]*<!--+\s*(?:;\s*)?(?P<directive>{directive})"
             rf":?\s*(?P<arguments>{arguments})\s*"
             rf"(?:--+>|$)",
             flags=re.MULTILINE,
@@ -72,6 +73,10 @@ class DirectiveInHTMLCommentLexer:
         Parse the document and yield regions for directive comments.
         """
         md = MarkdownIt()
+        # Disable the indented code block rule so that HTML comments
+        # in indented sections are still recognized as HTML blocks.
+        # This matches the behavior of CodeBlockParser.
+        md.disable(names="code")
         tokens = md.parse(src=document.text)
         line_offsets = _line_offsets(text=document.text)
 

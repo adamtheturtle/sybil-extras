@@ -3,12 +3,18 @@
 This parser uses a proper Markdown parsing library instead of regex.
 """
 
+import re
 from collections.abc import Iterable
 
 from beartype import beartype
 from markdown_it import MarkdownIt
 from sybil import Document, Lexeme, Region
 from sybil.typing import Evaluator
+
+# Pattern to extract just the language from the info string.
+# The info string can contain extra metadata like title="example".
+# We extract only the first word (anything that's not whitespace or backtick).
+_LANGUAGE_PATTERN = re.compile(pattern=r"^(?P<language>[^\s`]+)")
 
 
 def _line_offsets(*, text: str) -> list[int]:
@@ -69,8 +75,14 @@ class CodeBlockParser:
             if token.map is None:
                 continue
 
+            # Extract just the language from the info string.
+            # The info string can contain extra metadata
+            # (e.g., "python title=...").
+            info_match = _LANGUAGE_PATTERN.match(string=token.info)
+            block_language = info_match.group("language") if info_match else ""
+
             # Filter by language if specified
-            if self._language is not None and token.info != self._language:
+            if self._language is not None and block_language != self._language:
                 continue
 
             start_line, end_line = token.map
@@ -95,9 +107,12 @@ class CodeBlockParser:
             # We need to calculate the offset within the region where
             # the source starts. The region starts with the opening fence
             # line (e.g., "```python\n"), so the source starts after that.
-            opening_fence_line = document.text[
-                region_start : line_offsets[start_line + 1]
-            ]
+            if start_line + 1 < len(line_offsets):
+                opening_fence_end = line_offsets[start_line + 1]
+            else:
+                # Edge case: document ends without a newline after the fence
+                opening_fence_end = len(document.text)
+            opening_fence_line = document.text[region_start:opening_fence_end]
             source_offset = len(opening_fence_line)
 
             source = Lexeme(
@@ -107,7 +122,7 @@ class CodeBlockParser:
             )
 
             lexemes = {
-                "language": token.info,
+                "language": block_language,
                 "source": source,
             }
 
