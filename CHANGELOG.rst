@@ -5,6 +5,7 @@ Next
 ----
 
 * Fix MDX code block parsing when the info line is at EOF without a trailing newline.
+* Ensure ``GroupedSourceParser`` cleans up state when an evaluator raises an exception, allowing subsequent documents to be processed correctly.
 
 2025.12.13.4
 ------------

@@ -936,6 +936,82 @@ def test_no_pad_groups(
     assert output_document_content == expected_output_document_content
 
 
+def test_state_cleanup_across_documents(
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
+    tmp_path: Path,
+) -> None:
+    """State is cleaned up when evaluator fails, allowing new documents to
+    work.
+
+    When an evaluator raises an exception, the grouper's internal state
+    must be cleaned up properly. Otherwise, when the same parser
+    instance is used to parse a new document, the stale state from the
+    previous document could cause the new document to fail incorrectly.
+    """
+    language, directive_builder = language_directive_builder
+    content = language.markup_separator.join(
+        [
+            directive_builder(directive="group", argument="start"),
+            language.code_block_builder(code="exit 1", language="bash"),
+            directive_builder(directive="group", argument="end"),
+        ]
+    )
+    first_document_path = tmp_path / "first"
+    first_document_path.write_text(
+        data=f"{content}{language.markup_separator}",
+        encoding="utf-8",
+    )
+
+    shell_evaluator = ShellCommandEvaluator(
+        args=["sh"],
+        pad_file=False,
+        write_to_file=False,
+        use_pty=False,
+    )
+    group_parser = language.group_parser_cls(
+        directive="group",
+        evaluator=shell_evaluator,
+        pad_groups=False,
+    )
+    code_block_parser = language.code_block_parser_cls(language="bash")
+
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
+    first_document = sybil.parse(path=first_document_path)
+
+    first_start, first_code_block, first_end = first_document.examples()
+
+    first_start.evaluate()
+    first_code_block.evaluate()
+
+    with pytest.raises(expected_exception=subprocess.CalledProcessError):
+        first_end.evaluate()
+
+    # Now parse and evaluate a second document with the same parser.
+    # This should work correctly even after the first document's
+    # evaluator failed.
+    success_content = language.markup_separator.join(
+        [
+            directive_builder(directive="group", argument="start"),
+            language.code_block_builder(code="exit 0", language="bash"),
+            directive_builder(directive="group", argument="end"),
+        ]
+    )
+    second_document_path = tmp_path / "second"
+    second_document_path.write_text(
+        data=f"{success_content}{language.markup_separator}",
+        encoding="utf-8",
+    )
+
+    second_document = sybil.parse(path=second_document_path)
+
+    second_start, second_code_block, second_end = second_document.examples()
+
+    second_start.evaluate()
+    second_code_block.evaluate()
+    # This should succeed without any stale state issues.
+    second_end.evaluate()
+
+
 def test_end_marker_waits_for_code_blocks(
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
