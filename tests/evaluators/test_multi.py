@@ -41,6 +41,14 @@ def _failing_evaluator(example: Example) -> None:
     )
 
 
+def _string_returning_evaluator(example: Example) -> str:
+    """
+    Evaluator that returns a failure string instead of raising an exception.
+    """
+    del example
+    return "This check failed"
+
+
 @pytest.fixture(name="rst_file")
 def fixture_rst_file(tmp_path: Path) -> Path:
     """
@@ -92,3 +100,26 @@ def test_multi_evaluator_raises_on_failure(rst_file: Path) -> None:
         match="Failure in failing_evaluator",
     ):
         example.evaluate()
+
+
+def test_multi_evaluator_propagates_failure_string(rst_file: Path) -> None:
+    """MultiEvaluator propagates failure strings returned by evaluators.
+
+    According to Sybil's API contract, evaluators return Optional[str] where:
+    - None indicates success
+    - A string indicates failure (which Sybil converts to SybilFailure)
+
+    MultiEvaluator must propagate the first failure string encountered.
+    """
+    evaluators = [_evaluator_1, _string_returning_evaluator, _evaluator_3]
+    multi_evaluator = MultiEvaluator(evaluators=evaluators)
+    parser = CodeBlockParser(language="python", evaluator=multi_evaluator)
+
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    # mypy correctly identifies that the current implementation returns None.
+    # This test verifies the fix changes the return type to str | None.
+    result = multi_evaluator(example)  # type: ignore[func-returns-value]
+    assert result == "This check failed"
