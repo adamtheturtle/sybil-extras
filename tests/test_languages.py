@@ -5,7 +5,7 @@ Tests for the languages module.
 from pathlib import Path
 
 import pytest
-from sybil import Sybil
+from sybil import Document, Sybil
 from sybil.evaluators.python import PythonEvaluator
 
 from sybil_extras.evaluators.block_accumulator import (
@@ -247,3 +247,29 @@ def test_mdx_code_block_attributes(tmp_path: Path) -> None:
         "title": "example.py",
         "group": "setup",
     }
+
+
+def test_mdx_info_line_at_eof_without_newline() -> None:
+    """
+    An MDX code block info line at EOF without trailing newline is recognized.
+    """
+    parser = MDX.code_block_parser_cls(language="python")
+    document = Document(text="```python", path="doc.mdx")
+    regions = list(parser(document=document))
+
+    assert len(regions) == 1
+    assert regions[0].parsed == ""
+
+
+def test_mdx_info_line_with_attributes_at_eof_without_newline() -> None:
+    """
+    An MDX code block with attributes at EOF without trailing newline is
+    recognized.
+    """
+    parser = MDX.code_block_parser_cls(language="python")
+    document = Document(text='```python title="example.py"', path="doc.mdx")
+    regions = list(parser(document=document))
+
+    assert len(regions) == 1
+    assert regions[0].parsed == ""
+    assert regions[0].lexemes["attributes"] == {"title": "example.py"}

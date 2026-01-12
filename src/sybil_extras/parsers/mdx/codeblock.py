@@ -17,7 +17,7 @@ from sybil.typing import Evaluator, Lexer
 from sybil_extras.parsers.mdx.lexers import DirectiveInJSXCommentLexer
 
 _INFO_LINE_PATTERN = re.compile(
-    pattern=r"(?P<language>[^\s`]+)(?P<attributes>(?:[ \t]+[^\n]*?)?)$\n",
+    pattern=r"(?P<language>[^\s`]+)(?P<attributes>(?:[ \t]+[^\n]*?)?)$\n?",
     flags=re.MULTILINE,
 )
 
