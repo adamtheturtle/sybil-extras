@@ -4,6 +4,8 @@ Changelog
 Next
 ----
 
+* Fix ``CodeBlockWriterEvaluator`` corrupting files when code block indentation uses mixed tabs and spaces.
+
 2025.12.13.4
 ------------
 
