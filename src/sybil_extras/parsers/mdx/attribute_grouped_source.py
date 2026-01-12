@@ -16,5 +16,5 @@ class AttributeGroupedSourceParser(AbstractAttributeGroupedSourceParser):
     """A parser for grouping MDX code blocks by attribute values.
 
     This parser groups code blocks that have the same value for a
-    specified attribute (default: 'group').
+    specified attribute.
     """

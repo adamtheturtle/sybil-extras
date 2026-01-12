@@ -1041,6 +1041,38 @@ def test_multiple_blocks(tmp_path: Path) -> None:
     assert source_file.read_text(encoding="utf-8") == expected_content
 
 
+def test_mixed_tab_space_indentation(tmp_path: Path) -> None:
+    """
+    Changes are written correctly when code block indentation uses mixed tabs
+    and spaces.
+    """
+    # Content with one tab followed by three spaces for indentation
+    original_content = "\t.. code-block:: python\n\n\t   x = 1\n"
+    source_file = tmp_path / "source_file.rst"
+    source_file.write_text(data=original_content, encoding="utf-8")
+
+    def modifying_evaluator(example: Example) -> None:
+        """
+        Store modified content in namespace.
+        """
+        example.document.namespace["modified_content"] = "y = 2"
+
+    writer_evaluator = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)
+    parser = RESTRUCTUREDTEXT.code_block_parser_cls(
+        language="python",
+        evaluator=writer_evaluator,
+    )
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=source_file)
+    (example,) = document.examples()
+    example.evaluate()
+
+    # The indentation should be preserved: one tab + three spaces
+    expected_content = "\t.. code-block:: python\n\n\t   y = 2\n"
+    assert source_file.read_text(encoding="utf-8") == expected_content
+
+
 def test_changes_lines(tmp_path: Path) -> None:
     """If writing to a file changes the number of lines in the file, that does
     not affect the next code block.

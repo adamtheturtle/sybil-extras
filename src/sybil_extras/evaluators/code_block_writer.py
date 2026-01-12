@@ -57,10 +57,9 @@ def _get_within_code_block_indentation_prefix(example: Example) -> str:
 
     # Build the full prefix: container prefix + additional indentation
     if additional_indentation_length > 0 and line_without_container:
-        indentation_character = line_without_container[0]
-        additional_indentation = (
-            indentation_character * additional_indentation_length
-        )
+        additional_indentation = line_without_container[
+            :additional_indentation_length
+        ]
     else:
         additional_indentation = ""
 

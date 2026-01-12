@@ -3,11 +3,13 @@ Group-all parser tests shared across markup languages.
 """
 
 import subprocess
+from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
-from sybil import Example, Sybil
+from sybil import Document, Example, Region, Sybil
+from sybil.region import Lexeme
 
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
@@ -435,3 +437,154 @@ def test_finalize_waits_for_code_blocks(
     assert document.namespace["blocks"] == [
         f"x = [1]{padding}x = [*x, 2]\n",
     ]
+
+
+def test_custom_parser_with_string_parsed_value(
+    language: MarkupLanguage,
+    tmp_path: Path,
+) -> None:
+    """Custom parsers that set parsed to a string instead of a Lexeme work.
+
+    Custom parsers may set parsed to a plain string while still
+    providing a 'source' lexeme. The grouping logic should handle both
+    Lexeme objects and plain strings.
+    """
+    content = language.markup_separator.join(
+        [
+            language.code_block_builder(code="block1", language="python"),
+            language.code_block_builder(code="block2", language="python"),
+        ]
+    )
+    test_document = tmp_path / "test"
+    test_document.write_text(
+        data=f"{content}{language.markup_separator}",
+        encoding="utf-8",
+    )
+
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
+    group_all_parser = language.group_all_parser_cls(
+        evaluator=evaluator,
+        pad_groups=True,
+    )
+
+    # Create a custom parser that yields regions with string parsed values
+    # but with a source lexeme (so they get collected by GroupAllParser).
+    # This simulates custom parsers that don't follow the Lexeme convention.
+    def custom_parser_with_string_parsed(
+        document: Document,
+    ) -> Iterable[Region]:
+        """
+        A parser that creates examples with string parsed values.
+        """
+        # Find two positions in the document for our custom regions
+        # We'll create regions that have source lexemes but string parsed
+        # values
+        text = document.text
+        # Place regions at different positions
+        positions = [0, len(text) // 2]
+
+        for idx, pos in enumerate(iterable=positions):
+            block_num = idx + 1
+            source_lexeme = Lexeme(
+                text=f"custom_block_{block_num}",
+                offset=pos,
+                line_offset=0,
+            )
+            yield Region(
+                start=pos,
+                end=pos + 1,
+                parsed=f"custom_block_{block_num}",  # String, not Lexeme
+                evaluator=evaluator,
+                lexemes={"source": source_lexeme},
+            )
+
+    sybil = Sybil(
+        parsers=[
+            custom_parser_with_string_parsed,
+            group_all_parser,
+        ]
+    )
+    document = sybil.parse(path=test_document)
+
+    # Evaluate all examples - this should not raise AttributeError.
+    # Without the fix, _combine_examples_text would fail with:
+    # AttributeError: 'str' object has no attribute 'text'
+    for example in document.examples():
+        example.evaluate()
+
+    # Verify the custom blocks were collected and combined correctly
+    assert len(document.namespace["blocks"]) == 1
+    combined = document.namespace["blocks"][0]
+    assert "custom_block_1" in combined
+    assert "custom_block_2" in combined
+
+
+def test_examples_without_source_lexeme(
+    language: MarkupLanguage,
+    tmp_path: Path,
+) -> None:
+    """Examples without a source lexeme do not cause a deadlock.
+
+    This tests the fix for a bug where count_expected_code_blocks
+    counted all non-skip examples, but collect only processed examples
+    with a source lexeme. This mismatch caused finalize to wait
+    indefinitely for examples that would never arrive.
+
+    Custom parsers may create examples without source lexemes. If these
+    examples are counted but never collected, the finalize marker will
+    wait forever.
+    """
+    content = language.code_block_builder(code="x = [1]", language="python")
+    test_document = tmp_path / "test"
+    test_document.write_text(
+        data=f"{content}{language.markup_separator}",
+        encoding="utf-8",
+    )
+
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
+    group_all_parser = language.group_all_parser_cls(
+        evaluator=evaluator,
+        pad_groups=True,
+    )
+    code_block_parser = language.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
+
+    # Create a custom parser that yields a region without a source lexeme.
+    # This simulates parsers that create examples which should not be
+    # collected by the group-all parser.
+    def custom_parser_without_source(document: Document) -> Iterable[Region]:
+        """
+        A parser that creates an example without a source lexeme.
+        """
+        # Place the region at the end of the document to avoid overlap
+        # with the code block.
+        doc_end = len(document.text)
+        yield Region(
+            start=doc_end - 1,
+            end=doc_end,
+            parsed="custom_parsed_value",  # Not a skip tuple
+            evaluator=NoOpEvaluator(),
+            lexemes={},  # No source lexeme
+        )
+
+    sybil = Sybil(
+        parsers=[
+            code_block_parser,
+            custom_parser_without_source,
+            group_all_parser,
+        ]
+    )
+    document = sybil.parse(path=test_document)
+
+    # Evaluate all examples - this should not deadlock.
+    # Without the fix, count_expected_code_blocks would count 2 examples
+    # (the code block + custom example), but collect would only process
+    # the code block (which has a source lexeme), causing finalize to
+    # wait forever for an example that will never arrive.
+    for example in document.examples():
+        example.evaluate()
+
+    # Verify the code block was collected correctly
+    assert document.namespace["blocks"] == ["x = [1]\n"]

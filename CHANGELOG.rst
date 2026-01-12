@@ -4,6 +4,16 @@ Changelog
 Next
 ----
 
+2026.01.12
+----------
+
+
+* Fix ``GroupAllParser`` to handle custom parsers that set ``parsed`` to a plain string instead of a ``Lexeme``.
+* Fix ``MultiEvaluator`` to propagate failure strings returned by wrapped evaluators.
+* Fix ``DirectiveInDjotCommentLexer`` to stop at the first ``%}`` closing delimiter.
+* Fix ``CodeBlockWriterEvaluator`` corrupting files when code block indentation uses mixed tabs and spaces.
+* Fix MDX code block parsing when the info line is at EOF without a trailing newline.
+
 2025.12.13.4
 ------------
 
