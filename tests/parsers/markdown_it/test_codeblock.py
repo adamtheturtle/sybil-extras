@@ -4,6 +4,7 @@ Tests for the markdown_it CodeBlockParser.
 
 from pathlib import Path
 
+import pytest
 from sybil import Sybil
 
 from sybil_extras.evaluators.no_op import NoOpEvaluator
@@ -52,3 +53,31 @@ def test_unclosed_fence_no_trailing_newline(tmp_path: Path) -> None:
 
     # The parser should still find the code block (even if empty)
     assert len(examples) == 1
+
+
+def test_evaluator_not_none_when_omitted(tmp_path: Path) -> None:
+    """When no evaluator is provided, the region still has an evaluator.
+
+    Sybil's Example.evaluate() does nothing when region.evaluator is
+    None. To work correctly with document evaluators (like
+    GroupAllParser), the region must have a non-None evaluator. Like
+    Sybil's AbstractCodeBlockParser, we provide a default evaluate
+    method that raises NotImplementedError.
+    """
+    content = "```python\nprint('hello')\n```\n"
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    # Create parser without an evaluator
+    parser = CodeBlockParser(language="python")
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert len(examples) == 1
+    # The region should have a non-None evaluator
+    assert examples[0].region.evaluator is not None
+
+    # Calling evaluate should raise NotImplementedError (default behavior)
+    with pytest.raises(expected_exception=NotImplementedError):
+        examples[0].evaluate()

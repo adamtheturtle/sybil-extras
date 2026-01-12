@@ -8,7 +8,7 @@ from collections.abc import Iterable
 
 from beartype import beartype
 from markdown_it import MarkdownIt
-from sybil import Document, Lexeme, Region
+from sybil import Document, Example, Lexeme, Region
 from sybil.typing import Evaluator
 
 # Pattern to extract just the language from the info string.
@@ -53,6 +53,14 @@ class CodeBlockParser:
         """
         self._language = language
         self._evaluator = evaluator
+
+    def evaluate(self, example: Example) -> None:
+        """Evaluate method used when no evaluator is provided.
+
+        This matches the behavior of Sybil's AbstractCodeBlockParser.
+        Override this method to provide custom evaluation logic.
+        """
+        raise NotImplementedError
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """
@@ -130,6 +138,6 @@ class CodeBlockParser:
                 start=region_start,
                 end=region_end,
                 parsed=source,
-                evaluator=self._evaluator,
+                evaluator=self._evaluator or self.evaluate,
                 lexemes=lexemes,
             )
