@@ -4,6 +4,8 @@ Changelog
 Next
 ----
 
+* Fix MDX code block parsing when the info line is at EOF without a trailing newline.
+
 2025.12.13.4
 ------------
 
