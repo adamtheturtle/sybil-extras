@@ -4,6 +4,7 @@ Changelog
 Next
 ----
 
+* Fix ``DirectiveInDjotCommentLexer`` to stop at the first ``%}`` closing delimiter.
 * Fix ``CodeBlockWriterEvaluator`` corrupting files when code block indentation uses mixed tabs and spaces.
 * Fix MDX code block parsing when the info line is at EOF without a trailing newline.
 

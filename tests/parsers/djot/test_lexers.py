@@ -71,3 +71,23 @@ def test_directive_with_mapping() -> None:
         expected_text=expected_text,
         expected_lexemes=expected_lexemes,
     )
+
+
+def test_directive_stops_at_first_closing_delimiter() -> None:
+    """Djot comments end at the first ``%}``, so text after it is not captured.
+
+    This tests that ``{% group: foo %} bar %}`` captures only ``foo`` as
+    the argument, not ``foo %} bar``.
+    """
+    lexer = DirectiveInDjotCommentLexer(directive="group", arguments=r".+")
+    source_text = "{% group: foo %} bar %}\n"
+
+    expected_text = "{% group: foo %}"
+    expected_lexemes = {"directive": "group", "arguments": "foo"}
+
+    check_lexer(
+        lexer=lexer,
+        source_text=source_text,
+        expected_text=expected_text,
+        expected_lexemes=expected_lexemes,
+    )
