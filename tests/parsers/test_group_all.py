@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 from sybil import Document, Example, Region, Sybil
+from sybil.region import Lexeme
 
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
@@ -436,6 +437,91 @@ def test_finalize_waits_for_code_blocks(
     assert document.namespace["blocks"] == [
         f"x = [1]{padding}x = [*x, 2]\n",
     ]
+
+
+def test_custom_parser_with_string_parsed_value(
+    language: MarkupLanguage,
+    tmp_path: Path,
+) -> None:
+    """Custom parsers that set parsed to a string instead of a Lexeme work.
+
+    This tests the fix for issue #616 where _combine_examples_text
+    assumed that example.parsed is always a Lexeme object. When custom
+    parsers provide plain strings, this caused an AttributeError when
+    accessing .text on the string.
+
+    Custom parsers may set parsed to a plain string while still
+    providing a 'source' lexeme. The grouping logic should handle both
+    Lexeme objects and plain strings.
+    """
+    content = language.markup_separator.join(
+        [
+            language.code_block_builder(code="block1", language="python"),
+            language.code_block_builder(code="block2", language="python"),
+        ]
+    )
+    test_document = tmp_path / "test"
+    test_document.write_text(
+        data=f"{content}{language.markup_separator}",
+        encoding="utf-8",
+    )
+
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
+    group_all_parser = language.group_all_parser_cls(
+        evaluator=evaluator,
+        pad_groups=True,
+    )
+
+    # Create a custom parser that yields regions with string parsed values
+    # but with a source lexeme (so they get collected by GroupAllParser).
+    # This simulates custom parsers that don't follow the Lexeme convention.
+    def custom_parser_with_string_parsed(
+        document: Document,
+    ) -> Iterable[Region]:
+        """
+        A parser that creates examples with string parsed values.
+        """
+        # Find two positions in the document for our custom regions
+        # We'll create regions that have source lexemes but string parsed
+        # values
+        text = document.text
+        # Place regions at different positions
+        pos1 = 0
+        pos2 = len(text) // 2
+
+        for i, pos in enumerate([pos1, pos2], start=1):
+            source_lexeme = Lexeme(
+                text=f"custom_block_{i}",
+                offset=pos,
+                line_offset=0,
+            )
+            yield Region(
+                start=pos,
+                end=pos + 1,
+                parsed=f"custom_block_{i}",  # String, not Lexeme
+                evaluator=evaluator,
+                lexemes={"source": source_lexeme},
+            )
+
+    sybil = Sybil(
+        parsers=[
+            custom_parser_with_string_parsed,
+            group_all_parser,
+        ]
+    )
+    document = sybil.parse(path=test_document)
+
+    # Evaluate all examples - this should not raise AttributeError.
+    # Without the fix, _combine_examples_text would fail with:
+    # AttributeError: 'str' object has no attribute 'text'
+    for example in document.examples():
+        example.evaluate()
+
+    # Verify the custom blocks were collected and combined correctly
+    assert len(document.namespace["blocks"]) == 1
+    combined = document.namespace["blocks"][0]
+    assert "custom_block_1" in combined
+    assert "custom_block_2" in combined
 
 
 def test_examples_without_source_lexeme(
