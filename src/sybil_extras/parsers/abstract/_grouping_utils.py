@@ -19,6 +19,9 @@ def count_expected_code_blocks(examples: Iterable[Example]) -> int:
 
     Skip markers have parsed values like ('next', None) or ('start', None).
 
+    Only examples with a 'source' lexeme are counted, as these are the only
+    examples that will be collected by the GroupAllParser.
+
     Args:
         examples: The examples to count.
 
@@ -46,7 +49,7 @@ def count_expected_code_blocks(examples: Iterable[Example]) -> int:
                 in_skip_range = True
             else:
                 in_skip_range = False
-        else:
+        elif has_source(example=ex):
             non_skip_count += 1
             if skip_next or in_skip_range:
                 skipped_count += 1
