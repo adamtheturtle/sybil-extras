@@ -303,8 +303,15 @@ class _Grouper:
 
 @beartype
 class AbstractGroupedSourceParser:
-    """
-    An abstract parser for grouping blocks of source code.
+    """An abstract parser for grouping blocks of source code.
+
+    Important:
+        This parser must be registered **after** any code block parsers
+        in the ``Sybil(parsers=[...])`` list. At parse time, it counts
+        code blocks by examining ``document.examples()``, which only
+        contains examples from parsers that have already run. If this
+        parser is registered before the code block parser, it will not
+        find any code blocks to group.
     """
 
     def __init__(
