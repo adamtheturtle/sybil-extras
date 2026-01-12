@@ -4,6 +4,7 @@ Changelog
 Next
 ----
 
+* Fix ``CodeBlockWriterEvaluator`` corrupting files when code block indentation uses mixed tabs and spaces.
 * Fix MDX code block parsing when the info line is at EOF without a trailing newline.
 
 2025.12.13.4
