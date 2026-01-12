@@ -13,6 +13,27 @@ from sybil_extras.parsers.markdown_it.custom_directive_skip import (
 )
 
 
+def test_directive_at_eof_without_trailing_newline(tmp_path: Path) -> None:
+    """Directive at end of file without trailing newline is recognized.
+
+    When the HTML comment is at the end of the document with no trailing
+    newline, end_line may equal len(line_offsets). The lexer should
+    handle this by using len(document.text) as the region end.
+    """
+    # No trailing newline after the directive
+    content = "<!--- custom-skip: next -->"
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    skip_parser = CustomDirectiveSkipParser(directive="custom-skip")
+    sybil = Sybil(parsers=[skip_parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    # The directive should still be recognized
+    assert len(examples) == 1
+
+
 def test_directive_in_indented_section(tmp_path: Path) -> None:
     """HTML comment directives in indented sections should be recognized.
 

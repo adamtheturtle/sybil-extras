@@ -55,6 +55,47 @@ def test_unclosed_fence_no_trailing_newline(tmp_path: Path) -> None:
     assert len(examples) == 1
 
 
+def test_code_block_with_empty_info_string(tmp_path: Path) -> None:
+    """Code blocks with no language specified are matched when language=None.
+
+    When a code block has an empty info string (just ```), the pattern
+    won't match and block_language should be set to empty string.
+    """
+    content = "```\nsome code\n```\n"
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    # Parser with no language filter should match all code blocks
+    parser = CodeBlockParser(evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert len(examples) == 1
+    # The language lexeme should be empty string
+    assert examples[0].region.lexemes["language"] == ""
+
+
+def test_language_filter_skips_non_matching(tmp_path: Path) -> None:
+    """Code blocks with a different language are skipped.
+
+    When a specific language is requested, code blocks with a different
+    language should not be matched.
+    """
+    content = "```javascript\nconsole.log('hello');\n```\n"
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    # Parser looking for Python, but the block is JavaScript
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    # Should find no matching code blocks
+    assert len(examples) == 0
+
+
 def test_evaluator_not_none_when_omitted(tmp_path: Path) -> None:
     """When no evaluator is provided, the region still has an evaluator.
 

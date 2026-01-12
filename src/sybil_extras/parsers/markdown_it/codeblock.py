@@ -79,8 +79,9 @@ class CodeBlockParser:
             if token.type != "fence":
                 continue
 
-            # token.map gives us [start_line, end_line) (0-indexed)
-            if token.map is None:
+            # MarkdownIt always provides map for fence tokens.
+            # This check satisfies mypy's type narrowing.
+            if token.map is None:  # pragma: no cover
                 continue
 
             # Extract just the language from the info string.
