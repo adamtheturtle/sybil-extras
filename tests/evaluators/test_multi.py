@@ -41,14 +41,6 @@ def _failing_evaluator(example: Example) -> None:
     )
 
 
-def _string_returning_evaluator(example: Example) -> str:
-    """
-    Evaluator that returns a failure string instead of raising an exception.
-    """
-    del example
-    return "This check failed"
-
-
 @pytest.fixture(name="rst_file")
 def fixture_rst_file(tmp_path: Path) -> Path:
     """
@@ -111,6 +103,14 @@ def test_multi_evaluator_propagates_failure_string(rst_file: Path) -> None:
 
     MultiEvaluator must propagate the first failure string encountered.
     """
+
+    def _string_returning_evaluator(example: Example) -> str:
+        """
+        Return a failure string instead of raising an exception.
+        """
+        del example
+        return "This check failed"
+
     evaluators = [_evaluator_1, _string_returning_evaluator, _evaluator_3]
     multi_evaluator = MultiEvaluator(evaluators=evaluators)
     parser = CodeBlockParser(language="python", evaluator=multi_evaluator)
