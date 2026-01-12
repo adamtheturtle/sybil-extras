@@ -92,3 +92,42 @@ def test_multi_evaluator_raises_on_failure(rst_file: Path) -> None:
         match="Failure in failing_evaluator",
     ):
         example.evaluate()
+
+
+@pytest.mark.parametrize(
+    argnames="failure_string",
+    argvalues=["This check failed", ""],
+    ids=["non-empty", "empty"],
+)
+def test_multi_evaluator_propagates_failure_string(
+    rst_file: Path,
+    failure_string: str,
+) -> None:
+    """MultiEvaluator propagates failure strings returned by evaluators.
+
+    According to Sybil's API contract, evaluators return Optional[str]
+    where:
+    - None indicates success
+    - A string indicates failure (which Sybil converts to SybilFailure)
+
+    MultiEvaluator must propagate the first failure string encountered,
+    including empty strings.
+    """
+
+    def _string_returning_evaluator(example: Example) -> str:
+        """
+        Return a failure string instead of raising an exception.
+        """
+        del example
+        return failure_string
+
+    evaluators = [_evaluator_1, _string_returning_evaluator, _evaluator_3]
+    multi_evaluator = MultiEvaluator(evaluators=evaluators)
+    parser = CodeBlockParser(language="python", evaluator=multi_evaluator)
+
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    result = multi_evaluator(example)
+    assert result == failure_string
