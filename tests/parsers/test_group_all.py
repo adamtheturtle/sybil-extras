@@ -486,19 +486,19 @@ def test_custom_parser_with_string_parsed_value(
         # values
         text = document.text
         # Place regions at different positions
-        pos1 = 0
-        pos2 = len(text) // 2
+        positions = [0, len(text) // 2]
 
-        for i, pos in enumerate([pos1, pos2], start=1):
+        for idx, pos in enumerate(iterable=positions):
+            block_num = idx + 1
             source_lexeme = Lexeme(
-                text=f"custom_block_{i}",
+                text=f"custom_block_{block_num}",
                 offset=pos,
                 line_offset=0,
             )
             yield Region(
                 start=pos,
                 end=pos + 1,
-                parsed=f"custom_block_{i}",  # String, not Lexeme
+                parsed=f"custom_block_{block_num}",  # String, not Lexeme
                 evaluator=evaluator,
                 lexemes={"source": source_lexeme},
             )

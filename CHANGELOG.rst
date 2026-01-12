@@ -4,6 +4,7 @@ Changelog
 Next
 ----
 
+* Fix ``GroupAllParser`` to handle custom parsers that set ``parsed`` to a plain string instead of a ``Lexeme``.
 * Fix ``MultiEvaluator`` to propagate failure strings returned by wrapped evaluators.
 * Fix ``DirectiveInDjotCommentLexer`` to stop at the first ``%}`` closing delimiter.
 * Fix ``CodeBlockWriterEvaluator`` corrupting files when code block indentation uses mixed tabs and spaces.
