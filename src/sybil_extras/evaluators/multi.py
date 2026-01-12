@@ -21,9 +21,12 @@ class MultiEvaluator:
         """
         self._evaluators = evaluators
 
-    def __call__(self, example: Example) -> None:
+    def __call__(self, example: Example) -> str | None:
         """
         Run all evaluators.
         """
         for evaluator in self._evaluators:
-            evaluator(example)
+            result = evaluator(example)
+            if result:
+                return result
+        return None

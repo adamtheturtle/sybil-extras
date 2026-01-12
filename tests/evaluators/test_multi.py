@@ -119,7 +119,5 @@ def test_multi_evaluator_propagates_failure_string(rst_file: Path) -> None:
 
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
-    # mypy correctly identifies that the current implementation returns None.
-    # This test verifies the fix changes the return type to str | None.
-    result = multi_evaluator(example)  # type: ignore[func-returns-value]
+    result = multi_evaluator(example)
     assert result == "This check failed"
