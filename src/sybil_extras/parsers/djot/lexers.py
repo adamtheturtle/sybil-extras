@@ -42,13 +42,18 @@ class DirectiveInDjotCommentLexer:
         # Pattern to match djot comments with directives
         # Format: {% directive: argument %} or {% directive %}
         # The comment must be on its own line (with optional leading
-        # whitespace)
+        # whitespace).
+        # Arguments use (?:(?!\%\}).)*? to stop at %} but allow % otherwise.
+        # The user's arguments pattern is applied as a filter afterwards.
         pattern = (
             rf"^\s*\{{\%\s*(?P<directive>{directive})"
-            rf"(?:\s*:\s*(?P<arguments>{arguments}))?\s*\%\}}$"
+            rf"(?:\s*:\s*(?P<arguments>(?:(?!\%\}}).)*?))?\s*\%\}}"
         )
         self.pattern: re.Pattern[str] = re.compile(
             pattern=pattern, flags=re.MULTILINE
+        )
+        self._arguments_pattern: re.Pattern[str] = re.compile(
+            pattern=rf"^(?:{arguments})$"
         )
         self.mapping = mapping
 
@@ -63,6 +68,9 @@ class DirectiveInDjotCommentLexer:
                 lexemes["arguments"] = lexemes["arguments"].strip()
             else:
                 lexemes["arguments"] = ""
+
+            if not self._arguments_pattern.match(string=lexemes["arguments"]):
+                continue
 
             if self.mapping:
                 lexemes = {
