@@ -257,12 +257,10 @@ to be evaluated with the ``evaluator`` given to ``GroupedSourceParser``.
 
 Only code blocks parsed by another parser in the same Sybil instance will be grouped.
 
-.. note::
-
-   The ``GroupedSourceParser`` must be registered **after** any code block
-   parsers in the ``Sybil(parsers=[...])`` list. At parse time, it counts
-   code blocks by examining ``document.examples()``, which only contains
-   examples from parsers that have already run.
+The ``GroupedSourceParser`` must be registered **after** any code block
+parsers in the ``Sybil(parsers=[...])`` list. At parse time, it counts
+code blocks by examining ``document.examples()``, which only contains
+examples from parsers that have already run.
 
 A group is defined by a pair of comments, ``group: start`` and ``group: end``.
 The ``group: end`` example is expanded to include the contents of the code blocks in the group.
@@ -357,12 +355,10 @@ All code blocks in the document are automatically grouped together.
 
 Only code blocks parsed by another parser in the same Sybil instance will be grouped.
 
-.. note::
-
-   The ``GroupAllParser`` must be registered **after** any code block
-   parsers in the ``Sybil(parsers=[...])`` list. At parse time, it counts
-   code blocks by examining ``document.examples()``, which only contains
-   examples from parsers that have already run.
+The ``GroupAllParser`` must be registered **after** any code block
+parsers in the ``Sybil(parsers=[...])`` list. At parse time, it counts
+code blocks by examining ``document.examples()``, which only contains
+examples from parsers that have already run.
 
 AttributeGroupedSourceParser
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
