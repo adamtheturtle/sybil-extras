@@ -94,14 +94,24 @@ def test_multi_evaluator_raises_on_failure(rst_file: Path) -> None:
         example.evaluate()
 
 
-def test_multi_evaluator_propagates_failure_string(rst_file: Path) -> None:
+@pytest.mark.parametrize(
+    argnames="failure_string",
+    argvalues=["This check failed", ""],
+    ids=["non-empty", "empty"],
+)
+def test_multi_evaluator_propagates_failure_string(
+    rst_file: Path,
+    failure_string: str,
+) -> None:
     """MultiEvaluator propagates failure strings returned by evaluators.
 
-    According to Sybil's API contract, evaluators return Optional[str] where:
+    According to Sybil's API contract, evaluators return Optional[str]
+    where:
     - None indicates success
     - A string indicates failure (which Sybil converts to SybilFailure)
 
-    MultiEvaluator must propagate the first failure string encountered.
+    MultiEvaluator must propagate the first failure string encountered,
+    including empty strings.
     """
 
     def _string_returning_evaluator(example: Example) -> str:
@@ -109,7 +119,7 @@ def test_multi_evaluator_propagates_failure_string(rst_file: Path) -> None:
         Return a failure string instead of raising an exception.
         """
         del example
-        return "This check failed"
+        return failure_string
 
     evaluators = [_evaluator_1, _string_returning_evaluator, _evaluator_3]
     multi_evaluator = MultiEvaluator(evaluators=evaluators)
@@ -120,36 +130,4 @@ def test_multi_evaluator_propagates_failure_string(rst_file: Path) -> None:
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     result = multi_evaluator(example)
-    assert result == "This check failed"
-
-
-def test_multi_evaluator_propagates_empty_failure_string(
-    rst_file: Path,
-) -> None:
-    """MultiEvaluator propagates empty failure strings.
-
-    An empty string is still a failure according to Sybil's API
-    contract. Only None indicates success.
-    """
-
-    def _empty_string_returning_evaluator(example: Example) -> str:
-        """
-        Return an empty failure string.
-        """
-        del example
-        return ""
-
-    evaluators = [
-        _evaluator_1,
-        _empty_string_returning_evaluator,
-        _evaluator_3,
-    ]
-    multi_evaluator = MultiEvaluator(evaluators=evaluators)
-    parser = CodeBlockParser(language="python", evaluator=multi_evaluator)
-
-    sybil = Sybil(parsers=[parser])
-
-    document = sybil.parse(path=rst_file)
-    (example,) = document.examples()
-    result = multi_evaluator(example)
-    assert result == ""
+    assert result == failure_string
