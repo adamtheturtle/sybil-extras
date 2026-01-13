@@ -85,7 +85,6 @@ class DirectiveInHTMLCommentLexer:
                 continue
 
             # MarkdownIt always provides map for html_block tokens.
-            # This assertion satisfies mypy's type narrowing.
             assert token.map is not None  # noqa: S101
 
             start_line, end_line = token.map
