@@ -17,6 +17,7 @@ from sybil.typing import Evaluator
 _LANGUAGE_PATTERN = re.compile(pattern=r"^(?P<language>[^\s`]+)")
 
 
+@beartype
 def _line_offsets(*, text: str) -> list[int]:
     """Return the character offset of each line in the text.
 

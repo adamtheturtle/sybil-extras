@@ -11,6 +11,7 @@ from markdown_it import MarkdownIt
 from sybil import Document, Lexeme, Region
 
 
+@beartype
 def _line_offsets(*, text: str) -> list[int]:
     """Return the character offset of each line in the text.
 
