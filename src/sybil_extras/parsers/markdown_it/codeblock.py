@@ -80,9 +80,8 @@ class CodeBlockParser:
                 continue
 
             # MarkdownIt always provides map for fence tokens.
-            # This check satisfies mypy's type narrowing.
-            if token.map is None:  # pragma: no cover
-                continue
+            # This assertion satisfies mypy's type narrowing.
+            assert token.map is not None  # noqa: S101
 
             # Extract just the language from the info string.
             # The info string can contain extra metadata
