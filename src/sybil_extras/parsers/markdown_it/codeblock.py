@@ -125,7 +125,11 @@ class CodeBlockParser:
             source = Lexeme(
                 text=token.content,
                 offset=source_offset,
-                line_offset=0,  # Match Sybil's behavior
+                # line_offset is the number of newlines in the opening
+                # delimiter minus 1. For Markdown fenced code blocks, the
+                # opening line (e.g., "```python\n") has exactly one newline,
+                # so line_offset is always 0.
+                line_offset=0,
             )
 
             lexemes = {
