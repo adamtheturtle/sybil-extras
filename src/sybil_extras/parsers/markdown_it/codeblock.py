@@ -132,10 +132,7 @@ class CodeBlockParser:
                 line_offset=0,
             )
 
-            lexemes = {
-                "language": block_language,
-                "source": source,
-            }
+            lexemes = {"language": block_language, "source": source}
 
             yield Region(
                 start=region_start,
