@@ -31,13 +31,14 @@ def test_directive_at_eof_without_trailing_newline(tmp_path: Path) -> None:
 
 
 def test_directive_in_indented_section(tmp_path: Path) -> None:
-    """HTML comment directives in indented sections should be recognized.
+    """HTML comment directives indented by 4+ spaces should be recognized.
 
-    The DirectiveInHTMLCommentLexer should disable the indented code
-    block rule (like CodeBlockParser does) so that HTML comments in
-    indented sections are not treated as code block content.
+    By default, MarkdownIt treats 4-space indented content as a
+    code_block. The DirectiveInHTMLCommentLexer disables this rule so
+    that indented HTML comments are parsed as html_block tokens instead,
+    allowing directives to be found in indented sections.
     """
-    # Indented skip directive followed by a code block
+    # 4-space indented skip directive followed by a code block
     content = """\
     <!--- custom-skip: next -->
 

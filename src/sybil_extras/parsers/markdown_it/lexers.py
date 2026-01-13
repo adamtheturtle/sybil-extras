@@ -73,9 +73,11 @@ class DirectiveInHTMLCommentLexer:
         Parse the document and yield regions for directive comments.
         """
         md = MarkdownIt()
-        # Disable the indented code block rule so that HTML comments
-        # in indented sections are still recognized as HTML blocks.
-        # This matches the behavior of CodeBlockParser.
+        # Disable the indented code block rule. Without this, content
+        # indented by 4+ spaces would be parsed as a code_block token
+        # instead of being recognized as html_block. With the rule
+        # disabled, MarkdownIt treats indented HTML comments as html_block
+        # tokens, allowing us to find directives in indented sections.
         md.disable(names="code")
         tokens = md.parse(src=document.text)
         line_offsets = _line_offsets(text=document.text)
