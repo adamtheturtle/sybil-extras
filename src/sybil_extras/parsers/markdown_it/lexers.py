@@ -10,19 +10,7 @@ from beartype import beartype
 from markdown_it import MarkdownIt
 from sybil import Document, Lexeme, Region
 
-
-@beartype
-def _line_offsets(*, text: str) -> list[int]:
-    """Return the character offset of each line in the text.
-
-    The returned list has one entry per line, where entry[i] is the
-    character position where line i starts.
-    """
-    offsets = [0]
-    for i, char in enumerate(iterable=text):
-        if char == "\n":
-            offsets.append(i + 1)
-    return offsets
+from sybil_extras.parsers.markdown_it._line_offsets import line_offsets
 
 
 @beartype
@@ -81,7 +69,7 @@ class DirectiveInHTMLCommentLexer:
         # tokens, allowing us to find directives in indented sections.
         md.disable(names="code")
         tokens = md.parse(src=document.text)
-        line_offsets = _line_offsets(text=document.text)
+        offsets = line_offsets(text=document.text)
 
         for token in tokens:
             if token.type != "html_block":
@@ -93,9 +81,9 @@ class DirectiveInHTMLCommentLexer:
             start_line, end_line = token.map
 
             # Calculate character positions
-            region_start = line_offsets[start_line]
-            if end_line < len(line_offsets):
-                region_end = line_offsets[end_line]
+            region_start = offsets[start_line]
+            if end_line < len(offsets):
+                region_end = offsets[end_line]
             else:
                 region_end = len(document.text)
 

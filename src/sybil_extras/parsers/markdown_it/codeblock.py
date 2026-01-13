@@ -11,24 +11,12 @@ from markdown_it import MarkdownIt
 from sybil import Document, Example, Lexeme, Region
 from sybil.typing import Evaluator
 
+from sybil_extras.parsers.markdown_it._line_offsets import line_offsets
+
 # Pattern to extract just the language from the info string.
 # The info string can contain extra metadata like title="example".
 # We extract only the first word (anything that's not whitespace or backtick).
 _LANGUAGE_PATTERN = re.compile(pattern=r"^(?P<language>[^\s`]+)")
-
-
-@beartype
-def _line_offsets(*, text: str) -> list[int]:
-    """Return the character offset of each line in the text.
-
-    The returned list has one entry per line, where entry[i] is the
-    character position where line i starts.
-    """
-    offsets = [0]
-    for i, char in enumerate(iterable=text):
-        if char == "\n":
-            offsets.append(i + 1)
-    return offsets
 
 
 @beartype
@@ -74,7 +62,7 @@ class CodeBlockParser:
         # code blocks with a whitespace prefix.
         md.disable(names="code")
         tokens = md.parse(src=document.text)
-        line_offsets = _line_offsets(text=document.text)
+        offsets = line_offsets(text=document.text)
 
         for token in tokens:
             if token.type != "fence":
@@ -96,15 +84,15 @@ class CodeBlockParser:
             start_line, end_line = token.map
 
             # Calculate character positions
-            region_start = line_offsets[start_line]
+            region_start = offsets[start_line]
 
             # end_line is exclusive in MarkdownIt, pointing to the line
             # after the closing fence. We want the region to end at the end
             # of the closing fence line, not including the trailing newline.
             # This matches Sybil's regex-based behavior.
-            if end_line < len(line_offsets):
+            if end_line < len(offsets):
                 # Get the start of the line after the block
-                next_line_start = line_offsets[end_line]
+                next_line_start = offsets[end_line]
                 # The region end excludes the trailing newline after the
                 # closing fence. This matches Sybil's regex-based behavior.
                 region_end = next_line_start - 1
@@ -115,8 +103,8 @@ class CodeBlockParser:
             # We need to calculate the offset within the region where
             # the source starts. The region starts with the opening fence
             # line (e.g., "```python\n"), so the source starts after that.
-            if start_line + 1 < len(line_offsets):
-                opening_fence_end = line_offsets[start_line + 1]
+            if start_line + 1 < len(offsets):
+                opening_fence_end = offsets[start_line + 1]
             else:
                 # Edge case: document ends without a newline after the fence
                 opening_fence_end = len(document.text)
