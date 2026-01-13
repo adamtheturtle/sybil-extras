@@ -96,6 +96,37 @@ def test_language_filter_skips_non_matching(tmp_path: Path) -> None:
     assert len(examples) == 0
 
 
+def test_code_block_inside_blockquote(tmp_path: Path) -> None:
+    """Code blocks inside blockquotes are recognized and parsed.
+
+    This tests the fix for
+    https://github.com/simplistix/sybil/issues/160.
+    MarkdownIt correctly parses fenced code blocks inside blockquotes and
+    strips the blockquote prefixes from the content.
+    """
+    content = """> Here's a quoted code block:
+>
+> ```python
+> def hello() -> None:
+>     print("Hello")
+> ```
+"""
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert len(examples) == 1
+    # The content should have blockquote prefixes stripped
+    assert (
+        examples[0].parsed.text == 'def hello() -> None:\n    print("Hello")\n'
+    )
+    assert examples[0].region.lexemes["language"] == "python"
+
+
 def test_evaluator_not_none_when_omitted(tmp_path: Path) -> None:
     """When no evaluator is provided, the region still has an evaluator.
 
