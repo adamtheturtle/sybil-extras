@@ -184,6 +184,7 @@ CustomDirectiveSkipParser
 
     # Similar parsers are available at
     # sybil_extras.parsers.markdown.custom_directive_skip,
+    # sybil_extras.parsers.markdown_it.custom_directive_skip,
     # sybil_extras.parsers.mdx.custom_directive_skip and
     # sybil_extras.parsers.myst.custom_directive_skip.
     from sybil_extras.parsers.rest.custom_directive_skip import (
@@ -220,6 +221,7 @@ GroupedSourceParser
 
     # Similar parsers are available at
     # sybil_extras.parsers.markdown.grouped_source,
+    # sybil_extras.parsers.markdown_it.grouped_source,
     # sybil_extras.parsers.mdx.grouped_source and
     # sybil_extras.parsers.myst.grouped_source.
     from sybil_extras.parsers.rest.grouped_source import GroupedSourceParser
@@ -316,6 +318,7 @@ GroupAllParser
 
     # Similar parsers are available at
     # sybil_extras.parsers.markdown.group_all,
+    # sybil_extras.parsers.markdown_it.group_all,
     # sybil_extras.parsers.mdx.group_all and
     # sybil_extras.parsers.myst.group_all.
     from sybil_extras.parsers.rest.group_all import GroupAllParser
@@ -530,6 +533,32 @@ comments such as ``{% group: start %}``. This pairs well with
         expected_text="{% group: start %}",
         expected_lexemes={"directive": "group", "arguments": "start"},
     )
+
+MarkdownIt code block parser
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``markdown_it`` module provides Markdown parsers that use the
+`markdown-it-py <https://markdown-it-py.readthedocs.io/>`_ library instead of regex.
+This provides more accurate parsing of Markdown documents, particularly for edge cases
+like fenced code blocks inside indented sections.
+
+.. code-block:: python
+
+    """Use the markdown_it CodeBlockParser for Markdown documents."""
+
+    from sybil import Sybil
+
+    from sybil_extras.evaluators.no_op import NoOpEvaluator
+    from sybil_extras.parsers.markdown_it.codeblock import CodeBlockParser
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+
+    pytest_collect_file = sybil.pytest()
+
+The module also provides ``CustomDirectiveSkipParser``, ``GroupedSourceParser``,
+``GroupAllParser``, and ``DirectiveInHTMLCommentLexer`` that use the MarkdownIt library
+for parsing HTML comments containing directives.
 
 Markup Languages
 ----------------

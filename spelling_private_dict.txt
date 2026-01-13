@@ -3,9 +3,11 @@ Docusaurus
 EOF
 JSX
 MDX
+MarkdownIt
 Neorg
 args
 atomicity
+backtick
 beartype
 blockquote
 blockquotes
@@ -34,5 +36,6 @@ stderr
 stdout
 str
 syntaxes
+unclosed
 ungrouped
 whitespace
