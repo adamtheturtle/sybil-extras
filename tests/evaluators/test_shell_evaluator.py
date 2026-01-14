@@ -23,6 +23,7 @@ from sybil.parsers.rest.codeblock import CodeBlockParser
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 from sybil_extras.languages import (
     DJOT,
+    DOCUTILS_RST,
     MARKDOWN,
     MARKDOWN_IT,
     MDX,
@@ -438,17 +439,19 @@ def test_write_to_file_new_content_trailing_newlines(
         @end
         """
     )
+    rst_original_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+           x = 2 + 2
+           assert x == 4
+        """
+    )
     original_content = {
-        RESTRUCTUREDTEXT: textwrap.dedent(
-            text="""\
-            Not in code block
-
-            .. code-block:: python
-
-               x = 2 + 2
-               assert x == 4
-            """
-        ),
+        RESTRUCTUREDTEXT: rst_original_content,
+        DOCUTILS_RST: rst_original_content,
         MARKDOWN: markdown_content,
         MARKDOWN_IT: markdown_content,
         MDX: markdown_content,
@@ -510,18 +513,20 @@ def test_write_to_file_new_content_trailing_newlines(
         @end
         """
     )
+    # There is no code block in reStructuredText that ends with multiple
+    # newlines.
+    rst_expected = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+           foobar
+        """
+    )
     expected_content = {
-        # There is no code block in reStructuredText that ends with multiple
-        # newlines.
-        RESTRUCTUREDTEXT: textwrap.dedent(
-            text="""\
-            Not in code block
-
-            .. code-block:: python
-
-               foobar
-            """
-        ),
+        RESTRUCTUREDTEXT: rst_expected,
+        DOCUTILS_RST: rst_expected,
         MARKDOWN: markdown_expected,
         MARKDOWN_IT: markdown_expected,
         MDX: markdown_expected,
@@ -578,17 +583,19 @@ def test_write_to_file_new_content_no_trailing_newlines(
         @end
         """
     )
+    rst_original_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+           x = 2 + 2
+           assert x == 4
+        """
+    )
     original_content = {
-        RESTRUCTUREDTEXT: textwrap.dedent(
-            text="""\
-            Not in code block
-
-            .. code-block:: python
-
-               x = 2 + 2
-               assert x == 4
-            """
-        ),
+        RESTRUCTUREDTEXT: rst_original_content,
+        DOCUTILS_RST: rst_original_content,
         MARKDOWN: markdown_content,
         MARKDOWN_IT: markdown_content,
         MDX: markdown_content,
@@ -645,18 +652,20 @@ def test_write_to_file_new_content_no_trailing_newlines(
         @end
         """
     )
+    # There is no code block in reStructuredText that ends with multiple
+    # newlines.
+    rst_expected = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+           foobar
+        """
+    )
     expected_content = {
-        # There is no code block in reStructuredText that ends with multiple
-        # newlines.
-        RESTRUCTUREDTEXT: textwrap.dedent(
-            text="""\
-            Not in code block
-
-            .. code-block:: python
-
-               foobar
-            """
-        ),
+        RESTRUCTUREDTEXT: rst_expected,
+        DOCUTILS_RST: rst_expected,
         MARKDOWN: markdown_expected,
         MARKDOWN_IT: markdown_expected,
         MDX: markdown_expected,
