@@ -19,6 +19,10 @@ import sybil_extras.parsers.djot.codeblock
 import sybil_extras.parsers.djot.custom_directive_skip
 import sybil_extras.parsers.djot.group_all
 import sybil_extras.parsers.djot.grouped_source
+import sybil_extras.parsers.docutils_rst.codeblock
+import sybil_extras.parsers.docutils_rst.custom_directive_skip
+import sybil_extras.parsers.docutils_rst.group_all
+import sybil_extras.parsers.docutils_rst.grouped_source
 import sybil_extras.parsers.markdown.custom_directive_skip
 import sybil_extras.parsers.markdown.group_all
 import sybil_extras.parsers.markdown.grouped_source
@@ -464,6 +468,19 @@ NORG = MarkupLanguage(
     jinja_block_builder=None,
 )
 
+DOCUTILS_RST = MarkupLanguage(
+    name="DocutilsRST",
+    markup_separator="\n\n",
+    skip_parser_cls=sybil_extras.parsers.docutils_rst.custom_directive_skip.CustomDirectiveSkipParser,
+    code_block_parser_cls=sybil_extras.parsers.docutils_rst.codeblock.CodeBlockParser,
+    group_parser_cls=sybil_extras.parsers.docutils_rst.grouped_source.GroupedSourceParser,
+    group_all_parser_cls=sybil_extras.parsers.docutils_rst.group_all.GroupAllParser,
+    sphinx_jinja_parser_cls=None,
+    code_block_builder=_rst_code_block,
+    directive_builders=(_rst_directive,),
+    jinja_block_builder=None,
+)
+
 ALL_LANGUAGES: tuple[MarkupLanguage, ...] = (
     MYST,
     RESTRUCTUREDTEXT,
@@ -472,4 +489,5 @@ ALL_LANGUAGES: tuple[MarkupLanguage, ...] = (
     MDX,
     DJOT,
     NORG,
+    DOCUTILS_RST,
 )
