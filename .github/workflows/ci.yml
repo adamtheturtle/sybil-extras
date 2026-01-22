@@ -48,8 +48,6 @@ jobs:
           uv run --extra=dev prek run --all-files --hook-stage manual --verbose
         env:
           UV_PYTHON: ${{ matrix.python-version }}
-          # shellcheck and shfmt are not available on Windows.
-          SKIP: ${{ runner.os == 'Windows' && 'shellcheck,shellcheck-docs,shfmt,shfmt-docs' || '' }}
 
       - name: Run tests Linux
         if: matrix.platform == 'ubuntu-latest'
