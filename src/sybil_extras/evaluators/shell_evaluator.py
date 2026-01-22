@@ -70,16 +70,16 @@ def _run_command(
             output.flush()
 
     if use_pty:
-        stdout_master_fd = -1
-        slave_fd = -1
+        stdout_master_fd: int = -1
+        slave_fd: int = -1
         # We use ``hasattr`` rather than
         # ``contextlib.suppress(AttributeError)`` so that ``mypy`` can narrow
         # the type on Windows, where ``os.openpty`` does not exist.
         if hasattr(os, "openpty"):  # pragma: no branch
             stdout_master_fd, slave_fd = os.openpty()
 
-        stdout = slave_fd
-        stderr = slave_fd
+        stdout: int = slave_fd
+        stderr: int = slave_fd
         with subprocess.Popen(
             args=command,
             stdout=stdout,
