@@ -18,6 +18,9 @@ import pytest
 from click.testing import CliRunner
 from sybil import Sybil
 from sybil.example import Example
+from sybil.parsers.markdown import (
+    CodeBlockParser as SybilMarkdownCodeBlockParser,
+)
 from sybil.parsers.rest.codeblock import CodeBlockParser
 
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
@@ -1082,9 +1085,15 @@ def test_custom_on_modify_with_modification(
     example.evaluate()
 
 
+@pytest.mark.parametrize(
+    argnames="parser_cls",
+    argvalues=[MarkdownItCodeBlockParser, SybilMarkdownCodeBlockParser],
+    ids=["markdown_it", "sybil_markdown"],
+)
 def test_markdown_code_block_line_number(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
+    parser_cls: type,
 ) -> None:
     """Line numbers in error output match the source file for Markdown.
 
@@ -1128,7 +1137,7 @@ def test_markdown_code_block_line_number(
         use_pty=False,
     )
 
-    parser = MarkdownItCodeBlockParser(language="python", evaluator=evaluator)
+    parser = parser_cls(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])
     document = sybil.parse(path=test_file)
     (example,) = document.examples()
