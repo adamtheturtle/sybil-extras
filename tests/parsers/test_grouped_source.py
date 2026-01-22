@@ -568,16 +568,24 @@ def test_with_shell_command_evaluator(
     sybil = Sybil(parsers=[code_block_parser, group_parser])
     document = sybil.parse(path=test_document)
 
-    for example in document.examples():
+    # Get line numbers from the parsed examples to compute expected padding.
+    examples = list(document.examples())
+    first_code_block = examples[1]
+    second_code_block = examples[2]
+    first_line = first_code_block.line + first_code_block.parsed.line_offset
+    second_line = second_code_block.line + second_code_block.parsed.line_offset
+
+    for example in examples:
         example.evaluate()
 
     output_document_content = output_document.read_text(encoding="utf-8")
 
-    separator_newlines = len(language.markup_separator)
-    padding_newlines = separator_newlines + 1
-
-    leading_padding = "\n" * (separator_newlines * 2)
-    block_padding = "\n" * padding_newlines
+    # The shell evaluator pads the grouped source so line numbers match.
+    # Leading padding puts the first code block's content on its original line.
+    # Between-block padding aligns the second block relative to the first.
+    # We subtract 1 because the first content already ends with a newline.
+    leading_padding = "\n" * first_line
+    block_padding = "\n" * (second_line - first_line - 1)
 
     expected_output_document_content = (
         f"{leading_padding}x = [*x, 1]\n{block_padding}x = [*x, 2]\n"
@@ -922,14 +930,19 @@ def test_no_pad_groups(
     sybil = Sybil(parsers=[code_block_parser, group_parser])
     document = sybil.parse(path=test_document)
 
-    for example in document.examples():
+    # Get line number from the first code block to compute expected padding.
+    examples = list(document.examples())
+    first_code_block = examples[1]
+    first_line = first_code_block.line + first_code_block.parsed.line_offset
+
+    for example in examples:
         example.evaluate()
 
     output_document_content = output_document.read_text(encoding="utf-8")
 
-    separator_newlines = len(language.markup_separator)
-    leading_padding = "\n" * (separator_newlines * 2)
-
+    # Leading padding puts the first code block's content on its original line.
+    # With pad_groups=False, there's just a single newline between blocks.
+    leading_padding = "\n" * first_line
     expected_output_document_content = (
         f"{leading_padding}x = [*x, 1]\n\nx = [*x, 2]\n"
     )

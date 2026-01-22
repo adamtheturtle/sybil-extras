@@ -267,19 +267,9 @@ class _ShellCommandRunner:
             msg = "Pseudo-terminal not supported on Windows."
             raise ValueError(msg)
 
-        padding_line = 0
-        if self._pad_file:
-            preceding_text = example.document.text[: example.region.start]
-            trailing_newlines = len(preceding_text) - len(
-                preceding_text.rstrip("\n")
-            )
-            missing_line_offset = max(
-                0,
-                trailing_newlines - 1 - example.parsed.line_offset,
-            )
-            padding_line = (
-                example.line + example.parsed.line_offset + missing_line_offset
-            )
+        padding_line = (
+            example.line + example.parsed.line_offset if self._pad_file else 0
+        )
         source = pad(
             source=example.parsed,
             line=padding_line,
