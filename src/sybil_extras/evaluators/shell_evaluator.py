@@ -72,7 +72,7 @@ def _run_command(
     if use_pty:
         stdout_master_fd = -1
         slave_fd = -1
-        with contextlib.suppress(AttributeError):
+        if hasattr(os, "openpty"):
             stdout_master_fd, slave_fd = os.openpty()
 
         stdout = slave_fd
