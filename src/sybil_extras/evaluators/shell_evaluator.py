@@ -72,9 +72,9 @@ def _run_command(
     if use_pty:
         stdout_master_fd = -1
         slave_fd = -1
-        # We use hasattr rather than contextlib.suppress(AttributeError)
-        # so that mypy can narrow the type on Windows, where os.openpty
-        # does not exist.
+        # We use ``hasattr`` rather than
+        # ``contextlib.suppress(AttributeError)`` so that ``mypy`` can narrow
+        # the type on Windows, where ``os.openpty`` does not exist.
         if hasattr(os, "openpty"):  # pragma: no branch
             stdout_master_fd, slave_fd = os.openpty()
 
