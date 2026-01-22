@@ -31,6 +31,9 @@ from sybil_extras.languages import (
     RESTRUCTUREDTEXT,
     MarkupLanguage,
 )
+from sybil_extras.parsers.markdown_it.codeblock import (
+    CodeBlockParser as MarkdownItCodeBlockParser,
+)
 
 
 @pytest.fixture(
@@ -1077,3 +1080,65 @@ def test_custom_on_modify_with_modification(
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
+
+
+def test_markdown_code_block_line_number(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Line numbers in error output match the source file for Markdown.
+
+    When a Python syntax error occurs in a Markdown code block, the
+    reported line number should match the line number in the original
+    Markdown file.
+
+    For example, in this file:
+        Line 1: Example
+        Line 2: (empty)
+        Line 3: ```python
+        Line 4: syntax error here
+        Line 5: ```
+
+    The error on line 4 should be reported as being on line 4, not line 5.
+    This is because the padding in the temporary file must correctly
+    account for the opening fence line (```python) in Markdown files.
+    """
+    # Create a Markdown file with a Python syntax error on line 4.
+    # Line 1: Example
+    # Line 2: (empty)
+    # Line 3: ```python
+    # Line 4: syntax error here
+    # Line 5: ```
+    content = textwrap.dedent(
+        text="""\
+        Example
+
+        ```python
+        syntax error here
+        ```
+        """
+    )
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    evaluator = ShellCommandEvaluator(
+        args=[sys.executable, "-m", "py_compile"],
+        pad_file=True,
+        write_to_file=False,
+        use_pty=False,
+    )
+
+    parser = MarkdownItCodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    (example,) = document.examples()
+
+    with pytest.raises(expected_exception=subprocess.CalledProcessError):
+        example.evaluate()
+
+    captured = capsys.readouterr()
+    # The error should report line 4, not line 5.
+    # The syntax error is on line 4 of the original file.
+    assert "line 4" in captured.err, (
+        f"stderr contains 'line 5' instead of 'line 4': {captured.err}"
+    )
