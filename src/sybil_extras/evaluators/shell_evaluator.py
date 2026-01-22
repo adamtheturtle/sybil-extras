@@ -75,7 +75,10 @@ def _run_command(
         # We use ``hasattr`` rather than
         # ``contextlib.suppress(AttributeError)`` so that ``mypy`` can narrow
         # the type on Windows, where ``os.openpty`` does not exist.
-        if hasattr(os, "openpty"):  # pragma: no branch
+        # We also check ``sys.platform`` so that pyright can narrow the type.
+        if sys.platform != "win32" and hasattr(
+            os, "openpty"
+        ):  # pragma: no branch
             stdout_master_fd, slave_fd = os.openpty()
 
         stdout: int = slave_fd
