@@ -20,8 +20,7 @@ def test_attribute_group_single_group(tmp_path: Path) -> None:
     The attribute group parser groups examples with the same group attribute.
     """
     content = textwrap.dedent(
-        text=\
-             """
+        text="""
         ```python group="example1"
         from pprint import pp
         ```
@@ -31,8 +30,7 @@ def test_attribute_group_single_group(tmp_path: Path) -> None:
         ```python group="example1"
         pp({"hello": "world"})
         ```
-        """
-           ,
+        """,
     )
     test_document = tmp_path / "test.mdx"
     test_document.write_text(data=content, encoding="utf-8")
@@ -63,8 +61,7 @@ def test_attribute_group_multiple_groups(tmp_path: Path) -> None:
     Groups should not interleave to avoid region overlap issues.
     """
     content = textwrap.dedent(
-        text=\
-             """
+        text="""
         ```python group="setup"
         x = []
         ```
@@ -84,8 +81,7 @@ def test_attribute_group_multiple_groups(tmp_path: Path) -> None:
         ```python group="example"
         y = [*y, 10]
         ```
-        """\
-           ,
+        """,
     )
     test_document = tmp_path / "test.mdx"
     test_document.write_text(data=content, encoding="utf-8")
@@ -116,8 +112,7 @@ def test_attribute_group_no_group_attribute(tmp_path: Path) -> None:
     Code blocks without the group attribute are not grouped.
     """
     content = textwrap.dedent(
-        text=\
-             """
+        text="""
         ```python
         x = 1
         ```
@@ -129,8 +124,7 @@ def test_attribute_group_no_group_attribute(tmp_path: Path) -> None:
         ```python
         z = 3
         ```
-        """\
-           ,
+        """,
     )
     test_document = tmp_path / "test.mdx"
     test_document.write_text(data=content, encoding="utf-8")
@@ -159,8 +153,7 @@ def test_attribute_group_custom_attribute_name(tmp_path: Path) -> None:
     Custom attribute names can be used for grouping.
     """
     content = textwrap.dedent(
-        text=\
-             """
+        text="""
         ```python mygroup="test1"
         a = 1
         ```
@@ -168,8 +161,7 @@ def test_attribute_group_custom_attribute_name(tmp_path: Path) -> None:
         ```python mygroup="test1"
         b = 2
         ```
-        """\
-           ,
+        """,
     )
     test_document = tmp_path / "test.mdx"
     test_document.write_text(data=content, encoding="utf-8")
@@ -199,8 +191,7 @@ def test_attribute_group_with_other_attributes(tmp_path: Path) -> None:
     Code blocks with multiple attributes still group correctly.
     """
     content = textwrap.dedent(
-        text=\
-             """
+        text="""
         ```python title="example.py" group="setup" showLineNumbers
         value = 7
         ```
@@ -208,8 +199,7 @@ def test_attribute_group_with_other_attributes(tmp_path: Path) -> None:
         ```python group="setup" title="example2.py"
         result = value * 2
         ```
-        """\
-           ,
+        """,
     )
     test_document = tmp_path / "test.mdx"
     test_document.write_text(data=content, encoding="utf-8")
@@ -239,8 +229,7 @@ def test_attribute_group_pad_groups_false(tmp_path: Path) -> None:
     When pad_groups is False, groups are separated by single newlines.
     """
     content = textwrap.dedent(
-        text=\
-             """
+        text="""
         ```python group="test"
         x = 1
         ```
@@ -252,8 +241,7 @@ def test_attribute_group_pad_groups_false(tmp_path: Path) -> None:
         ```python group="test"
         y = 2
         ```
-        """\
-           ,
+        """,
     )
     test_document = tmp_path / "test.mdx"
     test_document.write_text(data=content, encoding="utf-8")
@@ -283,8 +271,7 @@ def test_attribute_group_interleaved_groups(tmp_path: Path) -> None:
     Groups can interleave.
     """
     content = textwrap.dedent(
-        text=\
-             """
+        text="""
         ```python group="setup"
         x = []
         ```
@@ -304,8 +291,7 @@ def test_attribute_group_interleaved_groups(tmp_path: Path) -> None:
         ```python group="example"
         y = [*y, 10]
         ```
-        """\
-           ,
+        """,
     )
     test_document = tmp_path / "test.mdx"
     test_document.write_text(data=content, encoding="utf-8")
@@ -337,8 +323,7 @@ def test_attribute_group_ungrouped_evaluator(tmp_path: Path) -> None:
     Code blocks without the group attribute use the ungrouped_evaluator.
     """
     content = textwrap.dedent(
-        text=\
-             """
+        text="""
         ```python
         x = 1
         ```
@@ -354,8 +339,7 @@ def test_attribute_group_ungrouped_evaluator(tmp_path: Path) -> None:
         ```python
         w = 4
         ```
-        """\
-           ,
+        """,
     )
     test_document = tmp_path / "test.mdx"
     test_document.write_text(data=content, encoding="utf-8")

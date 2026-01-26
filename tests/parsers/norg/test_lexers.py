@@ -17,13 +17,11 @@ def test_directive_with_argument() -> None:
     """
     lexer = DirectiveInNorgCommentLexer(directive="group", arguments=r".+")
     source_text = dedent(
-        text=\
-             """\
+        text="""\
         Before
         .group: start
         After
-        """
-           ,
+        """,
     )
 
     expected_text = ".group: start"
@@ -101,13 +99,11 @@ def test_verbatim_ranged_tag_lexer_no_mapping() -> None:
     """
     lexer = NorgVerbatimRangedTagLexer(language=r"python")
     source_text = dedent(
-        text=\
-             """\
+        text="""\
         @code python
         x = 1
         @end
-        """\
-           ,
+        """,
     )
 
     expected_text = "@code python\nx = 1\n@end"
@@ -132,13 +128,11 @@ def test_verbatim_ranged_tag_lexer_with_mapping() -> None:
         mapping={"language": "arguments", "source": "source"},
     )
     source_text = dedent(
-        text=\
-             """\
+        text="""\
         @code python
         x = 1
         @end
-        """\
-           ,
+        """,
     )
 
     expected_text = "@code python\nx = 1\n@end"
@@ -159,13 +153,11 @@ def test_verbatim_ranged_tag_lexer_no_language() -> None:
     # Use a pattern that matches any language including when not specified
     lexer = NorgVerbatimRangedTagLexer(language=r".+")
     source_text = dedent(
-        text=\
-             """\
+        text="""\
         @code
         x = 1
         @end
-        """\
-           ,
+        """,
     )
 
     expected_text = "@code\nx = 1\n@end"

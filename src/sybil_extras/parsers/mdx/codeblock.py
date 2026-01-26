@@ -22,15 +22,13 @@ _INFO_LINE_PATTERN = re.compile(
 )
 
 _ATTRIBUTE_PATTERN = re.compile(
-    pattern=\
-            r"""
+    pattern=r"""
     (?P<name>[A-Za-z0-9_.:-]+)
     \s*=\s*
     (?P<quote>["'])
     (?P<value>.*?)
     (?P=quote)
-    """
-       ,
+    """,
     flags=re.VERBOSE,
 )
 
