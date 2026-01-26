@@ -155,8 +155,8 @@ repos:
       - id: mypy-docs
         name: mypy-docs
         stages: [pre-push]
-        entry: uvx --python=3.13 doccmd --no-write-to-file --language=python
-          --command="uv run --extra=dev mypy"
+        entry: uvx --python=3.13 doccmd --no-write-to-file --language=python --command="uv
+          run --extra=dev mypy"
         language: python
         types_or: [markdown, rst]
         additional_dependencies: [uv==0.9.5]
