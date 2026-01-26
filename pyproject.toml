@@ -48,7 +48,9 @@ optional-dependencies.dev = [
     "click==8.3.1",
     "deptry==0.24.0",
     "doc8==2.0.0",
-    "docformatter==1.7.7",
+    # We use a fork of docformatter that has a fix for Python 3.14.
+    # See https://github.com/PyCQA/docformatter/pull/335.
+    "docformatter @ git+https://github.com/adamtheturtle/docformatter@fix-issue-331-black-module-docstring",
     "interrogate==1.7.0",
     "mypy[faster-cache]==1.19.1",
     "mypy-strict-kwargs==2026.1.12",
