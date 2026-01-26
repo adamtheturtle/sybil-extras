@@ -1,6 +1,4 @@
-"""
-Tests for custom djot lexers.
-"""
+"""Tests for custom djot lexers."""
 
 from textwrap import dedent
 
@@ -11,9 +9,7 @@ from sybil_extras.parsers.djot.lexers import DirectiveInDjotCommentLexer
 
 
 def test_directive_with_argument() -> None:
-    """
-    A directive with an argument is captured along with its text.
-    """
+    """A directive with an argument is captured along with its text."""
     lexer = DirectiveInDjotCommentLexer(directive="group", arguments=r".+")
     source_text = dedent(
         text="""\
@@ -36,7 +32,8 @@ def test_directive_with_argument() -> None:
 
 def test_directive_without_argument() -> None:
     """
-    A directive without an argument yields an empty arguments lexeme.
+    A directive without an argument yields an empty arguments
+    lexeme.
     """
     lexer = DirectiveInDjotCommentLexer(directive="skip")
     source_text = "{% skip %}\n"
@@ -53,9 +50,7 @@ def test_directive_without_argument() -> None:
 
 
 def test_directive_with_mapping() -> None:
-    """
-    Lexeme names can be remapped when requested.
-    """
+    """Lexeme names can be remapped when requested."""
     lexer = DirectiveInDjotCommentLexer(
         directive="custom",
         arguments=r".*",
@@ -75,7 +70,8 @@ def test_directive_with_mapping() -> None:
 
 
 def test_directive_stops_at_first_closing_delimiter() -> None:
-    """Djot comments end at the first ``%}``, so text after it is not captured.
+    """Djot comments end at the first ``%}``, so text after it is not
+    captured.
 
     This tests that ``{% group: foo %} bar %}`` captures only ``foo`` as
     the argument, not ``foo %} bar``.
@@ -110,7 +106,8 @@ def test_arguments_pattern_filters_matches() -> None:
 
 def test_argument_with_percent_sign() -> None:
     """
-    Arguments can contain percent signs that are not followed by ``}``.
+    Arguments can contain percent signs that are not followed by
+    ``}``.
     """
     lexer = DirectiveInDjotCommentLexer(directive="group", arguments=r".+")
     source_text = "{% group: 50% off %}\n"

@@ -1,3 +1,1 @@
-"""
-Custom MyST parsers.
-"""
+"""Custom MyST parsers."""

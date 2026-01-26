@@ -1,6 +1,4 @@
-"""
-Code block parsing for Djot.
-"""
+"""Code block parsing for Djot."""
 
 import re
 from collections.abc import Iterable, Sequence
@@ -22,9 +20,7 @@ FENCE = re.compile(
 
 @beartype
 def _match_closes_existing(current: Match[str], existing: Match[str]) -> bool:
-    """
-    Determine whether the current fence closes the existing block.
-    """
+    """Determine whether the current fence closes the existing block."""
     current_fence = current.group("fence")
     existing_fence = existing.group("fence")
     same_type = current_fence[0] == existing_fence[0]
@@ -41,9 +37,7 @@ def _find_container_end(
     info_end: int,
     default_end: int,
 ) -> int:
-    """
-    Find where a block closes because its container ends.
-    """
+    """Find where a block closes because its container ends."""
     prefix = opening.group("prefix")
     if ">" not in prefix:
         return default_end
@@ -69,7 +63,8 @@ def _find_container_end(
 
 class DjotRawFencedCodeBlockLexer:
     """
-    A lexer for Djot fenced code blocks that respects block quote boundaries.
+    A lexer for Djot fenced code blocks that respects block quote
+    boundaries.
     """
 
     def __init__(
@@ -79,9 +74,7 @@ class DjotRawFencedCodeBlockLexer:
         ),
         mapping: dict[str, str] | None = None,
     ) -> None:
-        """
-        Initialize the lexer.
-        """
+        """Initialize the lexer."""
         self.info_pattern = info_pattern
         self.mapping = mapping
 
@@ -91,9 +84,7 @@ class DjotRawFencedCodeBlockLexer:
         document: Document,
         closing: Match[str] | None,
     ) -> Region | None:
-        """
-        Build a Region for a fenced block.
-        """
+        """Build a Region for a fenced block."""
         if closing is None:
             default_end = len(document.text)
         else:
@@ -142,9 +133,7 @@ class DjotRawFencedCodeBlockLexer:
         )
 
     def __call__(self, document: Document) -> Iterable[Region]:
-        """
-        Yield regions for Djot fenced code blocks.
-        """
+        """Yield regions for Djot fenced code blocks."""
         index = 0
         while True:
             opening = FENCE.search(string=document.text, pos=index)
@@ -177,16 +166,12 @@ class DjotRawFencedCodeBlockLexer:
 
 
 class DjotFencedCodeBlockLexer(DjotRawFencedCodeBlockLexer):
-    """
-    A lexer for Djot fenced code blocks that captures languages.
-    """
+    """A lexer for Djot fenced code blocks that captures languages."""
 
     def __init__(
         self, language: str, mapping: dict[str, str] | None = None
     ) -> None:
-        """
-        Initialize the lexer.
-        """
+        """Initialize the lexer."""
         super().__init__(
             info_pattern=re.compile(
                 pattern=rf"(?P<language>{language})$\n", flags=re.MULTILINE
@@ -197,9 +182,7 @@ class DjotFencedCodeBlockLexer(DjotRawFencedCodeBlockLexer):
 
 @beartype
 class CodeBlockParser:
-    """
-    A parser for Djot fenced code blocks.
-    """
+    """A parser for Djot fenced code blocks."""
 
     def __init__(
         self,
@@ -229,7 +212,5 @@ class CodeBlockParser:
         )
 
     def __call__(self, document: Document) -> Iterable[Region]:
-        """
-        Yield regions for Djot code blocks.
-        """
+        """Yield regions for Djot code blocks."""
         return self._parser(document)

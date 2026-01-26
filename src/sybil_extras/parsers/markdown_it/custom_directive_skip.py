@@ -1,4 +1,5 @@
-"""A custom directive skip parser for Markdown using the MarkdownIt library.
+"""A custom directive skip parser for Markdown using the MarkdownIt
+library.
 
 This parser uses the MarkdownIt library instead of regex.
 """
@@ -35,13 +36,9 @@ class CustomDirectiveSkipParser:
         self._abstract_skip_parser.directive = directive
 
     def __call__(self, document: Document) -> Iterable[Region]:
-        """
-        Yield skip regions.
-        """
+        """Yield skip regions."""
         return self._abstract_skip_parser(document=document)
 
     def get_skipper(self) -> Skipper:
-        """
-        Return the skipper used by the parser.
-        """
+        """Return the skipper used by the parser."""
         return self._abstract_skip_parser.skipper

@@ -1,6 +1,4 @@
-"""
-Tests for Djot code block parsing.
-"""
+"""Tests for Djot code block parsing."""
 
 import re
 from textwrap import dedent
@@ -12,18 +10,14 @@ from sybil_extras.parsers.djot.codeblock import DjotRawFencedCodeBlockLexer
 
 
 def _parse(text: str) -> list[Region]:
-    """
-    Parse the supplied Djot text for Python code blocks.
-    """
+    """Parse the supplied Djot text for Python code blocks."""
     parser = DJOT.code_block_parser_cls(language="python")
     document = Document(text=text, path="doc.djot")
     return list(parser(document=document))
 
 
 def test_fenced_code_block_outside_blockquote() -> None:
-    """
-    A standard fenced code block is parsed.
-    """
+    """A standard fenced code block is parsed."""
     (region,) = _parse(
         text=dedent(
             text="""\
@@ -38,9 +32,7 @@ def test_fenced_code_block_outside_blockquote() -> None:
 
 
 def test_code_block_in_blockquote_without_closing_fence() -> None:
-    """
-    A Djot code block can be closed by the end of its blockquote.
-    """
+    """A Djot code block can be closed by the end of its blockquote."""
     (region,) = _parse(
         text=dedent(
             text="""\
@@ -57,7 +49,8 @@ def test_code_block_in_blockquote_without_closing_fence() -> None:
 
 
 def test_code_block_implicitly_closed_by_container_end() -> None:
-    """A code block without a closing fence is closed when its container ends.
+    """A code block without a closing fence is closed when its container
+    ends.
 
     This follows the djot spec: "A code block ... ends with ... the end of the
     document or enclosing block, if no such line is encountered."
@@ -79,7 +72,8 @@ def test_code_block_implicitly_closed_by_container_end() -> None:
 
 def test_code_block_without_closing_fence_no_blockquote() -> None:
     """
-    A code block without a closing fence outside a blockquote extends to EOF.
+    A code block without a closing fence outside a blockquote extends to
+    EOF.
     """
     (region,) = _parse(
         text=dedent(
@@ -95,18 +89,14 @@ def test_code_block_without_closing_fence_no_blockquote() -> None:
 
 
 def test_code_block_with_no_newline_at_end() -> None:
-    """
-    A code block that ends without a trailing newline.
-    """
+    """A code block that ends without a trailing newline."""
     (region,) = _parse(text="```python\nx = 1")
 
     assert region.parsed == "x = 1"
 
 
 def test_code_block_in_nested_blockquote() -> None:
-    """
-    A code block in a nested blockquote is properly closed.
-    """
+    """A code block in a nested blockquote is properly closed."""
     (region,) = _parse(
         text=dedent(
             text="""\
@@ -122,9 +112,7 @@ def test_code_block_in_nested_blockquote() -> None:
 
 
 def test_code_block_with_wrong_language() -> None:
-    """
-    A code block with a different language is not parsed.
-    """
+    """A code block with a different language is not parsed."""
     regions = _parse(
         text=dedent(
             text="""\
@@ -139,9 +127,7 @@ def test_code_block_with_wrong_language() -> None:
 
 
 def test_code_block_empty_info_string() -> None:
-    """
-    A code block with no language specified is not parsed.
-    """
+    """A code block with no language specified is not parsed."""
     regions = _parse(
         text=dedent(
             text="""\
@@ -156,36 +142,28 @@ def test_code_block_empty_info_string() -> None:
 
 
 def test_code_block_in_blockquote_at_eof() -> None:
-    """
-    A code block in a blockquote that reaches EOF without container end.
-    """
+    """A code block in a blockquote that reaches EOF without container end."""
     (region,) = _parse(text="> ```python\n> x = 1\n> y = 2")
 
     assert region.parsed == "x = 1\ny = 2"
 
 
 def test_code_block_empty_after_opening() -> None:
-    """
-    A code block in a blockquote with opening right at the end.
-    """
+    """A code block in a blockquote with opening right at the end."""
     (region,) = _parse(text="> ```python\n")
 
     assert region.parsed == ""
 
 
 def test_code_block_in_blockquote_no_newline_after_prefix_change() -> None:
-    """
-    A code block in blockquote where the prefix changes without newline.
-    """
+    """A code block in blockquote where the prefix changes without newline."""
     (region,) = _parse(text="> ```python\n> code\nno prefix")
 
     assert region.parsed == "code\n"
 
 
 def test_raw_lexer_without_mapping() -> None:
-    """
-    Test DjotRawFencedCodeBlockLexer without a mapping parameter.
-    """
+    """Test DjotRawFencedCodeBlockLexer without a mapping parameter."""
     lexer = DjotRawFencedCodeBlockLexer(
         info_pattern=re.compile(pattern=r"python$\n", flags=re.MULTILINE),
         mapping=None,
@@ -199,7 +177,8 @@ def test_raw_lexer_without_mapping() -> None:
 
 def test_multiple_code_blocks_with_invalid() -> None:
     """
-    Test multiple code blocks where some don't match the language filter.
+    Test multiple code blocks where some don't match the language
+    filter.
     """
     text = dedent(
         text="""\
@@ -248,7 +227,8 @@ def test_raw_lexer_skips_non_matching_and_continues() -> None:
 
 
 def test_fence_with_non_matching_closer() -> None:
-    """Test a code block where a fence is found but doesn't match as a closer.
+    """Test a code block where a fence is found but doesn't match as a
+    closer.
 
     This hits the branch 156->149 where match_closes_existing returns
     False and we continue looking for other fences.
@@ -271,7 +251,8 @@ def test_fence_with_non_matching_closer() -> None:
 
 
 def test_region_end_respects_container_boundary_with_closing_fence() -> None:
-    """Test that region end respects container boundary even when closing fence
+    """Test that region end respects container boundary even when closing
+    fence
     exists in a separate container.
 
     Per the Djot spec, "a code block closes...or the end of the document or

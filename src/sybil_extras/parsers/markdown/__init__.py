@@ -1,3 +1,1 @@
-"""
-Custom parsers for Markdown.
-"""
+"""Custom parsers for Markdown."""

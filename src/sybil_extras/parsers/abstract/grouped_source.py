@@ -29,9 +29,7 @@ from ._grouping_utils import (
 @beartype
 @dataclass(frozen=True)
 class _GroupStateKey:
-    """
-    Key for looking up group state.
-    """
+    """Key for looking up group state."""
 
     document: Document
     group_id: int
@@ -40,9 +38,7 @@ class _GroupStateKey:
 @beartype
 @dataclass
 class _GroupBoundary:
-    """
-    Boundary information for a group.
-    """
+    """Boundary information for a group."""
 
     group_id: int
     start_position: int
@@ -52,9 +48,7 @@ class _GroupBoundary:
 @beartype
 @dataclass
 class _GroupMarker:
-    """
-    A marker for a group start or end.
-    """
+    """A marker for a group start or end."""
 
     action: Literal["start", "end"]
     group_id: int
@@ -67,9 +61,7 @@ class _GroupMarker:
 
 @beartype
 class _GroupState:
-    """
-    State for a single group.
-    """
+    """State for a single group."""
 
     def __init__(
         self,
@@ -78,9 +70,7 @@ class _GroupState:
         end_position: int,
         expected_code_blocks: int,
     ) -> None:
-        """
-        Initialize the group state.
-        """
+        """Initialize the group state."""
         self.start_position = start_position
         self.end_position = end_position
         self.expected_code_blocks = expected_code_blocks
@@ -92,9 +82,7 @@ class _GroupState:
 
 @beartype
 class _Grouper:
-    """
-    Group blocks of source code.
-    """
+    """Group blocks of source code."""
 
     def __init__(
         self,
@@ -105,11 +93,14 @@ class _Grouper:
     ) -> None:
         """
         Args:
-            evaluator: The evaluator to use for evaluating the combined region.
+            evaluator: The evaluator to use for evaluating the combined
+        region.
             directive: The name of the directive to use for grouping.
             pad_groups: Whether to pad groups with empty lines.
-                This is useful for error messages that reference line numbers.
-                However, this is detrimental to commands that expect the file
+                This is useful for error messages that reference line
+        numbers.
+                However, this is detrimental to commands that expect the
+        file
                 to not have a bunch of newlines in it, such as formatters.
         """
         # State is keyed by _GroupStateKey to allow multiple groups
@@ -162,7 +153,8 @@ class _Grouper:
         document: Document,
         position: int,
     ) -> _GroupState | None:
-        """Find which group contains the given position and return its state.
+        """Find which group contains the given position and return its
+        state.
 
         This method atomically checks boundaries and retrieves state
         while holding both locks. This prevents a TOCTOU race where
@@ -185,9 +177,7 @@ class _Grouper:
         document: Document,
         group_id: int,
     ) -> _GroupState:
-        """
-        Get the state for a specific group.
-        """
+        """Get the state for a specific group."""
         key = _GroupStateKey(document=document, group_id=group_id)
         with self._group_state_lock:
             return self._group_state[key]
@@ -219,9 +209,7 @@ class _Grouper:
                 document.pop_evaluator(evaluator=self)
 
     def _evaluate_grouper_example(self, example: Example) -> None:
-        """
-        Evaluate a grouper marker.
-        """
+        """Evaluate a grouper marker."""
         marker: _GroupMarker = example.parsed
         state = self._get_group_state(
             document=example.document,
@@ -285,9 +273,7 @@ class _Grouper:
         raise NotEvaluated
 
     def __call__(self, /, example: Example) -> None:
-        """
-        Call the evaluator.
-        """
+        """Call the evaluator."""
         # We use ``id`` equivalence rather than ``is`` to avoid a
         # ``pyright`` error:
         # https://github.com/microsoft/pyright/issues/9932
@@ -324,11 +310,14 @@ class AbstractGroupedSourceParser:
         """
         Args:
             lexers: The lexers to use to find regions.
-            evaluator: The evaluator to use for evaluating the combined region.
+            evaluator: The evaluator to use for evaluating the combined
+        region.
             directive: The name of the directive to use for grouping.
             pad_groups: Whether to pad groups with empty lines.
-                This is useful for error messages that reference line numbers.
-                However, this is detrimental to commands that expect the file
+                This is useful for error messages that reference line
+        numbers.
+                However, this is detrimental to commands that expect the
+        file
                 to not have a bunch of newlines in it, such as formatters.
         """
         self._lexers: LexerCollection = LexerCollection(lexers)
@@ -341,7 +330,8 @@ class AbstractGroupedSourceParser:
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """
-        Yield regions to evaluate, grouped by start and end comments.
+        Yield regions to evaluate, grouped by start and end
+        comments.
         """
         # First pass: collect all start/end markers
         markers: list[tuple[int, int, str]] = []  # (start, end, action)

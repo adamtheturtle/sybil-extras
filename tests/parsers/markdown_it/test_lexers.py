@@ -1,6 +1,4 @@
-"""
-Tests for the markdown_it lexers.
-"""
+"""Tests for the markdown_it lexers."""
 
 from pathlib import Path
 
@@ -14,9 +12,7 @@ from sybil_extras.parsers.markdown_it.custom_directive_skip import (
 
 
 def test_directive_at_eof_without_trailing_newline(tmp_path: Path) -> None:
-    """
-    Directive at end of file without trailing newline is recognized.
-    """
+    """Directive at end of file without trailing newline is recognized."""
     # No trailing newline after the directive
     content = "<!--- custom-skip: next -->"
     test_file = tmp_path / "test.md"

@@ -1,6 +1,4 @@
-"""
-Tests for the markdown_it CodeBlockParser.
-"""
+"""Tests for the markdown_it CodeBlockParser."""
 
 from pathlib import Path
 
@@ -56,7 +54,8 @@ def test_unclosed_fence_no_trailing_newline(tmp_path: Path) -> None:
 
 
 def test_code_block_with_empty_info_string(tmp_path: Path) -> None:
-    """Code blocks with no language specified are matched when language=None.
+    """Code blocks with no language specified are matched when
+    language=None.
 
     When a code block has an empty info string (just ```), the pattern
     won't match and block_language should be set to empty string.

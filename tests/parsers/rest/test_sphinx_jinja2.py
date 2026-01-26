@@ -1,6 +1,4 @@
-"""
-Tests for the sphinx-jinja2 parser for reST.
-"""
+"""Tests for the sphinx-jinja2 parser for reST."""
 
 from pathlib import Path
 
@@ -12,7 +10,8 @@ from sybil_extras.parsers.rest.sphinx_jinja2 import SphinxJinja2Parser
 
 def test_sphinx_jinja2(*, tmp_path: Path) -> None:
     """
-    The ``SphinxJinja2Parser`` extracts information from sphinx-jinja2 blocks.
+    The ``SphinxJinja2Parser`` extracts information from sphinx-jinja2
+    blocks.
     """
     # These examples are taken from the sphinx-jinja2 documentation.
     content = """\

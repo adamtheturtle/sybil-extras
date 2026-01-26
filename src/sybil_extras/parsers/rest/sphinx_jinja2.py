@@ -1,6 +1,4 @@
-"""
-A parser for Sphinx jinja2 blocks in reST.
-"""
+"""A parser for Sphinx jinja2 blocks in reST."""
 
 import re
 from collections.abc import Iterable
@@ -14,9 +12,7 @@ from sybil.typing import Evaluator
 
 @beartype
 class SphinxJinja2Parser:
-    """
-    A parser for Sphinx jinja2 blocks in reST.
-    """
+    """A parser for Sphinx jinja2 blocks in reST."""
 
     def __init__(
         self,
@@ -25,7 +21,8 @@ class SphinxJinja2Parser:
     ) -> None:
         """
         Args:
-            evaluator: The evaluator to use for evaluating the combined region.
+            evaluator: The evaluator to use for evaluating the combined
+        region.
         """
         directive = "jinja"
         lexers = [
@@ -35,9 +32,7 @@ class SphinxJinja2Parser:
         self._evaluator = evaluator
 
     def __call__(self, document: Document) -> Iterable[Region]:
-        """
-        Parse the document for sphinx-jinja2 blocks.
-        """
+        """Parse the document for sphinx-jinja2 blocks."""
         for region in self._lexers(document):
             region.parsed = region.lexemes["source"]
             region.evaluator = self._evaluator

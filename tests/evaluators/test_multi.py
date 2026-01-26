@@ -1,6 +1,4 @@
-"""
-Tests for MultiEvaluator.
-"""
+"""Tests for MultiEvaluator."""
 
 from pathlib import Path
 
@@ -12,30 +10,22 @@ from sybil_extras.evaluators.multi import MultiEvaluator
 
 
 def _evaluator_1(example: Example) -> None:
-    """
-    Add `step_1` to namespace.
-    """
+    """Add `step_1` to namespace."""
     example.namespace["step_1"] = True
 
 
 def _evaluator_2(example: Example) -> None:
-    """
-    Add `step_2` to namespace.
-    """
+    """Add `step_2` to namespace."""
     example.namespace["step_2"] = True
 
 
 def _evaluator_3(example: Example) -> None:
-    """
-    Add `step_3` to namespace.
-    """
+    """Add `step_3` to namespace."""
     example.namespace["step_3"] = True
 
 
 def _failing_evaluator(example: Example) -> None:
-    """
-    Evaluator that intentionally fails by raising an AssertionError.
-    """
+    """Evaluator that intentionally fails by raising an AssertionError."""
     raise AssertionError(
         "Failure in failing_evaluator: " + str(object=example)
     )
@@ -43,9 +33,7 @@ def _failing_evaluator(example: Example) -> None:
 
 @pytest.fixture(name="rst_file")
 def fixture_rst_file(tmp_path: Path) -> Path:
-    """
-    Fixture to create a temporary RST file with Python code blocks.
-    """
+    """Fixture to create a temporary RST file with Python code blocks."""
     content = """
     .. code-block:: python
 
@@ -58,9 +46,7 @@ def fixture_rst_file(tmp_path: Path) -> Path:
 
 
 def test_multi_evaluator_runs_all(rst_file: Path) -> None:
-    """
-    MultiEvaluator runs all given evaluators.
-    """
+    """MultiEvaluator runs all given evaluators."""
     evaluators = [_evaluator_1, _evaluator_2, _evaluator_3]
     multi_evaluator = MultiEvaluator(evaluators=evaluators)
     parser = CodeBlockParser(language="python", evaluator=multi_evaluator)
@@ -76,9 +62,7 @@ def test_multi_evaluator_runs_all(rst_file: Path) -> None:
 
 
 def test_multi_evaluator_raises_on_failure(rst_file: Path) -> None:
-    """
-    MultiEvaluator raises an error if an evaluator fails.
-    """
+    """MultiEvaluator raises an error if an evaluator fails."""
     evaluators = [_evaluator_1, _failing_evaluator, _evaluator_3]
     multi_evaluator = MultiEvaluator(evaluators=evaluators)
     parser = CodeBlockParser(language="python", evaluator=multi_evaluator)
@@ -115,9 +99,7 @@ def test_multi_evaluator_propagates_failure_string(
     """
 
     def _string_returning_evaluator(example: Example) -> str:
-        """
-        Return a failure string instead of raising an exception.
-        """
+        """Return a failure string instead of raising an exception."""
         del example
         return failure_string
 

@@ -1,3 +1,1 @@
-"""
-Tests for Norg parsers.
-"""
+"""Tests for Norg parsers."""

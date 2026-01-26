@@ -1,3 +1,1 @@
-"""
-Evaluators for Sybil.
-"""
+"""Evaluators for Sybil."""

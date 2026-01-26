@@ -1,6 +1,4 @@
-"""
-Block accumulator evaluator.
-"""
+"""Block accumulator evaluator."""
 
 from beartype import beartype
 from sybil.example import Example
