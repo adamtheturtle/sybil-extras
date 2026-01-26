@@ -26,11 +26,13 @@ def test_fenced_code_block_outside_blockquote() -> None:
     """
     (region,) = _parse(
         text=dedent(
-            text="""\
+            text=\
+                 """\
             ```python
             x = 1
             ```
-            """,
+            """\
+               ,
         )
     )
 
@@ -43,13 +45,15 @@ def test_code_block_in_blockquote_without_closing_fence() -> None:
     """
     (region,) = _parse(
         text=dedent(
-            text="""\
+            text=\
+                 """\
             > ```python
             > x = 1
             > y = 2
 
             outside block quote
-            """,
+            """\
+               ,
         )
     )
 
@@ -64,13 +68,15 @@ def test_code_block_implicitly_closed_by_container_end() -> None:
     """
     (region,) = _parse(
         text=dedent(
-            text="""\
+            text=\
+                 """\
             > ```python
             > code in a
             > block quote
 
             Paragraph.
-            """,
+            """
+               ,
         )
     )
 
@@ -83,11 +89,13 @@ def test_code_block_without_closing_fence_no_blockquote() -> None:
     """
     (region,) = _parse(
         text=dedent(
-            text="""\
+            text=\
+                 """\
             ```python
             x = 1
             y = 2
-            """,
+            """\
+               ,
         )
     )
 
@@ -109,12 +117,14 @@ def test_code_block_in_nested_blockquote() -> None:
     """
     (region,) = _parse(
         text=dedent(
-            text="""\
+            text=\
+                 """\
             > > ```python
             > > x = 1
 
             outside
-            """,
+            """\
+               ,
         )
     )
 
@@ -127,11 +137,13 @@ def test_code_block_with_wrong_language() -> None:
     """
     regions = _parse(
         text=dedent(
-            text="""\
+            text=\
+                 """\
             ```javascript
             x = 1
             ```
-            """,
+            """\
+               ,
         )
     )
 
@@ -144,11 +156,13 @@ def test_code_block_empty_info_string() -> None:
     """
     regions = _parse(
         text=dedent(
-            text="""\
+            text=\
+                 """\
             ```
             x = 1
             ```
-            """,
+            """\
+               ,
         )
     )
 
@@ -202,7 +216,8 @@ def test_multiple_code_blocks_with_invalid() -> None:
     Test multiple code blocks where some don't match the language filter.
     """
     text = dedent(
-        text="""\
+        text=\
+             """\
         ```javascript
         x = 1
         ```
@@ -210,7 +225,8 @@ def test_multiple_code_blocks_with_invalid() -> None:
         ```python
         y = 2
         ```
-        """,
+        """\
+           ,
     )
     regions = _parse(text=text)
 
@@ -229,7 +245,8 @@ def test_raw_lexer_skips_non_matching_and_continues() -> None:
         mapping=None,
     )
     text = dedent(
-        text="""\
+        text=\
+             """\
         ```javascript
         x = 1
         ```
@@ -237,7 +254,8 @@ def test_raw_lexer_skips_non_matching_and_continues() -> None:
         ```python
         y = 2
         ```
-        """,
+        """\
+           ,
     )
     document = Document(text=text, path="test.djot")
     regions = list(lexer(document=document))
@@ -256,12 +274,14 @@ def test_fence_with_non_matching_closer() -> None:
     # A fence in a blockquote, followed by a fence NOT in a blockquote
     # The second fence won't match because of different prefixes
     text = dedent(
-        text="""\
+        text=\
+             """\
         > ```python
         > code
         ```
         > ```
-        """,
+        """
+           ,
     )
     (region,) = _parse(text=text)
 
@@ -274,21 +294,24 @@ def test_region_end_respects_container_boundary_with_closing_fence() -> None:
     """Test that region end respects container boundary even when closing fence
     exists in a separate container.
 
-    Per the Djot spec, "a code block closes...or the end of the document or
-    enclosing block, if no such line is encountered."
+    Per the Djot spec, "a code block closes...or the end of the document
+    or enclosing block, if no such line is encountered."
 
-    When a code block opens in one blockquote but lacks a closing fence within
-    that container, and a matching fence appears in a *separate* blockquote
-    after an empty line, the region should end at the container boundary, not
-    extend to include the fence from the second blockquote.
+    When a code block opens in one blockquote but lacks a closing fence
+    within that container, and a matching fence appears in a *separate*
+    blockquote after an empty line, the region should end at the
+    container boundary, not extend to include the fence from the second
+    blockquote.
     """
     text = dedent(
-        text="""\
+        text=\
+             """\
         > ```python
         > x = 1
 
         > ```
-        """,
+        """\
+           ,
     )
     (region,) = _parse(text=text)
 

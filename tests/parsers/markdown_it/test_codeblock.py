@@ -14,9 +14,10 @@ from sybil_extras.parsers.markdown_it.codeblock import CodeBlockParser
 def test_language_with_extra_info(tmp_path: Path) -> None:
     """Code blocks with extra info after the language are matched.
 
-    For example, ```python title="example" should match language="python".
-    The info line from MarkdownIt includes the full content after the fence
-    markers, so we need to extract only the first word as the language.
+    For example, ```python title="example" should match
+    language="python". The info line from MarkdownIt includes the full
+    content after the fence markers, so we need to extract only the
+    first word as the language.
     """
     content = '```python title="example"\nprint("hello")\n```\n'
     test_file = tmp_path / "test.md"

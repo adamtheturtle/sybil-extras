@@ -30,7 +30,8 @@ def test_writes_modified_content(
     Writes modified content from namespace to source file.
     """
     markdown_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         ```python
@@ -39,7 +40,8 @@ def test_writes_modified_content(
         """
     )
     myst_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         ```{code} python
@@ -48,7 +50,8 @@ def test_writes_modified_content(
         """
     )
     norg_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         @code python
@@ -58,7 +61,8 @@ def test_writes_modified_content(
     )
     original_content = {
         RESTRUCTUREDTEXT: textwrap.dedent(
-            text="""\
+            text=\
+                 """\
             Not in code block
 
             .. code-block:: python
@@ -94,7 +98,8 @@ def test_writes_modified_content(
     example.evaluate()
 
     markdown_expected = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         ```python
@@ -103,7 +108,8 @@ def test_writes_modified_content(
         """
     )
     myst_expected = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         ```{code} python
@@ -112,7 +118,8 @@ def test_writes_modified_content(
         """
     )
     norg_expected = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         @code python
@@ -122,7 +129,8 @@ def test_writes_modified_content(
     )
     expected_content = {
         RESTRUCTUREDTEXT: textwrap.dedent(
-            text="""\
+            text=\
+                 """\
             Not in code block
 
             .. code-block:: python
@@ -149,7 +157,8 @@ def test_writes_on_evaluator_exception(tmp_path: Path) -> None:
     subsequent checks fail.
     """
     original_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         ```python
         original
         ```
@@ -210,45 +219,53 @@ def test_empty_code_block_write_content(
     Content can be written to an empty code block.
     """
     rst_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         .. code-block:: python
 
         After empty code block
-        """,
+        """
+           ,
     )
     markdown_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         ```python
         ```
 
         After empty code block
-        """,
+        """
+           ,
     )
 
     myst_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         ```{code} python
         ```
 
         After empty code block
-        """,
+        """
+           ,
     )
 
     norg_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         @code python
         @end
 
         After empty code block
-        """,
+        """
+           ,
     )
 
     content = {
@@ -282,7 +299,8 @@ def test_empty_code_block_write_content(
     (example,) = document.examples()
 
     markdown_expected = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         ```python
@@ -294,7 +312,8 @@ def test_empty_code_block_write_content(
         """
     )
     myst_expected = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         ```{code} python
@@ -306,7 +325,8 @@ def test_empty_code_block_write_content(
         """
     )
     norg_expected = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         @code python
@@ -321,7 +341,8 @@ def test_empty_code_block_write_content(
         # There is no code block in reStructuredText that ends with multiple
         # newlines.
         RESTRUCTUREDTEXT: textwrap.dedent(
-            text="""\
+            text=\
+                 """\
             Not in code block
 
             .. code-block:: python
@@ -356,18 +377,21 @@ def test_empty_code_block_with_options(
         return
 
     rst_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         .. code-block:: python
            :emphasize-lines: 2,3
 
         After empty code block
-        """,
+        """
+           ,
     )
 
     myst_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         ```{code} python
@@ -375,18 +399,21 @@ def test_empty_code_block_with_options(
         ```
 
         After empty code block
-        """,
+        """
+           ,
     )
 
     mdx_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         ```python title="example.py"
         ```
 
         After empty code block
-        """,
+        """
+           ,
     )
 
     content = {
@@ -414,7 +441,8 @@ def test_empty_code_block_with_options(
     (example,) = document.examples()
 
     myst_expected = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         ```{code} python
@@ -427,7 +455,8 @@ def test_empty_code_block_with_options(
     )
     expected_content = {
         RESTRUCTUREDTEXT: textwrap.dedent(
-            text="""\
+            text=\
+                 """\
             Not in code block
 
             .. code-block:: python
@@ -440,7 +469,8 @@ def test_empty_code_block_with_options(
         ),
         MYST: myst_expected,
         MDX: textwrap.dedent(
-            text="""\
+            text=\
+                 """\
             Not in code block
 
             ```python title="example.py"
@@ -474,7 +504,8 @@ def test_empty_code_block_write_empty(
     block.
     """
     content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         .. code-block:: python
@@ -515,7 +546,8 @@ def test_djot_quoted_code_block(tmp_path: Path) -> None:
     this test to cover Markdown / MDX / MyST.
     """
     original_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Some text before
 
         > ```python
@@ -553,7 +585,8 @@ def test_djot_quoted_code_block(tmp_path: Path) -> None:
     second_example.evaluate()
 
     expected_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Some text before
 
         > ```python
@@ -578,7 +611,8 @@ def test_no_write_when_content_unchanged(tmp_path: Path) -> None:
     Does not write when modified content matches original.
     """
     content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         ```python
         original
         ```
@@ -614,7 +648,8 @@ def test_no_write_when_no_namespace_key(tmp_path: Path) -> None:
     Does not write when namespace key is not set.
     """
     content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         ```python
         original
         ```
@@ -642,7 +677,8 @@ def test_custom_namespace_key(tmp_path: Path) -> None:
     Uses custom namespace key for modified content.
     """
     content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         ```python
         original
         ```
@@ -673,7 +709,8 @@ def test_custom_namespace_key(tmp_path: Path) -> None:
     example.evaluate()
 
     expected_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         ```python
         modified
         ```
@@ -687,7 +724,8 @@ def test_encoding_parameter(tmp_path: Path) -> None:
     Uses specified encoding when writing.
     """
     content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         ```python
         original
         ```
@@ -716,7 +754,8 @@ def test_encoding_parameter(tmp_path: Path) -> None:
     example.evaluate()
 
     expected_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         ```python
         modified
         ```
@@ -737,7 +776,8 @@ def test_indented_existing_block(
         return
 
     markdown_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
             ```python
@@ -747,7 +787,8 @@ def test_indented_existing_block(
         """
     )
     myst_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
             ```{code} python
@@ -757,7 +798,8 @@ def test_indented_existing_block(
         """
     )
     norg_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
             @code python
@@ -768,7 +810,8 @@ def test_indented_existing_block(
     )
     original_content = {
         RESTRUCTUREDTEXT: textwrap.dedent(
-            text="""\
+            text=\
+                 """\
             Not in code block
 
                 .. code-block:: python
@@ -806,7 +849,8 @@ def test_indented_existing_block(
     source_file_content = source_file.read_text(encoding="utf-8")
 
     markdown_expected = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
             ```python
@@ -815,7 +859,8 @@ def test_indented_existing_block(
         """
     )
     myst_expected = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
             ```{code} python
@@ -824,7 +869,8 @@ def test_indented_existing_block(
         """
     )
     norg_expected = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
             @code python
@@ -834,7 +880,8 @@ def test_indented_existing_block(
     )
     expected_content = {
         RESTRUCTUREDTEXT: textwrap.dedent(
-            text="""\
+            text=\
+                 """\
             Not in code block
 
                 .. code-block:: python
@@ -864,7 +911,8 @@ def test_indented_empty_existing_block(
         return
 
     markdown_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
                 ```python
@@ -874,7 +922,8 @@ def test_indented_empty_existing_block(
         """
     )
     myst_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
                 ```{code} python
@@ -884,7 +933,8 @@ def test_indented_empty_existing_block(
         """
     )
     norg_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
                 @code python
@@ -895,7 +945,8 @@ def test_indented_empty_existing_block(
     )
     original_content = {
         RESTRUCTUREDTEXT: textwrap.dedent(
-            text="""\
+            text=\
+                 """\
             Not in code block
 
                     .. code-block:: python
@@ -932,7 +983,8 @@ def test_indented_empty_existing_block(
     source_file_content = source_file.read_text(encoding="utf-8")
 
     markdown_expected = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
                 ```python
@@ -943,7 +995,8 @@ def test_indented_empty_existing_block(
         """
     )
     myst_expected = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
                 ```{code} python
@@ -954,7 +1007,8 @@ def test_indented_empty_existing_block(
         """
     )
     norg_expected = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
                 @code python
@@ -966,7 +1020,8 @@ def test_indented_empty_existing_block(
     )
     expected_content = {
         RESTRUCTUREDTEXT: textwrap.dedent(
-            text="""\
+            text=\
+                 """\
             Not in code block
 
                     .. code-block:: python
@@ -991,7 +1046,8 @@ def test_multiple_blocks(tmp_path: Path) -> None:
     Handles multiple code blocks correctly.
     """
     content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         ```python
         first
         ```
@@ -1028,7 +1084,8 @@ def test_multiple_blocks(tmp_path: Path) -> None:
         example.evaluate()
 
     expected_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         ```python
         modified_1
         ```
@@ -1081,7 +1138,8 @@ def test_changes_lines(tmp_path: Path) -> None:
     https://github.com/adamtheturtle/doccmd/issues/451.
     """
     content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         ```python
         x = 1
         x = 1
@@ -1115,7 +1173,8 @@ def test_changes_lines(tmp_path: Path) -> None:
     first_example.evaluate()
     second_example.evaluate()
     expected_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         ```python
         pass
         ```

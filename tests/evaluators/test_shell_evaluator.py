@@ -68,7 +68,8 @@ def fixture_rst_file(tmp_path: Path) -> Path:
     # * The code block is the last element in the file
     # * There is text outside the code block
     content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         .. code-block:: python
@@ -367,8 +368,8 @@ def test_file_prefix(
 def test_pad(*, rst_file: Path, tmp_path: Path, use_pty_option: bool) -> None:
     """If pad is True, the file content is padded.
 
-    This test relies heavily on the exact formatting of the
-    `rst_file` example.
+    This test relies heavily on the exact formatting of the `rst_file`
+    example.
     """
     sh_function = """
     cp "$2" "$1"
@@ -389,14 +390,16 @@ def test_pad(*, rst_file: Path, tmp_path: Path, use_pty_option: bool) -> None:
     example.evaluate()
     given_file_content = file_path.read_text(encoding="utf-8")
     expected_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
 
 
 
 
         x = 2 + 2
         assert x == 4
-        """,
+        """\
+           ,
     )
     assert given_file_content == expected_content
 
@@ -415,7 +418,8 @@ def test_write_to_file_new_content_trailing_newlines(
     block types that allow them.
     """
     markdown_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         ```python
@@ -425,7 +429,8 @@ def test_write_to_file_new_content_trailing_newlines(
         """
     )
     myst_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         ```{code} python
@@ -435,7 +440,8 @@ def test_write_to_file_new_content_trailing_newlines(
         """
     )
     norg_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         @code python
@@ -446,7 +452,8 @@ def test_write_to_file_new_content_trailing_newlines(
     )
     original_content = {
         RESTRUCTUREDTEXT: textwrap.dedent(
-            text="""\
+            text=\
+                 """\
             Not in code block
 
             .. code-block:: python
@@ -487,7 +494,8 @@ def test_write_to_file_new_content_trailing_newlines(
     source_file_content = source_file.read_text(encoding="utf-8")
 
     markdown_expected = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         ```python
@@ -497,7 +505,8 @@ def test_write_to_file_new_content_trailing_newlines(
         """
     )
     myst_expected = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         ```{code} python
@@ -507,7 +516,8 @@ def test_write_to_file_new_content_trailing_newlines(
         """
     )
     norg_expected = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         @code python
@@ -520,7 +530,8 @@ def test_write_to_file_new_content_trailing_newlines(
         # There is no code block in reStructuredText that ends with multiple
         # newlines.
         RESTRUCTUREDTEXT: textwrap.dedent(
-            text="""\
+            text=\
+                 """\
             Not in code block
 
             .. code-block:: python
@@ -555,7 +566,8 @@ def test_write_to_file_new_content_no_trailing_newlines(
     valid.
     """
     markdown_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         ```python
@@ -565,7 +577,8 @@ def test_write_to_file_new_content_no_trailing_newlines(
         """
     )
     myst_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         ```{code} python
@@ -575,7 +588,8 @@ def test_write_to_file_new_content_no_trailing_newlines(
         """
     )
     norg_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         @code python
@@ -586,7 +600,8 @@ def test_write_to_file_new_content_no_trailing_newlines(
     )
     original_content = {
         RESTRUCTUREDTEXT: textwrap.dedent(
-            text="""\
+            text=\
+                 """\
             Not in code block
 
             .. code-block:: python
@@ -625,7 +640,8 @@ def test_write_to_file_new_content_no_trailing_newlines(
     source_file_content = source_file.read_text(encoding="utf-8")
 
     markdown_expected = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         ```python
@@ -634,7 +650,8 @@ def test_write_to_file_new_content_no_trailing_newlines(
         """
     )
     myst_expected = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         ```{code} python
@@ -643,7 +660,8 @@ def test_write_to_file_new_content_no_trailing_newlines(
         """
     )
     norg_expected = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         @code python
@@ -655,7 +673,8 @@ def test_write_to_file_new_content_no_trailing_newlines(
         # There is no code block in reStructuredText that ends with multiple
         # newlines.
         RESTRUCTUREDTEXT: textwrap.dedent(
-            text="""\
+            text=\
+                 """\
             Not in code block
 
             .. code-block:: python
@@ -708,7 +727,8 @@ def test_non_utf8_output(
     """
     Non-UTF-8 output is handled.
     """
-    sh_function = b"""
+    sh_function =\
+                  b"""
     echo "\xc0\x80"
     """
     script = tmp_path / "my_script.sh"
@@ -741,11 +761,13 @@ def test_no_file_left_behind_on_interruption(
     No file is left behind if the process is interrupted.
     """
     sleep_python_script_content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         import time
 
         time.sleep(0.5)
-        """,
+        """
+           ,
     )
 
     sleep_python_script = tmp_path / "sleep_comand.py"
@@ -975,7 +997,8 @@ def test_encoding(
 
     file_path = tmp_path / "file.txt"
     content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Not in code block
 
         .. code-block:: python
@@ -1119,7 +1142,8 @@ def test_markdown_code_block_line_number(
     # Line 4: syntax error here
     # Line 5: ```
     content = textwrap.dedent(
-        text="""\
+        text=\
+             """\
         Example
 
         ```python

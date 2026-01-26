@@ -16,11 +16,13 @@ def test_directive_with_argument() -> None:
     """
     lexer = DirectiveInDjotCommentLexer(directive="group", arguments=r".+")
     source_text = dedent(
-        text="""\
+        text=\
+             """\
         Before
         {% group: start %}
         After
-        """,
+        """
+           ,
     )
 
     expected_text = "{% group: start %}"

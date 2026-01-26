@@ -191,12 +191,13 @@ class CodeBlockWriterEvaluator:
     """An evaluator wrapper that writes modified content back to code blocks.
 
     This evaluator wraps another evaluator and writes any modifications
-    made to the example content back to the source document. It is useful
-    for building evaluators that transform code blocks, such as formatters
-    or auto-fixers.
+    made to the example content back to the source document. It is
+    useful for building evaluators that transform code blocks, such as
+    formatters or auto-fixers.
 
     The wrapped evaluator should store the modified content in
-    ``example.document.namespace[namespace_key]`` for it to be written back.
+    ``example.document.namespace[namespace_key]`` for it to be written
+    back.
     """
 
     def __init__(

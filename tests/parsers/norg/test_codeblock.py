@@ -24,11 +24,13 @@ def test_verbatim_ranged_tag_basic() -> None:
     """
     (region,) = _parse(
         text=dedent(
-            text="""\
+            text=\
+                 """\
             @code python
             x = 1
             @end
-            """,
+            """\
+               ,
         )
     )
 
@@ -41,11 +43,13 @@ def test_verbatim_ranged_tag_without_language() -> None:
     """
     regions = _parse(
         text=dedent(
-            text="""\
+            text=\
+                 """\
             @code
             x = 1
             @end
-            """,
+            """\
+               ,
         )
     )
 
@@ -58,11 +62,13 @@ def test_verbatim_ranged_tag_wrong_language() -> None:
     """
     regions = _parse(
         text=dedent(
-            text="""\
+            text=\
+                 """\
             @code javascript
             x = 1
             @end
-            """,
+            """\
+               ,
         )
     )
 
@@ -75,13 +81,15 @@ def test_verbatim_ranged_tag_multiline() -> None:
     """
     (region,) = _parse(
         text=dedent(
-            text="""\
+            text=\
+                 """\
             @code python
             x = 1
             y = 2
             z = 3
             @end
-            """,
+            """\
+               ,
         )
     )
 
@@ -94,10 +102,12 @@ def test_verbatim_ranged_tag_without_closing() -> None:
     """
     regions = _parse(
         text=dedent(
-            text="""\
+            text=\
+                 """\
             @code python
             x = 1
-            """,
+            """\
+               ,
         )
     )
 
@@ -110,11 +120,13 @@ def test_verbatim_ranged_tag_with_leading_whitespace() -> None:
     """
     (region,) = _parse(
         text=dedent(
-            text="""\
+            text=\
+                 """\
               @code python
               x = 1
               @end
-            """,
+            """\
+               ,
         )
     )
 
@@ -127,7 +139,8 @@ def test_multiple_code_blocks() -> None:
     """
     regions = _parse(
         text=dedent(
-            text="""\
+            text=\
+                 """\
             @code python
             x = 1
             @end
@@ -137,7 +150,8 @@ def test_multiple_code_blocks() -> None:
             @code python
             y = 2
             @end
-            """,
+            """\
+               ,
         )
     )
 
@@ -153,10 +167,12 @@ def test_empty_code_block() -> None:
     """
     (region,) = _parse(
         text=dedent(
-            text="""\
+            text=\
+                 """\
             @code python
             @end
-            """,
+            """
+               ,
         )
     )
 
@@ -169,13 +185,15 @@ def test_code_block_with_blank_lines() -> None:
     """
     (region,) = _parse(
         text=dedent(
-            text="""\
+            text=\
+                 """\
             @code python
             x = 1
 
             y = 2
             @end
-            """,
+            """\
+               ,
         )
     )
 
@@ -188,12 +206,14 @@ def test_nested_code_markers_in_content() -> None:
     """
     (region,) = _parse(
         text=dedent(
-            text="""\
+            text=\
+                 """\
             @code python
             # This is @code
             x = "@end"
             @end
-            """,
+            """\
+               ,
         )
     )
 
