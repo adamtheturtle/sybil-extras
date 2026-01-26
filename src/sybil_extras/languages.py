@@ -1,6 +1,4 @@
-"""
-Tools for managing markup languages and generating snippets.
-"""
+"""Tools for managing markup languages and generating snippets."""
 
 import textwrap
 from collections.abc import Iterable
@@ -46,22 +44,16 @@ import sybil_extras.parsers.rest.sphinx_jinja2
 
 @runtime_checkable
 class _SphinxJinja2Parser(Protocol):
-    """
-    A parser for sphinx-jinja2 blocks.
-    """
+    """A parser for sphinx-jinja2 blocks."""
 
     def __init__(self, *, evaluator: Evaluator) -> None:
-        """
-        Construct a sphinx-jinja2 parser.
-        """
+        """Construct a sphinx-jinja2 parser."""
         # We disable a pylint warning here because the ellipsis is required
         # for pyright to recognize this as a protocol.
         ...  # pylint: disable=unnecessary-ellipsis
 
     def __call__(self, document: Document) -> Iterable[Region]:
-        """
-        Call the sphinx-jinja2 parser.
-        """
+        """Call the sphinx-jinja2 parser."""
         # We disable a pylint warning here because the ellipsis is required
         # for pyright to recognize this as a protocol.
         ...  # pylint: disable=unnecessary-ellipsis
@@ -69,38 +61,28 @@ class _SphinxJinja2Parser(Protocol):
 
 @runtime_checkable
 class _SkipParser(Protocol):
-    """
-    A parser for skipping custom directives.
-    """
+    """A parser for skipping custom directives."""
 
     def __init__(self, directive: str) -> None:
-        """
-        Construct a skip parser.
-        """
+        """Construct a skip parser."""
         # We disable a pylint warning here because the ellipsis is required
         # for pyright to recognize this as a protocol.
         ...  # pylint: disable=unnecessary-ellipsis
 
     def __call__(self, document: Document) -> Iterable[Region]:
-        """
-        Call the skip parser.
-        """
+        """Call the skip parser."""
         # We disable a pylint warning here because the ellipsis is required
         # for pyright to recognize this as a protocol.
         ...  # pylint: disable=unnecessary-ellipsis
 
     def get_skipper(self) -> Skipper:
-        """
-        Return the skipper managing skip state.
-        """
+        """Return the skipper managing skip state."""
         ...  # pylint: disable=unnecessary-ellipsis
 
 
 @runtime_checkable
 class _GroupedSourceParser(Protocol):
-    """
-    A parser for grouping code blocks.
-    """
+    """A parser for grouping code blocks."""
 
     def __init__(
         self,
@@ -109,17 +91,13 @@ class _GroupedSourceParser(Protocol):
         evaluator: Evaluator,
         pad_groups: bool,
     ) -> None:
-        """
-        Construct a grouped code block parser.
-        """
+        """Construct a grouped code block parser."""
         # We disable a pylint warning here because the ellipsis is required
         # for pyright to recognize this as a protocol.
         ...  # pylint: disable=unnecessary-ellipsis
 
     def __call__(self, document: Document) -> Iterable[Region]:
-        """
-        Call the grouped code block parser.
-        """
+        """Call the grouped code block parser."""
         # We disable a pylint warning here because the ellipsis is required
         # for pyright to recognize this as a protocol.
         ...  # pylint: disable=unnecessary-ellipsis
@@ -127,9 +105,7 @@ class _GroupedSourceParser(Protocol):
 
 @runtime_checkable
 class _GroupAllParser(Protocol):
-    """
-    A parser for grouping all code blocks in a document.
-    """
+    """A parser for grouping all code blocks in a document."""
 
     def __init__(
         self,
@@ -137,62 +113,44 @@ class _GroupAllParser(Protocol):
         evaluator: Evaluator,
         pad_groups: bool,
     ) -> None:
-        """
-        Construct a parser that groups every code block.
-        """
+        """Construct a parser that groups every code block."""
         ...  # pylint: disable=unnecessary-ellipsis
 
     def __call__(self, document: Document) -> Iterable[Region]:
-        """
-        Call the group-all parser.
-        """
+        """Call the group-all parser."""
         ...  # pylint: disable=unnecessary-ellipsis
 
 
 @runtime_checkable
 class CodeBlockBuilder(Protocol):
-    """
-    A callable that renders code blocks for a markup language.
-    """
+    """A callable that renders code blocks for a markup language."""
 
     def __call__(self, code: str, language: str) -> str:
-        """
-        Render ``code`` for ``language``.
-        """
+        """Render ``code`` for ``language``."""
         ...  # pylint: disable=unnecessary-ellipsis
 
 
 @runtime_checkable
 class DirectiveBuilder(Protocol):
-    """
-    A callable that renders directives for a markup language.
-    """
+    """A callable that renders directives for a markup language."""
 
     def __call__(self, directive: str, argument: str | None = None) -> str:
-        """
-        Render ``directive`` with the optional ``argument``.
-        """
+        """Render ``directive`` with the optional ``argument``."""
         ...  # pylint: disable=unnecessary-ellipsis
 
 
 @runtime_checkable
 class JinjaBlockBuilder(Protocol):
-    """
-    A callable that renders Jinja blocks for a markup language.
-    """
+    """A callable that renders Jinja blocks for a markup language."""
 
     def __call__(self, body: str) -> str:
-        """
-        Render a Jinja block containing ``body``.
-        """
+        """Render a Jinja block containing ``body``."""
         ...  # pylint: disable=unnecessary-ellipsis
 
 
 @beartype
 def _normalize_code(content: str) -> str:
-    """
-    Normalize code provided in tests into a block-friendly form.
-    """
+    """Normalize code provided in tests into a block-friendly form."""
     normalized = textwrap.dedent(text=content).strip("\n")
     if not normalized:
         return ""
@@ -201,18 +159,14 @@ def _normalize_code(content: str) -> str:
 
 @beartype
 def _markdown_code_block(code: str, language: str) -> str:
-    """
-    Build a Markdown/MyST code block.
-    """
+    """Build a Markdown/MyST code block."""
     normalized = _normalize_code(content=code)
     return f"```{language}\n{normalized}```"
 
 
 @beartype
 def _rst_code_block(code: str, language: str) -> str:
-    """
-    Build a reStructuredText code block.
-    """
+    """Build a reStructuredText code block."""
     normalized = _normalize_code(content=code)
     indented = (
         textwrap.indent(text=normalized, prefix="   ") if normalized else ""
@@ -225,9 +179,7 @@ def _html_comment_directive(
     directive: str,
     argument: str | None = None,
 ) -> str:
-    """
-    Render a directive embedded in an HTML comment.
-    """
+    """Render a directive embedded in an HTML comment."""
     suffix = f": {argument}" if argument is not None else ""
     return f"<!--- {directive}{suffix} -->"
 
@@ -237,9 +189,7 @@ def _percent_comment_directive(
     directive: str,
     argument: str | None = None,
 ) -> str:
-    """
-    Render a directive embedded in a percent-style comment.
-    """
+    """Render a directive embedded in a percent-style comment."""
     suffix = f": {argument}" if argument is not None else ""
     return f"% {directive}{suffix}"
 
@@ -249,9 +199,7 @@ def _rst_directive(
     directive: str,
     argument: str | None = None,
 ) -> str:
-    """
-    Render a directive for reStructuredText documents.
-    """
+    """Render a directive for reStructuredText documents."""
     if argument is None:
         return f".. {directive}:"
     return f".. {directive}: {argument}"
@@ -262,9 +210,7 @@ def _jsx_comment_directive(
     directive: str,
     argument: str | None = None,
 ) -> str:
-    """
-    Render a directive embedded in a JSX comment.
-    """
+    """Render a directive embedded in a JSX comment."""
     suffix = f": {argument}" if argument is not None else ""
     return f"{{/* {directive}{suffix} */}}"
 
@@ -274,18 +220,14 @@ def _djot_directive(
     directive: str,
     argument: str | None = None,
 ) -> str:
-    """
-    Render a directive embedded in a djot comment.
-    """
+    """Render a directive embedded in a djot comment."""
     suffix = f": {argument}" if argument is not None else ""
     return f"{{% {directive}{suffix} %}}"
 
 
 @beartype
 def _norg_code_block(code: str, language: str) -> str:
-    """
-    Build a Norg verbatim ranged tag code block.
-    """
+    """Build a Norg verbatim ranged tag code block."""
     normalized = _normalize_code(content=code)
     lang_param = f" {language}" if language else ""
     return f"@code{lang_param}\n{normalized}@end"
@@ -296,27 +238,21 @@ def _norg_directive(
     directive: str,
     argument: str | None = None,
 ) -> str:
-    """
-    Render a directive embedded in a norg infirm tag.
-    """
+    """Render a directive embedded in a norg infirm tag."""
     suffix = f": {argument}" if argument is not None else ""
     return f".{directive}{suffix}"
 
 
 @beartype
 def _myst_jinja_block(body: str) -> str:
-    """
-    Render a sphinx-jinja block for MyST.
-    """
+    """Render a sphinx-jinja block for MyST."""
     normalized = _normalize_code(content=body)
     return f"```{{jinja}}\n{normalized}```"
 
 
 @beartype
 def _rst_jinja_block(body: str) -> str:
-    """
-    Render a sphinx-jinja block for reStructuredText.
-    """
+    """Render a sphinx-jinja block for reStructuredText."""
     normalized = _normalize_code(content=body)
     indented = (
         textwrap.indent(text=normalized, prefix="   ") if normalized else ""
@@ -326,9 +262,7 @@ def _rst_jinja_block(body: str) -> str:
 
 @runtime_checkable
 class _CodeBlockParser(Protocol):
-    """
-    A parser for code blocks.
-    """
+    """A parser for code blocks."""
 
     def __init__(
         self,
@@ -336,17 +270,13 @@ class _CodeBlockParser(Protocol):
         language: str | None = None,
         evaluator: Evaluator | None = None,
     ) -> None:
-        """
-        Construct a code block parser.
-        """
+        """Construct a code block parser."""
         # We disable a pylint warning here because the ellipsis is required
         # for pyright to recognize this as a protocol.
         ...  # pylint: disable=unnecessary-ellipsis
 
     def __call__(self, document: Document) -> Iterable[Region]:
-        """
-        Call the code block parser.
-        """
+        """Call the code block parser."""
         # We disable a pylint warning here because the ellipsis is required
         # for pyright to recognize this as a protocol.
         ...  # pylint: disable=unnecessary-ellipsis
@@ -355,9 +285,7 @@ class _CodeBlockParser(Protocol):
 @beartype
 @dataclass(frozen=True)
 class MarkupLanguage:
-    """
-    A markup language.
-    """
+    """A markup language."""
 
     name: str
     markup_separator: str

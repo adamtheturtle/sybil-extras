@@ -1,6 +1,4 @@
-"""
-No-op Evaluator.
-"""
+"""No-op Evaluator."""
 
 from beartype import beartype
 from sybil.example import Example
@@ -14,6 +12,4 @@ class NoOpEvaluator:
     """
 
     def __call__(self, _: Example) -> None:
-        """
-        Do nothing.
-        """
+        """Do nothing."""

@@ -1,6 +1,4 @@
-"""
-Attribute-based grouped source parser tests for MDX.
-"""
+"""Attribute-based grouped source parser tests for MDX."""
 
 import textwrap
 from pathlib import Path
@@ -17,7 +15,8 @@ from sybil_extras.parsers.mdx.codeblock import CodeBlockParser
 
 def test_attribute_group_single_group(tmp_path: Path) -> None:
     """
-    The attribute group parser groups examples with the same group attribute.
+    The attribute group parser groups examples with the same group
+    attribute.
     """
     content = textwrap.dedent(
         text="""
@@ -108,9 +107,7 @@ def test_attribute_group_multiple_groups(tmp_path: Path) -> None:
 
 
 def test_attribute_group_no_group_attribute(tmp_path: Path) -> None:
-    """
-    Code blocks without the group attribute are not grouped.
-    """
+    """Code blocks without the group attribute are not grouped."""
     content = textwrap.dedent(
         text="""
         ```python
@@ -149,9 +146,7 @@ def test_attribute_group_no_group_attribute(tmp_path: Path) -> None:
 
 
 def test_attribute_group_custom_attribute_name(tmp_path: Path) -> None:
-    """
-    Custom attribute names can be used for grouping.
-    """
+    """Custom attribute names can be used for grouping."""
     content = textwrap.dedent(
         text="""
         ```python mygroup="test1"
@@ -187,9 +182,7 @@ def test_attribute_group_custom_attribute_name(tmp_path: Path) -> None:
 
 
 def test_attribute_group_with_other_attributes(tmp_path: Path) -> None:
-    """
-    Code blocks with multiple attributes still group correctly.
-    """
+    """Code blocks with multiple attributes still group correctly."""
     content = textwrap.dedent(
         text="""
         ```python title="example.py" group="setup" showLineNumbers
@@ -226,7 +219,8 @@ def test_attribute_group_with_other_attributes(tmp_path: Path) -> None:
 
 def test_attribute_group_pad_groups_false(tmp_path: Path) -> None:
     """
-    When pad_groups is False, groups are separated by single newlines.
+    When pad_groups is False, groups are separated by single
+    newlines.
     """
     content = textwrap.dedent(
         text="""
@@ -267,9 +261,7 @@ def test_attribute_group_pad_groups_false(tmp_path: Path) -> None:
 
 
 def test_attribute_group_interleaved_groups(tmp_path: Path) -> None:
-    """
-    Groups can interleave.
-    """
+    """Groups can interleave."""
     content = textwrap.dedent(
         text="""
         ```python group="setup"
@@ -319,9 +311,7 @@ def test_attribute_group_interleaved_groups(tmp_path: Path) -> None:
 
 
 def test_attribute_group_ungrouped_evaluator(tmp_path: Path) -> None:
-    """
-    Code blocks without the group attribute use the ungrouped_evaluator.
-    """
+    """Code blocks without the group attribute use the ungrouped_evaluator."""
     content = textwrap.dedent(
         text="""
         ```python

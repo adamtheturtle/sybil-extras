@@ -1,6 +1,4 @@
-"""
-Code block parsing for Norg.
-"""
+"""Code block parsing for Norg."""
 
 import re
 from collections.abc import Iterable, Sequence
@@ -55,9 +53,7 @@ class NorgVerbatimRangedTagLexer:
         self._mapping = mapping
 
     def __call__(self, document: Document) -> Iterable[Region]:
-        """
-        Yield regions for Norg verbatim ranged tags.
-        """
+        """Yield regions for Norg verbatim ranged tags."""
         index = 0
         while True:
             opening = self._opening_pattern.search(
@@ -118,9 +114,7 @@ class NorgVerbatimRangedTagLexer:
 
 @beartype
 class CodeBlockParser:
-    """
-    A parser for Norg verbatim ranged tags (code blocks).
-    """
+    """A parser for Norg verbatim ranged tags (code blocks)."""
 
     def __init__(
         self,
@@ -150,7 +144,5 @@ class CodeBlockParser:
         )
 
     def __call__(self, document: Document) -> Iterable[Region]:
-        """
-        Yield regions for Norg code blocks.
-        """
+        """Yield regions for Norg code blocks."""
         return self._parser(document)

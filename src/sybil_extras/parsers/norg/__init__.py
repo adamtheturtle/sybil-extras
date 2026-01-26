@@ -1,3 +1,1 @@
-"""
-Parsers for Norg (Neorg) markup.
-"""
+"""Parsers for Norg (Neorg) markup."""

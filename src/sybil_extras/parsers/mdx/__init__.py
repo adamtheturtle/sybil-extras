@@ -1,3 +1,1 @@
-"""
-Custom parsers for MDX.
-"""
+"""Custom parsers for MDX."""

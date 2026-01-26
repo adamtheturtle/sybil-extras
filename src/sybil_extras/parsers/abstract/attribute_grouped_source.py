@@ -16,9 +16,7 @@ from ._grouping_utils import create_combined_region
 
 @beartype
 def _first_example_start_offset(examples: list[Example]) -> int:
-    """
-    Get the character offset where this group first appears.
-    """
+    """Get the character offset where this group first appears."""
     return examples[0].region.start
 
 
@@ -43,11 +41,14 @@ class AbstractAttributeGroupedSourceParser:
         Args:
             code_block_parser: A code block parser instance that parses
                 attributes.
-            evaluator: The evaluator to use for evaluating the combined region.
+            evaluator: The evaluator to use for evaluating the combined
+        region.
             attribute_name: The attribute name to use for grouping.
             pad_groups: Whether to pad groups with empty lines.
-                This is useful for error messages that reference line numbers.
-                However, this is detrimental to commands that expect the file
+                This is useful for error messages that reference line
+        numbers.
+                However, this is detrimental to commands that expect the
+        file
                 to not have a bunch of newlines in it, such as formatters.
             ungrouped_evaluator: The evaluator to use for code blocks that
                 don't have the grouping attribute.

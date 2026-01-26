@@ -1,6 +1,4 @@
-"""
-Tests for the BlockAccumulatorEvaluator.
-"""
+"""Tests for the BlockAccumulatorEvaluator."""
 
 from pathlib import Path
 
@@ -11,9 +9,7 @@ from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 
 
 def test_accumulates_blocks(tmp_path: Path) -> None:
-    """
-    The evaluator accumulates parsed code blocks in the namespace.
-    """
+    """The evaluator accumulates parsed code blocks in the namespace."""
     content = """\
 .. code-block:: python
 
@@ -42,9 +38,7 @@ def test_accumulates_blocks(tmp_path: Path) -> None:
 
 
 def test_custom_namespace_key(tmp_path: Path) -> None:
-    """
-    The evaluator can use a custom namespace key.
-    """
+    """The evaluator can use a custom namespace key."""
     content = """\
 .. code-block:: python
 
@@ -70,9 +64,7 @@ def test_custom_namespace_key(tmp_path: Path) -> None:
 
 
 def test_single_block(tmp_path: Path) -> None:
-    """
-    The evaluator handles a single code block.
-    """
+    """The evaluator handles a single code block."""
     content = """\
 .. code-block:: python
 
@@ -93,9 +85,7 @@ def test_single_block(tmp_path: Path) -> None:
 
 
 def test_preserves_content(tmp_path: Path) -> None:
-    """
-    The evaluator preserves the exact content of code blocks.
-    """
+    """The evaluator preserves the exact content of code blocks."""
     content = """\
 .. code-block:: python
 

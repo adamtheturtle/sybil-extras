@@ -1,6 +1,4 @@
-"""
-Tests for the ShellCommandEvaluator.
-"""
+"""Tests for the ShellCommandEvaluator."""
 
 import os
 import platform
@@ -47,9 +45,7 @@ from sybil_extras.parsers.markdown_it.codeblock import (
 def fixture_use_pty_option(
     request: pytest.FixtureRequest,
 ) -> bool:
-    """
-    Test with and without the pseudo-terminal.
-    """
+    """Test with and without the pseudo-terminal."""
     use_pty = bool(request.param)
     if use_pty and platform.system() == "Windows":  # pragma: no cover
         pytest.skip(reason="PTY is not supported on Windows.")
@@ -58,9 +54,7 @@ def fixture_use_pty_option(
 
 @pytest.fixture(name="rst_file")
 def fixture_rst_file(tmp_path: Path) -> Path:
-    """
-    Fixture to create a temporary RST file with code blocks.
-    """
+    """Fixture to create a temporary RST file with code blocks."""
     # Relied upon features:
     #
     # * Includes exactly one code block
@@ -84,7 +78,8 @@ def fixture_rst_file(tmp_path: Path) -> Path:
 
 def test_error(*, rst_file: Path, use_pty_option: bool) -> None:
     """
-    A ``subprocess.CalledProcessError`` is raised if the command fails.
+    A ``subprocess.CalledProcessError`` is raised if the command
+    fails.
     """
     args = ["sh", "-c", "exit 1"]
     evaluator = ShellCommandEvaluator(
@@ -115,9 +110,7 @@ def test_output_shown(
     capsys: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
-    """
-    Output is shown.
-    """
+    """Output is shown."""
     evaluator = ShellCommandEvaluator(
         args=[
             "sh",
@@ -151,9 +144,7 @@ def test_rm(
     capsys: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
-    """
-    Output is shown.
-    """
+    """Output is shown."""
     evaluator = ShellCommandEvaluator(
         args=["rm"],
         pad_file=False,
@@ -177,9 +168,7 @@ def test_pass_env(
     tmp_path: Path,
     use_pty_option: bool,
 ) -> None:
-    """
-    It is possible to pass environment variables to the command.
-    """
+    """It is possible to pass environment variables to the command."""
     new_file = tmp_path / "new_file.txt"
     evaluator = ShellCommandEvaluator(
         args=[
@@ -208,9 +197,7 @@ def test_global_env(
     tmp_path: Path,
     use_pty_option: bool,
 ) -> None:
-    """
-    Global environment variables are sent to the command by default.
-    """
+    """Global environment variables are sent to the command by default."""
     env_key = "ENV_KEY"
     os.environ[env_key] = "ENV_VALUE"
     new_file = tmp_path / "new_file.txt"
@@ -274,7 +261,8 @@ def test_file_path(
 ) -> None:
     """
     The given file path is random and absolute, and starts with a name
-    resembling the documentation file name, but without any hyphens or periods,
+    resembling the documentation file name, but without any hyphens or
+    periods,
     except for the period for the final suffix.
     """
     evaluator = ShellCommandEvaluator(
@@ -309,9 +297,7 @@ def test_file_suffix(
     capsys: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
-    """
-    The given file suffixes are used.
-    """
+    """The given file suffixes are used."""
     suffixes = [".example", ".foobar"]
     evaluator = ShellCommandEvaluator(
         args=["echo"],
@@ -340,9 +326,7 @@ def test_file_prefix(
     capsys: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
-    """
-    The given file prefixes are used.
-    """
+    """The given file prefixes are used."""
     prefix = "custom_prefix"
     evaluator = ShellCommandEvaluator(
         args=["echo"],
@@ -409,7 +393,8 @@ def test_write_to_file_new_content_trailing_newlines(
     use_pty_option: bool,
     markup_language: MarkupLanguage,
 ) -> None:
-    """Changes are written to the original file iff `write_to_file` is True.
+    """Changes are written to the original file iff `write_to_file` is
+    True.
 
     If the content has trailing newlines, those are included in code
     block types that allow them.
@@ -549,7 +534,8 @@ def test_write_to_file_new_content_no_trailing_newlines(
     use_pty_option: bool,
     markup_language: MarkupLanguage,
 ) -> None:
-    """Changes are written to the original file iff `write_to_file` is True.
+    """Changes are written to the original file iff `write_to_file` is
+    True.
 
     If the content has no trailing newlines, the new code block is still
     valid.
@@ -678,7 +664,8 @@ def test_write_to_file_new_content_no_trailing_newlines(
 
 def test_pad_and_write(*, rst_file: Path, use_pty_option: bool) -> None:
     """
-    Changes are written to the original file without the added padding.
+    Changes are written to the original file without the added
+    padding.
     """
     original_content = rst_file.read_text(encoding="utf-8")
     rst_file.write_text(data=original_content, encoding="utf-8")
@@ -705,9 +692,7 @@ def test_non_utf8_output(
     tmp_path: Path,
     use_pty_option: bool,
 ) -> None:
-    """
-    Non-UTF-8 output is handled.
-    """
+    """Non-UTF-8 output is handled."""
     sh_function = b"""
     echo "\xc0\x80"
     """
@@ -737,9 +722,7 @@ def test_no_file_left_behind_on_interruption(
     rst_file: Path,
     tmp_path: Path,
 ) -> None:
-    """
-    No file is left behind if the process is interrupted.
-    """
+    """No file is left behind if the process is interrupted."""
     sleep_python_script_content = textwrap.dedent(
         text="""\
         import time
@@ -812,9 +795,7 @@ def test_newline_system(
     source_newline: str,
     use_pty_option: bool,
 ) -> None:
-    """
-    The system line endings are used by default.
-    """
+    """The system line endings are used by default."""
     rst_file_contents = rst_file.read_text(encoding="utf-8")
     rst_file.write_text(data=rst_file_contents, newline=source_newline)
     sh_function = """
@@ -857,9 +838,7 @@ def test_newline_given(
     expect_crlf: bool,
     use_pty_option: bool,
 ) -> None:
-    """
-    The given line ending option is used.
-    """
+    """The given line ending option is used."""
     rst_file_contents = rst_file.read_text(encoding="utf-8")
     rst_file.write_text(data=rst_file_contents, newline=source_newline)
     sh_function = """
@@ -889,7 +868,8 @@ def test_newline_given(
 
 def test_bad_command_error(*, rst_file: Path, use_pty_option: bool) -> None:
     """
-    A ``subprocess.CalledProcessError`` is raised if the command is invalid.
+    A ``subprocess.CalledProcessError`` is raised if the command is
+    invalid.
     """
     args = ["sh", "--unknownoption"]
     evaluator = ShellCommandEvaluator(
@@ -916,15 +896,11 @@ def test_bad_command_error(*, rst_file: Path, use_pty_option: bool) -> None:
 
 
 def test_click_runner(*, rst_file: Path, use_pty_option: bool) -> None:
-    """
-    The click runner can pick up the command output.
-    """
+    """The click runner can pick up the command output."""
 
     @click.command()
     def _main() -> None:
-        """
-        Click command to run a shell command.
-        """
+        """Click command to run a shell command."""
         evaluator = ShellCommandEvaluator(
             args=[
                 "sh",
@@ -966,9 +942,7 @@ def test_encoding(
     use_pty_option: bool,
     encoding: str,
 ) -> None:
-    """
-    The given encoding is used.
-    """
+    """The given encoding is used."""
     sh_function = """
     cp "$2" "$1"
     """
@@ -1013,13 +987,12 @@ def test_custom_on_modify_no_modification(
     use_pty_option: bool,
 ) -> None:
     """
-    The custom `on_modify` function is not called when there is a modification.
+    The custom `on_modify` function is not called when there is a
+    modification.
     """
 
     def on_modify(example: Example, modified_example_content: str) -> None:
-        """
-        Raise an error if this function is called.
-        """
+        """Raise an error if this function is called."""
         del example
         del modified_example_content
         msg = "This should not be called."
@@ -1057,13 +1030,12 @@ def test_custom_on_modify_with_modification(
     tmp_path: Path,
 ) -> None:
     """
-    The custom `on_modify` function is called when there is a modification.
+    The custom `on_modify` function is called when there is a
+    modification.
     """
 
     def on_modify(example: Example, modified_example_content: str) -> None:
-        """
-        Check that the given content is as expected.
-        """
+        """Check that the given content is as expected."""
         assert modified_example_content == "foobar"
         assert example.path == str(object=rst_file)
 

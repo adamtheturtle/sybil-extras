@@ -21,7 +21,8 @@ _LANGUAGE_PATTERN = re.compile(pattern=r"^(?P<language>[^\s`]+)")
 
 @beartype
 class CodeBlockParser:
-    """A parser for Markdown fenced code blocks using the MarkdownIt library.
+    """A parser for Markdown fenced code blocks using the MarkdownIt
+    library.
 
     This parser uses a proper Markdown parsing library instead of regex
     to find and parse fenced code blocks.
@@ -37,9 +38,7 @@ class CodeBlockParser:
         language: str | None = None,
         evaluator: Evaluator | None = None,
     ) -> None:
-        """
-        Initialize the parser.
-        """
+        """Initialize the parser."""
         self._language = language
         self._evaluator = evaluator
 
@@ -52,9 +51,7 @@ class CodeBlockParser:
         raise NotImplementedError
 
     def __call__(self, document: Document) -> Iterable[Region]:
-        """
-        Parse the document and yield regions for each fenced code block.
-        """
+        """Parse the document and yield regions for each fenced code block."""
         md = MarkdownIt()
         # Disable the indented code block rule so that fenced code blocks
         # inside indented sections are still recognized as fences.

@@ -1,6 +1,4 @@
-"""
-Lexers for MDX parsing.
-"""
+"""Lexers for MDX parsing."""
 
 import re
 

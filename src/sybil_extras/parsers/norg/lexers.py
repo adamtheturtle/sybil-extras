@@ -1,6 +1,4 @@
-"""
-Lexers for norg.
-"""
+"""Lexers for norg."""
 
 import re
 from collections.abc import Iterable
@@ -36,9 +34,7 @@ class DirectiveInNorgCommentLexer:
         arguments: str = r".*?",
         mapping: dict[str, str] | None = None,
     ) -> None:
-        """
-        Initialize the norg infirm tag lexer.
-        """
+        """Initialize the norg infirm tag lexer."""
         # Pattern to match norg infirm tags with directives
         # Format: .directive: argument or .directive
         # The tag must be at the beginning of a line (with optional leading
@@ -53,9 +49,7 @@ class DirectiveInNorgCommentLexer:
         self.mapping = mapping
 
     def __call__(self, document: Document) -> Iterable[Region]:
-        """
-        Yield regions for norg infirm tag directives.
-        """
+        """Yield regions for norg infirm tag directives."""
         for match in self.pattern.finditer(string=document.text):
             lexemes = match.groupdict()
             # Clean up the arguments - might be None if no colon was present

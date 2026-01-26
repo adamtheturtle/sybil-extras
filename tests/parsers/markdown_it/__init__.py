@@ -1,3 +1,1 @@
-"""
-Tests for the markdown_it parser module.
-"""
+"""Tests for the markdown_it parser module."""

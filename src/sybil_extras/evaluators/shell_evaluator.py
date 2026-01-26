@@ -1,6 +1,4 @@
-"""
-An evaluator for running shell commands on example files.
-"""
+"""An evaluator for running shell commands on example files."""
 
 import contextlib
 import os
@@ -27,9 +25,7 @@ if TYPE_CHECKING:
 @beartype
 @runtime_checkable
 class _ExampleModified(Protocol):
-    """
-    A protocol for a callback to run when an example is modified.
-    """
+    """A protocol for a callback to run when an example is modified."""
 
     def __call__(
         self,
@@ -37,9 +33,7 @@ class _ExampleModified(Protocol):
         example: Example,
         modified_example_content: str,
     ) -> None:
-        """
-        This function is called when an example is modified.
-        """
+        """This function is called when an example is modified."""
         # We disable a pylint warning here because the ellipsis is required
         # for Pyright to recognize this as a protocol.
         ...  # pylint: disable=unnecessary-ellipsis
@@ -52,9 +46,7 @@ def _run_command(
     env: Mapping[str, str] | None = None,
     use_pty: bool,
 ) -> subprocess.CompletedProcess[bytes]:
-    """
-    Run a command in a pseudo-terminal to preserve color.
-    """
+    """Run a command in a pseudo-terminal to preserve color."""
     chunk_size = 1024
 
     @beartype
@@ -62,9 +54,7 @@ def _run_command(
         stream_fileno: int,
         output: IO[bytes] | BytesIO,
     ) -> None:
-        """
-        Write from an input stream to an output stream.
-        """
+        """Write from an input stream to an output stream."""
         while chunk := os.read(stream_fileno, chunk_size):
             output.write(chunk)
             output.flush()
@@ -217,7 +207,8 @@ def _create_temp_file_path_for_example(
 @beartype
 class _ShellCommandRunner:
     """
-    Run a shell command on an example file (internal implementation).
+    Run a shell command on an example file (internal
+    implementation).
     """
 
     def __init__(
@@ -264,9 +255,7 @@ class _ShellCommandRunner:
         self._namespace_key = namespace_key
 
     def __call__(self, example: Example) -> None:
-        """
-        Run the shell command on the example file.
-        """
+        """Run the shell command on the example file."""
         if (
             self._use_pty and platform.system() == "Windows"
         ):  # pragma: no cover
@@ -345,9 +334,7 @@ class _ShellCommandRunner:
 
 @beartype
 class ShellCommandEvaluator:
-    """
-    Run a shell command on the example file.
-    """
+    """Run a shell command on the example file."""
 
     def __init__(
         self,
@@ -426,7 +413,5 @@ class ShellCommandEvaluator:
             self._evaluator = runner
 
     def __call__(self, example: Example) -> None:
-        """
-        Run the shell command on the example file.
-        """
+        """Run the shell command on the example file."""
         self._evaluator(example)
