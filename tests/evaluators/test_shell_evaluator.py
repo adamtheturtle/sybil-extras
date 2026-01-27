@@ -23,7 +23,7 @@ from sybil.parsers.rest.codeblock import CodeBlockParser
 
 from sybil_extras.evaluators.shell_evaluator import (
     ShellCommandEvaluator,
-    _create_default_temp_file_path,
+    _create_default_temp_file_path,  # pyright: ignore[reportPrivateUsage]
 )
 from sybil_extras.languages import (
     DJOT,

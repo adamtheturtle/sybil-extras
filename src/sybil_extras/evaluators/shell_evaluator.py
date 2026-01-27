@@ -202,7 +202,7 @@ def _lstrip_newlines(input_string: str, number_of_newlines: int) -> str:
 
 
 @beartype
-def _create_default_temp_file_path(
+def _create_default_temp_file_path(  # pyright: ignore[reportUnusedFunction]
     *,
     example: Example,
     suffix: str = "",
