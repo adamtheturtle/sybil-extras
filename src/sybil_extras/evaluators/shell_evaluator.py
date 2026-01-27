@@ -40,10 +40,10 @@ class _ExampleModified(Protocol):
 
 @beartype
 @runtime_checkable
-class TempFilenameGenerator(Protocol):
-    """A protocol for generating temporary file paths for examples.
+class TempFilePathMaker(Protocol):
+    """A protocol for creating temporary file paths for examples.
 
-    This allows full customization of the temporary file name used when
+    This allows full customization of the temporary file path used when
     running shell commands on documentation examples.
     """
 
@@ -52,10 +52,10 @@ class TempFilenameGenerator(Protocol):
         *,
         example: Example,
     ) -> Path:
-        """Generate a temporary file path for an example.
+        """Create a temporary file path for an example.
 
         Args:
-            example: The Sybil example for which to generate a filename.
+            example: The Sybil example for which to create a file path.
 
         Returns:
             A Path object for the temporary file. The file should typically
@@ -211,7 +211,7 @@ class _ShellCommandRunner:
         self,
         *,
         args: Sequence[str | Path],
-        temp_filename_generator: TempFilenameGenerator,
+        temp_file_path_maker: TempFilePathMaker,
         env: Mapping[str, str] | None = None,
         newline: str | None = None,
         pad_file: bool,
@@ -225,7 +225,7 @@ class _ShellCommandRunner:
 
         Args:
             args: The shell command to run.
-            temp_filename_generator: A callable that generates the temporary
+            temp_file_path_maker: A callable that generates the temporary
                 file path for an example.
             env: The environment variables to use when running the shell
                 command.
@@ -240,7 +240,7 @@ class _ShellCommandRunner:
         self._args = args
         self._env = env
         self._pad_file = pad_file
-        self._temp_filename_generator = temp_filename_generator
+        self._temp_file_path_maker = temp_file_path_maker
         self._write_to_file = write_to_file
         self._newline = newline
         self._use_pty = use_pty
@@ -263,7 +263,7 @@ class _ShellCommandRunner:
             source=example.parsed,
             line=padding_line,
         )
-        temp_file = self._temp_filename_generator(example=example)
+        temp_file = self._temp_file_path_maker(example=example)
 
         # The parsed code block at the end of a file is given without a
         # trailing newline.  Some tools expect that a file has a trailing
@@ -330,7 +330,7 @@ class ShellCommandEvaluator:
         self,
         *,
         args: Sequence[str | Path],
-        temp_filename_generator: TempFilenameGenerator,
+        temp_file_path_maker: TempFilePathMaker,
         env: Mapping[str, str] | None = None,
         newline: str | None = None,
         # For some commands, padding is good: e.g. we want to see the error
@@ -347,7 +347,7 @@ class ShellCommandEvaluator:
 
         Args:
             args: The shell command to run.
-            temp_filename_generator: A callable that generates the temporary
+            temp_file_path_maker: A callable that generates the temporary
                 file path for an example. The callable receives the example
                 and should return a Path for the temporary file.
             env: The environment variables to use when running the shell
@@ -376,7 +376,7 @@ class ShellCommandEvaluator:
         namespace_key = "_shell_evaluator_modified_content"
         runner = _ShellCommandRunner(
             args=args,
-            temp_filename_generator=temp_filename_generator,
+            temp_file_path_maker=temp_file_path_maker,
             env=env,
             newline=newline,
             pad_file=pad_file,
