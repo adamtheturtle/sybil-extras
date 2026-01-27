@@ -202,16 +202,15 @@ def _lstrip_newlines(input_string: str, number_of_newlines: int) -> str:
 
 
 @beartype
-def create_default_temp_file_path(
+def _create_default_temp_file_path(
     *,
     example: Example,
     suffix: str = "",
 ) -> Path:
     """Create a temporary file path for an example code block.
 
-    This function can be used as a ``temp_filename_generator`` for
-    ``ShellCommandEvaluator``, or wrapped in a custom function to add
-    additional customization.
+    This is a test helper function that generates temporary file paths
+    with informative names for debugging.
 
     The temporary file is created in the same directory as the source
     file and includes the source filename and line number in its name
@@ -265,8 +264,7 @@ class _ShellCommandRunner:
         Args:
             args: The shell command to run.
             temp_filename_generator: A callable that generates the temporary
-                file path for an example. Use ``create_default_temp_file_path``
-                or a custom function.
+                file path for an example.
             env: The environment variables to use when running the shell
                 command.
             newline: The newline string to use for the temporary file.
@@ -388,8 +386,8 @@ class ShellCommandEvaluator:
         Args:
             args: The shell command to run.
             temp_filename_generator: A callable that generates the temporary
-                file path for an example. Use ``create_default_temp_file_path``
-                or wrap it with ``functools.partial`` to add a suffix.
+                file path for an example. The callable receives the example
+                and should return a Path for the temporary file.
             env: The environment variables to use when running the shell
                 command.
             newline: The newline string to use for the temporary file.
