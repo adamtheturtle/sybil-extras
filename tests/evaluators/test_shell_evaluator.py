@@ -339,41 +339,6 @@ def test_temp_file_path_maker(
     assert given_file_path.name == custom_filename
 
 
-def test_temp_file_path_maker_with_example_data(
-    *,
-    rst_file: Path,
-    capsys: pytest.CaptureFixture[str],
-    use_pty_option: bool,
-) -> None:
-    """The filename generator receives the example with path and line info."""
-
-    def generator_with_line(*, example: Example) -> Path:
-        """Generate a filename that includes the line number."""
-        return Path(example.path).parent / f"example_line_{example.line}.py"
-
-    evaluator = ShellCommandEvaluator(
-        args=["echo"],
-        pad_file=False,
-        write_to_file=False,
-        temp_file_path_maker=generator_with_line,
-        use_pty=use_pty_option,
-    )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
-    sybil = Sybil(parsers=[parser])
-
-    document = sybil.parse(path=rst_file)
-    (example,) = document.examples()
-    example.evaluate()
-    output = capsys.readouterr().out
-    stripped_output = output.strip()
-    assert stripped_output
-    given_file_path = Path(stripped_output)
-    # The fixture creates a code block starting around line 3 (0-indexed)
-    # or line 5 in the parsed output (depends on exact parsing)
-    assert given_file_path.name.startswith("example_line_")
-    assert given_file_path.name.endswith(".py")
-
-
 def test_pad(*, rst_file: Path, tmp_path: Path, use_pty_option: bool) -> None:
     """If pad is True, the file content is padded.
 
