@@ -219,7 +219,7 @@ def create_default_temp_file_path(
 
     Args:
         example: The Sybil example for which to generate a filename.
-        suffix: The suffix to use for the temporary file, e.g. ".py".
+        suffix: The suffix to use for the temporary file, e.g. ``".py"``.
 
     Returns:
         A Path object for the temporary file.
