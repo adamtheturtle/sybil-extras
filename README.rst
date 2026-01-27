@@ -66,7 +66,7 @@ ShellCommandEvaluator
 
     def temp_filename_generator(*, example: Example) -> Path:
         """Generate a temporary file path for an example."""
-        return example.path.parent / f"temp_{uuid.uuid4().hex[:8]}.py"
+        return Path(example.path).parent / f"temp_{uuid.uuid4().hex[:8]}.py"
 
 
     evaluator = ShellCommandEvaluator(
