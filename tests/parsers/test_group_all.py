@@ -11,7 +11,10 @@ from sybil.region import Lexeme
 
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
-from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
+from sybil_extras.evaluators.shell_evaluator import (
+    ShellCommandEvaluator,
+    create_default_temp_file_path,
+)
 from sybil_extras.languages import (
     DirectiveBuilder,
     MarkupLanguage,
@@ -337,6 +340,7 @@ def test_state_cleanup_on_evaluator_failure(
 
     shell_evaluator = ShellCommandEvaluator(
         args=["sh"],
+        temp_filename_generator=create_default_temp_file_path,
         pad_file=False,
         write_to_file=False,
         use_pty=False,
