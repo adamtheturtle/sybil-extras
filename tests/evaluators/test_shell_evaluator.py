@@ -38,18 +38,9 @@ from sybil_extras.parsers.markdown_it.codeblock import (
 )
 
 
-def create_default_temp_file_path(
-    *,
-    example: Example,
-    suffix: str = "",
-) -> Path:
+def create_default_temp_file_path(*, example: Example) -> Path:
     """Create a temporary file path for an example code block."""
-    path_name = Path(example.path).name
-    sanitized_path_name = path_name.replace(".", "_").replace("-", "_")
-    line_number_specifier = f"l{example.line}"
-    prefix = f"{sanitized_path_name}_{line_number_specifier}_"
-    parent = Path(example.path).parent
-    return parent / f"{prefix}{uuid.uuid4().hex[:4]}{suffix}"
+    return Path(example.path).parent / f"temp_{uuid.uuid4().hex[:8]}.py"
 
 
 @pytest.fixture(
