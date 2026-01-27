@@ -1,10 +1,6 @@
 """Shared pytest fixtures for tests package."""
 
-import uuid
-from pathlib import Path
-
 import pytest
-from sybil.example import Example
 
 from sybil_extras.languages import (
     ALL_LANGUAGES,
@@ -64,39 +60,3 @@ def fixture_language_directive_builder(
     """
     param: tuple[MarkupLanguage, DirectiveBuilder] = request.param
     return param
-
-
-def create_default_temp_file_path(
-    *,
-    example: Example,
-    suffix: str = "",
-) -> Path:
-    """Create a temporary file path for an example code block.
-
-    This is a test helper function that generates temporary file paths
-    with informative names for debugging.
-
-    The temporary file is created in the same directory as the source
-    file and includes the source filename and line number in its name
-    for easier identification in error messages.
-
-    Args:
-        example: The Sybil example for which to generate a filename.
-        suffix: The suffix to use for the temporary file, e.g. ".py".
-
-    Returns:
-        A Path object for the temporary file.
-    """
-    path_name = Path(example.path).name
-    # Replace characters that are not allowed in file names for Python
-    # modules.
-    sanitized_path_name = path_name.replace(".", "_").replace("-", "_")
-    line_number_specifier = f"l{example.line}"
-    prefix = f"{sanitized_path_name}_{line_number_specifier}_"
-
-    # Create a sibling file in the same directory as the example file.
-    # The name also looks like the example file name.
-    # This is so that output reflects the actual file path.
-    # This is useful for error messages, and for ignores.
-    parent = Path(example.path).parent
-    return parent / f"{prefix}{uuid.uuid4().hex[:4]}{suffix}"

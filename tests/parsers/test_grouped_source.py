@@ -1,6 +1,7 @@
 """Grouped source parser tests shared across markup languages."""
 
 import subprocess
+import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -11,7 +12,20 @@ from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 from sybil_extras.languages import DirectiveBuilder, MarkupLanguage
-from tests.conftest import create_default_temp_file_path
+
+
+def create_default_temp_file_path(
+    *,
+    example: Example,
+    suffix: str = "",
+) -> Path:
+    """Create a temporary file path for an example code block."""
+    path_name = Path(example.path).name
+    sanitized_path_name = path_name.replace(".", "_").replace("-", "_")
+    line_number_specifier = f"l{example.line}"
+    prefix = f"{sanitized_path_name}_{line_number_specifier}_"
+    parent = Path(example.path).parent
+    return parent / f"{prefix}{uuid.uuid4().hex[:4]}{suffix}"
 
 
 def test_group(
