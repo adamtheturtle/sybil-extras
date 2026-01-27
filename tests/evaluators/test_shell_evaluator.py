@@ -14,6 +14,7 @@ from pathlib import Path
 import charset_normalizer
 import click
 import pytest
+from beartype import beartype
 from click.testing import CliRunner
 from sybil import Sybil
 from sybil.example import Example
@@ -38,6 +39,7 @@ from sybil_extras.parsers.markdown_it.codeblock import (
 )
 
 
+@beartype
 def make_temp_file_path(*, example: Example) -> Path:
     """Create a temporary file path for an example code block."""
     return Path(example.path).parent / f"temp_{uuid.uuid4().hex[:8]}.py"

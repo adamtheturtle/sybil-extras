@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
+from beartype import beartype
 from sybil import Document, Example, Region, Sybil
 from sybil.region import Lexeme
 
@@ -19,6 +20,7 @@ from sybil_extras.languages import (
 )
 
 
+@beartype
 def make_temp_file_path(*, example: Example) -> Path:
     """Create a temporary file path for an example code block."""
     return Path(example.path).parent / f"temp_{uuid.uuid4().hex[:8]}.py"

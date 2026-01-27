@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
+from beartype import beartype
 from sybil import Example, Sybil
 
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
@@ -14,6 +15,7 @@ from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 from sybil_extras.languages import DirectiveBuilder, MarkupLanguage
 
 
+@beartype
 def make_temp_file_path(*, example: Example) -> Path:
     """Create a temporary file path for an example code block."""
     return Path(example.path).parent / f"temp_{uuid.uuid4().hex[:8]}.py"
