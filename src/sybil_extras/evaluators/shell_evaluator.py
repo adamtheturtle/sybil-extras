@@ -6,7 +6,6 @@ import platform
 import subprocess
 import sys
 import threading
-import uuid
 from collections.abc import Mapping, Sequence
 from io import BytesIO
 from pathlib import Path
@@ -199,43 +198,6 @@ def _lstrip_newlines(input_string: str, number_of_newlines: int) -> str:
     num_leading_newlines = _count_leading_newlines(s=input_string)
     lines_to_remove = min(num_leading_newlines, number_of_newlines)
     return input_string[lines_to_remove:]
-
-
-@beartype
-def _create_default_temp_file_path(  # pyright: ignore[reportUnusedFunction]
-    *,
-    example: Example,
-    suffix: str = "",
-) -> Path:
-    """Create a temporary file path for an example code block.
-
-    This is a test helper function that generates temporary file paths
-    with informative names for debugging.
-
-    The temporary file is created in the same directory as the source
-    file and includes the source filename and line number in its name
-    for easier identification in error messages.
-
-    Args:
-        example: The Sybil example for which to generate a filename.
-        suffix: The suffix to use for the temporary file, e.g. ``".py"``.
-
-    Returns:
-        A Path object for the temporary file.
-    """
-    path_name = Path(example.path).name
-    # Replace characters that are not allowed in file names for Python
-    # modules.
-    sanitized_path_name = path_name.replace(".", "_").replace("-", "_")
-    line_number_specifier = f"l{example.line}"
-    prefix = f"{sanitized_path_name}_{line_number_specifier}_"
-
-    # Create a sibling file in the same directory as the example file.
-    # The name also looks like the example file name.
-    # This is so that output reflects the actual file path.
-    # This is useful for error messages, and for ignores.
-    parent = Path(example.path).parent
-    return parent / f"{prefix}{uuid.uuid4().hex[:4]}{suffix}"
 
 
 @beartype

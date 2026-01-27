@@ -9,11 +9,9 @@ from sybil import Example, Sybil
 
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
-from sybil_extras.evaluators.shell_evaluator import (
-    ShellCommandEvaluator,
-    _create_default_temp_file_path,  # pyright: ignore[reportPrivateUsage]
-)
+from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 from sybil_extras.languages import DirectiveBuilder, MarkupLanguage
+from tests.conftest import create_default_temp_file_path
 
 
 def test_group(
@@ -532,7 +530,7 @@ def test_with_shell_command_evaluator(
     output_document = tmp_path / "output.txt"
     shell_evaluator = ShellCommandEvaluator(
         args=["sh", "-c", f"cat $0 > {output_document.as_posix()}"],
-        temp_filename_generator=_create_default_temp_file_path,
+        temp_filename_generator=create_default_temp_file_path,
         pad_file=True,
         write_to_file=False,
         use_pty=False,
@@ -602,7 +600,7 @@ def test_state_cleanup_on_evaluator_failure(
 
     shell_evaluator = ShellCommandEvaluator(
         args=["sh"],
-        temp_filename_generator=_create_default_temp_file_path,
+        temp_filename_generator=create_default_temp_file_path,
         pad_file=False,
         write_to_file=False,
         use_pty=False,
@@ -893,7 +891,7 @@ def test_no_pad_groups(
     output_document = tmp_path / "output.txt"
     shell_evaluator = ShellCommandEvaluator(
         args=["sh", "-c", f"cat $0 > {output_document.as_posix()}"],
-        temp_filename_generator=_create_default_temp_file_path,
+        temp_filename_generator=create_default_temp_file_path,
         pad_file=True,
         write_to_file=False,
         use_pty=False,
