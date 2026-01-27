@@ -348,6 +348,112 @@ def test_file_prefix(
     assert given_file_path.name.startswith("custom_prefix_")
 
 
+def test_temp_filename_generator(
+    *,
+    rst_file: Path,
+    capsys: pytest.CaptureFixture[str],
+    use_pty_option: bool,
+) -> None:
+    """A custom filename generator is used when provided."""
+    custom_filename = "my_custom_temp_file.py"
+
+    def custom_generator(*, example: Example) -> Path:
+        """Generate a custom temporary file path."""
+        return Path(example.path).parent / custom_filename
+
+    evaluator = ShellCommandEvaluator(
+        args=["echo"],
+        pad_file=False,
+        write_to_file=False,
+        temp_filename_generator=custom_generator,
+        use_pty=use_pty_option,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    example.evaluate()
+    output = capsys.readouterr().out
+    stripped_output = output.strip()
+    assert stripped_output
+    given_file_path = Path(stripped_output)
+    assert given_file_path.name == custom_filename
+
+
+def test_temp_filename_generator_with_example_data(
+    *,
+    rst_file: Path,
+    capsys: pytest.CaptureFixture[str],
+    use_pty_option: bool,
+) -> None:
+    """The filename generator receives the example with path and line info."""
+
+    def generator_with_line(*, example: Example) -> Path:
+        """Generate a filename that includes the line number."""
+        return Path(example.path).parent / f"example_line_{example.line}.py"
+
+    evaluator = ShellCommandEvaluator(
+        args=["echo"],
+        pad_file=False,
+        write_to_file=False,
+        temp_filename_generator=generator_with_line,
+        use_pty=use_pty_option,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    example.evaluate()
+    output = capsys.readouterr().out
+    stripped_output = output.strip()
+    assert stripped_output
+    given_file_path = Path(stripped_output)
+    # The fixture creates a code block starting around line 3 (0-indexed)
+    # or line 5 in the parsed output (depends on exact parsing)
+    assert given_file_path.name.startswith("example_line_")
+    assert given_file_path.name.endswith(".py")
+
+
+def test_temp_filename_generator_overrides_prefix_and_suffix(
+    *,
+    rst_file: Path,
+    capsys: pytest.CaptureFixture[str],
+    use_pty_option: bool,
+) -> None:
+    """The generator takes precedence over prefix and suffix options."""
+    custom_filename = "generator_wins.txt"
+
+    def custom_generator(*, example: Example) -> Path:
+        """Generate a custom temporary file path."""
+        return Path(example.path).parent / custom_filename
+
+    evaluator = ShellCommandEvaluator(
+        args=["echo"],
+        pad_file=False,
+        write_to_file=False,
+        # These should be ignored when generator is provided
+        tempfile_name_prefix="ignored_prefix",
+        tempfile_suffixes=[".ignored", ".suffix"],
+        temp_filename_generator=custom_generator,
+        use_pty=use_pty_option,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    example.evaluate()
+    output = capsys.readouterr().out
+    stripped_output = output.strip()
+    assert stripped_output
+    given_file_path = Path(stripped_output)
+    # Generator should win - not the prefix/suffix options
+    assert given_file_path.name == custom_filename
+    assert "ignored" not in given_file_path.name
+
+
 def test_pad(*, rst_file: Path, tmp_path: Path, use_pty_option: bool) -> None:
     """If pad is True, the file content is padded.
 

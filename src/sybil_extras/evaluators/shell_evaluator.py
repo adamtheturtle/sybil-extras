@@ -40,6 +40,36 @@ class _ExampleModified(Protocol):
 
 
 @beartype
+@runtime_checkable
+class TempFilenameGenerator(Protocol):
+    """A protocol for generating temporary file paths for examples.
+
+    This allows full customization of the temporary file name used when
+    running shell commands on documentation examples.
+    """
+
+    def __call__(
+        self,
+        *,
+        example: Example,
+    ) -> Path:
+        """Generate a temporary file path for an example.
+
+        Args:
+            example: The Sybil example for which to generate a filename.
+
+        Returns:
+            A Path object for the temporary file. The file should typically
+            be created in the same directory as the source file
+            (``example.path.parent``) so that relative imports and
+            tool configurations work correctly.
+        """
+        # We disable a pylint warning here because the ellipsis is required
+        # for Pyright to recognize this as a protocol.
+        ...  # pylint: disable=unnecessary-ellipsis
+
+
+@beartype
 def _run_command(
     *,
     command: list[str | Path],
@@ -218,6 +248,7 @@ class _ShellCommandRunner:
         env: Mapping[str, str] | None = None,
         tempfile_suffixes: Sequence[str] = (),
         tempfile_name_prefix: str = "",
+        temp_filename_generator: TempFilenameGenerator | None = None,
         newline: str | None = None,
         pad_file: bool,
         write_to_file: bool,
@@ -234,6 +265,9 @@ class _ShellCommandRunner:
                 command.
             tempfile_suffixes: The suffixes to use for the temporary file.
             tempfile_name_prefix: The prefix to use for the temporary file.
+            temp_filename_generator: A callable that generates the temporary
+                file path for an example. If provided, this takes precedence
+                over ``tempfile_suffixes`` and ``tempfile_name_prefix``.
             newline: The newline string to use for the temporary file.
             pad_file: Whether to pad the file with newlines at the start.
             write_to_file: Whether to write changes to the file.
@@ -247,6 +281,7 @@ class _ShellCommandRunner:
         self._pad_file = pad_file
         self._tempfile_name_prefix = tempfile_name_prefix
         self._tempfile_suffixes = tempfile_suffixes
+        self._temp_filename_generator = temp_filename_generator
         self._write_to_file = write_to_file
         self._newline = newline
         self._use_pty = use_pty
@@ -269,11 +304,14 @@ class _ShellCommandRunner:
             source=example.parsed,
             line=padding_line,
         )
-        temp_file = _create_temp_file_path_for_example(
-            example=example,
-            tempfile_name_prefix=self._tempfile_name_prefix,
-            tempfile_suffixes=self._tempfile_suffixes,
-        )
+        if self._temp_filename_generator is not None:
+            temp_file = self._temp_filename_generator(example=example)
+        else:
+            temp_file = _create_temp_file_path_for_example(
+                example=example,
+                tempfile_name_prefix=self._tempfile_name_prefix,
+                tempfile_suffixes=self._tempfile_suffixes,
+            )
 
         # The parsed code block at the end of a file is given without a
         # trailing newline.  Some tools expect that a file has a trailing
@@ -343,6 +381,7 @@ class ShellCommandEvaluator:
         env: Mapping[str, str] | None = None,
         tempfile_suffixes: Sequence[str] = (),
         tempfile_name_prefix: str = "",
+        temp_filename_generator: TempFilenameGenerator | None = None,
         newline: str | None = None,
         # For some commands, padding is good: e.g. we want to see the error
         # reported on the correct line for `mypy`. For others, padding is bad:
@@ -367,6 +406,10 @@ class ShellCommandEvaluator:
                 This is useful for distinguishing files created by a user of
                 this evaluator from other files, e.g. for ignoring in linter
                 configurations.
+            temp_filename_generator: A callable that generates the temporary
+                file path for an example. If provided, this takes precedence
+                over ``tempfile_suffixes`` and ``tempfile_name_prefix``.
+                This allows full customization of the temporary file name.
             newline: The newline string to use for the temporary file.
                 If ``None``, use the system default.
             pad_file: Whether to pad the file with newlines at the start.
@@ -394,6 +437,7 @@ class ShellCommandEvaluator:
             env=env,
             tempfile_suffixes=tempfile_suffixes,
             tempfile_name_prefix=tempfile_name_prefix,
+            temp_filename_generator=temp_filename_generator,
             newline=newline,
             pad_file=pad_file,
             write_to_file=write_to_file,
