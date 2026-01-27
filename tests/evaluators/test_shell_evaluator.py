@@ -274,10 +274,8 @@ def test_file_path(
     use_pty_option: bool,
 ) -> None:
     """
-    The given file path is random and absolute, and starts with a name
-    resembling the documentation file name, but without any hyphens or
-    periods,
-    except for the period for the final suffix.
+    The given file path is random and absolute, in the same directory as
+    the source file, and is different for each evaluation.
     """
     evaluator = ShellCommandEvaluator(
         args=["echo"],
@@ -299,7 +297,7 @@ def test_file_path(
     assert given_file_path.parent == rst_file.parent
     assert given_file_path.is_absolute()
     assert not given_file_path.exists()
-    assert given_file_path.name.startswith("test_document_example_rst_")
+    assert given_file_path.name.startswith("temp_")
     example.evaluate()
     output = capsys.readouterr().out
     new_given_file_path = Path(output.strip())
@@ -736,15 +734,22 @@ def test_no_file_left_behind_on_interruption(
     run_shell_command_evaluator_script_content = textwrap.dedent(
         text=f"""\
         import sys
+        import uuid
         from pathlib import PosixPath, Path
 
         from sybil import Sybil
+        from sybil.example import Example
         from sybil.parsers.rest.codeblock import CodeBlockParser
 
         from sybil_extras.evaluators.shell_evaluator import (
             ShellCommandEvaluator,
-            make_temp_file_path,
         )
+
+
+        def make_temp_file_path(*, example: Example) -> Path:
+            unique_id = uuid.uuid4().hex[:8]
+            return Path(example.path).parent / f"temp_{{unique_id}}.py"
+
 
         evaluator = ShellCommandEvaluator(
             args=[sys.executable, "{sleep_python_script.as_posix()}"],
