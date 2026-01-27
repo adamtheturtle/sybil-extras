@@ -1,11 +1,13 @@
 """Group-all parser tests shared across markup languages."""
 
 import subprocess
+import uuid
 from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
+from beartype import beartype
 from sybil import Document, Example, Region, Sybil
 from sybil.region import Lexeme
 
@@ -16,6 +18,12 @@ from sybil_extras.languages import (
     DirectiveBuilder,
     MarkupLanguage,
 )
+
+
+@beartype
+def make_temp_file_path(*, example: Example) -> Path:
+    """Create a temporary file path for an example code block."""
+    return Path(example.path).parent / f"temp_{uuid.uuid4().hex[:8]}.py"
 
 
 def test_group_all(language: MarkupLanguage, tmp_path: Path) -> None:
@@ -337,6 +345,7 @@ def test_state_cleanup_on_evaluator_failure(
 
     shell_evaluator = ShellCommandEvaluator(
         args=["sh"],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=False,
         use_pty=False,

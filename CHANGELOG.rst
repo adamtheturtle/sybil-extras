@@ -4,6 +4,8 @@ Changelog
 Next
 ----
 
+* **Breaking change**: Replace ``tempfile_suffixes`` and ``tempfile_name_prefix`` parameters in ``ShellCommandEvaluator`` with a single ``temp_file_path_maker`` callable for full control over temporary file path generation.
+
 2026.01.22
 ----------
 

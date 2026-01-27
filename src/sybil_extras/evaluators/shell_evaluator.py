@@ -6,7 +6,6 @@ import platform
 import subprocess
 import sys
 import threading
-import uuid
 from collections.abc import Mapping, Sequence
 from io import BytesIO
 from pathlib import Path
@@ -34,6 +33,36 @@ class _ExampleModified(Protocol):
         modified_example_content: str,
     ) -> None:
         """This function is called when an example is modified."""
+        # We disable a pylint warning here because the ellipsis is required
+        # for Pyright to recognize this as a protocol.
+        ...  # pylint: disable=unnecessary-ellipsis
+
+
+@beartype
+@runtime_checkable
+class TempFilePathMaker(Protocol):
+    """A protocol for creating temporary file paths for examples.
+
+    This allows full customization of the temporary file path used when
+    running shell commands on documentation examples.
+    """
+
+    def __call__(
+        self,
+        *,
+        example: Example,
+    ) -> Path:
+        """Create a temporary file path for an example.
+
+        Args:
+            example: The Sybil example for which to create a file path.
+
+        Returns:
+            A Path object for the temporary file. The file should typically
+            be created in the same directory as the source file
+            (``example.path.parent``) so that relative imports and
+            tool configurations work correctly.
+        """
         # We disable a pylint warning here because the ellipsis is required
         # for Pyright to recognize this as a protocol.
         ...  # pylint: disable=unnecessary-ellipsis
@@ -172,39 +201,6 @@ def _lstrip_newlines(input_string: str, number_of_newlines: int) -> str:
 
 
 @beartype
-def _create_temp_file_path_for_example(
-    *,
-    example: Example,
-    tempfile_name_prefix: str,
-    tempfile_suffixes: Sequence[str],
-) -> Path:
-    """Create a temporary file path for an example code block.
-
-    The temporary file is created in the same directory as the source
-    file and includes the source filename and line number in its name
-    for easier identification in error messages.
-    """
-    path_name = Path(example.path).name
-    # Replace characters that are not allowed in file names for Python
-    # modules.
-    sanitized_path_name = path_name.replace(".", "_").replace("-", "_")
-    line_number_specifier = f"l{example.line}"
-    prefix = f"{sanitized_path_name}_{line_number_specifier}_"
-
-    if tempfile_name_prefix:
-        prefix = f"{tempfile_name_prefix}_{prefix}"
-
-    suffix = "".join(tempfile_suffixes)
-
-    # Create a sibling file in the same directory as the example file.
-    # The name also looks like the example file name.
-    # This is so that output reflects the actual file path.
-    # This is useful for error messages, and for ignores.
-    parent = Path(example.path).parent
-    return parent / f"{prefix}_{uuid.uuid4().hex[:4]}_{suffix}"
-
-
-@beartype
 class _ShellCommandRunner:
     """
     Run a shell command on an example file (internal
@@ -215,9 +211,8 @@ class _ShellCommandRunner:
         self,
         *,
         args: Sequence[str | Path],
+        temp_file_path_maker: TempFilePathMaker,
         env: Mapping[str, str] | None = None,
-        tempfile_suffixes: Sequence[str] = (),
-        tempfile_name_prefix: str = "",
         newline: str | None = None,
         pad_file: bool,
         write_to_file: bool,
@@ -230,10 +225,10 @@ class _ShellCommandRunner:
 
         Args:
             args: The shell command to run.
+            temp_file_path_maker: A callable that generates the temporary
+                file path for an example.
             env: The environment variables to use when running the shell
                 command.
-            tempfile_suffixes: The suffixes to use for the temporary file.
-            tempfile_name_prefix: The prefix to use for the temporary file.
             newline: The newline string to use for the temporary file.
             pad_file: Whether to pad the file with newlines at the start.
             write_to_file: Whether to write changes to the file.
@@ -245,8 +240,7 @@ class _ShellCommandRunner:
         self._args = args
         self._env = env
         self._pad_file = pad_file
-        self._tempfile_name_prefix = tempfile_name_prefix
-        self._tempfile_suffixes = tempfile_suffixes
+        self._temp_file_path_maker = temp_file_path_maker
         self._write_to_file = write_to_file
         self._newline = newline
         self._use_pty = use_pty
@@ -269,11 +263,7 @@ class _ShellCommandRunner:
             source=example.parsed,
             line=padding_line,
         )
-        temp_file = _create_temp_file_path_for_example(
-            example=example,
-            tempfile_name_prefix=self._tempfile_name_prefix,
-            tempfile_suffixes=self._tempfile_suffixes,
-        )
+        temp_file = self._temp_file_path_maker(example=example)
 
         # The parsed code block at the end of a file is given without a
         # trailing newline.  Some tools expect that a file has a trailing
@@ -340,9 +330,8 @@ class ShellCommandEvaluator:
         self,
         *,
         args: Sequence[str | Path],
+        temp_file_path_maker: TempFilePathMaker,
         env: Mapping[str, str] | None = None,
-        tempfile_suffixes: Sequence[str] = (),
-        tempfile_name_prefix: str = "",
         newline: str | None = None,
         # For some commands, padding is good: e.g. we want to see the error
         # reported on the correct line for `mypy`. For others, padding is bad:
@@ -358,15 +347,11 @@ class ShellCommandEvaluator:
 
         Args:
             args: The shell command to run.
+            temp_file_path_maker: A callable that generates the temporary
+                file path for an example. The callable receives the example
+                and should return a Path for the temporary file.
             env: The environment variables to use when running the shell
                 command.
-            tempfile_suffixes: The suffixes to use for the temporary file.
-                This is useful for commands that expect a specific file suffix.
-                For example `pre-commit` hooks which expect `.py` files.
-            tempfile_name_prefix: The prefix to use for the temporary file.
-                This is useful for distinguishing files created by a user of
-                this evaluator from other files, e.g. for ignoring in linter
-                configurations.
             newline: The newline string to use for the temporary file.
                 If ``None``, use the system default.
             pad_file: Whether to pad the file with newlines at the start.
@@ -391,9 +376,8 @@ class ShellCommandEvaluator:
         namespace_key = "_shell_evaluator_modified_content"
         runner = _ShellCommandRunner(
             args=args,
+            temp_file_path_maker=temp_file_path_maker,
             env=env,
-            tempfile_suffixes=tempfile_suffixes,
-            tempfile_name_prefix=tempfile_name_prefix,
             newline=newline,
             pad_file=pad_file,
             write_to_file=write_to_file,

@@ -8,11 +8,13 @@ import subprocess
 import sys
 import textwrap
 import time
+import uuid
 from pathlib import Path
 
 import charset_normalizer
 import click
 import pytest
+from beartype import beartype
 from click.testing import CliRunner
 from sybil import Sybil
 from sybil.example import Example
@@ -35,6 +37,12 @@ from sybil_extras.languages import (
 from sybil_extras.parsers.markdown_it.codeblock import (
     CodeBlockParser as MarkdownItCodeBlockParser,
 )
+
+
+@beartype
+def make_temp_file_path(*, example: Example) -> Path:
+    """Create a temporary file path for an example code block."""
+    return Path(example.path).parent / f"temp_{uuid.uuid4().hex[:8]}.py"
 
 
 @pytest.fixture(
@@ -84,6 +92,7 @@ def test_error(*, rst_file: Path, use_pty_option: bool) -> None:
     args = ["sh", "-c", "exit 1"]
     evaluator = ShellCommandEvaluator(
         args=args,
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=False,
         use_pty=use_pty_option,
@@ -117,6 +126,7 @@ def test_output_shown(
             "-c",
             "echo 'Hello, Sybil!' && echo >&2 'Hello Stderr!'",
         ],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=False,
         use_pty=use_pty_option,
@@ -147,6 +157,7 @@ def test_rm(
     """Output is shown."""
     evaluator = ShellCommandEvaluator(
         args=["rm"],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=False,
         use_pty=use_pty_option,
@@ -176,6 +187,7 @@ def test_pass_env(
             "-c",
             f"echo Hello, $ENV_KEY! > {new_file.as_posix()}; exit 0",
         ],
+        temp_file_path_maker=make_temp_file_path,
         env={"ENV_KEY": "ENV_VALUE"},
         pad_file=False,
         write_to_file=False,
@@ -207,6 +219,7 @@ def test_global_env(
             "-c",
             f"echo Hello, ${env_key}! > {new_file.as_posix()}; exit 0",
         ],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=False,
         use_pty=use_pty_option,
@@ -239,6 +252,7 @@ def test_file_is_passed(
     file_path = tmp_path / "file.txt"
     evaluator = ShellCommandEvaluator(
         args=["sh", "-c", sh_function, "_", file_path],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=False,
         use_pty=use_pty_option,
@@ -260,13 +274,12 @@ def test_file_path(
     use_pty_option: bool,
 ) -> None:
     """
-    The given file path is random and absolute, and starts with a name
-    resembling the documentation file name, but without any hyphens or
-    periods,
-    except for the period for the final suffix.
+    The given file path is random and absolute, in the same directory as
+    the source file, and is different for each evaluation.
     """
     evaluator = ShellCommandEvaluator(
         args=["echo"],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=False,
         use_pty=use_pty_option,
@@ -284,26 +297,31 @@ def test_file_path(
     assert given_file_path.parent == rst_file.parent
     assert given_file_path.is_absolute()
     assert not given_file_path.exists()
-    assert given_file_path.name.startswith("test_document_example_rst_")
+    assert given_file_path.name.startswith("temp_")
     example.evaluate()
     output = capsys.readouterr().out
     new_given_file_path = Path(output.strip())
     assert new_given_file_path != given_file_path
 
 
-def test_file_suffix(
+def test_temp_file_path_maker(
     *,
     rst_file: Path,
     capsys: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
-    """The given file suffixes are used."""
-    suffixes = [".example", ".foobar"]
+    """A custom filename generator is used when provided."""
+    custom_filename = "my_custom_temp_file.py"
+
+    def custom_generator(*, example: Example) -> Path:
+        """Generate a custom temporary file path."""
+        return Path(example.path).parent / custom_filename
+
     evaluator = ShellCommandEvaluator(
         args=["echo"],
         pad_file=False,
         write_to_file=False,
-        tempfile_suffixes=suffixes,
+        temp_file_path_maker=custom_generator,
         use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
@@ -316,36 +334,7 @@ def test_file_suffix(
     stripped_output = output.strip()
     assert stripped_output
     given_file_path = Path(stripped_output)
-    assert given_file_path.name.startswith("test_document_example_rst_")
-    assert given_file_path.suffixes == suffixes
-
-
-def test_file_prefix(
-    *,
-    rst_file: Path,
-    capsys: pytest.CaptureFixture[str],
-    use_pty_option: bool,
-) -> None:
-    """The given file prefixes are used."""
-    prefix = "custom_prefix"
-    evaluator = ShellCommandEvaluator(
-        args=["echo"],
-        pad_file=False,
-        write_to_file=False,
-        tempfile_name_prefix=prefix,
-        use_pty=use_pty_option,
-    )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
-    sybil = Sybil(parsers=[parser])
-
-    document = sybil.parse(path=rst_file)
-    (example,) = document.examples()
-    example.evaluate()
-    output = capsys.readouterr().out
-    stripped_output = output.strip()
-    assert stripped_output
-    given_file_path = Path(stripped_output)
-    assert given_file_path.name.startswith("custom_prefix_")
+    assert given_file_path.name == custom_filename
 
 
 def test_pad(*, rst_file: Path, tmp_path: Path, use_pty_option: bool) -> None:
@@ -361,6 +350,7 @@ def test_pad(*, rst_file: Path, tmp_path: Path, use_pty_option: bool) -> None:
     file_path = tmp_path / "file.txt"
     evaluator = ShellCommandEvaluator(
         args=["sh", "-c", sh_function, "_", file_path],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=True,
         write_to_file=False,
         use_pty=use_pty_option,
@@ -456,6 +446,7 @@ def test_write_to_file_new_content_trailing_newlines(
     file_with_new_content.write_text(data=new_content, encoding="utf-8")
     evaluator = ShellCommandEvaluator(
         args=["cp", file_with_new_content],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=write_to_file,
         use_pty=use_pty_option,
@@ -595,6 +586,7 @@ def test_write_to_file_new_content_no_trailing_newlines(
     file_with_new_content.write_text(data=new_content, encoding="utf-8")
     evaluator = ShellCommandEvaluator(
         args=["cp", file_with_new_content],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=write_to_file,
         use_pty=use_pty_option,
@@ -671,6 +663,7 @@ def test_pad_and_write(*, rst_file: Path, use_pty_option: bool) -> None:
     rst_file.write_text(data=original_content, encoding="utf-8")
     evaluator = ShellCommandEvaluator(
         args=["true"],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=True,
         write_to_file=True,
         use_pty=use_pty_option,
@@ -701,6 +694,7 @@ def test_non_utf8_output(
     script.chmod(mode=stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
     evaluator = ShellCommandEvaluator(
         args=["sh", str(object=script)],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=False,
         use_pty=use_pty_option,
@@ -740,17 +734,26 @@ def test_no_file_left_behind_on_interruption(
     run_shell_command_evaluator_script_content = textwrap.dedent(
         text=f"""\
         import sys
+        import uuid
         from pathlib import PosixPath, Path
 
         from sybil import Sybil
+        from sybil.example import Example
         from sybil.parsers.rest.codeblock import CodeBlockParser
 
         from sybil_extras.evaluators.shell_evaluator import (
             ShellCommandEvaluator,
         )
 
+
+        def make_temp_file_path(*, example: Example) -> Path:
+            unique_id = uuid.uuid4().hex[:8]
+            return Path(example.path).parent / f"temp_{{unique_id}}.py"
+
+
         evaluator = ShellCommandEvaluator(
             args=[sys.executable, "{sleep_python_script.as_posix()}"],
+            temp_file_path_maker=make_temp_file_path,
             pad_file=False,
             write_to_file=True,
             use_pty=False,
@@ -805,6 +808,7 @@ def test_newline_system(
     file_path = tmp_path / "file.txt"
     evaluator = ShellCommandEvaluator(
         args=["sh", "-c", sh_function, "_", file_path],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=False,
         use_pty=use_pty_option,
@@ -848,6 +852,7 @@ def test_newline_given(
     file_path = tmp_path / "file.txt"
     evaluator = ShellCommandEvaluator(
         args=["sh", "-c", sh_function, "_", file_path],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=False,
         newline=given_newline,
@@ -874,6 +879,7 @@ def test_bad_command_error(*, rst_file: Path, use_pty_option: bool) -> None:
     args = ["sh", "--unknownoption"]
     evaluator = ShellCommandEvaluator(
         args=args,
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=False,
         use_pty=use_pty_option,
@@ -907,6 +913,7 @@ def test_click_runner(*, rst_file: Path, use_pty_option: bool) -> None:
                 "-c",
                 "echo 'Hello, Sybil!' && echo >&2 'Hello Stderr!'",
             ],
+            temp_file_path_maker=make_temp_file_path,
             pad_file=False,
             write_to_file=False,
             use_pty=use_pty_option,
@@ -960,6 +967,7 @@ def test_encoding(
     rst_file.write_text(data=content, encoding=encoding)
     evaluator = ShellCommandEvaluator(
         args=["sh", "-c", sh_function, "_", file_path],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=True,
         use_pty=use_pty_option,
@@ -1000,6 +1008,7 @@ def test_custom_on_modify_no_modification(
 
     evaluator = ShellCommandEvaluator(
         args=["true"],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=True,
         write_to_file=True,
         use_pty=use_pty_option,
@@ -1044,6 +1053,7 @@ def test_custom_on_modify_with_modification(
     file_with_new_content.write_text(data=new_content, encoding="utf-8")
     evaluator = ShellCommandEvaluator(
         args=["cp", file_with_new_content],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=True,
         use_pty=use_pty_option,
@@ -1104,6 +1114,7 @@ def test_markdown_code_block_line_number(
 
     evaluator = ShellCommandEvaluator(
         args=[sys.executable, "-m", "py_compile"],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=True,
         write_to_file=False,
         use_pty=False,
