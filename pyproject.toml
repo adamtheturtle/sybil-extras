@@ -71,7 +71,7 @@ optional-dependencies.dev = [
     "sphinx-lint==1.0.2",
     "sybil==9.3.0",
     "ty==0.0.14",
-    "uv==0.9.27",
+    "uv==0.9.28",
     "vulture==2.14",
     "yamlfix==1.19.1",
     "zizmor==1.22.0",
