@@ -74,7 +74,7 @@ def _get_modified_region_text(
     Get the region text to use after the example content is
     replaced.
     """
-    first_line = original_region_text.split(sep="\n")[0]
+    first_line = original_region_text.split(maxsplit=1, sep="\n")[0]
     code_block_indent_prefix = first_line[
         : len(first_line) - len(first_line.lstrip())
     ]
