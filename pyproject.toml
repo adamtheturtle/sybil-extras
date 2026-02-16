@@ -42,7 +42,7 @@ dependencies = [
     "sybil>=9.3.0",
 ]
 optional-dependencies.dev = [
-    "actionlint-py==1.7.10.24",
+    "actionlint-py==1.7.11.24",
     "charset-normalizer==3.4.4",
     "check-manifest==0.51",
     "click==8.3.1",
