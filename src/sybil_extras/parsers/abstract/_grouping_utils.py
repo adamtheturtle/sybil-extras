@@ -57,6 +57,7 @@ def count_expected_code_blocks(examples: Iterable[Example]) -> int:
     return non_skip_count - skipped_count
 
 
+@beartype
 def _get_text(parsed: Lexeme | str) -> str:
     """Get text from a parsed value, which may be a Lexeme or a string.
 

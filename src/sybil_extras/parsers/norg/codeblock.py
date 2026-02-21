@@ -11,6 +11,7 @@ from sybil.region import Lexeme
 from sybil.typing import Evaluator, Lexer
 
 
+@beartype
 class NorgVerbatimRangedTagLexer:
     """A lexer for Norg verbatim ranged tags.
 
