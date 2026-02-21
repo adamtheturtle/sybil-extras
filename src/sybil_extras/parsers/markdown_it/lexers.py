@@ -36,6 +36,7 @@ class DirectiveInHTMLCommentLexer:
 
     def __init__(
         self,
+        *,
         directive: str,
         arguments: str = ".*?",
     ) -> None:

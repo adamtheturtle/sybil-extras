@@ -66,6 +66,7 @@ def _get_within_code_block_indentation_prefix(example: Example) -> str:
 
 @beartype
 def _get_modified_region_text(
+    *,
     example: Example,
     original_region_text: str,
     new_code_block_content: str,

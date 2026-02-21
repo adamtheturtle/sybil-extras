@@ -150,6 +150,7 @@ class _Grouper:
 
     def _find_containing_group_and_state(
         self,
+        *,
         document: Document,
         position: int,
     ) -> _GroupState | None:
@@ -174,6 +175,7 @@ class _Grouper:
 
     def _get_group_state(
         self,
+        *,
         document: Document,
         group_id: int,
     ) -> _GroupState:
@@ -184,6 +186,7 @@ class _Grouper:
 
     def _cleanup_group_state(
         self,
+        *,
         document: Document,
         group_id: int,
     ) -> None:

@@ -80,6 +80,7 @@ def _run_command(
 
     @beartype
     def _process_stream(
+        *,
         stream_fileno: int,
         output: IO[bytes] | BytesIO,
     ) -> None:
@@ -139,11 +140,17 @@ def _run_command(
 
             stdout_thread = threading.Thread(
                 target=_process_stream,
-                args=(process.stdout.fileno(), sys.stdout.buffer),
+                kwargs={
+                    "stream_fileno": process.stdout.fileno(),
+                    "output": sys.stdout.buffer,
+                },
             )
             stderr_thread = threading.Thread(
                 target=_process_stream,
-                args=(process.stderr.fileno(), sys.stderr.buffer),
+                kwargs={
+                    "stream_fileno": process.stderr.fileno(),
+                    "output": sys.stderr.buffer,
+                },
             )
 
             stdout_thread.start()
@@ -183,7 +190,7 @@ def _count_leading_newlines(s: str) -> int:
 
 
 @beartype
-def _lstrip_newlines(input_string: str, number_of_newlines: int) -> str:
+def _lstrip_newlines(*, input_string: str, number_of_newlines: int) -> str:
     """Removes a specified number of newlines from the start of the string.
 
     Args:

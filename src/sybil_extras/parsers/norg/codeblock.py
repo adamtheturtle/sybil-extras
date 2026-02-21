@@ -28,6 +28,7 @@ class NorgVerbatimRangedTagLexer:
 
     def __init__(
         self,
+        *,
         language: str,
         mapping: dict[str, str] | None = None,
     ) -> None:

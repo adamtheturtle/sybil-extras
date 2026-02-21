@@ -35,6 +35,7 @@ class CodeBlockParser:
 
     def __init__(
         self,
+        *,
         language: str | None = None,
         evaluator: Evaluator | None = None,
     ) -> None:

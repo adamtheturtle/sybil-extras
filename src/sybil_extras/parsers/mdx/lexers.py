@@ -42,6 +42,7 @@ class DirectiveInJSXCommentLexer(BlockLexer):
 
     def __init__(
         self,
+        *,
         directive: str,
         arguments: str = ".*?",
         mapping: dict[str, str] | None = None,
