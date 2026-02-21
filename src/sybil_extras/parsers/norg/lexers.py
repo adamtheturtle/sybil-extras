@@ -30,6 +30,7 @@ class DirectiveInNorgCommentLexer:
 
     def __init__(
         self,
+        *,
         directive: str,
         arguments: str = r".*?",
         mapping: dict[str, str] | None = None,

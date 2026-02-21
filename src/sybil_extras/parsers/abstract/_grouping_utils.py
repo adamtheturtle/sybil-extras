@@ -163,6 +163,7 @@ def create_combined_region(
 
 @beartype
 def create_combined_example(
+    *,
     examples: Sequence[Example],
     region: Region,
 ) -> Example:

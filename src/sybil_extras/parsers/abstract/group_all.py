@@ -63,6 +63,7 @@ class _GroupAllEvaluator:
 
     def register_document(
         self,
+        *,
         document: Document,
         expected_code_blocks: int,
     ) -> None:

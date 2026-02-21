@@ -69,6 +69,7 @@ class DjotRawFencedCodeBlockLexer:
 
     def __init__(
         self,
+        *,
         info_pattern: Pattern[str] = re.compile(
             pattern=r"$\n", flags=re.MULTILINE
         ),
@@ -80,6 +81,7 @@ class DjotRawFencedCodeBlockLexer:
 
     def make_region(
         self,
+        *,
         opening: Match[str],
         document: Document,
         closing: Match[str] | None,
@@ -169,7 +171,7 @@ class DjotFencedCodeBlockLexer(DjotRawFencedCodeBlockLexer):
     """A lexer for Djot fenced code blocks that captures languages."""
 
     def __init__(
-        self, language: str, mapping: dict[str, str] | None = None
+        self, *, language: str, mapping: dict[str, str] | None = None
     ) -> None:
         """Initialize the lexer."""
         super().__init__(
