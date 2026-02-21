@@ -61,6 +61,7 @@ def _find_container_end(
     return default_end
 
 
+@beartype
 class DjotRawFencedCodeBlockLexer:
     """
     A lexer for Djot fenced code blocks that respects block quote
@@ -165,6 +166,7 @@ class DjotRawFencedCodeBlockLexer:
                 index = opening.end()
 
 
+@beartype
 class DjotFencedCodeBlockLexer(DjotRawFencedCodeBlockLexer):
     """A lexer for Djot fenced code blocks that captures languages."""
 
