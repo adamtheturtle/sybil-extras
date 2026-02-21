@@ -84,6 +84,7 @@ def test_multi_evaluator_raises_on_failure(rst_file: Path) -> None:
     ids=["non-empty", "empty"],
 )
 def test_multi_evaluator_propagates_failure_string(
+    *,
     rst_file: Path,
     failure_string: str,
 ) -> None:

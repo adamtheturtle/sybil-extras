@@ -22,6 +22,7 @@ def make_temp_file_path(*, example: Example) -> Path:
 
 
 def test_group(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
@@ -77,6 +78,7 @@ def test_group(
 
 
 def test_nothing_after_group(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
@@ -125,6 +127,7 @@ def test_nothing_after_group(
 
 
 def test_empty_group(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
@@ -168,6 +171,7 @@ def test_empty_group(
 
 
 def test_group_with_skip(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
@@ -216,6 +220,7 @@ def test_group_with_skip(
 
 
 def test_group_with_skip_range(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
@@ -268,6 +273,7 @@ def test_group_with_skip_range(
 
 
 def test_no_argument(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
@@ -300,6 +306,7 @@ def test_no_argument(
 
 
 def test_malformed_argument(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
@@ -335,6 +342,7 @@ def test_malformed_argument(
 
 
 def test_end_only(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
@@ -363,6 +371,7 @@ def test_end_only(
 
 
 def test_start_after_start(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
@@ -395,6 +404,7 @@ def test_start_after_start(
 
 
 def test_start_only(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
@@ -422,6 +432,7 @@ def test_start_only(
 
 
 def test_start_start_end(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
@@ -456,6 +467,7 @@ def test_start_start_end(
 
 
 def test_directive_name_not_regex_escaped(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
@@ -515,6 +527,7 @@ def test_directive_name_not_regex_escaped(
 
 
 def test_with_shell_command_evaluator(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
@@ -578,6 +591,7 @@ def test_with_shell_command_evaluator(
 
 
 def test_state_cleanup_on_evaluator_failure(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
@@ -643,6 +657,7 @@ def test_state_cleanup_on_evaluator_failure(
 
 
 def test_thread_safety(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
@@ -698,6 +713,7 @@ def test_thread_safety(
 
 
 def test_multiple_groups_concurrent_evaluation(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
@@ -773,6 +789,7 @@ def test_multiple_groups_concurrent_evaluation(
 
 
 def test_evaluation_order_independence(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
@@ -830,6 +847,7 @@ def test_evaluation_order_independence(
 
 
 def test_no_group_directives(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
@@ -876,6 +894,7 @@ def test_no_group_directives(
 
 
 def test_no_pad_groups(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
@@ -933,6 +952,7 @@ def test_no_pad_groups(
 
 
 def test_end_marker_waits_for_code_blocks(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:

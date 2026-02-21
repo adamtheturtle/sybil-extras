@@ -36,6 +36,7 @@ from sybil_extras.languages import (
     ],
 )
 def test_code_block_parser(
+    *,
     language: MarkupLanguage,
     value: int,
     tmp_path: Path,
@@ -63,6 +64,7 @@ def test_code_block_parser(
 
 
 def test_skip_parser(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
@@ -113,6 +115,7 @@ def test_code_block_empty(language: MarkupLanguage) -> None:
 
 
 def test_group_parser(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
@@ -165,6 +168,7 @@ def test_group_parser(
     ],
 )
 def test_sphinx_jinja_parser(
+    *,
     language: MarkupLanguage,
     tmp_path: Path,
 ) -> None:
