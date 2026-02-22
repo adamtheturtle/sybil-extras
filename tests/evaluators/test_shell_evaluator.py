@@ -377,8 +377,8 @@ def test_pad(*, rst_file: Path, tmp_path: Path, use_pty_option: bool) -> None:
 
 @pytest.mark.parametrize(argnames="write_to_file", argvalues=[True, False])
 def test_write_to_file_new_content_trailing_newlines(
-    tmp_path: Path,
     *,
+    tmp_path: Path,
     write_to_file: bool,
     use_pty_option: bool,
     markup_language: MarkupLanguage,
@@ -519,8 +519,8 @@ def test_write_to_file_new_content_trailing_newlines(
 
 @pytest.mark.parametrize(argnames="write_to_file", argvalues=[True, False])
 def test_write_to_file_new_content_no_trailing_newlines(
-    tmp_path: Path,
     *,
+    tmp_path: Path,
     write_to_file: bool,
     use_pty_option: bool,
     markup_language: MarkupLanguage,
@@ -713,6 +713,7 @@ def test_non_utf8_output(
 
 
 def test_no_file_left_behind_on_interruption(
+    *,
     rst_file: Path,
     tmp_path: Path,
 ) -> None:
@@ -1073,6 +1074,7 @@ def test_custom_on_modify_with_modification(
     ids=["markdown_it", "sybil_markdown"],
 )
 def test_markdown_code_block_line_number(
+    *,
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
     parser_cls: type,

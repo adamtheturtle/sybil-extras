@@ -11,6 +11,7 @@ from sybil_extras.languages import DirectiveBuilder, MarkupLanguage
 
 
 def test_skip(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
@@ -80,6 +81,7 @@ def test_skip(
 
 
 def test_directive_name_in_evaluate_error(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
@@ -108,6 +110,7 @@ def test_directive_name_in_evaluate_error(
 
 
 def test_directive_name_in_parse_error(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
@@ -134,6 +137,7 @@ def test_directive_name_in_parse_error(
 
 
 def test_directive_name_not_regex_escaped(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:

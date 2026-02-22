@@ -26,7 +26,7 @@ def make_temp_file_path(*, example: Example) -> Path:
     return Path(example.path).parent / f"temp_{uuid.uuid4().hex[:8]}.py"
 
 
-def test_group_all(language: MarkupLanguage, tmp_path: Path) -> None:
+def test_group_all(*, language: MarkupLanguage, tmp_path: Path) -> None:
     """All code blocks are grouped into a single block."""
     content = language.markup_separator.join(
         [
@@ -67,6 +67,7 @@ def test_group_all(language: MarkupLanguage, tmp_path: Path) -> None:
 
 
 def test_group_all_single_block(
+    *,
     language: MarkupLanguage,
     tmp_path: Path,
 ) -> None:
@@ -99,6 +100,7 @@ def test_group_all_single_block(
 
 
 def test_group_all_empty_document(
+    *,
     language: MarkupLanguage,
     tmp_path: Path,
 ) -> None:
@@ -128,7 +130,7 @@ def test_group_all_empty_document(
         example.evaluate()
 
 
-def test_group_all_no_pad(language: MarkupLanguage, tmp_path: Path) -> None:
+def test_group_all_no_pad(*, language: MarkupLanguage, tmp_path: Path) -> None:
     """Groups can be combined without inserting extra padding."""
     content = language.markup_separator.join(
         [
@@ -166,7 +168,7 @@ def test_group_all_no_pad(language: MarkupLanguage, tmp_path: Path) -> None:
     assert document.namespace["blocks"] == [expected]
 
 
-def test_thread_safety(language: MarkupLanguage, tmp_path: Path) -> None:
+def test_thread_safety(*, language: MarkupLanguage, tmp_path: Path) -> None:
     """
     The group-all parser is thread-safe when examples are evaluated
     concurrently.
@@ -215,6 +217,7 @@ def test_thread_safety(language: MarkupLanguage, tmp_path: Path) -> None:
 
 
 def test_group_all_with_skip(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
@@ -270,6 +273,7 @@ def test_group_all_with_skip(
 
 
 def test_evaluation_order_independence(
+    *,
     language: MarkupLanguage,
     tmp_path: Path,
 ) -> None:
@@ -326,6 +330,7 @@ def test_evaluation_order_independence(
 
 
 def test_state_cleanup_on_evaluator_failure(
+    *,
     language: MarkupLanguage,
     tmp_path: Path,
 ) -> None:
@@ -373,6 +378,7 @@ def test_state_cleanup_on_evaluator_failure(
 
 
 def test_finalize_waits_for_code_blocks(
+    *,
     language: MarkupLanguage,
     tmp_path: Path,
 ) -> None:
@@ -434,6 +440,7 @@ def test_finalize_waits_for_code_blocks(
 
 
 def test_custom_parser_with_string_parsed_value(
+    *,
     language: MarkupLanguage,
     tmp_path: Path,
 ) -> None:
@@ -512,6 +519,7 @@ def test_custom_parser_with_string_parsed_value(
 
 
 def test_examples_without_source_lexeme(
+    *,
     language: MarkupLanguage,
     tmp_path: Path,
 ) -> None:

@@ -21,6 +21,7 @@ from sybil_extras.languages import (
 
 
 def test_writes_modified_content(
+    *,
     tmp_path: Path,
     markup_language: MarkupLanguage,
 ) -> None:
@@ -192,6 +193,7 @@ def test_writes_on_evaluator_exception(tmp_path: Path) -> None:
 
 
 def test_empty_code_block_write_content(
+    *,
     tmp_path: Path,
     markup_language: MarkupLanguage,
 ) -> None:
@@ -329,6 +331,7 @@ def test_empty_code_block_write_content(
 
 
 def test_empty_code_block_with_options(
+    *,
     tmp_path: Path,
     markup_language: MarkupLanguage,
 ) -> None:
@@ -450,6 +453,7 @@ def test_empty_code_block_with_options(
     ],
 )
 def test_empty_code_block_write_empty(
+    *,
     tmp_path: Path,
     new_content: str,
 ) -> None:
@@ -693,6 +697,7 @@ def test_encoding_parameter(tmp_path: Path) -> None:
 
 
 def test_indented_existing_block(
+    *,
     tmp_path: Path,
     markup_language: MarkupLanguage,
 ) -> None:
@@ -816,6 +821,7 @@ def test_indented_existing_block(
 
 
 def test_indented_empty_existing_block(
+    *,
     tmp_path: Path,
     markup_language: MarkupLanguage,
 ) -> None:
