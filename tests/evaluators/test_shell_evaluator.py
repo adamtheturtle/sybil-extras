@@ -51,6 +51,7 @@ def make_temp_file_path(*, example: Example) -> Path:
     params=[True, False],
 )
 def fixture_use_pty_option(
+    *,
     request: pytest.FixtureRequest,
 ) -> bool:
     """Test with and without the pseudo-terminal."""
@@ -61,7 +62,7 @@ def fixture_use_pty_option(
 
 
 @pytest.fixture(name="rst_file")
-def fixture_rst_file(tmp_path: Path) -> Path:
+def fixture_rst_file(*, tmp_path: Path) -> Path:
     """Fixture to create a temporary RST file with code blocks."""
     # Relied upon features:
     #
