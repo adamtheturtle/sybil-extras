@@ -135,7 +135,7 @@ def python_to_pycon(python_text: str, original_pycon: str) -> str:
     preserve_output = len(statements) == len(original_chunks)
 
     result: list[str] = []
-    for i, stmt in enumerate(statements):
+    for i, stmt in enumerate(iterable=statements):
         # ast line numbers are 1-indexed and end_lineno is inclusive,
         # so python_lines[lineno-1:end_lineno] gives the statement lines.
         start = stmt.lineno - 1

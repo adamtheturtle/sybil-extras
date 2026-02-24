@@ -172,7 +172,7 @@ class TestPyconsShellCommandEvaluator:
             data=f'cat "$1" > {captured.as_posix()}',
             encoding="utf-8",
         )
-        script.chmod(0o755)
+        script.chmod(mode=0o755)
 
         content = "```pycon\n>>> x = 1 + 1\n>>> x\n2\n```\n"
         test_file = tmp_path / "test.md"
