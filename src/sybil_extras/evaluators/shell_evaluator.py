@@ -285,6 +285,8 @@ class ShellCommandEvaluator:
         use_pty: bool,
         encoding: str | None = None,
         on_modify: _ExampleModified | None = None,
+        source_preparer: SourcePreparer = _NOOP_SOURCE_PREPARER,
+        result_transformer: ResultTransformer = _NOOP_RESULT_TRANSFORMER,
     ) -> None:
         """Initialize the evaluator.
 
@@ -312,6 +314,10 @@ class ShellCommandEvaluator:
                 use the system default.
             on_modify: A callback to run when the example is modified by the
                 evaluator.
+            source_preparer: A callable that extracts source from an example
+                before it is written to the temporary file.
+            result_transformer: A callable that transforms the result before
+                it is written back to the document.
 
         Raises:
             ValueError: If pseudo-terminal is requested on Windows.
@@ -328,6 +334,8 @@ class ShellCommandEvaluator:
             encoding=encoding,
             on_modify=on_modify,
             namespace_key=namespace_key,
+            source_preparer=source_preparer,
+            result_transformer=result_transformer,
         )
         self._evaluator: _ShellCommandRunner | CodeBlockWriterEvaluator
         if write_to_file:
