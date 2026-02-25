@@ -150,7 +150,7 @@ def run_command(
 
 
 @beartype
-def count_leading_newlines(s: str) -> int:
+def _count_leading_newlines(s: str) -> int:
     """Count the number of leading newline characters in a string.
 
     Args:
@@ -182,6 +182,6 @@ def lstrip_newlines(*, input_string: str, number_of_newlines: int) -> str:
         The string with at most ``number_of_newlines`` leading newlines
         removed.
     """
-    num_leading = count_leading_newlines(s=input_string)
+    num_leading = _count_leading_newlines(s=input_string)
     lines_to_remove = min(num_leading, number_of_newlines)
     return input_string[lines_to_remove:]

@@ -5,20 +5,18 @@ import platform
 import subprocess
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from beartype import beartype
 from sybil import Example
 from sybil.evaluators.python import pad
+from sybil.typing import Evaluator
 
 from sybil_extras.evaluators._subprocess_utils import (
     lstrip_newlines,
     run_command,
 )
 from sybil_extras.evaluators.code_block_writer import CodeBlockWriterEvaluator
-
-if TYPE_CHECKING:
-    from sybil.typing import Evaluator
 
 
 @beartype
@@ -36,6 +34,74 @@ class _ExampleModified(Protocol):
         # We disable a pylint warning here because the ellipsis is required
         # for Pyright to recognize this as a protocol.
         ...  # pylint: disable=unnecessary-ellipsis
+
+
+@beartype
+@runtime_checkable
+class SourcePreparer(Protocol):
+    """Prepare source content from an example.
+
+    Implementations extract the raw source string from an example's parsed
+    content.  The returned string is then padded and written to a temporary
+    file by the runner.
+    """
+
+    def __call__(
+        self,
+        *,
+        example: Example,
+    ) -> str:
+        """Return the source string for the given example."""
+        # We disable a pylint warning here because the ellipsis is required
+        # for Pyright to recognize this as a protocol.
+        ...  # pylint: disable=unnecessary-ellipsis
+
+
+@beartype
+class _NoOpSourcePreparer:
+    """Return the example's parsed content as-is."""
+
+    def __call__(self, *, example: Example) -> str:
+        """Return the parsed content of the example."""
+        return str(object=example.parsed)
+
+
+_NOOP_SOURCE_PREPARER = _NoOpSourcePreparer()
+
+
+@beartype
+@runtime_checkable
+class ResultTransformer(Protocol):
+    """Transform the result content before it is written back.
+
+    Implementations receive the formatted content (after padding has been
+    stripped) and return the string that should replace the original code
+    block in the document.
+    """
+
+    def __call__(
+        self,
+        *,
+        content: str,
+        example: Example,
+    ) -> str:
+        """Return the transformed content."""
+        # We disable a pylint warning here because the ellipsis is required
+        # for Pyright to recognize this as a protocol.
+        ...  # pylint: disable=unnecessary-ellipsis
+
+
+@beartype
+class _NoOpResultTransformer:
+    """Return the content unchanged."""
+
+    def __call__(self, *, content: str, example: Example) -> str:
+        """Return the content as-is."""
+        del example
+        return content
+
+
+_NOOP_RESULT_TRANSFORMER = _NoOpResultTransformer()
 
 
 @beartype
@@ -88,6 +154,8 @@ class _ShellCommandRunner:
         encoding: str | None = None,
         on_modify: _ExampleModified | None = None,
         namespace_key: str = "",
+        source_preparer: SourcePreparer = _NOOP_SOURCE_PREPARER,
+        result_transformer: ResultTransformer = _NOOP_RESULT_TRANSFORMER,
     ) -> None:
         """Initialize the shell command runner.
 
@@ -104,6 +172,9 @@ class _ShellCommandRunner:
             encoding: The encoding to use for the temporary file.
             on_modify: A callback to run when the example is modified.
             namespace_key: The key to store modified content in the namespace.
+            source_preparer: A callable that extracts source from an example.
+            result_transformer: A callable that transforms the result before
+                it is written back.
         """
         self._args = args
         self._env = env
@@ -115,6 +186,8 @@ class _ShellCommandRunner:
         self._encoding = encoding
         self._on_modify = on_modify
         self._namespace_key = namespace_key
+        self._source_preparer = source_preparer
+        self._result_transformer = result_transformer
 
     def __call__(self, example: Example) -> None:
         """Run the shell command on the example file."""
@@ -127,10 +200,9 @@ class _ShellCommandRunner:
         padding_line = (
             example.line + example.parsed.line_offset if self._pad_file else 0
         )
-        source = pad(
-            source=example.parsed,
-            line=padding_line,
-        )
+
+        raw_source = self._source_preparer(example=example)
+        source = pad(source=raw_source, line=padding_line)
         temp_file = self._temp_file_path_maker(example=example)
 
         # The parsed code block at the end of a file is given without a
@@ -177,6 +249,10 @@ class _ShellCommandRunner:
                 input_string=temp_file_content,
                 number_of_newlines=padding_line,
             )
+            new_region_content = self._result_transformer(
+                content=new_region_content,
+                example=example,
+            )
             example.document.namespace[self._namespace_key] = (
                 new_region_content
             )
@@ -188,6 +264,72 @@ class _ShellCommandRunner:
                 output=result.stdout,
                 stderr=result.stderr,
             )
+
+
+@beartype
+def create_evaluator(
+    *,
+    args: Sequence[str | Path],
+    temp_file_path_maker: TempFilePathMaker,
+    env: Mapping[str, str] | None = None,
+    newline: str | None = None,
+    pad_file: bool,
+    write_to_file: bool,
+    use_pty: bool,
+    encoding: str | None = None,
+    on_modify: _ExampleModified | None = None,
+    namespace_key: str,
+    source_preparer: SourcePreparer = _NOOP_SOURCE_PREPARER,
+    result_transformer: ResultTransformer = _NOOP_RESULT_TRANSFORMER,
+) -> Evaluator:
+    """Create an evaluator that runs a shell command on examples.
+
+    This is the shared factory used by both
+    :class:`ShellCommandEvaluator` and
+    :class:`~sybil_extras.evaluators.pycon_shell_evaluator.PyconsShellCommandEvaluator`.
+    It builds a :class:`_ShellCommandRunner` and optionally wraps it with
+    :class:`~sybil_extras.evaluators.code_block_writer.CodeBlockWriterEvaluator`.
+
+    Args:
+        args: The shell command to run.
+        temp_file_path_maker: A callable that generates the temporary file
+            path for an example.
+        env: Environment variables for the command.
+        newline: Newline convention for the temporary file.
+        pad_file: Whether to pad with leading newlines.
+        write_to_file: Whether to write changes back to the document.
+        use_pty: Whether to run inside a pseudo-terminal.
+        encoding: Encoding for file I/O.
+        on_modify: Callback when the command modifies the file.
+        namespace_key: Key for storing modified content in the namespace.
+        source_preparer: Extracts source from the example before padding.
+        result_transformer: Transforms the result before writing back.
+
+    Returns:
+        An evaluator callable.
+    """
+    runner = _ShellCommandRunner(
+        args=args,
+        temp_file_path_maker=temp_file_path_maker,
+        env=env,
+        newline=newline,
+        pad_file=pad_file,
+        write_to_file=write_to_file,
+        use_pty=use_pty,
+        encoding=encoding,
+        on_modify=on_modify,
+        namespace_key=namespace_key,
+        source_preparer=source_preparer,
+        result_transformer=result_transformer,
+    )
+
+    if write_to_file:
+        return CodeBlockWriterEvaluator(
+            evaluator=runner,
+            namespace_key=namespace_key,
+            encoding=encoding,
+        )
+    return runner
 
 
 @beartype
@@ -241,8 +383,7 @@ class ShellCommandEvaluator:
         Raises:
             ValueError: If pseudo-terminal is requested on Windows.
         """
-        namespace_key = "_shell_evaluator_modified_content"
-        runner = _ShellCommandRunner(
+        self._evaluator = create_evaluator(
             args=args,
             temp_file_path_maker=temp_file_path_maker,
             env=env,
@@ -252,17 +393,8 @@ class ShellCommandEvaluator:
             use_pty=use_pty,
             encoding=encoding,
             on_modify=on_modify,
-            namespace_key=namespace_key,
+            namespace_key="_shell_evaluator_modified_content",
         )
-
-        if write_to_file:
-            self._evaluator: Evaluator = CodeBlockWriterEvaluator(
-                evaluator=runner,
-                namespace_key=namespace_key,
-                encoding=encoding,
-            )
-        else:
-            self._evaluator = runner
 
     def __call__(self, example: Example) -> None:
         """Run the shell command on the example file."""
