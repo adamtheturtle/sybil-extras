@@ -173,11 +173,11 @@ class PyconsShellCommandEvaluator:
             the system default is used.
         pad_file: Whether to pad the temporary file with leading newlines so
             that the code starts at its actual line number in the document.
-            Useful for linters that report line numbers.
+            Useful for tools that report line numbers.
         write_to_file: Whether to write any changes made by the command back
             to the source document. Useful for formatters.
         use_pty: Whether to run the command inside a pseudo-terminal.
-            Enables colour output from tools. Not supported on Windows.
+            Enables color output from tools. Not supported on Windows.
         encoding: Encoding for reading and writing files. If ``None``,
             the system default is used.
     """

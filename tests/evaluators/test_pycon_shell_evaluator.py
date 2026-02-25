@@ -24,354 +24,349 @@ def make_temp_file_path(*, example: Example) -> Path:
     return Path(example.path).parent / f"temp_{uuid.uuid4().hex[:8]}.py"
 
 
-class TestPyconsShellCommandEvaluator:
-    """Tests for PyconsShellCommandEvaluator."""
+def test_error_on_nonzero_exit(*, tmp_path: Path) -> None:
+    """A CalledProcessError is raised when the command fails."""
+    content = textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> x = 1
+        ```
+        """,
+    )
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
 
-    def test_error_on_nonzero_exit(self, *, tmp_path: Path) -> None:
-        """A CalledProcessError is raised when the command fails."""
-        content = textwrap.dedent(
-            text="""\
-            ```pycon
-            >>> x = 1
-            ```
-            """,
-        )
-        test_file = tmp_path / "test.md"
-        test_file.write_text(data=content, encoding="utf-8")
+    evaluator = PyconsShellCommandEvaluator(
+        args=["sh", "-c", "exit 1"],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=False,
+        use_pty=False,
+    )
+    parser = SybilMarkdownCodeBlockParser(
+        language="pycon",
+        evaluator=evaluator,
+    )
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    (example,) = document.examples()
 
-        evaluator = PyconsShellCommandEvaluator(
-            args=["sh", "-c", "exit 1"],
-            temp_file_path_maker=make_temp_file_path,
-            pad_file=False,
-            write_to_file=False,
-            use_pty=False,
-        )
-        parser = SybilMarkdownCodeBlockParser(
-            language="pycon",
-            evaluator=evaluator,
-        )
-        sybil = Sybil(parsers=[parser])
-        document = sybil.parse(path=test_file)
-        (example,) = document.examples()
-
-        with pytest.raises(expected_exception=subprocess.CalledProcessError):
-            example.evaluate()
-
-    def test_writes_extracted_python_to_temp_file(
-        self,
-        *,
-        tmp_path: Path,
-    ) -> None:
-        """Only Python input lines (without >>> prompts) reach the command."""
-        script = tmp_path / "capture.sh"
-        captured = tmp_path / "captured.txt"
-        script.write_text(
-            data=f'cat "$1" > {captured.as_posix()}',
-            encoding="utf-8",
-        )
-        script.chmod(mode=0o755)
-
-        content = textwrap.dedent(
-            text="""\
-            ```pycon
-            >>> x = 1 + 1
-            >>> x
-            2
-            ```
-            """,
-        )
-        test_file = tmp_path / "test.md"
-        test_file.write_text(data=content, encoding="utf-8")
-
-        evaluator = PyconsShellCommandEvaluator(
-            args=["sh", script.as_posix()],
-            temp_file_path_maker=make_temp_file_path,
-            pad_file=False,
-            write_to_file=False,
-            use_pty=False,
-        )
-        parser = SybilMarkdownCodeBlockParser(
-            language="pycon",
-            evaluator=evaluator,
-        )
-        sybil = Sybil(parsers=[parser])
-        document = sybil.parse(path=test_file)
-        (example,) = document.examples()
+    with pytest.raises(expected_exception=subprocess.CalledProcessError):
         example.evaluate()
 
-        written = captured.read_text(encoding="utf-8")
-        # The temp file should contain Python, not pycon
-        assert ">>>" not in written
-        assert "x = 1 + 1\n" in written
-        assert "x\n" in written
 
-    def test_write_to_file_reformats_pycon(
-        self,
-        *,
-        tmp_path: Path,
-    ) -> None:
-        """Write_to_file=True rewrites the block in pycon format."""
-        content = textwrap.dedent(
+def test_writes_extracted_python_to_temp_file(
+    *,
+    tmp_path: Path,
+) -> None:
+    """Only Python input lines (without >>> prompts) reach the command."""
+    script = tmp_path / "capture.sh"
+    captured = tmp_path / "captured.txt"
+    script.write_text(
+        data=f'cat "$1" > {captured.as_posix()}',
+        encoding="utf-8",
+    )
+    script.chmod(mode=0o755)
+
+    content = textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> x = 1 + 1
+        >>> x
+        2
+        ```
+        """,
+    )
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    evaluator = PyconsShellCommandEvaluator(
+        args=["sh", script.as_posix()],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=False,
+        use_pty=False,
+    )
+    parser = SybilMarkdownCodeBlockParser(
+        language="pycon",
+        evaluator=evaluator,
+    )
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    (example,) = document.examples()
+    example.evaluate()
+
+    written = captured.read_text(encoding="utf-8")
+    # The temp file should contain Python, not pycon
+    assert ">>>" not in written
+    assert "x = 1 + 1\n" in written
+    assert "x\n" in written
+
+
+def test_write_to_file_reformats_pycon(
+    *,
+    tmp_path: Path,
+) -> None:
+    """Write_to_file=True rewrites the block in pycon format."""
+    content = textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> x=1+1
+        >>> x
+        2
+        ```
+        """
+    )
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    # Use a script that adds spaces around the = sign
+    script = tmp_path / "fmt.py"
+    script.write_text(
+        data=textwrap.dedent(
             text="""\
-            ```pycon
-            >>> x=1+1
-            >>> x
-            2
-            ```
+            import sys, re, pathlib
+            path = pathlib.Path(sys.argv[1])
+            text = path.read_text()
+            text = text.replace("x=1+1", "x = 1 + 1")
+            path.write_text(text)
             """
-        )
-        test_file = tmp_path / "test.md"
-        test_file.write_text(data=content, encoding="utf-8")
+        ),
+        encoding="utf-8",
+    )
 
-        # Use a script that adds spaces around the = sign
-        script = tmp_path / "fmt.py"
-        script.write_text(
-            data=textwrap.dedent(
-                text="""\
-                import sys, re, pathlib
-                path = pathlib.Path(sys.argv[1])
-                text = path.read_text()
-                text = text.replace("x=1+1", "x = 1 + 1")
-                path.write_text(text)
-                """
-            ),
-            encoding="utf-8",
-        )
+    evaluator = PyconsShellCommandEvaluator(
+        args=["python3", str(object=script)],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=True,
+        use_pty=False,
+    )
+    parser = SybilMarkdownCodeBlockParser(
+        language="pycon",
+        evaluator=evaluator,
+    )
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    (example,) = document.examples()
+    example.evaluate()
 
-        evaluator = PyconsShellCommandEvaluator(
-            args=["python3", str(object=script)],
-            temp_file_path_maker=make_temp_file_path,
-            pad_file=False,
-            write_to_file=True,
-            use_pty=False,
-        )
-        parser = SybilMarkdownCodeBlockParser(
-            language="pycon",
-            evaluator=evaluator,
-        )
-        sybil = Sybil(parsers=[parser])
-        document = sybil.parse(path=test_file)
-        (example,) = document.examples()
-        example.evaluate()
+    result = test_file.read_text(encoding="utf-8")
+    # The file should now have formatted pycon content
+    assert ">>> x = 1 + 1\n" in result
+    # Output line should be preserved
+    assert "2\n" in result
 
-        result = test_file.read_text(encoding="utf-8")
-        # The file should now have formatted pycon content
-        assert ">>> x = 1 + 1\n" in result
-        # Output line should be preserved
-        assert "2\n" in result
 
-    def test_no_change_leaves_file_unmodified(
-        self,
-        *,
-        tmp_path: Path,
-    ) -> None:
-        """When the command makes no changes the file is left
-        untouched.
-        """
-        content = textwrap.dedent(
+def test_no_change_leaves_file_unmodified(
+    *,
+    tmp_path: Path,
+) -> None:
+    """When the command makes no changes the file is left untouched."""
+    content = textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> x = 1
+        ```
+        """,
+    )
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+    mtime_before = test_file.stat().st_mtime
+
+    evaluator = PyconsShellCommandEvaluator(
+        args=["true"],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=True,
+        use_pty=False,
+    )
+    parser = SybilMarkdownCodeBlockParser(
+        language="pycon",
+        evaluator=evaluator,
+    )
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    (example,) = document.examples()
+    example.evaluate()
+
+    assert test_file.stat().st_mtime == mtime_before
+
+
+def test_continuation_and_bare_prompts(
+    *,
+    tmp_path: Path,
+) -> None:
+    """Bare ``>>>`` / ``...`` and ``...`` continuation lines are
+    handled.
+    """
+    content = textwrap.dedent(
+        text="""\
+        ```pycon
+        >>>
+        >>> def foo():
+        ...     return 1
+        ...
+        ```
+        """,
+    )
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    evaluator = PyconsShellCommandEvaluator(
+        args=["true"],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=False,
+        use_pty=False,
+    )
+    parser = SybilMarkdownCodeBlockParser(
+        language="pycon",
+        evaluator=evaluator,
+    )
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    (example,) = document.examples()
+    example.evaluate()
+
+
+def test_write_to_file_with_continuation_lines(
+    *,
+    tmp_path: Path,
+) -> None:
+    """Write-to-file preserves continuation lines and output."""
+    content = textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> def foo():
+        ...     return 1
+        >>> foo()
+        1
+        ```
+        """,
+    )
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    evaluator = PyconsShellCommandEvaluator(
+        args=["true"],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=True,
+        use_pty=False,
+    )
+    parser = SybilMarkdownCodeBlockParser(
+        language="pycon",
+        evaluator=evaluator,
+    )
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    (example,) = document.examples()
+    example.evaluate()
+
+    result = test_file.read_text(encoding="utf-8")
+    assert ">>> def foo():\n" in result
+    assert "...     return 1\n" in result
+    assert "1\n" in result
+
+
+def test_write_to_file_syntax_error_fallback(
+    *,
+    tmp_path: Path,
+) -> None:
+    """When a formatter produces invalid Python, lines are prefixed
+    with ``>>>``.
+    """
+    content = textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> x = 1
+        ```
+        """,
+    )
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    script = tmp_path / "corrupt.py"
+    script.write_text(
+        data=textwrap.dedent(
             text="""\
-            ```pycon
-            >>> x = 1
-            ```
+            import sys, pathlib
+            path = pathlib.Path(sys.argv[1])
+            path.write_text("def (\\n")
             """,
-        )
-        test_file = tmp_path / "test.md"
-        test_file.write_text(data=content, encoding="utf-8")
-        mtime_before = test_file.stat().st_mtime
+        ),
+        encoding="utf-8",
+    )
 
-        evaluator = PyconsShellCommandEvaluator(
-            args=["true"],
-            temp_file_path_maker=make_temp_file_path,
-            pad_file=False,
-            write_to_file=True,
-            use_pty=False,
-        )
-        parser = SybilMarkdownCodeBlockParser(
-            language="pycon",
-            evaluator=evaluator,
-        )
-        sybil = Sybil(parsers=[parser])
-        document = sybil.parse(path=test_file)
-        (example,) = document.examples()
-        example.evaluate()
+    evaluator = PyconsShellCommandEvaluator(
+        args=["python3", str(object=script)],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=True,
+        use_pty=False,
+    )
+    parser = SybilMarkdownCodeBlockParser(
+        language="pycon",
+        evaluator=evaluator,
+    )
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    (example,) = document.examples()
+    example.evaluate()
 
-        assert test_file.stat().st_mtime == mtime_before
+    result = test_file.read_text(encoding="utf-8")
+    assert ">>> def (\n" in result
 
-    def test_continuation_and_bare_prompts(
-        self,
-        *,
-        tmp_path: Path,
-    ) -> None:
-        """Bare ``>>>`` / ``...`` and ``...`` continuation lines are
-        handled.
-        """
-        content = textwrap.dedent(
+
+def test_write_to_file_statement_count_mismatch(
+    *,
+    tmp_path: Path,
+) -> None:
+    """When the formatter changes the number of statements, output
+    lines are not preserved.
+    """
+    content = textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> x = 1
+        >>> y = 2
+        2
+        ```
+        """,
+    )
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    script = tmp_path / "merge.py"
+    script.write_text(
+        data=textwrap.dedent(
             text="""\
-            ```pycon
-            >>>
-            >>> def foo():
-            ...     return 1
-            ...
-            ```
+            import sys, pathlib
+            path = pathlib.Path(sys.argv[1])
+            path.write_text("z = 3\\n")
             """,
-        )
-        test_file = tmp_path / "test.md"
-        test_file.write_text(data=content, encoding="utf-8")
+        ),
+        encoding="utf-8",
+    )
 
-        evaluator = PyconsShellCommandEvaluator(
-            args=["true"],
-            temp_file_path_maker=make_temp_file_path,
-            pad_file=False,
-            write_to_file=False,
-            use_pty=False,
-        )
-        parser = SybilMarkdownCodeBlockParser(
-            language="pycon",
-            evaluator=evaluator,
-        )
-        sybil = Sybil(parsers=[parser])
-        document = sybil.parse(path=test_file)
-        (example,) = document.examples()
-        example.evaluate()
+    evaluator = PyconsShellCommandEvaluator(
+        args=["python3", str(object=script)],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=True,
+        use_pty=False,
+    )
+    parser = SybilMarkdownCodeBlockParser(
+        language="pycon",
+        evaluator=evaluator,
+    )
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    (example,) = document.examples()
+    example.evaluate()
 
-    def test_write_to_file_with_continuation_lines(
-        self,
-        *,
-        tmp_path: Path,
-    ) -> None:
-        """Write-to-file preserves continuation lines and output."""
-        content = textwrap.dedent(
-            text="""\
-            ```pycon
-            >>> def foo():
-            ...     return 1
-            >>> foo()
-            1
-            ```
-            """,
-        )
-        test_file = tmp_path / "test.md"
-        test_file.write_text(data=content, encoding="utf-8")
-
-        evaluator = PyconsShellCommandEvaluator(
-            args=["true"],
-            temp_file_path_maker=make_temp_file_path,
-            pad_file=False,
-            write_to_file=True,
-            use_pty=False,
-        )
-        parser = SybilMarkdownCodeBlockParser(
-            language="pycon",
-            evaluator=evaluator,
-        )
-        sybil = Sybil(parsers=[parser])
-        document = sybil.parse(path=test_file)
-        (example,) = document.examples()
-        example.evaluate()
-
-        result = test_file.read_text(encoding="utf-8")
-        assert ">>> def foo():\n" in result
-        assert "...     return 1\n" in result
-        assert "1\n" in result
-
-    def test_write_to_file_syntax_error_fallback(
-        self,
-        *,
-        tmp_path: Path,
-    ) -> None:
-        """When a formatter produces invalid Python, lines are prefixed
-        with ``>>>``.
-        """
-        content = textwrap.dedent(
-            text="""\
-            ```pycon
-            >>> x = 1
-            ```
-            """,
-        )
-        test_file = tmp_path / "test.md"
-        test_file.write_text(data=content, encoding="utf-8")
-
-        script = tmp_path / "corrupt.py"
-        script.write_text(
-            data=textwrap.dedent(
-                text="""\
-                import sys, pathlib
-                path = pathlib.Path(sys.argv[1])
-                path.write_text("def (\\n")
-                """,
-            ),
-            encoding="utf-8",
-        )
-
-        evaluator = PyconsShellCommandEvaluator(
-            args=["python3", str(object=script)],
-            temp_file_path_maker=make_temp_file_path,
-            pad_file=False,
-            write_to_file=True,
-            use_pty=False,
-        )
-        parser = SybilMarkdownCodeBlockParser(
-            language="pycon",
-            evaluator=evaluator,
-        )
-        sybil = Sybil(parsers=[parser])
-        document = sybil.parse(path=test_file)
-        (example,) = document.examples()
-        example.evaluate()
-
-        result = test_file.read_text(encoding="utf-8")
-        assert ">>> def (\n" in result
-
-    def test_write_to_file_statement_count_mismatch(
-        self,
-        *,
-        tmp_path: Path,
-    ) -> None:
-        """When the formatter changes the number of statements, output
-        lines are not preserved.
-        """
-        content = textwrap.dedent(
-            text="""\
-            ```pycon
-            >>> x = 1
-            >>> y = 2
-            2
-            ```
-            """,
-        )
-        test_file = tmp_path / "test.md"
-        test_file.write_text(data=content, encoding="utf-8")
-
-        script = tmp_path / "merge.py"
-        script.write_text(
-            data=textwrap.dedent(
-                text="""\
-                import sys, pathlib
-                path = pathlib.Path(sys.argv[1])
-                path.write_text("z = 3\\n")
-                """,
-            ),
-            encoding="utf-8",
-        )
-
-        evaluator = PyconsShellCommandEvaluator(
-            args=["python3", str(object=script)],
-            temp_file_path_maker=make_temp_file_path,
-            pad_file=False,
-            write_to_file=True,
-            use_pty=False,
-        )
-        parser = SybilMarkdownCodeBlockParser(
-            language="pycon",
-            evaluator=evaluator,
-        )
-        sybil = Sybil(parsers=[parser])
-        document = sybil.parse(path=test_file)
-        (example,) = document.examples()
-        example.evaluate()
-
-        result = test_file.read_text(encoding="utf-8")
-        assert ">>> z = 3\n" in result
-        # Output "2" is not preserved because statement count changed
-        assert "2\n" not in result
+    result = test_file.read_text(encoding="utf-8")
+    assert ">>> z = 3\n" in result
+    # Output "2" is not preserved because statement count changed
+    assert "2\n" not in result
