@@ -1184,8 +1184,8 @@ def test_custom_source_preparer(
     example.evaluate()
 
     written = captured_file.read_text(encoding="utf-8")
-    # The source should be in uppercase
-    assert written == written.upper()
+    expected = "X = 2 + 2\nASSERT X == 4\n"
+    assert written == expected
 
 
 def test_custom_result_transformer(
@@ -1234,8 +1234,16 @@ def test_custom_result_transformer(
     (example,) = document.examples()
     example.evaluate()
 
-    result = source_file.read_text(encoding="utf-8")
-    assert "# transformed" in result
+    expected = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+           x = 1  # transformed
+        """
+    )
+    assert source_file.read_text(encoding="utf-8") == expected
 
 
 def test_create_evaluator_no_write_returns_runner(
@@ -1297,6 +1305,13 @@ def test_create_evaluator_write_to_file(
     (example,) = document.examples()
     example.evaluate()
 
-    result = source_file.read_text(encoding="utf-8")
-    assert "new_content = True" in result
-    assert "old_content" not in result
+    expected = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+           new_content = True
+        """
+    )
+    assert source_file.read_text(encoding="utf-8") == expected
