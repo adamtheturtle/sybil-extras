@@ -152,10 +152,15 @@ def test_write_to_file_reformats_pycon(
     example.evaluate()
 
     result = test_file.read_text(encoding="utf-8")
-    # The file should now have formatted pycon content
-    assert ">>> x = 1 + 1\n" in result
-    # Output line should be preserved
-    assert "2\n" in result
+    assert result == textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> x = 1 + 1
+        >>> x
+        2
+        ```
+        """,
+    )
 
 
 def test_no_change_leaves_file_unmodified(
@@ -265,9 +270,16 @@ def test_write_to_file_with_continuation_lines(
     example.evaluate()
 
     result = test_file.read_text(encoding="utf-8")
-    assert ">>> def foo():\n" in result
-    assert "...     return 1\n" in result
-    assert "1\n" in result
+    assert result == textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> def foo():
+        ...     return 1
+        >>> foo()
+        1
+        ```
+        """,
+    )
 
 
 def test_write_to_file_with_trailing_bare_continuation_prompt(
@@ -306,10 +318,17 @@ def test_write_to_file_with_trailing_bare_continuation_prompt(
     example.evaluate()
 
     result = test_file.read_text(encoding="utf-8")
-    assert "...\n" in result
-    assert "... \n" not in result
-    assert ">>> foo()\n" in result
-    assert "1\n" in result
+    assert result == textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> def foo():
+        ...     return 1
+        ...
+        >>> foo()
+        1
+        ```
+        """,
+    )
 
 
 def test_write_to_file_preserves_bare_primary_prompt_spacing(
@@ -345,8 +364,14 @@ def test_write_to_file_preserves_bare_primary_prompt_spacing(
     example.evaluate()
 
     result = test_file.read_text(encoding="utf-8")
-    assert ">>>\n" in result
-    assert ">>> \n" not in result
+    assert result == textwrap.dedent(
+        text="""\
+        ```pycon
+        >>>
+        >>> x = 1
+        ```
+        """,
+    )
 
 
 def test_write_to_file_ignores_lines_before_first_prompt(
@@ -386,8 +411,14 @@ def test_write_to_file_ignores_lines_before_first_prompt(
     example.evaluate()
 
     result = test_file.read_text(encoding="utf-8")
-    assert ">>> x = 1\n" in result
-    assert "1\n" in result
+    assert result == textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> stray continuation
+        >>> x = 1
+        ```
+        """,
+    )
 
 
 def test_write_to_file_with_no_prompts(
@@ -423,7 +454,13 @@ def test_write_to_file_with_no_prompts(
     example.evaluate()
 
     result = test_file.read_text(encoding="utf-8")
-    assert ">>> stray continuation\n" in result
+    assert result == textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> stray continuation
+        ```
+        """,
+    )
 
 
 def test_write_to_file_syntax_error_fallback(
@@ -472,7 +509,13 @@ def test_write_to_file_syntax_error_fallback(
     example.evaluate()
 
     result = test_file.read_text(encoding="utf-8")
-    assert ">>> def (\n" in result
+    assert result == textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> def (
+        ```
+        """,
+    )
 
 
 def test_write_to_file_preserves_comment_lines(
@@ -509,10 +552,15 @@ def test_write_to_file_preserves_comment_lines(
     example.evaluate()
 
     result = test_file.read_text(encoding="utf-8")
-    assert ">>> # comment about x\n" in result
-    assert ">>> x = 1\n" in result
-    # Output line should be preserved
-    assert "1\n" in result
+    assert result == textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> # comment about x
+        >>> x = 1
+        1
+        ```
+        """,
+    )
 
 
 def test_write_to_file_no_semicolon_duplication(
@@ -547,7 +595,13 @@ def test_write_to_file_no_semicolon_duplication(
     example.evaluate()
 
     result = test_file.read_text(encoding="utf-8")
-    assert result.count("x = 1; y = 2") == 1
+    assert result == textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> x = 1; y = 2
+        ```
+        """,
+    )
 
 
 def test_write_to_file_statement_count_mismatch(
@@ -598,6 +652,10 @@ def test_write_to_file_statement_count_mismatch(
     example.evaluate()
 
     result = test_file.read_text(encoding="utf-8")
-    assert ">>> z = 3\n" in result
-    # Output "2" is not preserved because statement count changed
-    assert "2\n" not in result
+    assert result == textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> z = 3
+        ```
+        """,
+    )
