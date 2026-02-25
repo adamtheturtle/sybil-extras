@@ -23,7 +23,12 @@ from sybil.parsers.markdown import (
 )
 from sybil.parsers.rest.codeblock import CodeBlockParser
 
-from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
+from sybil_extras.evaluators.shell_evaluator import (
+    ResultTransformer,
+    ShellCommandEvaluator,
+    SourcePreparer,
+    create_evaluator,
+)
 from sybil_extras.languages import (
     DJOT,
     MARKDOWN,
@@ -1137,3 +1142,161 @@ def test_markdown_code_block_line_number(
     assert "line 4" in captured.err, (
         f"stderr contains 'line 5' instead of 'line 4': {captured.err}"
     )
+
+
+def test_custom_source_preparer(
+    *,
+    rst_file: Path,
+    tmp_path: Path,
+) -> None:
+    """A custom SourcePreparer can transform content before the
+    command.
+    """
+    captured_file = tmp_path / "captured.txt"
+
+    @beartype
+    class UpperSourcePreparer:
+        """Return the example's source uppercased."""
+
+        def __call__(self, *, example: Example) -> str:
+            """Return uppercased source."""
+            return str(object=example.parsed).upper()
+
+    assert isinstance(UpperSourcePreparer(), SourcePreparer)
+
+    # $1 is the temp file (args are: sh -c script _ <temp_file>)
+    sh_function = f'cp "$1" "{captured_file.as_posix()}"'
+
+    runner = create_evaluator(
+        args=["sh", "-c", sh_function, "_"],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=False,
+        use_pty=False,
+        namespace_key="test_key",
+        source_preparer=UpperSourcePreparer(),
+    )
+    parser = CodeBlockParser(language="python", evaluator=runner)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    example.evaluate()
+
+    written = captured_file.read_text(encoding="utf-8")
+    # The source should be uppercased
+    assert written == written.upper()
+
+
+def test_custom_result_transformer(
+    *,
+    tmp_path: Path,
+) -> None:
+    """A custom ResultTransformer can rewrite content before write-
+    back.
+    """
+    content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+           x = 1
+        """
+    )
+    source_file = tmp_path / "source.rst"
+    source_file.write_text(data=content, encoding="utf-8")
+
+    @beartype
+    class SuffixResultTransformer:
+        """Append a comment to the result."""
+
+        def __call__(self, *, content: str, example: Example) -> str:
+            """Append a comment."""
+            del example
+            return content.rstrip("\n") + "  # transformed\n"
+
+    assert isinstance(SuffixResultTransformer(), ResultTransformer)
+
+    runner = create_evaluator(
+        args=["true"],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=True,
+        use_pty=False,
+        namespace_key="test_result_key",
+        result_transformer=SuffixResultTransformer(),
+    )
+    parser = CodeBlockParser(language="python", evaluator=runner)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=source_file)
+    (example,) = document.examples()
+    example.evaluate()
+
+    result = source_file.read_text(encoding="utf-8")
+    assert "# transformed" in result
+
+
+def test_create_evaluator_no_write_returns_runner(
+    *,
+    rst_file: Path,
+) -> None:
+    """Create_evaluator with write_to_file=False returns a plain
+    runner.
+    """
+    evaluator = create_evaluator(
+        args=["true"],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=False,
+        use_pty=False,
+        namespace_key="test_key",
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    # Should run without error and leave the file unchanged
+    original = rst_file.read_text(encoding="utf-8")
+    example.evaluate()
+    assert rst_file.read_text(encoding="utf-8") == original
+
+
+def test_create_evaluator_write_to_file(
+    *,
+    tmp_path: Path,
+) -> None:
+    """Create_evaluator with write_to_file=True writes changes back."""
+    content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+           old_content = True
+        """
+    )
+    source_file = tmp_path / "source.rst"
+    source_file.write_text(data=content, encoding="utf-8")
+
+    new_content_file = tmp_path / "new.txt"
+    new_content_file.write_text(data="new_content = True\n", encoding="utf-8")
+
+    evaluator = create_evaluator(
+        args=["cp", new_content_file],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=True,
+        use_pty=False,
+        namespace_key="_create_evaluator_test",
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=source_file)
+    (example,) = document.examples()
+    example.evaluate()
+
+    result = source_file.read_text(encoding="utf-8")
+    assert "new_content = True" in result
+    assert "old_content" not in result
