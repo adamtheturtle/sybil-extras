@@ -12,11 +12,14 @@ from sybil.example import Example
 from sybil.parsers.markdown import (
     CodeBlockParser as SybilMarkdownCodeBlockParser,
 )
-from sybil.typing import Evaluator
 
-from sybil_extras.evaluators.result_transformer import PyconResultTransformer
-from sybil_extras.evaluators.shell_evaluator import create_evaluator
-from sybil_extras.evaluators.source_preparer import PyconSourcePreparer
+from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
+from sybil_extras.evaluators.shell_evaluator.result_transformer import (
+    PyconResultTransformer,
+)
+from sybil_extras.evaluators.shell_evaluator.source_preparer import (
+    PyconSourcePreparer,
+)
 
 
 @beartype
@@ -32,15 +35,14 @@ def _make_pycon_evaluator(
     pad_file: bool = False,
     write_to_file: bool = False,
     use_pty: bool = False,
-) -> Evaluator:
+) -> ShellCommandEvaluator:
     """Create an evaluator for pycon code blocks."""
-    return create_evaluator(
+    return ShellCommandEvaluator(
         args=args,
         temp_file_path_maker=make_temp_file_path,
         pad_file=pad_file,
         write_to_file=write_to_file,
         use_pty=use_pty,
-        namespace_key="_pycon_test_modified_content",
         source_preparer=PyconSourcePreparer(),
         result_transformer=PyconResultTransformer(),
     )

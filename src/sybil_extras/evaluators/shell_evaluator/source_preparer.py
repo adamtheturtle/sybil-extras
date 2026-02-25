@@ -10,6 +10,8 @@ from typing import Protocol, runtime_checkable
 from beartype import beartype
 from sybil import Example
 
+from sybil_extras.evaluators.shell_evaluator._pycon import pycon_to_python
+
 
 @beartype
 @runtime_checkable
@@ -42,3 +44,16 @@ class NoOpSourcePreparer:
 
 
 NOOP_SOURCE_PREPARER = NoOpSourcePreparer()
+
+
+@beartype
+class PyconSourcePreparer:
+    """Extract Python source from pycon content.
+
+    Strips ``>>>`` and ``...`` prompts and discards output lines,
+    returning plain Python source code.
+    """
+
+    def __call__(self, *, example: Example) -> str:
+        """Return the Python code extracted from the pycon example."""
+        return pycon_to_python(pycon_text=str(object=example.parsed))
