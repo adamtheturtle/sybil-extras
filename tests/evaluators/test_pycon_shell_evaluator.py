@@ -270,6 +270,83 @@ def test_write_to_file_with_continuation_lines(
     assert "1\n" in result
 
 
+def test_write_to_file_ignores_lines_before_first_prompt(
+    *,
+    tmp_path: Path,
+) -> None:
+    """Stray lines before the first prompt do not break pycon write-
+    back.
+    """
+    content = textwrap.dedent(
+        text="""\
+        ```pycon
+        leading output
+        ... stray continuation
+        >>> x = 1
+        1
+        ```
+        """,
+    )
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    evaluator = PyconsShellCommandEvaluator(
+        args=["true"],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=True,
+        use_pty=False,
+    )
+    parser = SybilMarkdownCodeBlockParser(
+        language="pycon",
+        evaluator=evaluator,
+    )
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    (example,) = document.examples()
+    example.evaluate()
+
+    result = test_file.read_text(encoding="utf-8")
+    assert ">>> x = 1\n" in result
+    assert "1\n" in result
+
+
+def test_write_to_file_with_no_prompts(
+    *,
+    tmp_path: Path,
+) -> None:
+    """A pycon block with no prompts is handled without crashing."""
+    content = textwrap.dedent(
+        text="""\
+        ```pycon
+        just output
+        ... stray continuation
+        ```
+        """,
+    )
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    evaluator = PyconsShellCommandEvaluator(
+        args=["true"],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=True,
+        use_pty=False,
+    )
+    parser = SybilMarkdownCodeBlockParser(
+        language="pycon",
+        evaluator=evaluator,
+    )
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    (example,) = document.examples()
+    example.evaluate()
+
+    result = test_file.read_text(encoding="utf-8")
+    assert ">>> stray continuation\n" in result
+
+
 def test_write_to_file_syntax_error_fallback(
     *,
     tmp_path: Path,

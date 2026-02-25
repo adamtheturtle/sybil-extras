@@ -80,13 +80,13 @@ def _parse_pycon_chunks(
             input_line = "\n" if stripped == ">>>" else line[4:]
             current_input.append(input_line)
         elif stripped == "..." or line.startswith("... "):
-            if have_current:  # pragma: no branch
+            if have_current:
                 input_line = "\n" if stripped == "..." else line[4:]
                 current_input.append(input_line)
-        elif have_current:  # pragma: no branch
+        elif have_current:
             current_output.append(line)
 
-    if have_current:  # pragma: no branch
+    if have_current:
         chunks.append((current_input, current_output))
 
     return chunks
@@ -128,10 +128,9 @@ def _python_to_pycon(python_text: str, original_pycon: str) -> str:
     continuation_lines: set[int] = set()
     for stmt in tree.body:
         start = stmt.lineno - 1
-        end = stmt.end_lineno
-        if end is not None:  # pragma: no branch
-            for line_idx in range(start + 1, end):
-                continuation_lines.add(line_idx)
+        end: int = stmt.end_lineno
+        for line_idx in range(start + 1, end):
+            continuation_lines.add(line_idx)
 
     # Build groups: each group is a ``>>>`` line followed by zero or more
     # ``...`` continuation lines.
