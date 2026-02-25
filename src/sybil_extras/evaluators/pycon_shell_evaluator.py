@@ -93,6 +93,52 @@ def _parse_pycon_chunks(
 
 
 @beartype
+def _with_pycon_prompt(*, prompt: str, line: str) -> str:
+    """Prefix a line with a pycon prompt, preserving bare prompts."""
+    if line in {"", "\n", "\r\n"}:
+        return prompt + line
+    return f"{prompt} {line}"
+
+
+@beartype
+def _continuation_line_indices(*, tree: ast.Module) -> set[int]:
+    """Return zero-based indices of continuation lines in multi-line
+    statements.
+    """
+    continuation_lines: set[int] = set()
+    for stmt in tree.body:
+        start = stmt.lineno - 1
+        end = stmt.end_lineno or stmt.lineno
+        for line_idx in range(start + 1, end):
+            continuation_lines.add(line_idx)
+    return continuation_lines
+
+
+@beartype
+def _python_lines_to_pycon_groups(
+    *,
+    python_lines: list[str],
+    continuation_lines: set[int],
+) -> list[list[str]]:
+    """Build pycon prompt groups from Python lines."""
+    groups: list[list[str]] = []
+    for i, line in enumerate(iterable=python_lines):
+        if i in continuation_lines:
+            groups[-1].append(_with_pycon_prompt(prompt="...", line=line))
+        elif (
+            groups
+            and line.strip("\r\n") == ""
+            and groups[-1][-1].startswith("... ")
+        ):
+            # Preserve the trailing bare ``...`` prompt used to terminate a
+            # block in interactive sessions.
+            groups[-1].append(_with_pycon_prompt(prompt="...", line=line))
+        else:
+            groups.append([_with_pycon_prompt(prompt=">>>", line=line)])
+    return groups
+
+
+@beartype
 def _python_to_pycon(python_text: str, original_pycon: str) -> str:
     """Convert formatted Python code back to pycon format.
 
@@ -122,38 +168,13 @@ def _python_to_pycon(python_text: str, original_pycon: str) -> str:
 
     python_lines = python_text.splitlines(keepends=True)
 
-    # Build a set of line indices that are continuation lines within a
-    # multi-line statement.  Every other line (statement starts, comments,
-    # blank lines between statements) will start a new ``>>>`` group.
-    continuation_lines: set[int] = set()
-    for stmt in tree.body:
-        start = stmt.lineno - 1
-        end = stmt.end_lineno or stmt.lineno
-        for line_idx in range(start + 1, end):
-            continuation_lines.add(line_idx)
-
     # Build groups: each group is a ``>>>`` line followed by zero or more
     # ``...`` continuation lines.
-    def _with_prompt(*, prompt: str, line: str) -> str:
-        """Prefix a line with a pycon prompt, preserving bare prompts."""
-        if line in {"", "\n", "\r\n"}:
-            return prompt + line
-        return f"{prompt} {line}"
-
-    groups: list[list[str]] = []
-    for i, line in enumerate(iterable=python_lines):
-        if i in continuation_lines:
-            groups[-1].append(_with_prompt(prompt="...", line=line))
-        elif (
-            groups
-            and line.strip("\r\n") == ""
-            and groups[-1][-1].startswith("... ")
-        ):
-            # Preserve the trailing bare ``...`` prompt used to terminate a
-            # block in interactive sessions.
-            groups[-1].append(_with_prompt(prompt="...", line=line))
-        else:
-            groups.append([_with_prompt(prompt=">>>", line=line)])
+    continuation_lines = _continuation_line_indices(tree=tree)
+    groups = _python_lines_to_pycon_groups(
+        python_lines=python_lines,
+        continuation_lines=continuation_lines,
+    )
 
     preserve_output = len(groups) == len(original_chunks)
 
