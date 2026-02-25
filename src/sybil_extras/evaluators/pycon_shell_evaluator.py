@@ -141,6 +141,14 @@ def _python_to_pycon(python_text: str, original_pycon: str) -> str:
     for i, line in enumerate(iterable=python_lines):
         if i in continuation_lines:
             groups[-1].append("... " + line)
+        elif (
+            groups
+            and line.strip("\r\n") == ""
+            and groups[-1][-1].startswith("... ")
+        ):
+            # Preserve the trailing bare ``...`` prompt used to terminate a
+            # block in interactive sessions.
+            groups[-1].append("... " + line)
         else:
             groups.append([">>> " + line])
 
