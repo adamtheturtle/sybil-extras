@@ -1156,10 +1156,10 @@ def test_custom_source_preparer(
 
     @beartype
     class UpperSourcePreparer:
-        """Return the example's source uppercased."""
+        """Return the example's source in uppercase."""
 
         def __call__(self, *, example: Example) -> str:
-            """Return uppercased source."""
+            """Return source in uppercase."""
             return str(object=example.parsed).upper()
 
     assert isinstance(UpperSourcePreparer(), SourcePreparer)
@@ -1184,7 +1184,7 @@ def test_custom_source_preparer(
     example.evaluate()
 
     written = captured_file.read_text(encoding="utf-8")
-    # The source should be uppercased
+    # The source should be in uppercase
     assert written == written.upper()
 
 
