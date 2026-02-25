@@ -1,27 +1,18 @@
-"""An evaluator for running shell commands on pycon code blocks.
+"""Internal pycon conversion utilities.
 
-This module provides an evaluator that extracts Python code from pycon-style
-code blocks (containing lines with ``>>>`` and ``...`` prompts), runs a tool
-on the extracted code, and optionally writes back the results in pycon format,
-preserving any output lines from the original.
+This module handles conversion between pycon format (interactive Python
+sessions with ``>>>`` and ``...`` prompts) and plain Python source code,
+preserving output lines during round-trips.
 """
 
 import ast
-from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from pathlib import Path
 
 from beartype import beartype
-from sybil import Example
-
-from sybil_extras.evaluators.shell_evaluator import (
-    TempFilePathMaker,
-    create_evaluator,
-)
 
 
 @beartype
-def _pycon_to_python(pycon_text: str) -> str:
+def pycon_to_python(pycon_text: str) -> str:
     """Extract Python input lines from pycon content.
 
     Strip ``>>> `` and ``... `` prefixes from input lines.
@@ -226,7 +217,7 @@ def _render_pycon_from_python(
 
 
 @beartype
-def _python_to_pycon(python_text: str, original_pycon: str) -> str:
+def python_to_pycon(python_text: str, original_pycon: str) -> str:
     """Convert formatted Python code back to pycon format.
 
     Adds ``>>> `` to the first line of each top-level statement and ``... ``
@@ -248,85 +239,3 @@ def _python_to_pycon(python_text: str, original_pycon: str) -> str:
         python_text=python_text,
         original_transcript=transcript,
     )
-
-
-@beartype
-class _PyconSourcePreparer:
-    """Extract Python source from pycon content."""
-
-    def __call__(self, *, example: Example) -> str:
-        """Return the Python code extracted from the pycon example."""
-        return _pycon_to_python(pycon_text=str(object=example.parsed))
-
-
-@beartype
-class _PyconResultTransformer:
-    """Convert formatted Python back to pycon format."""
-
-    def __call__(self, *, content: str, example: Example) -> str:
-        """Return the pycon-formatted version of the formatted Python."""
-        return _python_to_pycon(
-            python_text=content,
-            original_pycon=str(object=example.parsed),
-        )
-
-
-@beartype
-class PyconsShellCommandEvaluator:
-    """Run a shell command on pycon (Python Console) code blocks.
-
-    This evaluator extracts Python source from pycon-style code blocks,
-    writes it to a temporary file, runs a shell command on that file, and
-    optionally writes the result back to the document in pycon format,
-    preserving any output lines from the original block.
-
-    Args:
-        args: The shell command to run. The temporary file path is appended
-            as the final argument.
-        temp_file_path_maker: A callable that generates the temporary file
-            path for an example.
-        env: Environment variables for the shell command. If ``None``, the
-            current process environment is used.
-        newline: Newline convention for the temporary file. If ``None``,
-            the system default is used.
-        pad_file: Whether to pad the temporary file with leading newlines so
-            that the code starts at its actual line number in the document.
-            Useful for tools that report line numbers.
-        write_to_file: Whether to write any changes made by the command back
-            to the source document. Useful for formatters.
-        use_pty: Whether to run the command inside a pseudo-terminal.
-            Enables color output from tools. Not supported on Windows.
-        encoding: Encoding for reading and writing files. If ``None``,
-            the system default is used.
-    """
-
-    def __init__(
-        self,
-        *,
-        args: Sequence[str | Path],
-        temp_file_path_maker: TempFilePathMaker,
-        env: Mapping[str, str] | None = None,
-        newline: str | None = None,
-        pad_file: bool,
-        write_to_file: bool,
-        use_pty: bool,
-        encoding: str | None = None,
-    ) -> None:
-        """Initialize the evaluator."""
-        self._evaluator = create_evaluator(
-            args=args,
-            temp_file_path_maker=temp_file_path_maker,
-            env=env,
-            newline=newline,
-            pad_file=pad_file,
-            write_to_file=write_to_file,
-            use_pty=use_pty,
-            encoding=encoding,
-            namespace_key="_pycon_shell_evaluator_modified_content",
-            source_preparer=_PyconSourcePreparer(),
-            result_transformer=_PyconResultTransformer(),
-        )
-
-    def __call__(self, example: Example) -> None:
-        """Run the shell command on the pycon example."""
-        self._evaluator(example)

@@ -9,6 +9,8 @@ from typing import Protocol, runtime_checkable
 from beartype import beartype
 from sybil import Example
 
+from sybil_extras.evaluators._pycon import python_to_pycon
+
 
 @beartype
 @runtime_checkable
@@ -43,3 +45,19 @@ class NoOpResultTransformer:
 
 
 NOOP_RESULT_TRANSFORMER = NoOpResultTransformer()
+
+
+@beartype
+class PyconResultTransformer:
+    """Convert formatted Python back to pycon format.
+
+    Adds ``>>>`` and ``...`` prompts and preserves output lines from the
+    original pycon content when the statement structure is unchanged.
+    """
+
+    def __call__(self, *, content: str, example: Example) -> str:
+        """Return the pycon-formatted version of the formatted Python."""
+        return python_to_pycon(
+            python_text=content,
+            original_pycon=str(object=example.parsed),
+        )

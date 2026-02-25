@@ -1,4 +1,4 @@
-"""Tests for PyconsShellCommandEvaluator."""
+"""Tests for pycon source preparer and result transformer."""
 
 import subprocess
 import textwrap
@@ -12,16 +12,38 @@ from sybil.example import Example
 from sybil.parsers.markdown import (
     CodeBlockParser as SybilMarkdownCodeBlockParser,
 )
+from sybil.typing import Evaluator
 
-from sybil_extras.evaluators.pycon_shell_evaluator import (
-    PyconsShellCommandEvaluator,
-)
+from sybil_extras.evaluators.result_transformer import PyconResultTransformer
+from sybil_extras.evaluators.shell_evaluator import create_evaluator
+from sybil_extras.evaluators.source_preparer import PyconSourcePreparer
 
 
 @beartype
 def make_temp_file_path(*, example: Example) -> Path:
     """Create a temporary file path for an example code block."""
     return Path(example.path).parent / f"temp_{uuid.uuid4().hex[:8]}.py"
+
+
+@beartype
+def _make_pycon_evaluator(
+    *,
+    args: list[str | Path],
+    pad_file: bool = False,
+    write_to_file: bool = False,
+    use_pty: bool = False,
+) -> Evaluator:
+    """Create an evaluator for pycon code blocks."""
+    return create_evaluator(
+        args=args,
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=pad_file,
+        write_to_file=write_to_file,
+        use_pty=use_pty,
+        namespace_key="_pycon_test_modified_content",
+        source_preparer=PyconSourcePreparer(),
+        result_transformer=PyconResultTransformer(),
+    )
 
 
 def test_error_on_nonzero_exit(*, tmp_path: Path) -> None:
@@ -36,13 +58,7 @@ def test_error_on_nonzero_exit(*, tmp_path: Path) -> None:
     test_file = tmp_path / "test.md"
     test_file.write_text(data=content, encoding="utf-8")
 
-    evaluator = PyconsShellCommandEvaluator(
-        args=["sh", "-c", "exit 1"],
-        temp_file_path_maker=make_temp_file_path,
-        pad_file=False,
-        write_to_file=False,
-        use_pty=False,
-    )
+    evaluator = _make_pycon_evaluator(args=["sh", "-c", "exit 1"])
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
         evaluator=evaluator,
@@ -80,12 +96,8 @@ def test_writes_extracted_python_to_temp_file(
     test_file = tmp_path / "test.md"
     test_file.write_text(data=content, encoding="utf-8")
 
-    evaluator = PyconsShellCommandEvaluator(
+    evaluator = _make_pycon_evaluator(
         args=["sh", script.as_posix()],
-        temp_file_path_maker=make_temp_file_path,
-        pad_file=False,
-        write_to_file=False,
-        use_pty=False,
     )
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
@@ -135,12 +147,9 @@ def test_write_to_file_reformats_pycon(
         encoding="utf-8",
     )
 
-    evaluator = PyconsShellCommandEvaluator(
+    evaluator = _make_pycon_evaluator(
         args=["python3", str(object=script)],
-        temp_file_path_maker=make_temp_file_path,
-        pad_file=False,
         write_to_file=True,
-        use_pty=False,
     )
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
@@ -179,12 +188,9 @@ def test_no_change_leaves_file_unmodified(
     test_file.write_text(data=content, encoding="utf-8")
     mtime_before = test_file.stat().st_mtime
 
-    evaluator = PyconsShellCommandEvaluator(
+    evaluator = _make_pycon_evaluator(
         args=["true"],
-        temp_file_path_maker=make_temp_file_path,
-        pad_file=False,
         write_to_file=True,
-        use_pty=False,
     )
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
@@ -218,13 +224,7 @@ def test_continuation_and_bare_prompts(
     test_file = tmp_path / "test.md"
     test_file.write_text(data=content, encoding="utf-8")
 
-    evaluator = PyconsShellCommandEvaluator(
-        args=["true"],
-        temp_file_path_maker=make_temp_file_path,
-        pad_file=False,
-        write_to_file=False,
-        use_pty=False,
-    )
+    evaluator = _make_pycon_evaluator(args=["true"])
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
         evaluator=evaluator,
@@ -253,12 +253,9 @@ def test_write_to_file_with_continuation_lines(
     test_file = tmp_path / "test.md"
     test_file.write_text(data=content, encoding="utf-8")
 
-    evaluator = PyconsShellCommandEvaluator(
+    evaluator = _make_pycon_evaluator(
         args=["true"],
-        temp_file_path_maker=make_temp_file_path,
-        pad_file=False,
         write_to_file=True,
-        use_pty=False,
     )
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
@@ -301,12 +298,9 @@ def test_write_to_file_with_trailing_bare_continuation_prompt(
     test_file = tmp_path / "test.md"
     test_file.write_text(data=content, encoding="utf-8")
 
-    evaluator = PyconsShellCommandEvaluator(
+    evaluator = _make_pycon_evaluator(
         args=["true"],
-        temp_file_path_maker=make_temp_file_path,
-        pad_file=False,
         write_to_file=True,
-        use_pty=False,
     )
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
@@ -347,12 +341,9 @@ def test_write_to_file_preserves_bare_primary_prompt_spacing(
     test_file = tmp_path / "test.md"
     test_file.write_text(data=content, encoding="utf-8")
 
-    evaluator = PyconsShellCommandEvaluator(
+    evaluator = _make_pycon_evaluator(
         args=["true"],
-        temp_file_path_maker=make_temp_file_path,
-        pad_file=False,
         write_to_file=True,
-        use_pty=False,
     )
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
@@ -394,12 +385,9 @@ def test_write_to_file_ignores_lines_before_first_prompt(
     test_file = tmp_path / "test.md"
     test_file.write_text(data=content, encoding="utf-8")
 
-    evaluator = PyconsShellCommandEvaluator(
+    evaluator = _make_pycon_evaluator(
         args=["true"],
-        temp_file_path_maker=make_temp_file_path,
-        pad_file=False,
         write_to_file=True,
-        use_pty=False,
     )
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
@@ -437,12 +425,9 @@ def test_write_to_file_with_no_prompts(
     test_file = tmp_path / "test.md"
     test_file.write_text(data=content, encoding="utf-8")
 
-    evaluator = PyconsShellCommandEvaluator(
+    evaluator = _make_pycon_evaluator(
         args=["true"],
-        temp_file_path_maker=make_temp_file_path,
-        pad_file=False,
         write_to_file=True,
-        use_pty=False,
     )
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
@@ -492,12 +477,9 @@ def test_write_to_file_syntax_error_fallback(
         encoding="utf-8",
     )
 
-    evaluator = PyconsShellCommandEvaluator(
+    evaluator = _make_pycon_evaluator(
         args=["python3", str(object=script)],
-        temp_file_path_maker=make_temp_file_path,
-        pad_file=False,
         write_to_file=True,
-        use_pty=False,
     )
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
@@ -535,12 +517,9 @@ def test_write_to_file_preserves_comment_lines(
     test_file = tmp_path / "test.md"
     test_file.write_text(data=content, encoding="utf-8")
 
-    evaluator = PyconsShellCommandEvaluator(
+    evaluator = _make_pycon_evaluator(
         args=["true"],
-        temp_file_path_maker=make_temp_file_path,
-        pad_file=False,
         write_to_file=True,
-        use_pty=False,
     )
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
@@ -578,12 +557,9 @@ def test_write_to_file_no_semicolon_duplication(
     test_file = tmp_path / "test.md"
     test_file.write_text(data=content, encoding="utf-8")
 
-    evaluator = PyconsShellCommandEvaluator(
+    evaluator = _make_pycon_evaluator(
         args=["true"],
-        temp_file_path_maker=make_temp_file_path,
-        pad_file=False,
         write_to_file=True,
-        use_pty=False,
     )
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
@@ -635,12 +611,9 @@ def test_write_to_file_statement_count_mismatch(
         encoding="utf-8",
     )
 
-    evaluator = PyconsShellCommandEvaluator(
+    evaluator = _make_pycon_evaluator(
         args=["python3", str(object=script)],
-        temp_file_path_maker=make_temp_file_path,
-        pad_file=False,
         write_to_file=True,
-        use_pty=False,
     )
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
@@ -704,12 +677,9 @@ def test_write_to_file_preserves_output_when_formatter_adds_blank_line(
         encoding="utf-8",
     )
 
-    evaluator = PyconsShellCommandEvaluator(
+    evaluator = _make_pycon_evaluator(
         args=["python3", str(object=script)],
-        temp_file_path_maker=make_temp_file_path,
-        pad_file=False,
         write_to_file=True,
-        use_pty=False,
     )
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
