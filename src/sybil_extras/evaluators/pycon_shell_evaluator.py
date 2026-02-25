@@ -7,25 +7,16 @@ preserving any output lines from the original.
 """
 
 import ast
-import contextlib
-import subprocess
-import sys
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from beartype import beartype
 from sybil import Example
 
-from sybil_extras.evaluators._subprocess_utils import (
-    lstrip_newlines,
-    run_command,
+from sybil_extras.evaluators.shell_evaluator import (
+    TempFilePathMaker,
+    create_evaluator,
 )
-from sybil_extras.evaluators.code_block_writer import CodeBlockWriterEvaluator
-from sybil_extras.evaluators.shell_evaluator import TempFilePathMaker
-
-if TYPE_CHECKING:
-    from sybil.typing import Evaluator
 
 
 @beartype
@@ -164,6 +155,27 @@ def _python_to_pycon(python_text: str, original_pycon: str) -> str:
 
 
 @beartype
+class _PyconSourcePreparer:
+    """Extract Python source from pycon content."""
+
+    def __call__(self, *, example: Example) -> str:
+        """Return the Python code extracted from the pycon example."""
+        return _pycon_to_python(pycon_text=str(object=example.parsed))
+
+
+@beartype
+class _PyconResultTransformer:
+    """Convert formatted Python back to pycon format."""
+
+    def __call__(self, *, content: str, example: Example) -> str:
+        """Return the pycon-formatted version of the formatted Python."""
+        return _python_to_pycon(
+            python_text=content,
+            original_pycon=str(object=example.parsed),
+        )
+
+
+@beartype
 class PyconsShellCommandEvaluator:
     """Run a shell command on pycon (Python Console) code blocks.
 
@@ -205,87 +217,19 @@ class PyconsShellCommandEvaluator:
         encoding: str | None = None,
     ) -> None:
         """Initialize the evaluator."""
-        self._args = args
-        self._temp_file_path_maker = temp_file_path_maker
-        self._env = env
-        self._newline = newline
-        self._pad_file = pad_file
-        self._write_to_file = write_to_file
-        self._use_pty = use_pty
-        self._encoding = encoding
-        self._namespace_key = "_pycon_shell_evaluator_modified_content"
-
-        if write_to_file:
-            self._evaluator: Evaluator = CodeBlockWriterEvaluator(
-                evaluator=self._run,
-                namespace_key=self._namespace_key,
-                encoding=encoding,
-            )
-        else:
-            self._evaluator = self._run
-
-    def _run(self, example: Example) -> None:
-        """Extract Python from pycon, run the command, and store the
-        result.
-        """
-        if self._use_pty and sys.platform == "win32":  # pragma: no cover
-            msg = "Pseudo-terminal not supported on Windows."
-            raise ValueError(msg)
-
-        pycon_content = str(object=example.parsed)
-        python_content = _pycon_to_python(pycon_text=pycon_content)
-
-        padding_line = (
-            example.line + example.parsed.line_offset if self._pad_file else 0
+        self._evaluator = create_evaluator(
+            args=args,
+            temp_file_path_maker=temp_file_path_maker,
+            env=env,
+            newline=newline,
+            pad_file=pad_file,
+            write_to_file=write_to_file,
+            use_pty=use_pty,
+            encoding=encoding,
+            namespace_key="_pycon_shell_evaluator_modified_content",
+            source_preparer=_PyconSourcePreparer(),
+            result_transformer=_PyconResultTransformer(),
         )
-        python_with_padding = "\n" * padding_line + python_content
-
-        # Ensure a trailing newline; many tools expect it.
-        if not python_with_padding.endswith("\n"):  # pragma: no cover
-            python_with_padding += "\n"
-
-        temp_file = self._temp_file_path_maker(example=example)
-        temp_file.write_text(
-            data=python_with_padding,
-            encoding=self._encoding,
-            newline=self._newline,
-        )
-
-        temp_file_content = ""
-        try:
-            result = run_command(
-                command=[
-                    str(object=item) for item in [*self._args, temp_file]
-                ],
-                env=self._env,
-                use_pty=self._use_pty,
-            )
-            with contextlib.suppress(FileNotFoundError):
-                temp_file_content = temp_file.read_text(
-                    encoding=self._encoding,
-                )
-        finally:
-            with contextlib.suppress(FileNotFoundError):
-                temp_file.unlink()
-
-        if self._write_to_file:
-            formatted_python = lstrip_newlines(
-                input_string=temp_file_content,
-                number_of_newlines=padding_line,
-            )
-            new_pycon = _python_to_pycon(
-                python_text=formatted_python,
-                original_pycon=pycon_content,
-            )
-            example.document.namespace[self._namespace_key] = new_pycon
-
-        if result.returncode != 0:
-            raise subprocess.CalledProcessError(
-                cmd=result.args,
-                returncode=result.returncode,
-                output=result.stdout,
-                stderr=result.stderr,
-            )
 
     def __call__(self, example: Example) -> None:
         """Run the shell command on the pycon example."""
