@@ -1,4 +1,4 @@
-"""Internal utilities for running subprocesses and handling output.
+"""Internal utilities for running shell commands and handling output.
 
 These helpers are shared across evaluators within this package and are not
 part of the public API.
@@ -38,14 +38,14 @@ def run_command(
     use_pty: bool,
 ) -> subprocess.CompletedProcess[bytes]:
     """Run a command, optionally inside a pseudo-terminal to preserve
-    colour.
+    color.
 
     Args:
         command: The command and arguments to execute.
         env: Optional environment variable mapping.  If ``None``, the
             current process environment is inherited.
         use_pty: When ``True`` the command is run inside a pseudo-terminal
-            so that tools that emit ANSI colour codes do so correctly.
+            so that tools that emit ANSI color codes do so correctly.
             Not supported on Windows.
 
     Returns:
