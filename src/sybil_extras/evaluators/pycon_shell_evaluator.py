@@ -134,10 +134,16 @@ def _python_to_pycon(python_text: str, original_pycon: str) -> str:
 
     # Build groups: each group is a ``>>>`` line followed by zero or more
     # ``...`` continuation lines.
+    def _with_prompt(*, prompt: str, line: str) -> str:
+        """Prefix a line with a pycon prompt, preserving bare prompts."""
+        if line in {"", "\n", "\r\n"}:
+            return prompt + line
+        return f"{prompt} {line}"
+
     groups: list[list[str]] = []
     for i, line in enumerate(iterable=python_lines):
         if i in continuation_lines:
-            groups[-1].append("... " + line)
+            groups[-1].append(_with_prompt(prompt="...", line=line))
         elif (
             groups
             and line.strip("\r\n") == ""
@@ -145,9 +151,9 @@ def _python_to_pycon(python_text: str, original_pycon: str) -> str:
         ):
             # Preserve the trailing bare ``...`` prompt used to terminate a
             # block in interactive sessions.
-            groups[-1].append("... " + line)
+            groups[-1].append(_with_prompt(prompt="...", line=line))
         else:
-            groups.append([">>> " + line])
+            groups.append([_with_prompt(prompt=">>>", line=line)])
 
     preserve_output = len(groups) == len(original_chunks)
 
