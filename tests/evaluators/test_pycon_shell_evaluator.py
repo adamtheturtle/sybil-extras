@@ -319,6 +319,81 @@ def test_write_to_file_syntax_error_fallback(
     assert ">>> def (\n" in result
 
 
+def test_write_to_file_preserves_comment_lines(
+    *,
+    tmp_path: Path,
+) -> None:
+    """Comment lines are not dropped during write-back."""
+    content = textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> # comment about x
+        >>> x = 1
+        1
+        ```
+        """,
+    )
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    evaluator = PyconsShellCommandEvaluator(
+        args=["true"],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=True,
+        use_pty=False,
+    )
+    parser = SybilMarkdownCodeBlockParser(
+        language="pycon",
+        evaluator=evaluator,
+    )
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    (example,) = document.examples()
+    example.evaluate()
+
+    result = test_file.read_text(encoding="utf-8")
+    assert ">>> # comment about x\n" in result
+    assert ">>> x = 1\n" in result
+    # Output line should be preserved
+    assert "1\n" in result
+
+
+def test_write_to_file_no_semicolon_duplication(
+    *,
+    tmp_path: Path,
+) -> None:
+    """Lines with semicolons are not duplicated during write-back."""
+    content = textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> x = 1; y = 2
+        ```
+        """,
+    )
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    evaluator = PyconsShellCommandEvaluator(
+        args=["true"],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=True,
+        use_pty=False,
+    )
+    parser = SybilMarkdownCodeBlockParser(
+        language="pycon",
+        evaluator=evaluator,
+    )
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    (example,) = document.examples()
+    example.evaluate()
+
+    result = test_file.read_text(encoding="utf-8")
+    assert result.count("x = 1; y = 2") == 1
+
+
 def test_write_to_file_statement_count_mismatch(
     *,
     tmp_path: Path,

@@ -106,11 +106,10 @@ def _python_to_pycon(python_text: str, original_pycon: str) -> str:
     """Convert formatted Python code back to pycon format.
 
     Adds ``>>> `` to the first line of each top-level statement and ``... ``
-    to continuation lines. Output lines from the original pycon content are
-    preserved and appended after each corresponding statement.
-
-    If the number of statements in the formatted Python differs from the
-    number of chunks in the original pycon, output lines are not preserved.
+    to continuation lines.  Lines not belonging to any AST statement (such
+    as comments or blank lines) also receive ``>>> ``.  Output lines from
+    the original pycon content are preserved when the number of ``>>>``
+    groups matches the number of original pycon chunks.
 
     Args:
         python_text: Formatted Python source code (no prompts).
@@ -131,21 +130,32 @@ def _python_to_pycon(python_text: str, original_pycon: str) -> str:
         )
 
     python_lines = python_text.splitlines(keepends=True)
-    statements = tree.body
-    preserve_output = len(statements) == len(original_chunks)
 
-    result: list[str] = []
-    for i, stmt in enumerate(iterable=statements):
-        # ast line numbers are 1-indexed and end_lineno is inclusive,
-        # so python_lines[lineno-1:end_lineno] gives the statement lines.
+    # Build a set of line indices that are continuation lines within a
+    # multi-line statement.  Every other line (statement starts, comments,
+    # blank lines between statements) will start a new ``>>>`` group.
+    continuation_lines: set[int] = set()
+    for stmt in tree.body:
         start = stmt.lineno - 1
         end = stmt.end_lineno
-        stmt_lines = python_lines[start:end]
+        if end is not None:  # pragma: no branch
+            for line_idx in range(start + 1, end):
+                continuation_lines.add(line_idx)
 
-        if stmt_lines:  # pragma: no branch
-            result.append(">>> " + stmt_lines[0])
-            result.extend("... " + line for line in stmt_lines[1:])
+    # Build groups: each group is a ``>>>`` line followed by zero or more
+    # ``...`` continuation lines.
+    groups: list[list[str]] = []
+    for i, line in enumerate(iterable=python_lines):
+        if i in continuation_lines:
+            groups[-1].append("... " + line)
+        else:
+            groups.append([">>> " + line])
 
+    preserve_output = len(groups) == len(original_chunks)
+
+    result: list[str] = []
+    for i, group in enumerate(iterable=groups):
+        result.extend(group)
         if preserve_output:
             _input_lines, output_lines = original_chunks[i]
             result.extend(output_lines)
