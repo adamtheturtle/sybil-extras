@@ -90,6 +90,22 @@ def run_command(
             os.close(fd=stdout_master_fd)
 
     else:
+        # We use ``subprocess.PIPE`` + threads rather than passing
+        # ``stdout=sys.stdout.buffer`` directly to ``Popen``.
+        #
+        # ``Popen`` accepts a file-like object for ``stdout``/``stderr``
+        # only if it exposes a real OS file descriptor via ``fileno()``.
+        # When test frameworks such as pytest replace ``sys.stdout`` with
+        # a ``StringIO``-based capture object, ``sys.stdout.buffer.fileno()``
+        # raises ``io.UnsupportedOperation``.
+        #
+        # By routing data through ``subprocess.PIPE`` we always get genuine
+        # OS-level pipe file descriptors.  The background threads then read
+        # from those descriptors and write into ``sys.stdout.buffer`` /
+        # ``sys.stderr.buffer``, which may be the real terminal or a
+        # test-framework capture object — either way the write is safe.
+        # This preserves live streaming: output is forwarded chunk-by-chunk
+        # rather than being buffered until the process exits.
         with subprocess.Popen(
             args=command,
             stdout=subprocess.PIPE,
