@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 
 
 @beartype
-def pycon_to_python(pycon_text: str) -> str:
+def _pycon_to_python(pycon_text: str) -> str:
     """Extract Python input lines from pycon content.
 
     Strip ``>>> `` and ``... `` prefixes from input lines.
@@ -102,7 +102,7 @@ def _parse_pycon_chunks(
 
 
 @beartype
-def python_to_pycon(python_text: str, original_pycon: str) -> str:
+def _python_to_pycon(python_text: str, original_pycon: str) -> str:
     """Convert formatted Python code back to pycon format.
 
     Adds ``>>> `` to the first line of each top-level statement and ``... ``
@@ -223,7 +223,7 @@ class PyconsShellCommandEvaluator:
             raise ValueError(msg)
 
         pycon_content = str(object=example.parsed)
-        python_content = pycon_to_python(pycon_text=pycon_content)
+        python_content = _pycon_to_python(pycon_text=pycon_content)
 
         padding_line = (
             example.line + example.parsed.line_offset if self._pad_file else 0
@@ -263,7 +263,7 @@ class PyconsShellCommandEvaluator:
                 input_string=temp_file_content,
                 number_of_newlines=padding_line,
             )
-            new_pycon = python_to_pycon(
+            new_pycon = _python_to_pycon(
                 python_text=formatted_python,
                 original_pycon=pycon_content,
             )
