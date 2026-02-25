@@ -1,20 +1,20 @@
 """An evaluator for running shell commands on example files."""
 
 import contextlib
-import os
 import platform
 import subprocess
-import sys
-import threading
 from collections.abc import Mapping, Sequence
-from io import BytesIO
 from pathlib import Path
-from typing import IO, TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from beartype import beartype
 from sybil import Example
 from sybil.evaluators.python import pad
 
+from sybil_extras.evaluators._subprocess_utils import (
+    lstrip_newlines,
+    run_command,
+)
 from sybil_extras.evaluators.code_block_writer import CodeBlockWriterEvaluator
 
 if TYPE_CHECKING:
@@ -66,145 +66,6 @@ class TempFilePathMaker(Protocol):
         # We disable a pylint warning here because the ellipsis is required
         # for Pyright to recognize this as a protocol.
         ...  # pylint: disable=unnecessary-ellipsis
-
-
-@beartype
-def _run_command(
-    *,
-    command: list[str | Path],
-    env: Mapping[str, str] | None = None,
-    use_pty: bool,
-) -> subprocess.CompletedProcess[bytes]:
-    """Run a command in a pseudo-terminal to preserve color."""
-    chunk_size = 1024
-
-    @beartype
-    def _process_stream(
-        *,
-        stream_fileno: int,
-        output: IO[bytes] | BytesIO,
-    ) -> None:
-        """Write from an input stream to an output stream."""
-        while chunk := os.read(stream_fileno, chunk_size):
-            output.write(chunk)
-            output.flush()
-
-    if use_pty:
-        stdout_master_fd: int = -1
-        slave_fd: int = -1
-        # We use ``hasattr`` rather than
-        # ``contextlib.suppress(AttributeError)`` so that ``mypy`` can narrow
-        # the type on Windows, where ``os.openpty`` does not exist.
-        # We also check ``sys.platform`` so that pyright can narrow the type.
-        if sys.platform != "win32" and hasattr(
-            os, "openpty"
-        ):  # pragma: no branch
-            stdout_master_fd, slave_fd = os.openpty()
-
-        stdout: int = slave_fd
-        stderr: int = slave_fd
-        with subprocess.Popen(
-            args=command,
-            stdout=stdout,
-            stderr=stderr,
-            stdin=subprocess.PIPE,
-            env=env,
-            close_fds=True,
-        ) as process:
-            os.close(fd=slave_fd)
-
-            # On some platforms, an ``OSError`` is raised when reading from
-            # a master file descriptor that has no corresponding slave file.
-            # I think that this may be described in
-            # https://bugs.python.org/issue5380#msg82827
-            with contextlib.suppress(OSError):
-                _process_stream(
-                    stream_fileno=stdout_master_fd,
-                    output=sys.stdout.buffer,
-                )
-
-            os.close(fd=stdout_master_fd)
-
-    else:
-        with subprocess.Popen(
-            args=command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            stdin=subprocess.PIPE,
-            env=env,
-        ) as process:
-            if (
-                process.stdout is None or process.stderr is None
-            ):  # pragma: no cover
-                raise ValueError
-
-            stdout_thread = threading.Thread(
-                target=_process_stream,
-                kwargs={
-                    "stream_fileno": process.stdout.fileno(),
-                    "output": sys.stdout.buffer,
-                },
-            )
-            stderr_thread = threading.Thread(
-                target=_process_stream,
-                kwargs={
-                    "stream_fileno": process.stderr.fileno(),
-                    "output": sys.stderr.buffer,
-                },
-            )
-
-            stdout_thread.start()
-            stderr_thread.start()
-
-            stdout_thread.join()
-            stderr_thread.join()
-
-    return_code = process.wait()
-
-    return subprocess.CompletedProcess(
-        args=command,
-        returncode=return_code,
-        stdout=None,
-        stderr=None,
-    )
-
-
-@beartype
-def _count_leading_newlines(s: str) -> int:
-    """Count the number of leading newlines in a string.
-
-    Args:
-        s: The input string.
-
-    Returns:
-        The number of leading newlines.
-    """
-    count = 0
-    non_newline_found = False
-    for char in s:
-        if char == "\n" and not non_newline_found:
-            count += 1
-        else:
-            non_newline_found = True
-    return count
-
-
-@beartype
-def _lstrip_newlines(*, input_string: str, number_of_newlines: int) -> str:
-    """Removes a specified number of newlines from the start of the string.
-
-    Args:
-        input_string: The input string to process.
-        number_of_newlines: The number of newlines to remove from the
-            start.
-
-    Returns:
-        The string with the specified number of leading newlines removed.
-        If fewer newlines exist, removes all of them.
-    """
-    num_leading_newlines = _count_leading_newlines(s=input_string)
-    lines_to_remove = min(num_leading_newlines, number_of_newlines)
-    return input_string[lines_to_remove:]
 
 
 @beartype
@@ -285,7 +146,7 @@ class _ShellCommandRunner:
 
         temp_file_content = ""
         try:
-            result = _run_command(
+            result = run_command(
                 command=[
                     str(object=item) for item in [*self._args, temp_file]
                 ],
@@ -312,7 +173,7 @@ class _ShellCommandRunner:
             # While it is possible that a formatter added leading newlines,
             # we assume that this is not the case, and we remove any leading
             # newlines from the replacement which were added by the padding.
-            new_region_content = _lstrip_newlines(
+            new_region_content = lstrip_newlines(
                 input_string=temp_file_content,
                 number_of_newlines=padding_line,
             )
