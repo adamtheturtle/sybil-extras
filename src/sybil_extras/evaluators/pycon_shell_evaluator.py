@@ -8,6 +8,7 @@ preserving any output lines from the original.
 
 import ast
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from pathlib import Path
 
 from beartype import beartype
@@ -49,47 +50,70 @@ def _pycon_to_python(pycon_text: str) -> str:
 
 
 @beartype
-def _parse_pycon_chunks(
-    pycon_text: str,
-) -> list[tuple[list[str], list[str]]]:
-    """Parse pycon content into a list of (input_lines, output_lines)
-    chunks.
+@dataclass
+class _PyconChunk:
+    """A parsed pycon interaction chunk."""
 
-    Each chunk represents one interactive statement: the input lines (with
-    prompts stripped) and the output lines (as-is, no prompt).
+    _input_lines: list[str]
+    output_lines: list[str]
 
-    Args:
-        pycon_text: The content of a pycon code block.
 
-    Returns:
-        A list of ``(input_lines, output_lines)`` tuples.
-    """
-    chunks: list[tuple[list[str], list[str]]] = []
-    current_input: list[str] = []
-    current_output: list[str] = []
-    have_current = False
+@beartype
+@dataclass
+class _PyconTranscript:
+    """A parsed pycon transcript."""
 
-    for line in pycon_text.splitlines(keepends=True):
-        stripped = line.rstrip("\n\r")
-        if stripped == ">>>" or line.startswith(">>> "):
-            if have_current:
-                chunks.append((current_input, current_output))
-                current_input = []
-                current_output = []
-            have_current = True
-            input_line = "\n" if stripped == ">>>" else line[4:]
-            current_input.append(input_line)
-        elif stripped == "..." or line.startswith("... "):
-            if have_current:
-                input_line = "\n" if stripped == "..." else line[4:]
+    chunks: list[_PyconChunk]
+
+    @classmethod
+    def from_text(cls, *, pycon_text: str) -> "_PyconTranscript":
+        """Parse pycon content into transcript chunks.
+
+        Each chunk represents one interactive statement: the input lines
+        (with prompts stripped) and the output lines (as-is, no prompt).
+
+        Args:
+            pycon_text: The content of a pycon code block.
+
+        Returns:
+            A parsed transcript.
+        """
+        chunks: list[_PyconChunk] = []
+        current_input: list[str] = []
+        current_output: list[str] = []
+        have_current = False
+
+        for line in pycon_text.splitlines(keepends=True):
+            stripped = line.rstrip("\n\r")
+            if stripped == ">>>" or line.startswith(">>> "):
+                if have_current:
+                    chunks.append(
+                        _PyconChunk(
+                            _input_lines=current_input,
+                            output_lines=current_output,
+                        )
+                    )
+                    current_input = []
+                    current_output = []
+                have_current = True
+                input_line = "\n" if stripped == ">>>" else line[4:]
                 current_input.append(input_line)
-        elif have_current:
-            current_output.append(line)
+            elif stripped == "..." or line.startswith("... "):
+                if have_current:
+                    input_line = "\n" if stripped == "..." else line[4:]
+                    current_input.append(input_line)
+            elif have_current:
+                current_output.append(line)
 
-    if have_current:
-        chunks.append((current_input, current_output))
+        if have_current:
+            chunks.append(
+                _PyconChunk(
+                    _input_lines=current_input,
+                    output_lines=current_output,
+                )
+            )
 
-    return chunks
+        return cls(chunks=chunks)
 
 
 @beartype
@@ -139,24 +163,13 @@ def _python_lines_to_pycon_groups(
 
 
 @beartype
-def _python_to_pycon(python_text: str, original_pycon: str) -> str:
-    """Convert formatted Python code back to pycon format.
-
-    Adds ``>>> `` to the first line of each top-level statement and ``... ``
-    to continuation lines.  Lines not belonging to any AST statement (such
-    as comments or blank lines) also receive ``>>> ``.  Output lines from
-    the original pycon content are preserved when the number of ``>>>``
-    groups matches the number of original pycon chunks.
-
-    Args:
-        python_text: Formatted Python source code (no prompts).
-        original_pycon: The original pycon content, used to extract output
-            lines for preservation.
-
-    Returns:
-        The pycon-formatted version of ``python_text``.
-    """
-    original_chunks = _parse_pycon_chunks(pycon_text=original_pycon)
+def _render_pycon_from_python(
+    *,
+    python_text: str,
+    original_transcript: _PyconTranscript,
+) -> str:
+    """Render Python source back to pycon using an original transcript."""
+    original_chunks = original_transcript.chunks
 
     try:
         tree = ast.parse(source=python_text)
@@ -182,10 +195,34 @@ def _python_to_pycon(python_text: str, original_pycon: str) -> str:
     for i, group in enumerate(iterable=groups):
         result.extend(group)
         if preserve_output:
-            _input_lines, output_lines = original_chunks[i]
-            result.extend(output_lines)
+            result.extend(original_chunks[i].output_lines)
 
     return "".join(result)
+
+
+@beartype
+def _python_to_pycon(python_text: str, original_pycon: str) -> str:
+    """Convert formatted Python code back to pycon format.
+
+    Adds ``>>> `` to the first line of each top-level statement and ``... ``
+    to continuation lines.  Lines not belonging to any AST statement (such
+    as comments or blank lines) also receive ``>>> ``.  Output lines from
+    the original pycon content are preserved when the number of ``>>>``
+    groups matches the number of original pycon chunks.
+
+    Args:
+        python_text: Formatted Python source code (no prompts).
+        original_pycon: The original pycon content, used to extract output
+            lines for preservation.
+
+    Returns:
+        The pycon-formatted version of ``python_text``.
+    """
+    transcript = _PyconTranscript.from_text(pycon_text=original_pycon)
+    return _render_pycon_from_python(
+        python_text=python_text,
+        original_transcript=transcript,
+    )
 
 
 @beartype
