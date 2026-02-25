@@ -128,7 +128,10 @@ def _python_to_pycon(python_text: str, original_pycon: str) -> str:
     continuation_lines: set[int] = set()
     for stmt in tree.body:
         start = stmt.lineno - 1
-        end: int = stmt.end_lineno
+        end = stmt.end_lineno
+        if end is None:
+            msg = "AST statements are expected to have end_lineno"
+            raise ValueError(msg)
         for line_idx in range(start + 1, end):
             continuation_lines.add(line_idx)
 
