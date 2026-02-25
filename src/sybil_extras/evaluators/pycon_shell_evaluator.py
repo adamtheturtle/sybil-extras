@@ -163,6 +163,12 @@ def _python_lines_to_pycon_groups(
 
 
 @beartype
+def _is_separator_group(*, group: list[str]) -> bool:
+    """Return True if the group contains only bare prompts (no code)."""
+    return all(line.rstrip("\n\r") in {">>>", "..."} for line in group)
+
+
+@beartype
 def _render_pycon_from_python(
     *,
     python_text: str,
@@ -189,13 +195,32 @@ def _render_pycon_from_python(
         continuation_lines=continuation_lines,
     )
 
-    preserve_output = len(groups) == len(original_chunks)
+    # Check if output can be preserved.  When the group count matches the
+    # chunk count directly, use a simple 1:1 mapping.  Otherwise, ignore
+    # separator groups (bare ``>>>`` blank lines added by formatters) and
+    # check if the *substantive* groups match the original chunks.
+    if len(groups) == len(original_chunks):
+        # Direct 1:1 match - every group gets its chunk's output.
+        chunk_for_group: list[int | None] = list(range(len(groups)))
+    else:
+        substantive = [
+            i
+            for i, g in enumerate(iterable=groups)
+            if not _is_separator_group(group=g)
+        ]
+        if len(substantive) == len(original_chunks):
+            chunk_for_group = [None] * len(groups)
+            for c_idx, group_idx in enumerate(iterable=substantive):
+                chunk_for_group[group_idx] = c_idx
+        else:
+            chunk_for_group = [None] * len(groups)
 
     result: list[str] = []
     for i, group in enumerate(iterable=groups):
         result.extend(group)
-        if preserve_output:
-            result.extend(original_chunks[i].output_lines)
+        matched_chunk = chunk_for_group[i]
+        if matched_chunk is not None:
+            result.extend(original_chunks[matched_chunk].output_lines)
 
     return "".join(result)
 

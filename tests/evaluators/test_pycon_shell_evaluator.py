@@ -659,3 +659,76 @@ def test_write_to_file_statement_count_mismatch(
         ```
         """,
     )
+
+
+def test_write_to_file_preserves_output_when_formatter_adds_blank_line(
+    *,
+    tmp_path: Path,
+) -> None:
+    """Output is preserved when a formatter adds blank lines between
+    statements (e.g. after imports).
+    """
+    content = textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> import os
+        >>> result = os.path.join("foo","bar","baz")
+        >>> result
+        'foo/bar/baz'
+        ```
+        """,
+    )
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    # Simulate a formatter that adds a blank line after import and
+    # re-formats the arguments.
+    script = tmp_path / "fmt.py"
+    script.write_text(
+        data=textwrap.dedent(
+            text="""\
+            import sys, pathlib
+            path = pathlib.Path(sys.argv[1])
+            text = path.read_text()
+            text = text.replace(
+                'import os\\nresult',
+                'import os\\n\\nresult',
+            )
+            text = text.replace(
+                '"foo","bar","baz"',
+                '"foo", "bar", "baz"',
+            )
+            path.write_text(text)
+            """,
+        ),
+        encoding="utf-8",
+    )
+
+    evaluator = PyconsShellCommandEvaluator(
+        args=["python3", str(object=script)],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=True,
+        use_pty=False,
+    )
+    parser = SybilMarkdownCodeBlockParser(
+        language="pycon",
+        evaluator=evaluator,
+    )
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    (example,) = document.examples()
+    example.evaluate()
+
+    result = test_file.read_text(encoding="utf-8")
+    assert result == textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> import os
+        >>>
+        >>> result = os.path.join("foo", "bar", "baz")
+        >>> result
+        'foo/bar/baz'
+        ```
+        """,
+    )
