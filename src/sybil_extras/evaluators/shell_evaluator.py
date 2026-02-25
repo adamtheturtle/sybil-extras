@@ -10,7 +10,6 @@ from typing import Protocol, runtime_checkable
 from beartype import beartype
 from sybil import Example
 from sybil.evaluators.python import pad
-from sybil.typing import Evaluator
 
 from sybil_extras.evaluators._subprocess_utils import (
     lstrip_newlines,
@@ -267,72 +266,6 @@ class _ShellCommandRunner:
 
 
 @beartype
-def create_evaluator(
-    *,
-    args: Sequence[str | Path],
-    temp_file_path_maker: TempFilePathMaker,
-    env: Mapping[str, str] | None = None,
-    newline: str | None = None,
-    pad_file: bool,
-    write_to_file: bool,
-    use_pty: bool,
-    encoding: str | None = None,
-    on_modify: _ExampleModified | None = None,
-    namespace_key: str,
-    source_preparer: SourcePreparer = _NOOP_SOURCE_PREPARER,
-    result_transformer: ResultTransformer = _NOOP_RESULT_TRANSFORMER,
-) -> Evaluator:
-    """Create an evaluator that runs a shell command on examples.
-
-    This is the shared factory used by both
-    :class:`ShellCommandEvaluator` and
-    :class:`~sybil_extras.evaluators.pycon_shell_evaluator.PyconsShellCommandEvaluator`.
-    It builds a :class:`_ShellCommandRunner` and optionally wraps it with
-    :class:`~sybil_extras.evaluators.code_block_writer.CodeBlockWriterEvaluator`.
-
-    Args:
-        args: The shell command to run.
-        temp_file_path_maker: A callable that generates the temporary file
-            path for an example.
-        env: Environment variables for the command.
-        newline: Newline convention for the temporary file.
-        pad_file: Whether to pad with leading newlines.
-        write_to_file: Whether to write changes back to the document.
-        use_pty: Whether to run inside a pseudo-terminal.
-        encoding: Encoding for file I/O.
-        on_modify: Callback when the command modifies the file.
-        namespace_key: Key for storing modified content in the namespace.
-        source_preparer: Extracts source from the example before padding.
-        result_transformer: Transforms the result before writing back.
-
-    Returns:
-        An evaluator callable.
-    """
-    runner = _ShellCommandRunner(
-        args=args,
-        temp_file_path_maker=temp_file_path_maker,
-        env=env,
-        newline=newline,
-        pad_file=pad_file,
-        write_to_file=write_to_file,
-        use_pty=use_pty,
-        encoding=encoding,
-        on_modify=on_modify,
-        namespace_key=namespace_key,
-        source_preparer=source_preparer,
-        result_transformer=result_transformer,
-    )
-
-    if write_to_file:
-        return CodeBlockWriterEvaluator(
-            evaluator=runner,
-            namespace_key=namespace_key,
-            encoding=encoding,
-        )
-    return runner
-
-
-@beartype
 class ShellCommandEvaluator:
     """Run a shell command on the example file."""
 
@@ -383,7 +316,8 @@ class ShellCommandEvaluator:
         Raises:
             ValueError: If pseudo-terminal is requested on Windows.
         """
-        self._evaluator = create_evaluator(
+        namespace_key = "_shell_evaluator_modified_content"
+        runner = _ShellCommandRunner(
             args=args,
             temp_file_path_maker=temp_file_path_maker,
             env=env,
@@ -393,8 +327,17 @@ class ShellCommandEvaluator:
             use_pty=use_pty,
             encoding=encoding,
             on_modify=on_modify,
-            namespace_key="_shell_evaluator_modified_content",
+            namespace_key=namespace_key,
         )
+        self._evaluator: _ShellCommandRunner | CodeBlockWriterEvaluator
+        if write_to_file:
+            self._evaluator = CodeBlockWriterEvaluator(
+                evaluator=runner,
+                namespace_key=namespace_key,
+                encoding=encoding,
+            )
+        else:
+            self._evaluator = runner
 
     def __call__(self, example: Example) -> None:
         """Run the shell command on the example file."""
