@@ -193,62 +193,76 @@ def test_no_change_leaves_file_unmodified(
     argnames="pycon_block",
     argvalues=[
         pytest.param(
-            """\
->>>
->>> def foo():
-...     return 1
-...
-""",
+            textwrap.dedent(
+                text="""\
+                >>>
+                >>> def foo():
+                ...     return 1
+                ...
+                """,
+            ),
             id="bare_prompts_and_continuation",
         ),
         pytest.param(
-            """\
->>> def foo():
-...     return 1
->>> foo()
-1
-""",
+            textwrap.dedent(
+                text="""\
+                >>> def foo():
+                ...     return 1
+                >>> foo()
+                1
+                """,
+            ),
             id="continuation_lines_with_output",
         ),
         pytest.param(
-            """\
->>> def foo():
-...     return 1
-...
->>> foo()
-1
-""",
+            textwrap.dedent(
+                text="""\
+                >>> def foo():
+                ...     return 1
+                ...
+                >>> foo()
+                1
+                """,
+            ),
             id="trailing_bare_continuation_prompt",
         ),
         pytest.param(
-            """\
->>>
->>> x = 1
-""",
+            textwrap.dedent(
+                text="""\
+                >>>
+                >>> x = 1
+                """,
+            ),
             id="bare_primary_prompt_spacing",
         ),
         pytest.param(
-            """\
->>> # comment about x
->>> x = 1
-1
-""",
+            textwrap.dedent(
+                text="""\
+                >>> # comment about x
+                >>> x = 1
+                1
+                """,
+            ),
             id="comment_lines",
         ),
         pytest.param(
-            """\
->>> x = 1; y = 2
-""",
+            textwrap.dedent(
+                text="""\
+                >>> x = 1; y = 2
+                """,
+            ),
             id="semicolon_no_duplication",
         ),
         pytest.param(
-            """\
->>> @staticmethod
-... def foo():
-...     return 1
->>> foo()
-1
-""",
+            textwrap.dedent(
+                text="""\
+                >>> @staticmethod
+                ... def foo():
+                ...     return 1
+                >>> foo()
+                1
+                """,
+            ),
             id="decorated_function",
         ),
     ],
