@@ -155,7 +155,12 @@ def test_no_change_leaves_file_unmodified(
     *,
     tmp_path: Path,
 ) -> None:
-    """When the command makes no changes the file is left untouched."""
+    """When the command makes no changes the file is left untouched.
+
+    This is similar to ``test_pad_and_write`` in ``test_shell_evaluator``
+    but verifies the pycon round-trip (pycon → python → python → pycon)
+    is lossless.
+    """
     content = textwrap.dedent(
         text="""\
         ```pycon

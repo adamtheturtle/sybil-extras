@@ -12,7 +12,7 @@ from beartype import beartype
 
 
 @beartype
-def pycon_to_python(pycon_text: str) -> str:
+def pycon_to_python(*, pycon_text: str) -> str:
     """Extract Python input lines from pycon content.
 
     Strip ``>>> `` and ``... `` prefixes from input lines.
@@ -209,7 +209,7 @@ def _render_pycon_from_python(
 
 
 @beartype
-def python_to_pycon(python_text: str, original_pycon: str) -> str:
+def python_to_pycon(*, python_text: str, original_pycon: str) -> str:
     """Convert formatted Python code back to pycon format.
 
     Adds ``>>> `` to the first line of each top-level statement and ``... ``
