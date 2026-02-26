@@ -1243,3 +1243,25 @@ def test_custom_result_transformer(
         """
     )
     assert source_file.read_text(encoding="utf-8") == expected
+
+
+def test_no_write_leaves_file_unchanged(
+    *,
+    rst_file: Path,
+) -> None:
+    """With write_to_file=False the source file is left untouched."""
+    evaluator = ShellCommandEvaluator(
+        args=["true"],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=False,
+        use_pty=False,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    # Should run without error and leave the file unchanged
+    original = rst_file.read_text(encoding="utf-8")
+    example.evaluate()
+    assert rst_file.read_text(encoding="utf-8") == original
