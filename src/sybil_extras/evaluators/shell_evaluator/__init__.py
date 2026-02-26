@@ -25,9 +25,6 @@ from sybil_extras.evaluators.shell_evaluator.source_preparer import (
     SourcePreparer,
 )
 
-if TYPE_CHECKING:
-    from sybil.typing import Evaluator
-
 
 @beartype
 @runtime_checkable
