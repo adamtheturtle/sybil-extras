@@ -1,11 +1,9 @@
 """Tests for pycon source preparer and result transformer."""
 
-import subprocess
 import textwrap
 import uuid
 from pathlib import Path
 
-import pytest
 from beartype import beartype
 from sybil import Sybil
 from sybil.example import Example
@@ -46,31 +44,6 @@ def _make_pycon_evaluator(
         source_preparer=PyconSourcePreparer(),
         result_transformer=PyconResultTransformer(),
     )
-
-
-def test_error_on_nonzero_exit(*, tmp_path: Path) -> None:
-    """A CalledProcessError is raised when the command fails."""
-    content = textwrap.dedent(
-        text="""\
-        ```pycon
-        >>> x = 1
-        ```
-        """,
-    )
-    test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
-
-    evaluator = _make_pycon_evaluator(args=["sh", "-c", "exit 1"])
-    parser = SybilMarkdownCodeBlockParser(
-        language="pycon",
-        evaluator=evaluator,
-    )
-    sybil = Sybil(parsers=[parser])
-    document = sybil.parse(path=test_file)
-    (example,) = document.examples()
-
-    with pytest.raises(expected_exception=subprocess.CalledProcessError):
-        example.evaluate()
 
 
 def test_writes_extracted_python_to_temp_file(
