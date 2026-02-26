@@ -528,7 +528,7 @@ comments such as ``{% group: start %}``. This pairs well with
 
 .. code-block:: python
 
-    """Parse djot directives and test them with check_lexer."""
+    """Lex djot directives and test them with check_lexer."""
 
     from sybil.testing import check_lexer
 
