@@ -85,7 +85,12 @@ def test_writes_extracted_python_to_temp_file(
 
     written = captured.read_text(encoding="utf-8")
     # The temp file should contain Python, not pycon
-    expected = "x = 1 + 1\nx\n"
+    expected = textwrap.dedent(
+        text="""\
+        x = 1 + 1
+        x
+        """,
+    )
     assert written == expected
 
 
