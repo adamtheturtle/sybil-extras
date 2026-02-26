@@ -1,24 +1,29 @@
 """An evaluator for running shell commands on example files."""
 
 import contextlib
-import os
 import platform
 import subprocess
-import sys
-import threading
 from collections.abc import Mapping, Sequence
-from io import BytesIO
 from pathlib import Path
-from typing import IO, TYPE_CHECKING, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from beartype import beartype
 from sybil import Example
 from sybil.evaluators.python import pad
 
+from sybil_extras.evaluators._subprocess_utils import (
+    lstrip_newlines,
+    run_command,
+)
 from sybil_extras.evaluators.code_block_writer import CodeBlockWriterEvaluator
-
-if TYPE_CHECKING:
-    from sybil.typing import Evaluator
+from sybil_extras.evaluators.shell_evaluator.result_transformer import (
+    NOOP_RESULT_TRANSFORMER,
+    ResultTransformer,
+)
+from sybil_extras.evaluators.shell_evaluator.source_preparer import (
+    NOOP_SOURCE_PREPARER,
+    SourcePreparer,
+)
 
 
 @beartype
@@ -69,145 +74,6 @@ class TempFilePathMaker(Protocol):
 
 
 @beartype
-def _run_command(
-    *,
-    command: list[str | Path],
-    env: Mapping[str, str] | None = None,
-    use_pty: bool,
-) -> subprocess.CompletedProcess[bytes]:
-    """Run a command in a pseudo-terminal to preserve color."""
-    chunk_size = 1024
-
-    @beartype
-    def _process_stream(
-        *,
-        stream_fileno: int,
-        output: IO[bytes] | BytesIO,
-    ) -> None:
-        """Write from an input stream to an output stream."""
-        while chunk := os.read(stream_fileno, chunk_size):
-            output.write(chunk)
-            output.flush()
-
-    if use_pty:
-        stdout_master_fd: int = -1
-        slave_fd: int = -1
-        # We use ``hasattr`` rather than
-        # ``contextlib.suppress(AttributeError)`` so that ``mypy`` can narrow
-        # the type on Windows, where ``os.openpty`` does not exist.
-        # We also check ``sys.platform`` so that pyright can narrow the type.
-        if sys.platform != "win32" and hasattr(
-            os, "openpty"
-        ):  # pragma: no branch
-            stdout_master_fd, slave_fd = os.openpty()
-
-        stdout: int = slave_fd
-        stderr: int = slave_fd
-        with subprocess.Popen(
-            args=command,
-            stdout=stdout,
-            stderr=stderr,
-            stdin=subprocess.PIPE,
-            env=env,
-            close_fds=True,
-        ) as process:
-            os.close(fd=slave_fd)
-
-            # On some platforms, an ``OSError`` is raised when reading from
-            # a master file descriptor that has no corresponding slave file.
-            # I think that this may be described in
-            # https://bugs.python.org/issue5380#msg82827
-            with contextlib.suppress(OSError):
-                _process_stream(
-                    stream_fileno=stdout_master_fd,
-                    output=sys.stdout.buffer,
-                )
-
-            os.close(fd=stdout_master_fd)
-
-    else:
-        with subprocess.Popen(
-            args=command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            stdin=subprocess.PIPE,
-            env=env,
-        ) as process:
-            if (
-                process.stdout is None or process.stderr is None
-            ):  # pragma: no cover
-                raise ValueError
-
-            stdout_thread = threading.Thread(
-                target=_process_stream,
-                kwargs={
-                    "stream_fileno": process.stdout.fileno(),
-                    "output": sys.stdout.buffer,
-                },
-            )
-            stderr_thread = threading.Thread(
-                target=_process_stream,
-                kwargs={
-                    "stream_fileno": process.stderr.fileno(),
-                    "output": sys.stderr.buffer,
-                },
-            )
-
-            stdout_thread.start()
-            stderr_thread.start()
-
-            stdout_thread.join()
-            stderr_thread.join()
-
-    return_code = process.wait()
-
-    return subprocess.CompletedProcess(
-        args=command,
-        returncode=return_code,
-        stdout=None,
-        stderr=None,
-    )
-
-
-@beartype
-def _count_leading_newlines(s: str) -> int:
-    """Count the number of leading newlines in a string.
-
-    Args:
-        s: The input string.
-
-    Returns:
-        The number of leading newlines.
-    """
-    count = 0
-    non_newline_found = False
-    for char in s:
-        if char == "\n" and not non_newline_found:
-            count += 1
-        else:
-            non_newline_found = True
-    return count
-
-
-@beartype
-def _lstrip_newlines(*, input_string: str, number_of_newlines: int) -> str:
-    """Removes a specified number of newlines from the start of the string.
-
-    Args:
-        input_string: The input string to process.
-        number_of_newlines: The number of newlines to remove from the
-            start.
-
-    Returns:
-        The string with the specified number of leading newlines removed.
-        If fewer newlines exist, removes all of them.
-    """
-    num_leading_newlines = _count_leading_newlines(s=input_string)
-    lines_to_remove = min(num_leading_newlines, number_of_newlines)
-    return input_string[lines_to_remove:]
-
-
-@beartype
 class _ShellCommandRunner:
     """
     Run a shell command on an example file (internal
@@ -227,6 +93,8 @@ class _ShellCommandRunner:
         encoding: str | None = None,
         on_modify: _ExampleModified | None = None,
         namespace_key: str = "",
+        source_preparer: SourcePreparer = NOOP_SOURCE_PREPARER,
+        result_transformer: ResultTransformer = NOOP_RESULT_TRANSFORMER,
     ) -> None:
         """Initialize the shell command runner.
 
@@ -243,6 +111,9 @@ class _ShellCommandRunner:
             encoding: The encoding to use for the temporary file.
             on_modify: A callback to run when the example is modified.
             namespace_key: The key to store modified content in the namespace.
+            source_preparer: A callable that extracts source from an example.
+            result_transformer: A callable that transforms the result before
+                it is written back.
         """
         self._args = args
         self._env = env
@@ -254,6 +125,8 @@ class _ShellCommandRunner:
         self._encoding = encoding
         self._on_modify = on_modify
         self._namespace_key = namespace_key
+        self._source_preparer = source_preparer
+        self._result_transformer = result_transformer
 
     def __call__(self, example: Example) -> None:
         """Run the shell command on the example file."""
@@ -266,10 +139,9 @@ class _ShellCommandRunner:
         padding_line = (
             example.line + example.parsed.line_offset if self._pad_file else 0
         )
-        source = pad(
-            source=example.parsed,
-            line=padding_line,
-        )
+
+        raw_source = self._source_preparer(example=example)
+        source = pad(source=raw_source, line=padding_line)
         temp_file = self._temp_file_path_maker(example=example)
 
         # The parsed code block at the end of a file is given without a
@@ -285,7 +157,7 @@ class _ShellCommandRunner:
 
         temp_file_content = ""
         try:
-            result = _run_command(
+            result = run_command(
                 command=[
                     str(object=item) for item in [*self._args, temp_file]
                 ],
@@ -312,9 +184,13 @@ class _ShellCommandRunner:
             # While it is possible that a formatter added leading newlines,
             # we assume that this is not the case, and we remove any leading
             # newlines from the replacement which were added by the padding.
-            new_region_content = _lstrip_newlines(
+            new_region_content = lstrip_newlines(
                 input_string=temp_file_content,
                 number_of_newlines=padding_line,
+            )
+            new_region_content = self._result_transformer(
+                content=new_region_content,
+                example=example,
             )
             example.document.namespace[self._namespace_key] = (
                 new_region_content
@@ -349,6 +225,8 @@ class ShellCommandEvaluator:
         use_pty: bool,
         encoding: str | None = None,
         on_modify: _ExampleModified | None = None,
+        source_preparer: SourcePreparer = NOOP_SOURCE_PREPARER,
+        result_transformer: ResultTransformer = NOOP_RESULT_TRANSFORMER,
     ) -> None:
         """Initialize the evaluator.
 
@@ -376,6 +254,12 @@ class ShellCommandEvaluator:
                 use the system default.
             on_modify: A callback to run when the example is modified by the
                 evaluator.
+            source_preparer: A callable that extracts source from an example
+                before it is written to the temporary file. By default the
+                example's parsed content is used as-is.
+            result_transformer: A callable that transforms the result content
+                before it is written back to the document. By default the
+                content is used as-is.
 
         Raises:
             ValueError: If pseudo-terminal is requested on Windows.
@@ -392,10 +276,12 @@ class ShellCommandEvaluator:
             encoding=encoding,
             on_modify=on_modify,
             namespace_key=namespace_key,
+            source_preparer=source_preparer,
+            result_transformer=result_transformer,
         )
-
+        self._evaluator: _ShellCommandRunner | CodeBlockWriterEvaluator
         if write_to_file:
-            self._evaluator: Evaluator = CodeBlockWriterEvaluator(
+            self._evaluator = CodeBlockWriterEvaluator(
                 evaluator=runner,
                 namespace_key=namespace_key,
                 encoding=encoding,

@@ -24,6 +24,12 @@ from sybil.parsers.markdown import (
 from sybil.parsers.rest.codeblock import CodeBlockParser
 
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
+from sybil_extras.evaluators.shell_evaluator.result_transformer import (
+    ResultTransformer,
+)
+from sybil_extras.evaluators.shell_evaluator.source_preparer import (
+    SourcePreparer,
+)
 from sybil_extras.languages import (
     DJOT,
     MARKDOWN,
@@ -51,6 +57,7 @@ def make_temp_file_path(*, example: Example) -> Path:
     params=[True, False],
 )
 def fixture_use_pty_option(
+    *,
     request: pytest.FixtureRequest,
 ) -> bool:
     """Test with and without the pseudo-terminal."""
@@ -61,7 +68,7 @@ def fixture_use_pty_option(
 
 
 @pytest.fixture(name="rst_file")
-def fixture_rst_file(tmp_path: Path) -> Path:
+def fixture_rst_file(*, tmp_path: Path) -> Path:
     """Fixture to create a temporary RST file with code blocks."""
     # Relied upon features:
     #
@@ -1136,6 +1143,106 @@ def test_markdown_code_block_line_number(
     assert "line 4" in captured.err, (
         f"stderr contains 'line 5' instead of 'line 4': {captured.err}"
     )
+
+
+def test_custom_source_preparer(
+    *,
+    rst_file: Path,
+    tmp_path: Path,
+) -> None:
+    """A custom SourcePreparer can transform content before the
+    command.
+    """
+    captured_file = tmp_path / "captured.txt"
+
+    @beartype
+    class UpperSourcePreparer:
+        """Return the example's source in uppercase."""
+
+        def __call__(self, *, example: Example) -> str:
+            """Return source in uppercase."""
+            return str(object=example.parsed).upper()
+
+    assert isinstance(UpperSourcePreparer(), SourcePreparer)
+
+    # $1 is the temp file (args are: sh -c script _ <temp_file>)
+    sh_function = f'cp "$1" "{captured_file.as_posix()}"'
+
+    evaluator = ShellCommandEvaluator(
+        args=["sh", "-c", sh_function, "_"],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=False,
+        use_pty=False,
+        source_preparer=UpperSourcePreparer(),
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    example.evaluate()
+
+    written = captured_file.read_text(encoding="utf-8")
+    expected = "X = 2 + 2\nASSERT X == 4\n"
+    assert written == expected
+
+
+def test_custom_result_transformer(
+    *,
+    tmp_path: Path,
+) -> None:
+    """A custom ResultTransformer can rewrite content before write-
+    back.
+    """
+    content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+           x = 1
+        """
+    )
+    source_file = tmp_path / "source.rst"
+    source_file.write_text(data=content, encoding="utf-8")
+
+    @beartype
+    class SuffixResultTransformer:
+        """Append a comment to the result."""
+
+        def __call__(self, *, content: str, example: Example) -> str:
+            """Append a comment."""
+            del example
+            return content.rstrip("\n") + "  # transformed\n"
+
+    assert isinstance(SuffixResultTransformer(), ResultTransformer)
+
+    evaluator = ShellCommandEvaluator(
+        args=["true"],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=True,
+        use_pty=False,
+        result_transformer=SuffixResultTransformer(),
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=source_file)
+    (example,) = document.examples()
+    example.evaluate()
+
+    expected = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+           x = 1  # transformed
+        """
+    )
+    assert source_file.read_text(encoding="utf-8") == expected
 
 
 def test_no_write_leaves_file_unchanged(

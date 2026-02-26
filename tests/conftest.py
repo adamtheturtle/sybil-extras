@@ -24,7 +24,7 @@ LANGUAGE_DIRECTIVE_BUILDER_IDS = [
 
 
 @pytest.fixture(name="language", params=ALL_LANGUAGES, ids=LANGUAGE_IDS)
-def fixture_language(request: pytest.FixtureRequest) -> MarkupLanguage:
+def fixture_language(*, request: pytest.FixtureRequest) -> MarkupLanguage:
     """Provide each supported markup language."""
     language = request.param
     if not isinstance(language, MarkupLanguage):  # pragma: no cover
@@ -38,7 +38,9 @@ def fixture_language(request: pytest.FixtureRequest) -> MarkupLanguage:
     params=ALL_LANGUAGES,
     ids=LANGUAGE_IDS,
 )
-def fixture_markup_language(request: pytest.FixtureRequest) -> MarkupLanguage:
+def fixture_markup_language(
+    *, request: pytest.FixtureRequest
+) -> MarkupLanguage:
     """Provide each supported markup language."""
     language: MarkupLanguage = request.param
     return language
@@ -50,6 +52,7 @@ def fixture_markup_language(request: pytest.FixtureRequest) -> MarkupLanguage:
     ids=LANGUAGE_DIRECTIVE_BUILDER_IDS,
 )
 def fixture_language_directive_builder(
+    *,
     request: pytest.FixtureRequest,
 ) -> tuple[MarkupLanguage, DirectiveBuilder]:
     """Provide each (language, directive_builder) combination.
