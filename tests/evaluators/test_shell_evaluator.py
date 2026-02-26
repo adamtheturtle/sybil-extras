@@ -23,9 +23,11 @@ from sybil.parsers.markdown import (
 )
 from sybil.parsers.rest.codeblock import CodeBlockParser
 
-from sybil_extras.evaluators.shell_evaluator import (
+from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
+from sybil_extras.evaluators.shell_evaluator.result_transformer import (
     ResultTransformer,
-    ShellCommandEvaluator,
+)
+from sybil_extras.evaluators.shell_evaluator.source_preparer import (
     SourcePreparer,
 )
 from sybil_extras.languages import (

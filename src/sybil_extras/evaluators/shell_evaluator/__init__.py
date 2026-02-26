@@ -16,6 +16,14 @@ from sybil_extras.evaluators._subprocess_utils import (
     run_command,
 )
 from sybil_extras.evaluators.code_block_writer import CodeBlockWriterEvaluator
+from sybil_extras.evaluators.shell_evaluator.result_transformer import (
+    NOOP_RESULT_TRANSFORMER,
+    ResultTransformer,
+)
+from sybil_extras.evaluators.shell_evaluator.source_preparer import (
+    NOOP_SOURCE_PREPARER,
+    SourcePreparer,
+)
 
 
 @beartype
@@ -33,74 +41,6 @@ class _ExampleModified(Protocol):
         # We disable a pylint warning here because the ellipsis is required
         # for Pyright to recognize this as a protocol.
         ...  # pylint: disable=unnecessary-ellipsis
-
-
-@beartype
-@runtime_checkable
-class SourcePreparer(Protocol):
-    """Prepare source content from an example.
-
-    Implementations extract the raw source string from an example's parsed
-    content.  The returned string is then padded and written to a temporary
-    file by the runner.
-    """
-
-    def __call__(
-        self,
-        *,
-        example: Example,
-    ) -> str:
-        """Return the source string for the given example."""
-        # We disable a pylint warning here because the ellipsis is required
-        # for Pyright to recognize this as a protocol.
-        ...  # pylint: disable=unnecessary-ellipsis
-
-
-@beartype
-class _NoOpSourcePreparer:
-    """Return the example's parsed content as-is."""
-
-    def __call__(self, *, example: Example) -> str:
-        """Return the parsed content of the example."""
-        return str(object=example.parsed)
-
-
-_NOOP_SOURCE_PREPARER = _NoOpSourcePreparer()
-
-
-@beartype
-@runtime_checkable
-class ResultTransformer(Protocol):
-    """Transform the result content before it is written back.
-
-    Implementations receive the formatted content (after padding has been
-    stripped) and return the string that should replace the original code
-    block in the document.
-    """
-
-    def __call__(
-        self,
-        *,
-        content: str,
-        example: Example,
-    ) -> str:
-        """Return the transformed content."""
-        # We disable a pylint warning here because the ellipsis is required
-        # for Pyright to recognize this as a protocol.
-        ...  # pylint: disable=unnecessary-ellipsis
-
-
-@beartype
-class _NoOpResultTransformer:
-    """Return the content unchanged."""
-
-    def __call__(self, *, content: str, example: Example) -> str:
-        """Return the content as-is."""
-        del example
-        return content
-
-
-_NOOP_RESULT_TRANSFORMER = _NoOpResultTransformer()
 
 
 @beartype
@@ -153,8 +93,8 @@ class _ShellCommandRunner:
         encoding: str | None = None,
         on_modify: _ExampleModified | None = None,
         namespace_key: str = "",
-        source_preparer: SourcePreparer = _NOOP_SOURCE_PREPARER,
-        result_transformer: ResultTransformer = _NOOP_RESULT_TRANSFORMER,
+        source_preparer: SourcePreparer = NOOP_SOURCE_PREPARER,
+        result_transformer: ResultTransformer = NOOP_RESULT_TRANSFORMER,
     ) -> None:
         """Initialize the shell command runner.
 
@@ -285,8 +225,8 @@ class ShellCommandEvaluator:
         use_pty: bool,
         encoding: str | None = None,
         on_modify: _ExampleModified | None = None,
-        source_preparer: SourcePreparer = _NOOP_SOURCE_PREPARER,
-        result_transformer: ResultTransformer = _NOOP_RESULT_TRANSFORMER,
+        source_preparer: SourcePreparer = NOOP_SOURCE_PREPARER,
+        result_transformer: ResultTransformer = NOOP_RESULT_TRANSFORMER,
     ) -> None:
         """Initialize the evaluator.
 
@@ -315,9 +255,11 @@ class ShellCommandEvaluator:
             on_modify: A callback to run when the example is modified by the
                 evaluator.
             source_preparer: A callable that extracts source from an example
-                before it is written to the temporary file.
-            result_transformer: A callable that transforms the result before
-                it is written back to the document.
+                before it is written to the temporary file. By default the
+                example's parsed content is used as-is.
+            result_transformer: A callable that transforms the result content
+                before it is written back to the document. By default the
+                content is used as-is.
 
         Raises:
             ValueError: If pseudo-terminal is requested on Windows.
