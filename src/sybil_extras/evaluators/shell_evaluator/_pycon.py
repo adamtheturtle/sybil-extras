@@ -45,7 +45,6 @@ def pycon_to_python(pycon_text: str) -> str:
 class _PyconChunk:
     """A parsed pycon interaction chunk."""
 
-    _input_lines: list[str]
     output_lines: list[str]
 
 
@@ -60,8 +59,8 @@ class _PyconTranscript:
     def from_text(cls, *, pycon_text: str) -> "_PyconTranscript":
         """Parse pycon content into transcript chunks.
 
-        Each chunk represents one interactive statement: the input lines
-        (with prompts stripped) and the output lines (as-is, no prompt).
+        Each chunk represents one interactive statement and its output
+        lines (as-is, no prompt).
 
         Args:
             pycon_text: The content of a pycon code block.
@@ -70,7 +69,6 @@ class _PyconTranscript:
             A parsed transcript.
         """
         chunks: list[_PyconChunk] = []
-        current_input: list[str] = []
         current_output: list[str] = []
         have_current = False
 
@@ -78,31 +76,16 @@ class _PyconTranscript:
             stripped = line.rstrip("\n\r")
             if stripped == ">>>" or line.startswith(">>> "):
                 if have_current:
-                    chunks.append(
-                        _PyconChunk(
-                            _input_lines=current_input,
-                            output_lines=current_output,
-                        )
-                    )
-                    current_input = []
+                    chunks.append(_PyconChunk(output_lines=current_output))
                     current_output = []
                 have_current = True
-                input_line = "\n" if stripped == ">>>" else line[4:]
-                current_input.append(input_line)
             elif stripped == "..." or line.startswith("... "):
-                if have_current:
-                    input_line = "\n" if stripped == "..." else line[4:]
-                    current_input.append(input_line)
+                pass
             elif have_current:
                 current_output.append(line)
 
         if have_current:
-            chunks.append(
-                _PyconChunk(
-                    _input_lines=current_input,
-                    output_lines=current_output,
-                )
-            )
+            chunks.append(_PyconChunk(output_lines=current_output))
 
         return cls(chunks=chunks)
 
@@ -123,6 +106,14 @@ def _continuation_line_indices(*, tree: ast.Module) -> set[int]:
     continuation_lines: set[int] = set()
     for stmt in tree.body:
         start = stmt.lineno - 1
+        if (
+            isinstance(
+                stmt,
+                (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef),
+            )
+            and stmt.decorator_list
+        ):
+            start = stmt.decorator_list[0].lineno - 1
         end = stmt.end_lineno or stmt.lineno
         for line_idx in range(start + 1, end):
             continuation_lines.add(line_idx)
@@ -173,7 +164,8 @@ def _render_pycon_from_python(
     except SyntaxError:
         # Fallback: prefix every line with >>>
         return "".join(
-            ">>> " + line for line in python_text.splitlines(keepends=True)
+            _with_pycon_prompt(prompt=">>>", line=line)
+            for line in python_text.splitlines(keepends=True)
         )
 
     python_lines = python_text.splitlines(keepends=True)

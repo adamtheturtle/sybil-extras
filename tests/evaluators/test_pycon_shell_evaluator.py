@@ -636,6 +636,52 @@ def test_write_to_file_statement_count_mismatch(
     )
 
 
+def test_write_to_file_with_decorated_function(
+    *,
+    tmp_path: Path,
+) -> None:
+    """Decorator lines get ``>>>`` and subsequent lines get ``...``."""
+    content = textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> @staticmethod
+        ... def foo():
+        ...     return 1
+        >>> foo()
+        1
+        ```
+        """,
+    )
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    evaluator = _make_pycon_evaluator(
+        args=["true"],
+        write_to_file=True,
+    )
+    parser = SybilMarkdownCodeBlockParser(
+        language="pycon",
+        evaluator=evaluator,
+    )
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    (example,) = document.examples()
+    example.evaluate()
+
+    result = test_file.read_text(encoding="utf-8")
+    assert result == textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> @staticmethod
+        ... def foo():
+        ...     return 1
+        >>> foo()
+        1
+        ```
+        """,
+    )
+
+
 def test_write_to_file_preserves_output_when_formatter_adds_blank_line(
     *,
     tmp_path: Path,
