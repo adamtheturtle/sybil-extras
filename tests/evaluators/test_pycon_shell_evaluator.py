@@ -85,9 +85,8 @@ def test_writes_extracted_python_to_temp_file(
 
     written = captured.read_text(encoding="utf-8")
     # The temp file should contain Python, not pycon
-    assert ">>>" not in written
-    assert "x = 1 + 1\n" in written
-    assert "x\n" in written
+    expected = "x = 1 + 1\nx\n"
+    assert written == expected
 
 
 def test_write_to_file_reformats_pycon(
