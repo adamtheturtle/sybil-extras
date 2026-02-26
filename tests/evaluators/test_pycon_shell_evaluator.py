@@ -4,6 +4,7 @@ import textwrap
 import uuid
 from pathlib import Path
 
+import pytest
 from beartype import beartype
 from sybil import Sybil
 from sybil.example import Example
@@ -188,97 +189,77 @@ def test_no_change_leaves_file_unmodified(
     assert test_file.stat().st_mtime == mtime_before
 
 
-def test_continuation_and_bare_prompts(
+@pytest.mark.parametrize(
+    argnames="pycon_block",
+    argvalues=[
+        pytest.param(
+            """\
+>>>
+>>> def foo():
+...     return 1
+...
+""",
+            id="bare_prompts_and_continuation",
+        ),
+        pytest.param(
+            """\
+>>> def foo():
+...     return 1
+>>> foo()
+1
+""",
+            id="continuation_lines_with_output",
+        ),
+        pytest.param(
+            """\
+>>> def foo():
+...     return 1
+...
+>>> foo()
+1
+""",
+            id="trailing_bare_continuation_prompt",
+        ),
+        pytest.param(
+            """\
+>>>
+>>> x = 1
+""",
+            id="bare_primary_prompt_spacing",
+        ),
+        pytest.param(
+            """\
+>>> # comment about x
+>>> x = 1
+1
+""",
+            id="comment_lines",
+        ),
+        pytest.param(
+            """\
+>>> x = 1; y = 2
+""",
+            id="semicolon_no_duplication",
+        ),
+        pytest.param(
+            """\
+>>> @staticmethod
+... def foo():
+...     return 1
+>>> foo()
+1
+""",
+            id="decorated_function",
+        ),
+    ],
+)
+def test_write_to_file_round_trip(
     *,
     tmp_path: Path,
+    pycon_block: str,
 ) -> None:
-    """Bare ``>>>`` / ``...`` and ``...`` continuation lines are
-    handled.
-    """
-    content = textwrap.dedent(
-        text="""\
-        ```pycon
-        >>>
-        >>> def foo():
-        ...     return 1
-        ...
-        ```
-        """,
-    )
-    test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
-
-    evaluator = _make_pycon_evaluator(args=["true"])
-    parser = SybilMarkdownCodeBlockParser(
-        language="pycon",
-        evaluator=evaluator,
-    )
-    sybil = Sybil(parsers=[parser])
-    document = sybil.parse(path=test_file)
-    (example,) = document.examples()
-    example.evaluate()
-
-
-def test_write_to_file_with_continuation_lines(
-    *,
-    tmp_path: Path,
-) -> None:
-    """Write-to-file preserves continuation lines and output."""
-    content = textwrap.dedent(
-        text="""\
-        ```pycon
-        >>> def foo():
-        ...     return 1
-        >>> foo()
-        1
-        ```
-        """,
-    )
-    test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
-
-    evaluator = _make_pycon_evaluator(
-        args=["true"],
-        write_to_file=True,
-    )
-    parser = SybilMarkdownCodeBlockParser(
-        language="pycon",
-        evaluator=evaluator,
-    )
-    sybil = Sybil(parsers=[parser])
-    document = sybil.parse(path=test_file)
-    (example,) = document.examples()
-    example.evaluate()
-
-    result = test_file.read_text(encoding="utf-8")
-    assert result == textwrap.dedent(
-        text="""\
-        ```pycon
-        >>> def foo():
-        ...     return 1
-        >>> foo()
-        1
-        ```
-        """,
-    )
-
-
-def test_write_to_file_with_trailing_bare_continuation_prompt(
-    *,
-    tmp_path: Path,
-) -> None:
-    """Trailing bare ``...`` prompt preserves output during write-back."""
-    content = textwrap.dedent(
-        text="""\
-        ```pycon
-        >>> def foo():
-        ...     return 1
-        ...
-        >>> foo()
-        1
-        ```
-        """,
-    )
+    """Pycon content round-trips unchanged through write-to-file."""
+    content = f"```pycon\n{pycon_block}```\n"
     test_file = tmp_path / "test.md"
     test_file.write_text(data=content, encoding="utf-8")
 
@@ -296,57 +277,7 @@ def test_write_to_file_with_trailing_bare_continuation_prompt(
     example.evaluate()
 
     result = test_file.read_text(encoding="utf-8")
-    assert result == textwrap.dedent(
-        text="""\
-        ```pycon
-        >>> def foo():
-        ...     return 1
-        ...
-        >>> foo()
-        1
-        ```
-        """,
-    )
-
-
-def test_write_to_file_preserves_bare_primary_prompt_spacing(
-    *,
-    tmp_path: Path,
-) -> None:
-    """Bare ``>>>`` prompts are preserved without trailing spaces."""
-    content = textwrap.dedent(
-        text="""\
-        ```pycon
-        >>>
-        >>> x = 1
-        ```
-        """,
-    )
-    test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
-
-    evaluator = _make_pycon_evaluator(
-        args=["true"],
-        write_to_file=True,
-    )
-    parser = SybilMarkdownCodeBlockParser(
-        language="pycon",
-        evaluator=evaluator,
-    )
-    sybil = Sybil(parsers=[parser])
-    document = sybil.parse(path=test_file)
-    (example,) = document.examples()
-    example.evaluate()
-
-    result = test_file.read_text(encoding="utf-8")
-    assert result == textwrap.dedent(
-        text="""\
-        ```pycon
-        >>>
-        >>> x = 1
-        ```
-        """,
-    )
+    assert result == content
 
 
 def test_write_to_file_ignores_lines_before_first_prompt(
@@ -484,86 +415,6 @@ def test_write_to_file_syntax_error_fallback(
     )
 
 
-def test_write_to_file_preserves_comment_lines(
-    *,
-    tmp_path: Path,
-) -> None:
-    """Comment lines are not dropped during write-back."""
-    content = textwrap.dedent(
-        text="""\
-        ```pycon
-        >>> # comment about x
-        >>> x = 1
-        1
-        ```
-        """,
-    )
-    test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
-
-    evaluator = _make_pycon_evaluator(
-        args=["true"],
-        write_to_file=True,
-    )
-    parser = SybilMarkdownCodeBlockParser(
-        language="pycon",
-        evaluator=evaluator,
-    )
-    sybil = Sybil(parsers=[parser])
-    document = sybil.parse(path=test_file)
-    (example,) = document.examples()
-    example.evaluate()
-
-    result = test_file.read_text(encoding="utf-8")
-    assert result == textwrap.dedent(
-        text="""\
-        ```pycon
-        >>> # comment about x
-        >>> x = 1
-        1
-        ```
-        """,
-    )
-
-
-def test_write_to_file_no_semicolon_duplication(
-    *,
-    tmp_path: Path,
-) -> None:
-    """Lines with semicolons are not duplicated during write-back."""
-    content = textwrap.dedent(
-        text="""\
-        ```pycon
-        >>> x = 1; y = 2
-        ```
-        """,
-    )
-    test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
-
-    evaluator = _make_pycon_evaluator(
-        args=["true"],
-        write_to_file=True,
-    )
-    parser = SybilMarkdownCodeBlockParser(
-        language="pycon",
-        evaluator=evaluator,
-    )
-    sybil = Sybil(parsers=[parser])
-    document = sybil.parse(path=test_file)
-    (example,) = document.examples()
-    example.evaluate()
-
-    result = test_file.read_text(encoding="utf-8")
-    assert result == textwrap.dedent(
-        text="""\
-        ```pycon
-        >>> x = 1; y = 2
-        ```
-        """,
-    )
-
-
 def test_write_to_file_statement_count_mismatch(
     *,
     tmp_path: Path,
@@ -613,52 +464,6 @@ def test_write_to_file_statement_count_mismatch(
         text="""\
         ```pycon
         >>> z = 3
-        ```
-        """,
-    )
-
-
-def test_write_to_file_with_decorated_function(
-    *,
-    tmp_path: Path,
-) -> None:
-    """Decorator lines get ``>>>`` and subsequent lines get ``...``."""
-    content = textwrap.dedent(
-        text="""\
-        ```pycon
-        >>> @staticmethod
-        ... def foo():
-        ...     return 1
-        >>> foo()
-        1
-        ```
-        """,
-    )
-    test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
-
-    evaluator = _make_pycon_evaluator(
-        args=["true"],
-        write_to_file=True,
-    )
-    parser = SybilMarkdownCodeBlockParser(
-        language="pycon",
-        evaluator=evaluator,
-    )
-    sybil = Sybil(parsers=[parser])
-    document = sybil.parse(path=test_file)
-    (example,) = document.examples()
-    example.evaluate()
-
-    result = test_file.read_text(encoding="utf-8")
-    assert result == textwrap.dedent(
-        text="""\
-        ```pycon
-        >>> @staticmethod
-        ... def foo():
-        ...     return 1
-        >>> foo()
-        1
         ```
         """,
     )
