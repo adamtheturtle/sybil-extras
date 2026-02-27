@@ -10,6 +10,10 @@ from dataclasses import dataclass
 
 from beartype import beartype
 
+from sybil_extras.evaluators.shell_evaluator.exceptions import (
+    InvalidPyconError,
+)
+
 
 @beartype
 def pycon_to_python(*, pycon_text: str) -> str:
@@ -24,10 +28,26 @@ def pycon_to_python(*, pycon_text: str) -> str:
 
     Returns:
         The extracted Python source code with prompts removed.
+
+    Raises:
+        InvalidPyconError: If lines appear before the first prompt.
     """
     lines: list[str] = []
+    seen_prompt = False
     for line in pycon_text.splitlines(keepends=True):
         stripped = line.rstrip("\n\r")
+        is_prompt_line = stripped in {">>>", "..."} or line.startswith(
+            (">>> ", "... ")
+        )
+        if not seen_prompt:
+            if is_prompt_line:
+                seen_prompt = True
+            else:
+                msg = (
+                    f"Invalid pycon: line {stripped!r} "
+                    "appears before the first >>> prompt"
+                )
+                raise InvalidPyconError(msg)
         if stripped == ">>>":
             lines.append("\n")
         elif line.startswith(">>> "):
@@ -70,22 +90,21 @@ class _PyconTranscript:
         """
         chunks: list[_PyconChunk] = []
         current_output: list[str] = []
-        have_current = False
+        seen_prompt = False
 
         for line in pycon_text.splitlines(keepends=True):
             stripped = line.rstrip("\n\r")
             if stripped == ">>>" or line.startswith(">>> "):
-                if have_current:
+                if seen_prompt:
                     chunks.append(_PyconChunk(output_lines=current_output))
                     current_output = []
-                have_current = True
+                seen_prompt = True
             elif stripped == "..." or line.startswith("... "):
                 pass
-            elif have_current:
+            else:
                 current_output.append(line)
 
-        if have_current:
-            chunks.append(_PyconChunk(output_lines=current_output))
+        chunks.append(_PyconChunk(output_lines=current_output))
 
         return cls(chunks=chunks)
 

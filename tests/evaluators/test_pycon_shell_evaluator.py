@@ -13,6 +13,9 @@ from sybil.parsers.markdown import (
 )
 
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
+from sybil_extras.evaluators.shell_evaluator.exceptions import (
+    InvalidPyconError,
+)
 from sybil_extras.evaluators.shell_evaluator.result_transformer import (
     PyconResultTransformer,
 )
@@ -294,23 +297,46 @@ def test_write_to_file_round_trip(
     assert result == content
 
 
-def test_write_to_file_ignores_lines_before_first_prompt(
+@pytest.mark.parametrize(
+    argnames=("pycon_block", "expected_match"),
+    argvalues=[
+        pytest.param(
+            textwrap.dedent(
+                text="""\
+                leading output
+                ... stray continuation
+                >>> x = 1
+                1
+                """,
+            ),
+            "leading output",
+            id="lines_before_first_prompt",
+        ),
+        pytest.param(
+            textwrap.dedent(
+                text="""\
+                just output
+                ... stray continuation
+                """,
+            ),
+            "just output",
+            id="no_prompts_with_stray_lines",
+        ),
+        pytest.param(
+            "\n>>> x = 1\n",
+            "appears before the first",
+            id="blank_line_before_first_prompt",
+        ),
+    ],
+)
+def test_invalid_pycon_raises(
     *,
     tmp_path: Path,
+    pycon_block: str,
+    expected_match: str,
 ) -> None:
-    """Stray lines before the first prompt do not break pycon write-
-    back.
-    """
-    content = textwrap.dedent(
-        text="""\
-        ```pycon
-        leading output
-        ... stray continuation
-        >>> x = 1
-        1
-        ```
-        """,
-    )
+    """Invalid pycon content raises InvalidPyconError."""
+    content = f"```pycon\n{pycon_block}```\n"
     test_file = tmp_path / "test.md"
     test_file.write_text(data=content, encoding="utf-8")
 
@@ -325,56 +351,11 @@ def test_write_to_file_ignores_lines_before_first_prompt(
     sybil = Sybil(parsers=[parser])
     document = sybil.parse(path=test_file)
     (example,) = document.examples()
-    example.evaluate()
-
-    result = test_file.read_text(encoding="utf-8")
-    assert result == textwrap.dedent(
-        text="""\
-        ```pycon
-        >>> stray continuation
-        >>> x = 1
-        ```
-        """,
-    )
-
-
-def test_write_to_file_with_no_prompts(
-    *,
-    tmp_path: Path,
-) -> None:
-    """A pycon block with no prompts is handled without crashing."""
-    content = textwrap.dedent(
-        text="""\
-        ```pycon
-        just output
-        ... stray continuation
-        ```
-        """,
-    )
-    test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
-
-    evaluator = _make_pycon_evaluator(
-        args=["true"],
-        write_to_file=True,
-    )
-    parser = SybilMarkdownCodeBlockParser(
-        language="pycon",
-        evaluator=evaluator,
-    )
-    sybil = Sybil(parsers=[parser])
-    document = sybil.parse(path=test_file)
-    (example,) = document.examples()
-    example.evaluate()
-
-    result = test_file.read_text(encoding="utf-8")
-    assert result == textwrap.dedent(
-        text="""\
-        ```pycon
-        >>> stray continuation
-        ```
-        """,
-    )
+    with pytest.raises(
+        expected_exception=InvalidPyconError,
+        match=expected_match,
+    ):
+        example.evaluate()
 
 
 def test_write_to_file_syntax_error_fallback(

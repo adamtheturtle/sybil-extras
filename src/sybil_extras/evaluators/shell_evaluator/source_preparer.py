@@ -55,5 +55,10 @@ class PyconSourcePreparer:
     """
 
     def __call__(self, *, example: Example) -> str:
-        """Return the Python code extracted from the pycon example."""
+        """Return the Python code extracted from the pycon example.
+
+        Raises:
+            InvalidPyconError: If the pycon content has lines before
+                the first prompt.
+        """
         return pycon_to_python(pycon_text=str(object=example.parsed))
