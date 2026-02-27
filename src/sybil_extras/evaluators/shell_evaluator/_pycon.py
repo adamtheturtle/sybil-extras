@@ -16,12 +16,6 @@ from sybil_extras.evaluators.shell_evaluator.exceptions import (
 
 
 @beartype
-def _is_prompt_line(*, stripped: str, line: str) -> bool:
-    """Return True if the line is a ``>>>`` or ``...`` prompt."""
-    return stripped in {">>>", "..."} or line.startswith((">>> ", "... "))
-
-
-@beartype
 def pycon_to_python(*, pycon_text: str) -> str:
     """Extract Python input lines from pycon content.
 
@@ -42,8 +36,11 @@ def pycon_to_python(*, pycon_text: str) -> str:
     seen_prompt = False
     for line in pycon_text.splitlines(keepends=True):
         stripped = line.rstrip("\n\r")
+        is_prompt_line = stripped in {">>>", "..."} or line.startswith(
+            (">>> ", "... ")
+        )
         if not seen_prompt:
-            if _is_prompt_line(stripped=stripped, line=line):
+            if is_prompt_line:
                 seen_prompt = True
             else:
                 msg = (
