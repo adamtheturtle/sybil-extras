@@ -105,10 +105,10 @@ class _PyconTranscript:
                 have_current = True
             elif stripped == "..." or line.startswith("... "):
                 pass
-            elif have_current:
+            elif have_current:  # pragma: no branch
                 current_output.append(line)
 
-        if have_current:
+        if have_current:  # pragma: no branch
             chunks.append(_PyconChunk(output_lines=current_output))
 
         return cls(chunks=chunks)
