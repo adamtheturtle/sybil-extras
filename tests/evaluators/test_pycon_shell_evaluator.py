@@ -13,11 +13,13 @@ from sybil.parsers.markdown import (
 )
 
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
+from sybil_extras.evaluators.shell_evaluator.exceptions import (
+    InvalidPyconError,
+)
 from sybil_extras.evaluators.shell_evaluator.result_transformer import (
     PyconResultTransformer,
 )
 from sybil_extras.evaluators.shell_evaluator.source_preparer import (
-    InvalidPyconError,
     PyconSourcePreparer,
 )
 

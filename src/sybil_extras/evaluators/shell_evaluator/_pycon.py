@@ -10,11 +10,9 @@ from dataclasses import dataclass
 
 from beartype import beartype
 
-
-class InvalidPyconError(ValueError):
-    """Raised when pycon content contains lines before the first
-    prompt.
-    """
+from sybil_extras.evaluators.shell_evaluator.exceptions import (
+    InvalidPyconError,
+)
 
 
 def _is_prompt_line(*, stripped: str, line: str) -> bool:
