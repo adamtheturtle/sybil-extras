@@ -46,7 +46,7 @@ def pycon_to_python(*, pycon_text: str) -> str:
         if not seen_prompt:
             if _is_prompt_line(stripped=stripped, line=line):
                 seen_prompt = True
-            elif stripped:
+            else:
                 msg = (
                     f"Invalid pycon: line {stripped!r} "
                     "appears before the first >>> prompt"

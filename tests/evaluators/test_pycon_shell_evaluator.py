@@ -295,45 +295,6 @@ def test_write_to_file_round_trip(
     assert result == content
 
 
-def test_blank_line_before_first_prompt(
-    *,
-    tmp_path: Path,
-) -> None:
-    """A blank line before the first prompt is tolerated."""
-    content = textwrap.dedent(
-        text="""\
-        ```pycon
-
-        >>> x = 1
-        ```
-        """,
-    )
-    test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
-
-    evaluator = _make_pycon_evaluator(
-        args=["true"],
-        write_to_file=True,
-    )
-    parser = SybilMarkdownCodeBlockParser(
-        language="pycon",
-        evaluator=evaluator,
-    )
-    sybil = Sybil(parsers=[parser])
-    document = sybil.parse(path=test_file)
-    (example,) = document.examples()
-    example.evaluate()
-
-    result = test_file.read_text(encoding="utf-8")
-    assert result == textwrap.dedent(
-        text="""\
-        ```pycon
-        >>> x = 1
-        ```
-        """,
-    )
-
-
 @pytest.mark.parametrize(
     argnames=("pycon_block", "expected_match"),
     argvalues=[
@@ -358,6 +319,11 @@ def test_blank_line_before_first_prompt(
             ),
             "just output",
             id="no_prompts_with_stray_lines",
+        ),
+        pytest.param(
+            "\n>>> x = 1\n",
+            "appears before the first",
+            id="blank_line_before_first_prompt",
         ),
     ],
 )
