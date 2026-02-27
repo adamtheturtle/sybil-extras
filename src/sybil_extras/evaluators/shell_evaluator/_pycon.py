@@ -11,6 +11,17 @@ from dataclasses import dataclass
 from beartype import beartype
 
 
+class InvalidPyconError(ValueError):
+    """Raised when pycon content contains lines before the first
+    prompt.
+    """
+
+
+def _is_prompt_line(*, stripped: str, line: str) -> bool:
+    """Return True if the line is a ``>>>`` or ``...`` prompt."""
+    return stripped in {">>>", "..."} or line.startswith((">>> ", "... "))
+
+
 @beartype
 def pycon_to_python(*, pycon_text: str) -> str:
     """Extract Python input lines from pycon content.
@@ -24,10 +35,23 @@ def pycon_to_python(*, pycon_text: str) -> str:
 
     Returns:
         The extracted Python source code with prompts removed.
+
+    Raises:
+        InvalidPyconError: If lines appear before the first prompt.
     """
     lines: list[str] = []
+    seen_prompt = False
     for line in pycon_text.splitlines(keepends=True):
         stripped = line.rstrip("\n\r")
+        if not seen_prompt:
+            if _is_prompt_line(stripped=stripped, line=line):
+                seen_prompt = True
+            elif stripped:
+                msg = (
+                    f"Invalid pycon: line {stripped!r} "
+                    "appears before the first >>> prompt"
+                )
+                raise InvalidPyconError(msg)
         if stripped == ">>>":
             lines.append("\n")
         elif line.startswith(">>> "):

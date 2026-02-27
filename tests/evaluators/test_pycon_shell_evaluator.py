@@ -17,6 +17,7 @@ from sybil_extras.evaluators.shell_evaluator.result_transformer import (
     PyconResultTransformer,
 )
 from sybil_extras.evaluators.shell_evaluator.source_preparer import (
+    InvalidPyconError,
     PyconSourcePreparer,
 )
 
@@ -294,13 +295,11 @@ def test_write_to_file_round_trip(
     assert result == content
 
 
-def test_write_to_file_ignores_lines_before_first_prompt(
+def test_lines_before_first_prompt_raises(
     *,
     tmp_path: Path,
 ) -> None:
-    """Stray lines before the first prompt do not break pycon write-
-    back.
-    """
+    """Lines before the first ``>>>`` prompt raise InvalidPyconError."""
     content = textwrap.dedent(
         text="""\
         ```pycon
@@ -325,24 +324,15 @@ def test_write_to_file_ignores_lines_before_first_prompt(
     sybil = Sybil(parsers=[parser])
     document = sybil.parse(path=test_file)
     (example,) = document.examples()
-    example.evaluate()
-
-    result = test_file.read_text(encoding="utf-8")
-    assert result == textwrap.dedent(
-        text="""\
-        ```pycon
-        >>> stray continuation
-        >>> x = 1
-        ```
-        """,
-    )
+    with pytest.raises(InvalidPyconError, match="leading output"):  # type: ignore[call-overload]
+        example.evaluate()
 
 
-def test_write_to_file_with_no_prompts(
+def test_no_prompts_with_stray_lines_raises(
     *,
     tmp_path: Path,
 ) -> None:
-    """A pycon block with no prompts is handled without crashing."""
+    """A pycon block with no prompts and stray lines raises."""
     content = textwrap.dedent(
         text="""\
         ```pycon
@@ -365,16 +355,8 @@ def test_write_to_file_with_no_prompts(
     sybil = Sybil(parsers=[parser])
     document = sybil.parse(path=test_file)
     (example,) = document.examples()
-    example.evaluate()
-
-    result = test_file.read_text(encoding="utf-8")
-    assert result == textwrap.dedent(
-        text="""\
-        ```pycon
-        >>> stray continuation
-        ```
-        """,
-    )
+    with pytest.raises(InvalidPyconError, match="just output"):  # type: ignore[call-overload]
+        example.evaluate()
 
 
 def test_write_to_file_syntax_error_fallback(

@@ -10,7 +10,18 @@ from typing import Protocol, runtime_checkable
 from beartype import beartype
 from sybil import Example
 
-from sybil_extras.evaluators.shell_evaluator._pycon import pycon_to_python
+from sybil_extras.evaluators.shell_evaluator._pycon import (
+    InvalidPyconError,
+    pycon_to_python,
+)
+
+__all__ = [
+    "NOOP_SOURCE_PREPARER",
+    "InvalidPyconError",
+    "NoOpSourcePreparer",
+    "PyconSourcePreparer",
+    "SourcePreparer",
+]
 
 
 @beartype
