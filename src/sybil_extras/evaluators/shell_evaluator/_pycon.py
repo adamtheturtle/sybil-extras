@@ -94,22 +94,21 @@ class _PyconTranscript:
         """
         chunks: list[_PyconChunk] = []
         current_output: list[str] = []
-        have_current = False
+        seen_prompt = False
 
         for line in pycon_text.splitlines(keepends=True):
             stripped = line.rstrip("\n\r")
             if stripped == ">>>" or line.startswith(">>> "):
-                if have_current:
+                if seen_prompt:
                     chunks.append(_PyconChunk(output_lines=current_output))
                     current_output = []
-                have_current = True
+                seen_prompt = True
             elif stripped == "..." or line.startswith("... "):
                 pass
-            elif have_current:  # pragma: no branch
+            else:
                 current_output.append(line)
 
-        if have_current:  # pragma: no branch
-            chunks.append(_PyconChunk(output_lines=current_output))
+        chunks.append(_PyconChunk(output_lines=current_output))
 
         return cls(chunks=chunks)
 
