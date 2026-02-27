@@ -15,6 +15,7 @@ from sybil_extras.evaluators.shell_evaluator.exceptions import (
 )
 
 
+@beartype
 def _is_prompt_line(*, stripped: str, line: str) -> bool:
     """Return True if the line is a ``>>>`` or ``...`` prompt."""
     return stripped in {">>>", "..."} or line.startswith((">>> ", "... "))
