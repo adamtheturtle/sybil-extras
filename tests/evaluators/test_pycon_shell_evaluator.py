@@ -295,21 +295,41 @@ def test_write_to_file_round_trip(
     assert result == content
 
 
-def test_lines_before_first_prompt_raises(
+@pytest.mark.parametrize(
+    argnames=("pycon_block", "expected_match"),
+    argvalues=[
+        pytest.param(
+            textwrap.dedent(
+                text="""\
+                leading output
+                ... stray continuation
+                >>> x = 1
+                1
+                """,
+            ),
+            "leading output",
+            id="lines_before_first_prompt",
+        ),
+        pytest.param(
+            textwrap.dedent(
+                text="""\
+                just output
+                ... stray continuation
+                """,
+            ),
+            "just output",
+            id="no_prompts_with_stray_lines",
+        ),
+    ],
+)
+def test_invalid_pycon_raises(
     *,
     tmp_path: Path,
+    pycon_block: str,
+    expected_match: str,
 ) -> None:
-    """Lines before the first ``>>>`` prompt raise InvalidPyconError."""
-    content = textwrap.dedent(
-        text="""\
-        ```pycon
-        leading output
-        ... stray continuation
-        >>> x = 1
-        1
-        ```
-        """,
-    )
+    """Invalid pycon content raises InvalidPyconError."""
+    content = f"```pycon\n{pycon_block}```\n"
     test_file = tmp_path / "test.md"
     test_file.write_text(data=content, encoding="utf-8")
 
@@ -324,38 +344,10 @@ def test_lines_before_first_prompt_raises(
     sybil = Sybil(parsers=[parser])
     document = sybil.parse(path=test_file)
     (example,) = document.examples()
-    with pytest.raises(InvalidPyconError, match="leading output"):  # type: ignore[call-overload]
-        example.evaluate()
-
-
-def test_no_prompts_with_stray_lines_raises(
-    *,
-    tmp_path: Path,
-) -> None:
-    """A pycon block with no prompts and stray lines raises."""
-    content = textwrap.dedent(
-        text="""\
-        ```pycon
-        just output
-        ... stray continuation
-        ```
-        """,
-    )
-    test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
-
-    evaluator = _make_pycon_evaluator(
-        args=["true"],
-        write_to_file=True,
-    )
-    parser = SybilMarkdownCodeBlockParser(
-        language="pycon",
-        evaluator=evaluator,
-    )
-    sybil = Sybil(parsers=[parser])
-    document = sybil.parse(path=test_file)
-    (example,) = document.examples()
-    with pytest.raises(InvalidPyconError, match="just output"):  # type: ignore[call-overload]
+    with pytest.raises(
+        expected_exception=InvalidPyconError,
+        match=expected_match,
+    ):
         example.evaluate()
 
 
