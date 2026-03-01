@@ -551,16 +551,18 @@ def test_trailing_blank_lines_preserved_in_code_block(
     should be preserved in the parsed text to match the behavior of the
     RESTRUCTUREDTEXT parser.
     """
-    content = (
-        ".. code-block:: python\n"
-        "\n"
-        "   def my_function() -> None:\n"
-        '       """Do nothing."""\n'
-        "\n"
-        "\n"
-        ".. code-block:: python\n"
-        "\n"
-        "   my_function()\n"
+    content = dedent(
+        text='''\
+        .. code-block:: python
+
+           def my_function() -> None:
+               """Do nothing."""
+
+
+        .. code-block:: python
+
+           my_function()
+        '''
     )
     test_file = tmp_path / "test.rst"
     test_file.write_text(data=content, encoding="utf-8")
