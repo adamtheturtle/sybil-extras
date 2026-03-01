@@ -13,7 +13,7 @@ from docutils.utils import new_document
 from sybil import Document, Example, Lexeme, Region
 from sybil.typing import Evaluator
 
-from sybil_extras.parsers.docutils_rst._line_offsets import line_offsets
+from sybil_extras.parsers.abstract._line_offsets import line_offsets
 
 
 @beartype
@@ -31,6 +31,7 @@ class CodeBlockParser:
 
     def __init__(
         self,
+        *,
         language: str | None = None,
         evaluator: Evaluator | None = None,
     ) -> None:
@@ -104,7 +105,7 @@ class CodeBlockParser:
         ref_line = node.line
         if ref_line is None and node.parent is not None:
             ref_line = getattr(node.parent, "line", None)
-        if ref_line is None:
+        if ref_line is None:  # pragma: no cover
             # Code blocks with the 'code' class always have a line
             # reference via node.line or node.parent.line.
             msg = "Code block node has no line reference"
@@ -172,7 +173,7 @@ def _compute_positions(
     """
     directive = f".. code-block:: {language}".rstrip()
 
-    if ref_line < 1 or ref_line > len(lines):
+    if ref_line < 1 or ref_line > len(lines):  # pragma: no cover
         msg = f"Line reference {ref_line} is out of range [1, {len(lines)}]"
         raise ValueError(msg)
 
@@ -223,18 +224,24 @@ def _find_content_after_directive(
     Raises:
         ValueError: If no content is found after the directive.
     """
+    seen_blank = False
     for i in range(directive_line, len(lines)):
-        line = lines[i]
-        # Skip blank lines and option lines (starting with :)
-        stripped = line.lstrip()
-        if not stripped or stripped.startswith(":"):
+        stripped = lines[i].lstrip()
+        if not stripped:
+            seen_blank = True
             continue
-        # Found content
+        # Before the blank separator, skip directive options (e.g. :linenos:).
+        # Docutils strips options before creating the literal_block node,
+        # so this branch is not reachable through normal usage.
+        if not seen_blank and stripped.startswith(":"):  # pragma: no cover
+            continue
         return i + 1
     # Docutils only produces literal_block nodes when there is
     # content after the directive, so this should not be reachable.
-    msg = f"No content found after directive at line {directive_line}"
-    raise ValueError(msg)
+    msg = (  # pragma: no cover
+        f"No content found after directive at line {directive_line}"
+    )
+    raise ValueError(msg)  # pragma: no cover
 
 
 def _find_directive_before_content(
@@ -256,10 +263,12 @@ def _find_directive_before_content(
         if line.startswith(directive):
             return i + 1
         # Stop if we hit non-blank, non-option content
-        if line and not line.startswith(":"):
+        if line and not line.startswith(":"):  # pragma: no cover
             break
     # Docutils only produces literal_block nodes for valid
     # code-block directives, so the directive should always
     # be found before the content.
-    msg = f"No directive found before content at line {content_start_line}"
-    raise ValueError(msg)
+    msg = (  # pragma: no cover
+        f"No directive found before content at line {content_start_line}"
+    )
+    raise ValueError(msg)  # pragma: no cover

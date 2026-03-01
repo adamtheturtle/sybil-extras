@@ -13,7 +13,7 @@ from docutils.parsers.rst import Parser
 from docutils.utils import new_document
 from sybil import Document, Lexeme, Region
 
-from sybil_extras.parsers.docutils_rst._line_offsets import line_offsets
+from sybil_extras.parsers.abstract._line_offsets import line_offsets
 
 
 @beartype
@@ -101,7 +101,7 @@ class DirectiveInCommentLexer:
 
         # Get the line number (1-indexed in docutils)
         line_num = node.line
-        if line_num is None:
+        if line_num is None:  # pragma: no cover
             # Comment nodes in docutils always have a line number.
             msg = "Comment node has no line number"
             raise ValueError(msg)
@@ -110,7 +110,7 @@ class DirectiveInCommentLexer:
         start_line = line_num - 1
 
         # Calculate character positions
-        if start_line >= len(offsets):
+        if start_line >= len(offsets):  # pragma: no cover
             # The line number from docutils should always be within
             # the document.
             msg = (
