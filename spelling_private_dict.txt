@@ -4,6 +4,7 @@ EOF
 JSX
 MDX
 MarkdownIt
+MystParser
 Neorg
 args
 ast

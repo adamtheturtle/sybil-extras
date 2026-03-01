@@ -4,6 +4,8 @@ Changelog
 Next
 ----
 
+* Added ``myst_parser`` parsers using the ``myst-parser`` library.
+
 2026.02.27
 ----------
 

@@ -16,6 +16,7 @@ from sybil_extras.languages import (
     MARKDOWN_IT,
     MDX,
     MYST,
+    MYST_PARSER,
     NORG,
     RESTRUCTUREDTEXT,
     DirectiveBuilder,
@@ -27,6 +28,7 @@ from sybil_extras.languages import (
     argnames=("language", "value"),
     argvalues=[
         pytest.param(MYST, 1, id="myst-code-block"),
+        pytest.param(MYST_PARSER, 8, id="myst-parser-code-block"),
         pytest.param(RESTRUCTUREDTEXT, 2, id="rest-code-block"),
         pytest.param(MARKDOWN, 3, id="markdown-code-block"),
         pytest.param(MARKDOWN_IT, 7, id="markdown-it-code-block"),
@@ -101,6 +103,7 @@ def test_skip_parser(
     argnames=("language"),
     argvalues=[
         pytest.param(MYST, id="myst-empty"),
+        pytest.param(MYST_PARSER, id="myst-parser-empty"),
         pytest.param(RESTRUCTUREDTEXT, id="rest-empty"),
         pytest.param(MARKDOWN, id="markdown-empty"),
         pytest.param(MDX, id="mdx-empty"),
@@ -164,6 +167,7 @@ def test_group_parser(
     argnames=("language"),
     argvalues=[
         pytest.param(MYST, id="myst-jinja"),
+        pytest.param(MYST_PARSER, id="myst-parser-jinja"),
         pytest.param(RESTRUCTUREDTEXT, id="rest-jinja"),
     ],
 )
@@ -205,6 +209,7 @@ def test_markdown_no_sphinx_jinja() -> None:
 def test_language_names() -> None:
     """Test that languages have the expected names."""
     assert MYST.name == "MyST"
+    assert MYST_PARSER.name == "MystParser"
     assert RESTRUCTUREDTEXT.name == "reStructuredText"
     assert MARKDOWN.name == "Markdown"
     assert MDX.name == "MDX"
