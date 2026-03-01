@@ -78,8 +78,7 @@ class CodeBlockParser:
             if region is not None:
                 yield region
 
-        for node in doc.findall(condition=nodes.comment):  # type: ignore[assignment]
-            comment_node: nodes.comment = node  # type: ignore[assignment]
+        for comment_node in doc.findall(condition=nodes.comment):
             region = self._process_invisible_comment_node(
                 node=comment_node,
                 document=document,
