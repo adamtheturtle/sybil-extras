@@ -3,6 +3,7 @@
 from pathlib import Path
 from textwrap import dedent
 
+import pytest
 from sybil import Sybil
 from sybil.evaluators.python import PythonEvaluator
 
@@ -109,6 +110,38 @@ def test_include_directive_does_not_crash(tmp_path: Path) -> None:
         example.evaluate()
 
     assert "x" not in document.namespace
+
+
+def test_directive_with_colon_but_no_argument(tmp_path: Path) -> None:
+    """Directive with colon but no argument raises missing arguments error.
+
+    When a directive has colon but no text after it (e.g., ``.. skip:``),
+    it should raise "missing arguments to ..." like RESTRUCTUREDTEXT,
+    not "malformed arguments to ...: ''".
+    """
+    content = dedent(
+        text="""\
+        .. custom-skip:
+
+        .. code-block:: python
+
+           x = 1
+    """
+    )
+    test_file = tmp_path / "test.rst"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    skip_parser = CustomDirectiveSkipParser(directive="custom-skip")
+    code_parser = CodeBlockParser(
+        language="python",
+        evaluator=PythonEvaluator(),
+    )
+    sybil = Sybil(parsers=[code_parser, skip_parser])
+    with pytest.raises(
+        expected_exception=ValueError,
+        match="missing arguments to custom-skip",
+    ):
+        sybil.parse(path=test_file)
 
 
 def test_directive_at_end_of_file(tmp_path: Path) -> None:
