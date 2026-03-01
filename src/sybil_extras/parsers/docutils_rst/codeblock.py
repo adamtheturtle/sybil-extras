@@ -236,7 +236,9 @@ def _find_content_after_directive(
     Returns 1-indexed.
     """
     return next(
-        i + 1 for i in range(directive_line, len(lines)) if lines[i].lstrip()
+        line_idx + 1
+        for line_idx in range(directive_line, len(lines))
+        if lines[line_idx].lstrip()
     )
 
 
@@ -253,7 +255,9 @@ def _find_directive_before_content(
     """
     prefixes = _directive_prefixes(language=language)
     return next(
-        i + 1
-        for i in range(content_start_line - 2, -1, -1)
-        if any(lines[i].lstrip().startswith(p) for p in prefixes)
+        line_idx + 1
+        for line_idx in range(content_start_line - 2, -1, -1)
+        if any(
+            lines[line_idx].lstrip().startswith(prefix) for prefix in prefixes
+        )
     )
