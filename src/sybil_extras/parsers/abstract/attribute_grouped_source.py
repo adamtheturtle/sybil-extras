@@ -36,6 +36,7 @@ class AbstractAttributeGroupedSourceParser:
         attribute_name: str,
         pad_groups: bool,
         ungrouped_evaluator: Evaluator,
+        no_pad_separator_lines: int = 1,
     ) -> None:
         """
         Args:
@@ -52,12 +53,15 @@ class AbstractAttributeGroupedSourceParser:
                 to not have a bunch of newlines in it, such as formatters.
             ungrouped_evaluator: The evaluator to use for code blocks that
                 don't have the grouping attribute.
+            no_pad_separator_lines: Number of newlines to insert
+        between blocks when ``pad_groups`` is ``False``.
         """
         self._code_block_parser = code_block_parser
         self._evaluator = evaluator
         self._attribute_name = attribute_name
         self._pad_groups = pad_groups
         self._ungrouped_evaluator = ungrouped_evaluator
+        self._no_pad_separator_lines = no_pad_separator_lines
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """Parse the document and yield grouped regions.
@@ -116,6 +120,7 @@ class AbstractAttributeGroupedSourceParser:
                 examples=examples,
                 evaluator=self._evaluator,
                 pad_groups=self._pad_groups,
+                no_pad_separator_lines=self._no_pad_separator_lines,
             )
 
             # We use examples[0].region.end instead of examples[-1].region.end

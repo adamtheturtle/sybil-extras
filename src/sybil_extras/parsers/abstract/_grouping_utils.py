@@ -77,7 +77,7 @@ def _combine_examples_text(
     examples: Sequence[Example],
     *,
     pad_groups: bool,
-    no_pad_separator_lines: int = 1,
+    no_pad_separator_lines: int,
 ) -> Lexeme:
     """Combine text from multiple examples.
 
@@ -142,7 +142,7 @@ def create_combined_region(
     *,
     evaluator: Evaluator,
     pad_groups: bool,
-    no_pad_separator_lines: int = 1,
+    no_pad_separator_lines: int,
 ) -> Region:
     """Create a combined region from multiple examples.
 
