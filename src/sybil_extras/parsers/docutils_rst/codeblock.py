@@ -78,9 +78,10 @@ class CodeBlockParser:
             if region is not None:
                 yield region
 
-        for node in doc.findall(condition=nodes.comment):
+        for node in doc.findall(condition=nodes.comment):  # type: ignore[assignment]
+            comment_node: nodes.comment = node  # type: ignore[assignment]
             region = self._process_invisible_comment_node(
-                node=node,
+                node=comment_node,
                 document=document,
                 offsets=offsets,
                 lines=lines,
@@ -185,7 +186,7 @@ class CodeBlockParser:
         Returns None if the node doesn't match the directive pattern.
         """
         comment_text = node.astext()
-        first_line, *rest_lines = comment_text.split("\n")
+        first_line, *rest_lines = comment_text.split(sep="\n")
         match = _INVISIBLE_CODE_COMMENT_PATTERN.match(string=first_line)
         if match is None:
             return None
@@ -196,7 +197,7 @@ class CodeBlockParser:
             return None
 
         # Extract code lines (skip leading blanks, strip trailing blanks)
-        code_lines = []
+        code_lines: list[str] = []
         found_content = False
         for line in rest_lines:
             if not found_content and not line.strip():

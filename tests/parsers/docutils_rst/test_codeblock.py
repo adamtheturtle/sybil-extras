@@ -522,7 +522,12 @@ def test_invisible_code_block_single_colon_at_end_of_file(
     tmp_path: Path,
 ) -> None:
     """Single-colon invisible-code-block at end of file is parsed."""
-    content = ".. invisible-code-block: python\n\n   x = 1"
+    content = dedent(
+        text="""\
+        .. invisible-code-block: python
+
+           x = 1"""
+    )
     test_file = tmp_path / "test.rst"
     test_file.write_text(data=content, encoding="utf-8")
 
