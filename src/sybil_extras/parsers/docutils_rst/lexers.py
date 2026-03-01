@@ -100,7 +100,7 @@ class DirectiveInCommentLexer:
             return None
 
         directive_name = match.group("directive")
-        arguments_text = match.group("arguments")
+        arguments_text = match.group("arguments") or None
 
         # Get the line number (1-indexed in docutils)
         line_num = node.line
