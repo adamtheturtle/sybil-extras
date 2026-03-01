@@ -1,4 +1,4 @@
-"""Line offset calculation shared across parsers."""
+"""Line offset calculation for parsers."""
 
 from beartype import beartype
 

@@ -12,7 +12,7 @@ from myst_parser.parsers.mdit import create_md_parser
 from sybil import Document, Region
 from sybil.typing import Evaluator
 
-from sybil_extras.parsers.abstract._line_offsets import line_offsets
+from sybil_extras.parsers._line_offsets import line_offsets
 
 _OPTION_PATTERN = re.compile(pattern=r"^:(?P<key>\w+):\s*(?P<value>.*)$")
 

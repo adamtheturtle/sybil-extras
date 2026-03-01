@@ -13,7 +13,7 @@ from docutils.parsers.rst import Parser
 from docutils.utils import new_document
 from sybil import Document, Lexeme, Region
 
-from sybil_extras.parsers.abstract._line_offsets import line_offsets
+from sybil_extras.parsers._line_offsets import line_offsets
 
 
 @beartype
