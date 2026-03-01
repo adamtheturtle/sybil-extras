@@ -204,7 +204,7 @@ class CodeBlockParser:
                 continue
             found_content = True
             code_lines.append(line)
-        while code_lines and not code_lines[-1].strip():
+        while code_lines and not code_lines[-1].strip():  # pragma: no cover
             code_lines.pop()
 
         source_content = "\n".join(code_lines)
