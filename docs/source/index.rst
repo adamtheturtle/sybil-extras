@@ -1,19 +1,9 @@
-|Build Status| |PyPI|
+|project|
+=========
 
-sybil-extras
-============
+Add ons for `Sybil <https://sybil.readthedocs.io>`_.
 
-.. contents::
-   :local:
-
-Add ons for `Sybil <http://sybil.readthedocs.io>`_.
-
-Installation
-------------
-
-.. code-block:: shell
-
-    $ pip install sybil-extras
+.. include:: install.rst
 
 Evaluators
 ----------
@@ -95,7 +85,8 @@ ShellCommandEvaluator
 BlockAccumulatorEvaluator
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``BlockAccumulatorEvaluator`` accumulates parsed code block content in a list within the document's namespace.
+The ``BlockAccumulatorEvaluator`` accumulates parsed code block content in a
+list within the document's namespace.
 This is useful for testing parsers that group multiple code blocks together.
 
 .. code-block:: python
@@ -144,10 +135,13 @@ It is useful for testing and debugging parsers.
 CodeBlockWriterEvaluator
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``CodeBlockWriterEvaluator`` wraps another evaluator and writes any modifications back to the source document.
-This is useful for building evaluators that transform code blocks, such as formatters or auto-fixers.
+The ``CodeBlockWriterEvaluator`` wraps another evaluator and writes any
+modifications back to the source document.
+This is useful for building evaluators that transform code blocks, such as
+formatters or auto-fixers.
 
-The wrapped evaluator should store the modified content in ``example.document.namespace[namespace_key]`` for it to be written back.
+The wrapped evaluator should store the modified content in
+``example.document.namespace[namespace_key]`` for it to be written back.
 
 .. code-block:: python
 
@@ -212,7 +206,7 @@ CustomDirectiveSkipParser
 This allows you to skip code blocks in the same way as described in
 the Sybil documentation for skipping examples in
 `reStructuredText <https://sybil.readthedocs.io/en/latest/rest.html#skipping-examples>`_,
-`Markdown <https://sybil.readthedocs.io/en/latest/rest.html#skipping-examples>`_ ,
+`Markdown <https://sybil.readthedocs.io/en/latest/rest.html#skipping-examples>`_,
 MDX, and `MyST <https://sybil.readthedocs.io/en/latest/myst.html#skipping-examples>`_ files,
 but with custom text, e.g. ``custom-marker-skip`` replacing the word ``skip``.
 
@@ -267,18 +261,21 @@ GroupedSourceParser
         # code blocks in the group.
         item.evaluate()
 
-This makes Sybil act as though all of the code blocks within a group are a single code block,
-to be evaluated with the ``evaluator`` given to ``GroupedSourceParser``.
+This makes Sybil act as though all of the code blocks within a group are a
+single code block, to be evaluated with the ``evaluator`` given to
+``GroupedSourceParser``.
 
-Only code blocks parsed by another parser in the same Sybil instance will be grouped.
+Only code blocks parsed by another parser in the same Sybil instance will be
+grouped.
 
 The ``GroupedSourceParser`` must be registered **after** any code block
 parsers in the ``Sybil(parsers=[...])`` list. At parse time, it counts
 code blocks by examining ``document.examples()``, which only contains
 examples from parsers that have already run.
 
-A group is defined by a pair of comments, ``group: start`` and ``group: end``.
-The ``group: end`` example is expanded to include the contents of the code blocks in the group.
+A group is defined by a pair of comments, ``group: start`` and
+``group: end``. The ``group: end`` example is expanded to include the
+contents of the code blocks in the group.
 
 A reStructuredText example:
 
@@ -365,24 +362,29 @@ GroupAllParser
         # code blocks in the document.
         item.evaluate()
 
-This makes Sybil act as though all of the code blocks in a document are a single code block,
-to be evaluated with the ``evaluator`` given to ``GroupAllParser``.
+This makes Sybil act as though all of the code blocks in a document are a
+single code block, to be evaluated with the ``evaluator`` given to
+``GroupAllParser``.
 
-Unlike ``GroupedSourceParser``, this parser does not require any special markup directives like ``group: start`` and ``group: end``.
+Unlike ``GroupedSourceParser``, this parser does not require any special markup
+directives like ``group: start`` and ``group: end``.
 All code blocks in the document are automatically grouped together.
 
-Only code blocks parsed by another parser in the same Sybil instance will be grouped.
+Only code blocks parsed by another parser in the same Sybil instance will be
+grouped.
 
-The ``GroupAllParser`` must be registered **after** any code block
-parsers in the ``Sybil(parsers=[...])`` list. At parse time, it counts
-code blocks by examining ``document.examples()``, which only contains
-examples from parsers that have already run.
+The ``GroupAllParser`` must be registered **after** any code block parsers in
+the ``Sybil(parsers=[...])`` list. At parse time, it counts code blocks by
+examining ``document.examples()``, which only contains examples from parsers
+that have already run.
 
 AttributeGroupedSourceParser
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``AttributeGroupedSourceParser`` groups MDX code blocks by their ``group`` attribute value, following Docusaurus conventions.
-This is useful for MDX documentation where code blocks with the same group attribute should be combined and evaluated together.
+The ``AttributeGroupedSourceParser`` groups MDX code blocks by their ``group``
+attribute value, following Docusaurus conventions.
+This is useful for MDX documentation where code blocks with the same group
+attribute should be combined and evaluated together.
 
 .. code-block:: python
 
@@ -433,8 +435,9 @@ This is useful for MDX documentation where code blocks with the same group attri
         # code blocks in the same group.
         item.evaluate()
 
-This makes Sybil act as though all code blocks with the same ``group`` attribute value are a single code block,
-to be evaluated with the ``evaluator`` given to ``AttributeGroupedSourceParser``.
+This makes Sybil act as though all code blocks with the same ``group``
+attribute value are a single code block, to be evaluated with the
+``evaluator`` given to ``AttributeGroupedSourceParser``.
 
 An MDX example:
 
@@ -454,18 +457,24 @@ An MDX example:
    x = 1
    ```
 
-In this example, the first two code blocks will be combined and evaluated as one block,
-while the third block (with ``group="example2"``) will be evaluated separately.
+In this example, the first two code blocks will be combined and evaluated as
+one block, while the third block (with ``group="example2"``) will be evaluated
+separately.
 
-Code blocks with the ``group`` attribute (or custom attribute name) will be grouped.
-Code blocks without the attribute are evaluated with the ``ungrouped_evaluator``.
+Code blocks with the ``group`` attribute (or custom attribute name) will be
+grouped. Code blocks without the attribute are evaluated with the
+``ungrouped_evaluator``.
 
 SphinxJinja2Parser
 ^^^^^^^^^^^^^^^^^^
 
-Use the ``SphinxJinja2Parser`` to parse `sphinx-jinja2 <https://sphinx-jinja2.readthedocs.io/en/latest/>`_ templates in Sphinx documentation.
+Use the ``SphinxJinja2Parser`` to parse
+`sphinx-jinja2 <https://sphinx-jinja2.readthedocs.io/en/latest/>`_ templates
+in Sphinx documentation.
 
-This extracts the source, arguments and options from ``.. jinja::`` directive blocks in reStructuredText documents or ``\`\`\`{jinja}`` blocks in MyST documents.
+This extracts the source, arguments and options from ``.. jinja::`` directive
+blocks in reStructuredText documents or ``\`\`\`{jinja}`` blocks in MyST
+documents.
 
 .. code-block:: python
 
@@ -555,9 +564,9 @@ MarkdownIt code block parser
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The ``markdown_it`` module provides Markdown parsers that use the
-`markdown-it-py <https://markdown-it-py.readthedocs.io/>`_ library instead of regex.
-This provides more accurate parsing of Markdown documents, particularly for edge cases
-like fenced code blocks inside indented sections.
+`markdown-it-py <https://markdown-it-py.readthedocs.io/>`_ library instead of
+regex. This provides more accurate parsing of Markdown documents, particularly
+for edge cases like fenced code blocks inside indented sections.
 
 .. code-block:: python
 
@@ -574,8 +583,8 @@ like fenced code blocks inside indented sections.
     pytest_collect_file = sybil.pytest()
 
 The module also provides ``CustomDirectiveSkipParser``, ``GroupedSourceParser``,
-``GroupAllParser``, and ``DirectiveInHTMLCommentLexer`` that use the MarkdownIt library
-for parsing HTML comments containing directives.
+``GroupAllParser``, and ``DirectiveInHTMLCommentLexer`` that use the MarkdownIt
+library for parsing HTML comments containing directives.
 
 MystParser code block parser
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -627,13 +636,15 @@ both ``.. code-block::`` and ``.. code::`` directives.
     pytest_collect_file = sybil.pytest()
 
 The module also provides ``CustomDirectiveSkipParser``, ``GroupedSourceParser``,
-``GroupAllParser``, and ``DirectiveInCommentLexer`` that use the docutils library.
+``GroupAllParser``, and ``DirectiveInCommentLexer`` that use the docutils
+library.
 
 Markup Languages
 ----------------
 
-The ``languages`` module provides a ``MarkupLanguage`` dataclass and predefined instances for working with different markup formats.
-This is useful for building tools that need to work consistently across multiple markup languages.
+The ``languages`` module provides a ``MarkupLanguage`` dataclass and predefined
+instances for working with different markup formats. This is useful for building
+tools that need to work consistently across multiple markup languages.
 
 .. code-block:: python
 
@@ -675,12 +686,13 @@ This is useful for building tools that need to work consistently across multiple
     for example in document.examples():
         example.evaluate()
 
-Full documentation
-------------------
+Reference
+---------
 
-See the `full documentation <https://adamtheturtle.github.io/sybil-extras/>`__.
+.. toctree::
+   :maxdepth: 3
 
-.. |Build Status| image:: https://github.com/adamtheturtle/sybil-extras/actions/workflows/ci.yml/badge.svg?branch=main
-   :target: https://github.com/adamtheturtle/sybil-extras/actions
-.. |PyPI| image:: https://badge.fury.io/py/sybil-extras.svg
-   :target: https://badge.fury.io/py/sybil-extras
+   install
+   contributing
+   release-process
+   changelog
