@@ -3,7 +3,7 @@
 This parser uses docutils to parse RST and extract code blocks.
 """
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 
 from beartype import beartype
 from docutils import nodes
@@ -74,7 +74,7 @@ class CodeBlockParser:
         node: nodes.literal_block,
         document: Document,
         offsets: list[int],
-        lines: list[str],
+        lines: Sequence[str],
     ) -> Region | None:
         """Process a single literal_block node into a Region.
 
@@ -99,27 +99,26 @@ class CodeBlockParser:
         # Get content info
         source_content = node.rawsource or node.astext()
         line_count = source_content.count("\n") + 1
-        if source_content.endswith("\n"):  # pragma: no cover
-            line_count -= 1
 
         # Get line reference from node or parent
         ref_line = node.line
         if ref_line is None and node.parent is not None:
             ref_line = getattr(node.parent, "line", None)
-        if ref_line is None:  # pragma: no cover
-            return None
+        if ref_line is None:
+            # Code blocks with the 'code' class always have a line
+            # reference via node.line or node.parent.line.
+            msg = "Code block node has no line reference"
+            raise ValueError(msg)
 
         # Determine content position based on what ref_line points to
-        result = _compute_positions(
-            lines=lines,
-            ref_line=ref_line,
-            line_count=line_count,
-            language=block_language,
+        directive_line, content_start_line, content_end_line = (
+            _compute_positions(
+                lines=lines,
+                ref_line=ref_line,
+                line_count=line_count,
+                language=block_language,
+            )
         )
-        if result is None:  # pragma: no cover
-            return None
-
-        directive_line, content_start_line, content_end_line = result
 
         # Calculate byte positions
         region_start = offsets[directive_line - 1]
@@ -158,21 +157,24 @@ class CodeBlockParser:
 
 def _compute_positions(
     *,
-    lines: list[str],
+    lines: Sequence[str],
     ref_line: int,
     line_count: int,
     language: str,
-) -> tuple[int, int, int] | None:
+) -> tuple[int, int, int]:
     """Compute directive and content line positions.
 
     Returns (directive_line, content_start_line, content_end_line)
-    as 1-indexed line numbers, or None if not found.
+    as 1-indexed line numbers.
+
+    Raises:
+        ValueError: If the line reference is out of range.
     """
     directive = f".. code-block:: {language}".rstrip()
 
-    # Check what ref_line points to
-    if ref_line < 1 or ref_line > len(lines):  # pragma: no cover
-        return None
+    if ref_line < 1 or ref_line > len(lines):
+        msg = f"Line reference {ref_line} is out of range [1, {len(lines)}]"
+        raise ValueError(msg)
 
     line_at_ref = lines[ref_line - 1]
     stripped = line_at_ref.lstrip()
@@ -184,47 +186,42 @@ def _compute_positions(
             lines=lines,
             directive_line=directive_line,
         )
-        if content_start_line is None:  # pragma: no cover
-            return None
         content_end_line = content_start_line + line_count - 1
 
     elif not stripped:
         # ref_line is blank - content ends before it
         content_end_line = ref_line - 1
         content_start_line = content_end_line - line_count + 1
-        found_directive = _find_directive_before_content(
+        directive_line = _find_directive_before_content(
             lines=lines,
             content_start_line=content_start_line,
             language=language,
         )
-        if found_directive is None:  # pragma: no cover
-            return None
-        directive_line = found_directive
 
     else:
         # ref_line is content (last line of content)
         content_end_line = ref_line
         content_start_line = content_end_line - line_count + 1
-        found_directive = _find_directive_before_content(
+        directive_line = _find_directive_before_content(
             lines=lines,
             content_start_line=content_start_line,
             language=language,
         )
-        if found_directive is None:  # pragma: no cover
-            return None
-        directive_line = found_directive
 
     return (directive_line, content_start_line, content_end_line)
 
 
 def _find_content_after_directive(
     *,
-    lines: list[str],
+    lines: Sequence[str],
     directive_line: int,
-) -> int | None:
+) -> int:
     """Find first content line after directive.
 
     Returns 1-indexed.
+
+    Raises:
+        ValueError: If no content is found after the directive.
     """
     for i in range(directive_line, len(lines)):
         line = lines[i]
@@ -234,18 +231,24 @@ def _find_content_after_directive(
             continue
         # Found content
         return i + 1
-    return None  # pragma: no cover
+    # Docutils only produces literal_block nodes when there is
+    # content after the directive, so this should not be reachable.
+    msg = f"No content found after directive at line {directive_line}"
+    raise ValueError(msg)
 
 
 def _find_directive_before_content(
     *,
-    lines: list[str],
+    lines: Sequence[str],
     content_start_line: int,
     language: str,
-) -> int | None:
+) -> int:
     """Find directive line before content.
 
     Returns 1-indexed.
+
+    Raises:
+        ValueError: If no directive is found before the content.
     """
     directive = f".. code-block:: {language}".rstrip()
     for i in range(content_start_line - 2, -1, -1):
@@ -253,6 +256,10 @@ def _find_directive_before_content(
         if line.startswith(directive):
             return i + 1
         # Stop if we hit non-blank, non-option content
-        if line and not line.startswith(":"):  # pragma: no cover
+        if line and not line.startswith(":"):
             break
-    return None  # pragma: no cover
+    # Docutils only produces literal_block nodes for valid
+    # code-block directives, so the directive should always
+    # be found before the content.
+    msg = f"No directive found before content at line {content_start_line}"
+    raise ValueError(msg)

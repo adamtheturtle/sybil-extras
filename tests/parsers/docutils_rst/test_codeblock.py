@@ -1,22 +1,33 @@
 """Tests for the docutils_rst CodeBlockParser."""
 
 from pathlib import Path
+from textwrap import dedent
 
 import pytest
-from sybil import Sybil
+from docutils import nodes
+from sybil import Document, Sybil
 
 from sybil_extras.evaluators.no_op import NoOpEvaluator
-from sybil_extras.parsers.docutils_rst.codeblock import CodeBlockParser
+from sybil_extras.parsers.docutils_rst._line_offsets import line_offsets
+from sybil_extras.parsers.docutils_rst.codeblock import (
+    CodeBlockParser,
+    _compute_positions,  # pyright: ignore[reportPrivateUsage]
+    _find_content_after_directive,  # pyright: ignore[reportPrivateUsage]
+    _find_directive_before_content,  # pyright: ignore[reportPrivateUsage]
+)
 
 
 def test_basic_code_block(tmp_path: Path) -> None:
     """Basic code blocks are parsed correctly."""
-    content = """Some text
+    content = dedent(
+        text="""\
+        Some text
 
-.. code-block:: python
+        .. code-block:: python
 
-   print("hello")
-"""
+           print("hello")
+    """
+    )
     test_file = tmp_path / "test.rst"
     test_file.write_text(data=content, encoding="utf-8")
 
@@ -31,18 +42,21 @@ def test_basic_code_block(tmp_path: Path) -> None:
 
 def test_multiple_code_blocks(tmp_path: Path) -> None:
     """Multiple code blocks are all parsed."""
-    content = """Some text
+    content = dedent(
+        text="""\
+        Some text
 
-.. code-block:: python
+        .. code-block:: python
 
-   x = 1
+           x = 1
 
-More text
+        More text
 
-.. code-block:: python
+        .. code-block:: python
 
-   y = 2
-"""
+           y = 2
+    """
+    )
     test_file = tmp_path / "test.rst"
     test_file.write_text(data=content, encoding="utf-8")
 
@@ -59,16 +73,19 @@ More text
 
 def test_language_filter(tmp_path: Path) -> None:
     """Code blocks with a different language are skipped."""
-    content = """Some text
+    content = dedent(
+        text="""\
+        Some text
 
-.. code-block:: python
+        .. code-block:: python
 
-   x = 1
+           x = 1
 
-.. code-block:: bash
+        .. code-block:: bash
 
-   echo "hello"
-"""
+           echo "hello"
+    """
+    )
     test_file = tmp_path / "test.rst"
     test_file.write_text(data=content, encoding="utf-8")
 
@@ -86,16 +103,19 @@ def test_no_language_filter(tmp_path: Path) -> None:
     All code blocks are matched when no language filter is
     specified.
     """
-    content = """Some text
+    content = dedent(
+        text="""\
+        Some text
 
-.. code-block:: python
+        .. code-block:: python
 
-   x = 1
+           x = 1
 
-.. code-block:: bash
+        .. code-block:: bash
 
-   echo "hello"
-"""
+           echo "hello"
+    """
+    )
     test_file = tmp_path / "test.rst"
     test_file.write_text(data=content, encoding="utf-8")
 
@@ -110,11 +130,13 @@ def test_no_language_filter(tmp_path: Path) -> None:
 
 def test_language_lexeme(tmp_path: Path) -> None:
     """The language lexeme is set correctly."""
-    content = """
-.. code-block:: python
+    content = dedent(
+        text="""
+        .. code-block:: python
 
-   x = 1
-"""
+           x = 1
+    """
+    )
     test_file = tmp_path / "test.rst"
     test_file.write_text(data=content, encoding="utf-8")
 
@@ -129,13 +151,15 @@ def test_language_lexeme(tmp_path: Path) -> None:
 
 def test_multiline_code_block(tmp_path: Path) -> None:
     """Multiline code blocks are parsed correctly."""
-    content = """
-.. code-block:: python
+    content = dedent(
+        text="""
+        .. code-block:: python
 
-   def hello():
-       print("hello")
-       print("world")
-"""
+           def hello():
+               print("hello")
+               print("world")
+    """
+    )
     test_file = tmp_path / "test.rst"
     test_file.write_text(data=content, encoding="utf-8")
 
@@ -156,14 +180,17 @@ def test_literal_block_skipped(tmp_path: Path) -> None:
     ``literal_block`` nodes without the ``code`` class. These should
     not be matched by the parser.
     """
-    content = """Some text::
+    content = dedent(
+        text="""\
+        Some text::
 
-   x = 1
+           x = 1
 
-.. code-block:: python
+        .. code-block:: python
 
-   y = 2
-"""
+           y = 2
+    """
+    )
     test_file = tmp_path / "test.rst"
     test_file.write_text(data=content, encoding="utf-8")
 
@@ -183,11 +210,13 @@ def test_code_block_without_language(tmp_path: Path) -> None:
     the block should be matched when no language filter is set and
     should have an empty language lexeme.
     """
-    content = """
-.. code-block::
+    content = dedent(
+        text="""
+        .. code-block::
 
-   x = 1
-"""
+           x = 1
+    """
+    )
     test_file = tmp_path / "test.rst"
     test_file.write_text(data=content, encoding="utf-8")
 
@@ -229,11 +258,13 @@ def test_evaluator_not_none_when_omitted(tmp_path: Path) -> None:
     Sybil's AbstractCodeBlockParser, we provide a default evaluate
     method that raises NotImplementedError.
     """
-    content = """
-.. code-block:: python
+    content = dedent(
+        text="""
+        .. code-block:: python
 
-   print('hello')
-"""
+           print('hello')
+    """
+    )
     test_file = tmp_path / "test.rst"
     test_file.write_text(data=content, encoding="utf-8")
 
@@ -250,3 +281,75 @@ def test_evaluator_not_none_when_omitted(tmp_path: Path) -> None:
     # Calling evaluate should raise NotImplementedError (default behavior)
     with pytest.raises(expected_exception=NotImplementedError):
         examples[0].evaluate()
+
+
+def test_compute_positions_ref_line_too_low() -> None:
+    """A ref_line below 1 raises ValueError."""
+    with pytest.raises(expected_exception=ValueError, match="out of range"):
+        _compute_positions(
+            lines=[".. code-block:: python", "", "   x = 1"],
+            ref_line=0,
+            line_count=1,
+            language="python",
+        )
+
+
+def test_compute_positions_ref_line_too_high() -> None:
+    """A ref_line beyond the number of lines raises ValueError."""
+    with pytest.raises(expected_exception=ValueError, match="out of range"):
+        _compute_positions(
+            lines=[".. code-block:: python", "", "   x = 1"],
+            ref_line=99,
+            line_count=1,
+            language="python",
+        )
+
+
+def test_find_content_after_directive_no_content() -> None:
+    """Raises ValueError when there is no content after the directive."""
+    with pytest.raises(expected_exception=ValueError, match="No content"):
+        _find_content_after_directive(
+            lines=[".. code-block:: python", ""],
+            directive_line=1,
+        )
+
+
+def test_find_directive_before_content_no_directive() -> None:
+    """Raises ValueError when no directive is found before the content."""
+    with pytest.raises(expected_exception=ValueError, match="No directive"):
+        _find_directive_before_content(
+            lines=["x = 1"],
+            content_start_line=1,
+            language="python",
+        )
+
+
+def test_find_directive_before_content_other_content() -> None:
+    """Raises ValueError when non-directive content is hit."""
+    with pytest.raises(expected_exception=ValueError, match="No directive"):
+        _find_directive_before_content(
+            lines=["Some other text", "   x = 1"],
+            content_start_line=2,
+            language="python",
+        )
+
+
+def test_process_node_no_line_reference() -> None:
+    """Raises ValueError when a code block node has no line reference."""
+    text = ".. code-block:: python\n\n   x = 1\n"
+    document = Document(text=text, path="test.rst")
+    offsets = line_offsets(text=text)
+    lines_list = text.split(sep="\n")
+
+    node = nodes.literal_block(rawsource="x = 1", text="x = 1")
+    node["classes"] = ["code", "python"]
+    # Do not set node.line or node.parent
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    with pytest.raises(expected_exception=ValueError, match="no line"):
+        parser._process_node(  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+            node=node,
+            document=document,
+            offsets=offsets,
+            lines=lines_list,
+        )
