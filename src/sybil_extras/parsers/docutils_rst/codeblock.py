@@ -318,7 +318,7 @@ def _compute_positions(
         # ref_line is blank - content ends before it.
         # Docutils may point ref_line to a blank line that is several
         # lines after the actual code content, with trailing blank lines
-        # in between (which docutils strips from ``rawsource``/``astext``).
+        # in between (which docutils strips from node text).
         content_end_line = ref_line - 1
         # Find the actual last non-blank content line.
         actual_last_content = content_end_line
