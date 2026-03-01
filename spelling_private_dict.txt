@@ -39,6 +39,7 @@ py
 pycon
 pyright
 pytest
+reportIncompatibleVariableOverride
 rst
 stderr
 stdout
