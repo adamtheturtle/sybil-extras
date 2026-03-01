@@ -53,16 +53,17 @@ def test_writes_modified_content(
         @end
         """
     )
+    rst_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+            original
+        """
+    )
     original_content = {
-        RESTRUCTUREDTEXT: textwrap.dedent(
-            text="""\
-            Not in code block
-
-            .. code-block:: python
-
-                original
-            """
-        ),
+        RESTRUCTUREDTEXT: rst_content,
         MARKDOWN: markdown_content,
         MARKDOWN_IT: markdown_content,
         MDX: markdown_content,
@@ -115,16 +116,17 @@ def test_writes_modified_content(
         @end
         """
     )
+    rst_expected = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+            modified
+        """
+    )
     expected_content = {
-        RESTRUCTUREDTEXT: textwrap.dedent(
-            text="""\
-            Not in code block
-
-            .. code-block:: python
-
-                modified
-            """
-        ),
+        RESTRUCTUREDTEXT: rst_expected,
         MARKDOWN: markdown_expected,
         MARKDOWN_IT: markdown_expected,
         MDX: markdown_expected,
@@ -304,20 +306,21 @@ def test_empty_code_block_write_content(
         After empty code block
         """
     )
+    # There is no code block in reStructuredText that ends with multiple
+    # newlines.
+    rst_expected = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+           foobar
+
+        After empty code block
+        """
+    )
     expected_content = {
-        # There is no code block in reStructuredText that ends with multiple
-        # newlines.
-        RESTRUCTUREDTEXT: textwrap.dedent(
-            text="""\
-            Not in code block
-
-            .. code-block:: python
-
-               foobar
-
-            After empty code block
-            """
-        ),
+        RESTRUCTUREDTEXT: rst_expected,
         MARKDOWN: markdown_expected,
         MARKDOWN_IT: markdown_expected,
         MDX: markdown_expected,
@@ -412,19 +415,20 @@ def test_empty_code_block_with_options(
         After empty code block
         """
     )
+    rst_expected = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+           :emphasize-lines: 2,3
+
+           foobar
+
+        After empty code block
+        """
+    )
     expected_content = {
-        RESTRUCTUREDTEXT: textwrap.dedent(
-            text="""\
-            Not in code block
-
-            .. code-block:: python
-               :emphasize-lines: 2,3
-
-               foobar
-
-            After empty code block
-            """
-        ),
+        RESTRUCTUREDTEXT: rst_expected,
         MYST: myst_expected,
         MDX: textwrap.dedent(
             text="""\
@@ -736,17 +740,18 @@ def test_indented_existing_block(
             @end
         """
     )
+    rst_original_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+            .. code-block:: python
+
+               x = 2 + 2
+               assert x == 4
+        """
+    )
     original_content = {
-        RESTRUCTUREDTEXT: textwrap.dedent(
-            text="""\
-            Not in code block
-
-                .. code-block:: python
-
-                   x = 2 + 2
-                   assert x == 4
-            """
-        ),
+        RESTRUCTUREDTEXT: rst_original_content,
         MARKDOWN: markdown_content,
         MARKDOWN_IT: markdown_content,
         MDX: markdown_content,
@@ -800,16 +805,17 @@ def test_indented_existing_block(
             @end
         """
     )
+    rst_expected = textwrap.dedent(
+        text="""\
+        Not in code block
+
+            .. code-block:: python
+
+               foobar
+        """
+    )
     expected_content = {
-        RESTRUCTUREDTEXT: textwrap.dedent(
-            text="""\
-            Not in code block
-
-                .. code-block:: python
-
-                   foobar
-            """
-        ),
+        RESTRUCTUREDTEXT: rst_expected,
         MARKDOWN: markdown_expected,
         MARKDOWN_IT: markdown_expected,
         MDX: markdown_expected,
@@ -860,16 +866,17 @@ def test_indented_empty_existing_block(
         After code block
         """
     )
+    rst_original_content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+                .. code-block:: python
+
+        After code block
+        """
+    )
     original_content = {
-        RESTRUCTUREDTEXT: textwrap.dedent(
-            text="""\
-            Not in code block
-
-                    .. code-block:: python
-
-            After code block
-            """
-        ),
+        RESTRUCTUREDTEXT: rst_original_content,
         MARKDOWN: markdown_content,
         MARKDOWN_IT: markdown_content,
         MDX: markdown_content,
@@ -929,18 +936,19 @@ def test_indented_empty_existing_block(
         After code block
         """
     )
+    rst_expected = textwrap.dedent(
+        text="""\
+        Not in code block
+
+                .. code-block:: python
+
+                   foobar
+
+        After code block
+        """
+    )
     expected_content = {
-        RESTRUCTUREDTEXT: textwrap.dedent(
-            text="""\
-            Not in code block
-
-                    .. code-block:: python
-
-                       foobar
-
-            After code block
-            """
-        ),
+        RESTRUCTUREDTEXT: rst_expected,
         MARKDOWN: markdown_expected,
         MARKDOWN_IT: markdown_expected,
         MDX: markdown_expected,
