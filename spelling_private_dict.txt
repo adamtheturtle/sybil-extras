@@ -4,6 +4,7 @@ EOF
 JSX
 MDX
 MarkdownIt
+MystParser
 Neorg
 args
 ast
@@ -24,12 +25,15 @@ lexeme
 lexemes
 linter
 mdx
+myst
 namespace
+natively
 norg
 ons
 parametrize
 parsers
 pragma
+py
 pycon
 pyright
 pytest

@@ -194,8 +194,9 @@ CustomDirectiveSkipParser
     # Similar parsers are available at
     # sybil_extras.parsers.markdown.custom_directive_skip,
     # sybil_extras.parsers.markdown_it.custom_directive_skip,
-    # sybil_extras.parsers.mdx.custom_directive_skip and
-    # sybil_extras.parsers.myst.custom_directive_skip.
+    # sybil_extras.parsers.mdx.custom_directive_skip,
+    # sybil_extras.parsers.myst.custom_directive_skip and
+    # sybil_extras.parsers.myst_parser.custom_directive_skip.
     from sybil_extras.parsers.rest.custom_directive_skip import (
         CustomDirectiveSkipParser,
     )
@@ -231,8 +232,9 @@ GroupedSourceParser
     # Similar parsers are available at
     # sybil_extras.parsers.markdown.grouped_source,
     # sybil_extras.parsers.markdown_it.grouped_source,
-    # sybil_extras.parsers.mdx.grouped_source and
-    # sybil_extras.parsers.myst.grouped_source.
+    # sybil_extras.parsers.mdx.grouped_source,
+    # sybil_extras.parsers.myst.grouped_source and
+    # sybil_extras.parsers.myst_parser.grouped_source.
     from sybil_extras.parsers.rest.grouped_source import GroupedSourceParser
 
 
@@ -328,8 +330,9 @@ GroupAllParser
     # Similar parsers are available at
     # sybil_extras.parsers.markdown.group_all,
     # sybil_extras.parsers.markdown_it.group_all,
-    # sybil_extras.parsers.mdx.group_all and
-    # sybil_extras.parsers.myst.group_all.
+    # sybil_extras.parsers.mdx.group_all,
+    # sybil_extras.parsers.myst.group_all and
+    # sybil_extras.parsers.myst_parser.group_all.
     from sybil_extras.parsers.rest.group_all import GroupAllParser
 
 
@@ -470,7 +473,9 @@ This extracts the source, arguments and options from ``.. jinja::`` directive bl
     from sybil import Sybil
     from sybil.example import Example
 
-    # A similar parser is available at sybil_extras.parsers.myst.sphinx_jinja2.
+    # Similar parsers are available at
+    # sybil_extras.parsers.myst.sphinx_jinja2 and
+    # sybil_extras.parsers.myst_parser.sphinx_jinja2.
     # There are no Markdown or MDX parsers as Sphinx is not used with them
     # without MyST.
     from sybil_extras.parsers.rest.sphinx_jinja2 import SphinxJinja2Parser
@@ -569,6 +574,33 @@ The module also provides ``CustomDirectiveSkipParser``, ``GroupedSourceParser``,
 ``GroupAllParser``, and ``DirectiveInHTMLCommentLexer`` that use the MarkdownIt library
 for parsing HTML comments containing directives.
 
+MystParser code block parser
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``myst_parser`` module provides MyST parsers that use the
+`myst-parser <https://myst-parser.readthedocs.io/>`_ library instead of regex.
+This provides more accurate parsing of MyST documents, including support for
+percent-style comment directives (``% skip: next``) in addition to HTML comment
+directives.
+
+.. code-block:: python
+
+    """Use the myst_parser CodeBlockParser for MyST documents."""
+
+    from sybil import Sybil
+
+    from sybil_extras.evaluators.no_op import NoOpEvaluator
+    from sybil_extras.parsers.myst_parser.codeblock import CodeBlockParser
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+
+    pytest_collect_file = sybil.pytest()
+
+The module also provides ``CustomDirectiveSkipParser``, ``GroupedSourceParser``,
+``GroupAllParser``, ``SphinxJinja2Parser``, ``DirectiveInHTMLCommentLexer``, and
+``DirectiveInPercentCommentLexer`` that use the myst-parser library.
+
 Markup Languages
 ----------------
 
@@ -589,11 +621,13 @@ This is useful for building tools that need to work consistently across multiple
         MARKDOWN,
         MDX,
         MYST,
+        MYST_PARSER,
         NORG,
         RESTRUCTUREDTEXT,
     )
 
     assert MYST.name == "MyST"
+    assert MYST_PARSER.name == "MystParser"
     assert MARKDOWN.name == "Markdown"
     assert MDX.name == "MDX"
     assert DJOT.name == "Djot"

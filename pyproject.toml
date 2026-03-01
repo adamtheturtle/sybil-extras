@@ -20,14 +20,13 @@ license = "MIT"
 authors = [
     { name = "Adam Dangoor", email = "adamdangoor@gmail.com" },
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Web Environment",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -39,6 +38,7 @@ dynamic = [
 dependencies = [
     "beartype>=0.22.9",
     "markdown-it-py>=3.0.0",
+    "myst-parser>=5.0.0",
     "sybil>=9.3.0",
 ]
 optional-dependencies.dev = [
