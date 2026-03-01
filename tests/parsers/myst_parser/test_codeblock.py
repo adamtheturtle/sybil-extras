@@ -1,5 +1,6 @@
 """Tests for the myst_parser CodeBlockParser."""
 
+import textwrap
 from pathlib import Path
 
 import pytest
@@ -92,13 +93,16 @@ def test_code_block_inside_blockquote(tmp_path: Path) -> None:
     The myst-parser correctly parses fenced code blocks inside
     blockquotes and strips the blockquote prefixes from the content.
     """
-    content = """> Here's a quoted code block:
->
-> ```python
-> def hello() -> None:
->     print("Hello")
-> ```
-"""
+    content = textwrap.dedent(
+        text="""\
+        > Here's a quoted code block:
+        >
+        > ```python
+        > def hello() -> None:
+        >     print("Hello")
+        > ```
+        """
+    )
     test_file = tmp_path / "test.md"
     test_file.write_text(data=content, encoding="utf-8")
 
@@ -145,19 +149,21 @@ def test_percent_comment_does_not_break_parsing(tmp_path: Path) -> None:
     The myst-parser understands percent comments natively, so they
     should not interfere with code block parsing.
     """
-    content = """\
-% This is a MyST comment
+    content = textwrap.dedent(
+        text="""\
+        % This is a MyST comment
 
-```python
-x = 1
-```
+        ```python
+        x = 1
+        ```
 
-% Another comment
+        % Another comment
 
-```python
-y = 2
-```
-"""
+        ```python
+        y = 2
+        ```
+        """
+    )
     test_file = tmp_path / "test.md"
     test_file.write_text(data=content, encoding="utf-8")
 

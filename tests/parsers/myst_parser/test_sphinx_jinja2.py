@@ -1,5 +1,6 @@
 """Tests for the sphinx-jinja2 parser using myst-parser."""
 
+import textwrap
 from pathlib import Path
 
 from sybil import Sybil
@@ -14,18 +15,20 @@ def test_sphinx_jinja2(*, tmp_path: Path) -> None:
     """The ``SphinxJinja2Parser`` extracts information from
     sphinx-jinja2 blocks.
     """
-    content = """\
-```{jinja}
-:ctx: {"name": "World"}
+    content = textwrap.dedent(
+        text="""\
+        ```{jinja}
+        :ctx: {"name": "World"}
 
-Hallo {{ name }}!
-```
+        Hallo {{ name }}!
+        ```
 
-```{jinja}
-:file: templates/example1.jinja
-:ctx: {"name": "World"}
-```
-"""
+        ```{jinja}
+        :file: templates/example1.jinja
+        :ctx: {"name": "World"}
+        ```
+        """
+    )
 
     test_document = tmp_path / "test.md"
     test_document.write_text(data=content, encoding="utf-8")

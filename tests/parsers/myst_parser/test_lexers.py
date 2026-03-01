@@ -1,5 +1,6 @@
 """Tests for the myst_parser lexers."""
 
+import textwrap
 from pathlib import Path
 
 from sybil import Sybil
@@ -38,13 +39,15 @@ def test_html_directive_in_indented_section(tmp_path: Path) -> None:
     that indented HTML comments are parsed as html_block tokens instead,
     allowing directives to be found in indented sections.
     """
-    content = """\
-    <!--- custom-skip: next -->
+    content = textwrap.dedent(
+        text="""\
+            <!--- custom-skip: next -->
 
-```python
-x = 1
-```
-"""
+        ```python
+        x = 1
+        ```
+        """
+    )
     test_file = tmp_path / "test.md"
     test_file.write_text(data=content, encoding="utf-8")
 
@@ -68,13 +71,15 @@ def test_percent_comment_directive(tmp_path: Path) -> None:
     MyST supports percent-style comments (% comment) as an alternative
     to HTML comments. The myst-parser module should handle both styles.
     """
-    content = """\
-% custom-skip: next
+    content = textwrap.dedent(
+        text="""\
+        % custom-skip: next
 
-```python
-x = 1
-```
-"""
+        ```python
+        x = 1
+        ```
+        """
+    )
     test_file = tmp_path / "test.md"
     test_file.write_text(data=content, encoding="utf-8")
 
