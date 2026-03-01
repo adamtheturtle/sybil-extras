@@ -4,6 +4,8 @@ Changelog
 Next
 ----
 
+* Add ``SphinxJinja2Parser`` to the ``docutils_rst`` parser module.
+
 2026.03.01.2
 ------------
 

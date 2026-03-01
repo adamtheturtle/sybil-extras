@@ -12,6 +12,7 @@ from sybil_extras.evaluators.block_accumulator import (
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.languages import (
     DJOT,
+    DOCUTILS_RST,
     MARKDOWN,
     MARKDOWN_IT,
     MDX,
@@ -169,6 +170,7 @@ def test_group_parser(
         pytest.param(MYST, id="myst-jinja"),
         pytest.param(MYST_PARSER, id="myst-parser-jinja"),
         pytest.param(RESTRUCTUREDTEXT, id="rest-jinja"),
+        pytest.param(DOCUTILS_RST, id="docutils-rst-jinja"),
     ],
 )
 def test_sphinx_jinja_parser(

@@ -477,6 +477,7 @@ This extracts the source, arguments and options from ``.. jinja::`` directive bl
     from sybil.example import Example
 
     # Similar parsers are available at
+    # sybil_extras.parsers.docutils_rst.sphinx_jinja2,
     # sybil_extras.parsers.myst.sphinx_jinja2 and
     # sybil_extras.parsers.myst_parser.sphinx_jinja2.
     # There are no Markdown or MDX parsers as Sphinx is not used with them
