@@ -230,7 +230,7 @@ def _find_content_after_directive(
         if not stripped:
             seen_blank = True
             continue
-        # Before the blank separator, skip directive options (e.g. :linenos:).
+        # Before the blank separator, skip directive options.
         # Docutils strips options before creating the literal_block node,
         # so this branch is not reachable through normal usage.
         if not seen_blank and stripped.startswith(":"):  # pragma: no cover
