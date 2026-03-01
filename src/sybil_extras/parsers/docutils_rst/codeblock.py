@@ -54,6 +54,9 @@ class CodeBlockParser:
         settings = get_default_settings(parser)
         # Suppress warnings about unknown directives, etc.
         settings.report_level = 5  # Never report
+        # Prevent SEVERE messages (e.g. from .. include:: directives with
+        # relative paths) from raising SystemMessage exceptions.
+        settings.halt_level = 5  # Never halt
         doc = new_document(source_path="<sybil>", settings=settings)
         parser.parse(inputstring=document.text, document=doc)
 

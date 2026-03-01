@@ -290,6 +290,36 @@ def test_code_block_at_end_of_file(tmp_path: Path) -> None:
     assert examples[0].parsed.text == "x = 1\n"
 
 
+def test_include_directive_does_not_crash(tmp_path: Path) -> None:
+    """Files with ``.. include::`` directives are parsed without error.
+
+    When an RST file contains ``.. include::`` with a relative path,
+    docutils would normally raise a ``SystemMessage`` (SEVERE/4) because
+    the source path is set to ``<sybil>`` and the file cannot be found.
+    The parser should handle this gracefully and still parse any code
+    blocks in the file.
+    """
+    content = dedent(
+        text="""\
+        .. include:: ../../CHANGELOG.rst
+
+        .. code-block:: python
+
+           x = 1
+    """
+    )
+    test_file = tmp_path / "test.rst"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert len(examples) == 1
+    assert examples[0].parsed.text == "x = 1\n"
+
+
 def test_evaluator_not_none_when_omitted(tmp_path: Path) -> None:
     """When no evaluator is provided, the region still has an evaluator.
 
