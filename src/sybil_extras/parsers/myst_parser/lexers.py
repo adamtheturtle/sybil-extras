@@ -68,7 +68,9 @@ class DirectiveInHTMLCommentLexer:
             if token.type != "html_block":
                 continue
 
-            assert token.map is not None  # noqa: S101
+            if token.map is None:  # pragma: no cover
+                # map is always set for html_block tokens.
+                raise ValueError(token)
 
             start_line, end_line = token.map
 
@@ -157,7 +159,9 @@ class DirectiveInPercentCommentLexer:
             if token.type != "myst_line_comment":
                 continue
 
-            assert token.map is not None  # noqa: S101
+            if token.map is None:  # pragma: no cover
+                # map is always set for myst_line_comment tokens.
+                raise ValueError(token)
 
             start_line, end_line = token.map
 

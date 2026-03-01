@@ -79,7 +79,9 @@ class SphinxJinja2Parser:
             if token.info.strip() != "{jinja}":
                 continue
 
-            assert token.map is not None  # noqa: S101
+            if token.map is None:  # pragma: no cover
+                # This should never happen; map is always set for fence tokens.
+                raise ValueError(token)
 
             start_line, end_line = token.map
 

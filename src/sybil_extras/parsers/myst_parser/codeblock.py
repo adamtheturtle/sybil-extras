@@ -67,7 +67,9 @@ class CodeBlockParser:
                 continue
 
             # MarkdownIt always provides map for fence tokens.
-            assert token.map is not None  # noqa: S101
+            if token.map is None:  # pragma: no cover
+                # This should never happen; map is always set for fence tokens.
+                raise ValueError(token)
 
             # Extract just the language from the info string.
             # The info string can contain extra metadata
