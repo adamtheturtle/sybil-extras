@@ -1,6 +1,4 @@
-"""
-Tests for the docutils_rst CodeBlockParser.
-"""
+"""Tests for the docutils_rst CodeBlockParser."""
 
 from pathlib import Path
 
@@ -12,9 +10,7 @@ from sybil_extras.parsers.docutils_rst.codeblock import CodeBlockParser
 
 
 def test_basic_code_block(tmp_path: Path) -> None:
-    """
-    Basic code blocks are parsed correctly.
-    """
+    """Basic code blocks are parsed correctly."""
     content = """Some text
 
 .. code-block:: python
@@ -34,9 +30,7 @@ def test_basic_code_block(tmp_path: Path) -> None:
 
 
 def test_multiple_code_blocks(tmp_path: Path) -> None:
-    """
-    Multiple code blocks are all parsed.
-    """
+    """Multiple code blocks are all parsed."""
     content = """Some text
 
 .. code-block:: python
@@ -64,9 +58,7 @@ More text
 
 
 def test_language_filter(tmp_path: Path) -> None:
-    """
-    Code blocks with a different language are skipped.
-    """
+    """Code blocks with a different language are skipped."""
     content = """Some text
 
 .. code-block:: python
@@ -91,7 +83,8 @@ def test_language_filter(tmp_path: Path) -> None:
 
 def test_no_language_filter(tmp_path: Path) -> None:
     """
-    All code blocks are matched when no language filter is specified.
+    All code blocks are matched when no language filter is
+    specified.
     """
     content = """Some text
 
@@ -116,9 +109,7 @@ def test_no_language_filter(tmp_path: Path) -> None:
 
 
 def test_language_lexeme(tmp_path: Path) -> None:
-    """
-    The language lexeme is set correctly.
-    """
+    """The language lexeme is set correctly."""
     content = """
 .. code-block:: python
 
@@ -137,9 +128,7 @@ def test_language_lexeme(tmp_path: Path) -> None:
 
 
 def test_multiline_code_block(tmp_path: Path) -> None:
-    """
-    Multiline code blocks are parsed correctly.
-    """
+    """Multiline code blocks are parsed correctly."""
     content = """
 .. code-block:: python
 

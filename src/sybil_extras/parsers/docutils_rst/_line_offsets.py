@@ -1,6 +1,4 @@
-"""
-Line offset calculation for the docutils_rst parsers.
-"""
+"""Line offset calculation for the docutils_rst parsers."""
 
 from beartype import beartype
 

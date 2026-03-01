@@ -34,9 +34,7 @@ class CodeBlockParser:
         language: str | None = None,
         evaluator: Evaluator | None = None,
     ) -> None:
-        """
-        Initialize the parser.
-        """
+        """Initialize the parser."""
         self._language = language
         self._evaluator = evaluator
 
@@ -49,9 +47,7 @@ class CodeBlockParser:
         raise NotImplementedError
 
     def __call__(self, document: Document) -> Iterable[Region]:
-        """
-        Parse the document and yield regions for each code block.
-        """
+        """Parse the document and yield regions for each code block."""
         parser = Parser()
         settings = get_default_settings(parser)
         # Suppress warnings about unknown directives, etc.

@@ -42,9 +42,7 @@ class DirectiveInCommentLexer:
         directive: str,
         arguments: str = ".*?",
     ) -> None:
-        """
-        Initialize the lexer.
-        """
+        """Initialize the lexer."""
         # Build a pattern to match the directive inside the comment.
         # RST comments have their content after ".. " with possible
         # indentation.
@@ -60,9 +58,7 @@ class DirectiveInCommentLexer:
         )
 
     def __call__(self, document: Document) -> Iterable[Region]:
-        """
-        Parse the document and yield regions for directive comments.
-        """
+        """Parse the document and yield regions for directive comments."""
         parser = Parser()
         settings = get_default_settings(parser)
         # Suppress warnings about unknown directives, etc.

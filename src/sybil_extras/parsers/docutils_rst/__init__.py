@@ -1,3 +1,1 @@
-"""
-ReStructuredText parsers using the docutils library.
-"""
+"""ReStructuredText parsers using the docutils library."""

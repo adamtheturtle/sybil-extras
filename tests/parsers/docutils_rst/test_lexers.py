@@ -1,6 +1,4 @@
-"""
-Tests for the docutils_rst lexers.
-"""
+"""Tests for the docutils_rst lexers."""
 
 from pathlib import Path
 
@@ -14,9 +12,7 @@ from sybil_extras.parsers.docutils_rst.custom_directive_skip import (
 
 
 def test_directive_in_comment(tmp_path: Path) -> None:
-    """
-    Directive in an RST comment is recognized.
-    """
+    """Directive in an RST comment is recognized."""
     content = """
 .. custom-skip: next
 
@@ -45,9 +41,7 @@ def test_directive_in_comment(tmp_path: Path) -> None:
 
 
 def test_directive_without_colon(tmp_path: Path) -> None:
-    """
-    Directive without a colon is also recognized.
-    """
+    """Directive without a colon is also recognized."""
     content = """
 .. custom-skip next
 
