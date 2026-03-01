@@ -6,6 +6,7 @@ MDX
 MarkdownIt
 Neorg
 args
+ast
 atomicity
 backtick
 beartype
@@ -29,6 +30,7 @@ ons
 parametrize
 parsers
 pragma
+pycon
 pyright
 pytest
 rst

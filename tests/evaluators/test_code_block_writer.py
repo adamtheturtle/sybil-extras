@@ -1,6 +1,4 @@
-"""
-Tests for the code_block_writer module.
-"""
+"""Tests for the code_block_writer module."""
 
 import textwrap
 from pathlib import Path
@@ -24,12 +22,11 @@ from sybil_extras.languages import (
 
 
 def test_writes_modified_content(
+    *,
     tmp_path: Path,
     markup_language: MarkupLanguage,
 ) -> None:
-    """
-    Writes modified content from namespace to source file.
-    """
+    """Writes modified content from namespace to source file."""
     markdown_content = textwrap.dedent(
         text="""\
         Not in code block
@@ -81,9 +78,7 @@ def test_writes_modified_content(
     source_file.write_text(data=original_content, encoding="utf-8")
 
     def modifying_evaluator(example: Example) -> None:
-        """
-        Store modified content in namespace.
-        """
+        """Store modified content in namespace."""
         example.document.namespace["modified_content"] = "modified"
 
     writer_evaluator = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)
@@ -147,7 +142,8 @@ def test_writes_modified_content(
 
 
 def test_writes_on_evaluator_exception(tmp_path: Path) -> None:
-    """When the wrapped evaluator raises an exception, modifications are still
+    """When the wrapped evaluator raises an exception, modifications are
+    still
     written to the file before the exception is re-raised.
 
     This is important for formatters that should update files even when
@@ -164,20 +160,14 @@ def test_writes_on_evaluator_exception(tmp_path: Path) -> None:
     source_file.write_text(data=original_content, encoding="utf-8")
 
     class FailingEvaluator:
-        """
-        An evaluator that modifies content then raises an exception.
-        """
+        """An evaluator that modifies content then raises an exception."""
 
         def __init__(self, namespace_key: str) -> None:
-            """
-            Initialize the evaluator with a namespace key.
-            """
+            """Initialize the evaluator with a namespace key."""
             self._namespace_key = namespace_key
 
         def __call__(self, example: Example) -> None:
-            """
-            Modify content then raise an exception.
-            """
+            """Modify content then raise an exception."""
             example.document.namespace[self._namespace_key] = "modified"
             msg = "Intentional failure"
             raise RuntimeError(msg)
@@ -208,12 +198,11 @@ def test_writes_on_evaluator_exception(tmp_path: Path) -> None:
 
 
 def test_empty_code_block_write_content(
+    *,
     tmp_path: Path,
     markup_language: MarkupLanguage,
 ) -> None:
-    """
-    Content can be written to an empty code block.
-    """
+    """Content can be written to an empty code block."""
     if markup_language == DOCUTILS_RST:
         # Docutils treats empty code blocks as errors and doesn't parse them
         # as valid code-block directives.
@@ -275,9 +264,7 @@ def test_empty_code_block_write_content(
     source_file.write_text(data=content, encoding="utf-8")
 
     def modifying_evaluator(example: Example) -> None:
-        """
-        Store modified content in namespace.
-        """
+        """Store modified content in namespace."""
         # Add multiple newlines to show that they are not included in the file.
         # No code block in reStructuredText ends with multiple newlines.
         example.document.namespace["modified_content"] = "foobar\n\n"
@@ -357,11 +344,13 @@ def test_empty_code_block_write_content(
 
 
 def test_empty_code_block_with_options(
+    *,
     tmp_path: Path,
     markup_language: MarkupLanguage,
 ) -> None:
     """
-    It is possible to write content to an empty code block even if that code
+    It is possible to write content to an empty code block even if that
+    code
     block has options.
     """
     if markup_language in (MARKDOWN, MARKDOWN_IT, DJOT, NORG):
@@ -417,9 +406,7 @@ def test_empty_code_block_with_options(
     source_file.write_text(data=content, encoding="utf-8")
 
     def modifying_evaluator(example: Example) -> None:
-        """
-        Store modified content in namespace.
-        """
+        """Store modified content in namespace."""
         example.document.namespace["modified_content"] = "foobar"
 
     writer_evaluator = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)
@@ -487,11 +474,13 @@ def test_empty_code_block_with_options(
     ],
 )
 def test_empty_code_block_write_empty(
+    *,
     tmp_path: Path,
     new_content: str,
 ) -> None:
     """
-    No error is given when trying to write empty content to an empty code
+    No error is given when trying to write empty content to an empty
+    code
     block.
     """
     content = textwrap.dedent(
@@ -507,9 +496,7 @@ def test_empty_code_block_write_empty(
     source_file.write_text(data=content, encoding="utf-8")
 
     def modifying_evaluator(example: Example) -> None:
-        """
-        Store modified content in namespace.
-        """
+        """Store modified content in namespace."""
         example.document.namespace["modified_content"] = new_content
 
     writer_evaluator = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)
@@ -557,9 +544,7 @@ def test_djot_quoted_code_block(tmp_path: Path) -> None:
     djot_file.write_text(data=original_content, encoding="utf-8")
 
     def modifying_evaluator(example: Example) -> None:
-        """
-        Store modified content in namespace.
-        """
+        """Store modified content in namespace."""
         example.document.namespace["modified_content"] = "y = 5"
 
     writer_evaluator = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)
@@ -595,9 +580,7 @@ def test_djot_quoted_code_block(tmp_path: Path) -> None:
 
 
 def test_no_write_when_content_unchanged(tmp_path: Path) -> None:
-    """
-    Does not write when modified content matches original.
-    """
+    """Does not write when modified content matches original."""
     content = textwrap.dedent(
         text="""\
         ```python
@@ -610,9 +593,7 @@ def test_no_write_when_content_unchanged(tmp_path: Path) -> None:
     original_mtime = source_file.stat().st_mtime
 
     def same_content_evaluator(example: Example) -> None:
-        """
-        Store same content in namespace.
-        """
+        """Store same content in namespace."""
         example.document.namespace["modified_content"] = "original\n"
 
     writer_evaluator = CodeBlockWriterEvaluator(
@@ -631,9 +612,7 @@ def test_no_write_when_content_unchanged(tmp_path: Path) -> None:
 
 
 def test_no_write_when_no_namespace_key(tmp_path: Path) -> None:
-    """
-    Does not write when namespace key is not set.
-    """
+    """Does not write when namespace key is not set."""
     content = textwrap.dedent(
         text="""\
         ```python
@@ -659,9 +638,7 @@ def test_no_write_when_no_namespace_key(tmp_path: Path) -> None:
 
 
 def test_custom_namespace_key(tmp_path: Path) -> None:
-    """
-    Uses custom namespace key for modified content.
-    """
+    """Uses custom namespace key for modified content."""
     content = textwrap.dedent(
         text="""\
         ```python
@@ -675,9 +652,7 @@ def test_custom_namespace_key(tmp_path: Path) -> None:
     custom_key = "custom_modified"
 
     def modifying_evaluator(example: Example) -> None:
-        """
-        Store modified content with custom key.
-        """
+        """Store modified content with custom key."""
         example.document.namespace[custom_key] = "modified"
 
     writer_evaluator = CodeBlockWriterEvaluator(
@@ -704,9 +679,7 @@ def test_custom_namespace_key(tmp_path: Path) -> None:
 
 
 def test_encoding_parameter(tmp_path: Path) -> None:
-    """
-    Uses specified encoding when writing.
-    """
+    """Uses specified encoding when writing."""
     content = textwrap.dedent(
         text="""\
         ```python
@@ -718,9 +691,7 @@ def test_encoding_parameter(tmp_path: Path) -> None:
     source_file.write_text(data=content, encoding="utf-16")
 
     def modifying_evaluator(example: Example) -> None:
-        """
-        Store modified content.
-        """
+        """Store modified content."""
         example.document.namespace["modified_content"] = "modified"
 
     writer_evaluator = CodeBlockWriterEvaluator(
@@ -747,12 +718,11 @@ def test_encoding_parameter(tmp_path: Path) -> None:
 
 
 def test_indented_existing_block(
+    *,
     tmp_path: Path,
     markup_language: MarkupLanguage,
 ) -> None:
-    """
-    Changes are written to indented code blocks.
-    """
+    """Changes are written to indented code blocks."""
     if markup_language == NORG:
         # Norg does not support indented code blocks in the same way.
         return
@@ -811,9 +781,7 @@ def test_indented_existing_block(
     source_file.write_text(data=original_content, encoding="utf-8")
 
     def modifying_evaluator(example: Example) -> None:
-        """
-        Store modified content in namespace.
-        """
+        """Store modified content in namespace."""
         example.document.namespace["modified_content"] = "foobar"
 
     writer_evaluator = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)
@@ -878,12 +846,11 @@ def test_indented_existing_block(
 
 
 def test_indented_empty_existing_block(
+    *,
     tmp_path: Path,
     markup_language: MarkupLanguage,
 ) -> None:
-    """
-    Changes are written to indented empty code blocks.
-    """
+    """Changes are written to indented empty code blocks."""
     if markup_language == NORG:
         # Norg does not support indented code blocks in the same way.
         return
@@ -946,9 +913,7 @@ def test_indented_empty_existing_block(
     source_file.write_text(data=original_content, encoding="utf-8")
 
     def modifying_evaluator(example: Example) -> None:
-        """
-        Store modified content in namespace.
-        """
+        """Store modified content in namespace."""
         example.document.namespace["modified_content"] = "foobar"
 
     writer_evaluator = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)
@@ -1021,9 +986,7 @@ def test_indented_empty_existing_block(
 
 
 def test_multiple_blocks(tmp_path: Path) -> None:
-    """
-    Handles multiple code blocks correctly.
-    """
+    """Handles multiple code blocks correctly."""
     content = textwrap.dedent(
         text="""\
         ```python
@@ -1041,9 +1004,7 @@ def test_multiple_blocks(tmp_path: Path) -> None:
     call_count = 0
 
     def modifying_evaluator(example: Example) -> None:
-        """
-        Store modified content with incrementing value.
-        """
+        """Store modified content with incrementing value."""
         nonlocal call_count
         call_count += 1
         example.document.namespace["modified_content"] = (
@@ -1077,7 +1038,8 @@ def test_multiple_blocks(tmp_path: Path) -> None:
 
 def test_mixed_tab_space_indentation(tmp_path: Path) -> None:
     """
-    Changes are written correctly when code block indentation uses mixed tabs
+    Changes are written correctly when code block indentation uses mixed
+    tabs
     and spaces.
     """
     # Content with one tab followed by three spaces for indentation
@@ -1086,9 +1048,7 @@ def test_mixed_tab_space_indentation(tmp_path: Path) -> None:
     source_file.write_text(data=original_content, encoding="utf-8")
 
     def modifying_evaluator(example: Example) -> None:
-        """
-        Store modified content in namespace.
-        """
+        """Store modified content in namespace."""
         example.document.namespace["modified_content"] = "y = 2"
 
     writer_evaluator = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)
@@ -1108,7 +1068,8 @@ def test_mixed_tab_space_indentation(tmp_path: Path) -> None:
 
 
 def test_changes_lines(tmp_path: Path) -> None:
-    """If writing to a file changes the number of lines in the file, that does
+    """If writing to a file changes the number of lines in the file, that
+    does
     not affect the next code block.
 
     This test case is a narrow version of
@@ -1132,9 +1093,7 @@ def test_changes_lines(tmp_path: Path) -> None:
     source_file.write_text(data=content, encoding="utf-8")
 
     def modifying_evaluator(example: Example) -> None:
-        """
-        Store modified content.
-        """
+        """Store modified content."""
         example.document.namespace["modified_content"] = "pass"
 
     writer_evaluator = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)

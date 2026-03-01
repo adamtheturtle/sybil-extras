@@ -1,3 +1,1 @@
-"""
-Parsers for djot.
-"""
+"""Parsers for djot."""

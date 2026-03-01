@@ -1,6 +1,4 @@
-"""
-Lexers for djot.
-"""
+"""Lexers for djot."""
 
 import re
 from collections.abc import Iterable
@@ -32,13 +30,12 @@ class DirectiveInDjotCommentLexer:
 
     def __init__(
         self,
+        *,
         directive: str,
         arguments: str = r".*?",
         mapping: dict[str, str] | None = None,
     ) -> None:
-        """
-        Initialize the djot comment lexer.
-        """
+        """Initialize the djot comment lexer."""
         # Pattern to match djot comments with directives
         # Format: {% directive: argument %} or {% directive %}
         # The comment must be on its own line (with optional leading
@@ -58,9 +55,7 @@ class DirectiveInDjotCommentLexer:
         self.mapping = mapping
 
     def __call__(self, document: Document) -> Iterable[Region]:
-        """
-        Yield regions for djot comment directives.
-        """
+        """Yield regions for djot comment directives."""
         for match in self.pattern.finditer(string=document.text):
             lexemes = match.groupdict()
             # Clean up the arguments - might be None if no colon was present

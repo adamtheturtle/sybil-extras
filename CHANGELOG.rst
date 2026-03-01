@@ -4,6 +4,32 @@ Changelog
 Next
 ----
 
+2026.02.27
+----------
+
+
+2026.02.26.1
+------------
+
+
+2026.02.26
+----------
+
+
+2026.01.27
+----------
+
+
+* **Breaking change**: Replace ``tempfile_suffixes`` and ``tempfile_name_prefix`` parameters in ``ShellCommandEvaluator`` with a single ``temp_file_path_maker`` callable for full control over temporary file path generation.
+
+2026.01.22
+----------
+
+
+2026.01.13
+----------
+
+
 * Add ``markdown_it`` parser module using the ``markdown-it-py`` library for more accurate Markdown parsing.
 
 2026.01.12

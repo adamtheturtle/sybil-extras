@@ -25,14 +25,10 @@ from ._grouping_utils import (
 
 @beartype
 class _GroupAllState:
-    """
-    State for grouping all examples in a document.
-    """
+    """State for grouping all examples in a document."""
 
     def __init__(self, *, expected_code_blocks: int) -> None:
-        """
-        Initialize the group all state.
-        """
+        """Initialize the group all state."""
         self.expected_code_blocks = expected_code_blocks
         self.examples: list[Example] = []
         self.lock = threading.Lock()
@@ -42,9 +38,7 @@ class _GroupAllState:
 
 @beartype
 class _GroupAllEvaluator:
-    """
-    Evaluator that collects all examples and evaluates them as one.
-    """
+    """Evaluator that collects all examples and evaluates them as one."""
 
     def __init__(
         self,
@@ -54,10 +48,13 @@ class _GroupAllEvaluator:
     ) -> None:
         """
         Args:
-            evaluator: The evaluator to use for evaluating the combined region.
+            evaluator: The evaluator to use for evaluating the combined
+        region.
             pad_groups: Whether to pad groups with empty lines.
-                This is useful for error messages that reference line numbers.
-                However, this is detrimental to commands that expect the file
+                This is useful for error messages that reference line
+        numbers.
+                However, this is detrimental to commands that expect the
+        file
                 to not have a bunch of newlines in it, such as formatters.
         """
         self._document_state: dict[Document, _GroupAllState] = {}
@@ -66,6 +63,7 @@ class _GroupAllEvaluator:
 
     def register_document(
         self,
+        *,
         document: Document,
         expected_code_blocks: int,
     ) -> None:
@@ -78,9 +76,7 @@ class _GroupAllEvaluator:
         )
 
     def collect(self, example: Example) -> None:
-        """
-        Collect an example to be grouped.
-        """
+        """Collect an example to be grouped."""
         state = self._document_state[example.document]
 
         with state.ready:
@@ -93,9 +89,7 @@ class _GroupAllEvaluator:
         raise NotEvaluated
 
     def finalize(self, example: Example) -> None:
-        """
-        Finalize the grouping and evaluate all collected examples.
-        """
+        """Finalize the grouping and evaluate all collected examples."""
         state = self._document_state[example.document]
 
         with state.ready:
@@ -133,9 +127,7 @@ class _GroupAllEvaluator:
                 del self._document_state[example.document]
 
     def __call__(self, example: Example) -> None:
-        """
-        Call the evaluator.
-        """
+        """Call the evaluator."""
         # We use ``id`` equivalence rather than ``is`` to avoid a
         # ``pyright`` error:
         # https://github.com/microsoft/pyright/issues/9932
@@ -170,10 +162,13 @@ class AbstractGroupAllParser:
     ) -> None:
         """
         Args:
-            evaluator: The evaluator to use for evaluating the combined region.
+            evaluator: The evaluator to use for evaluating the combined
+        region.
             pad_groups: Whether to pad groups with empty lines.
-                This is useful for error messages that reference line numbers.
-                However, this is detrimental to commands that expect the file
+                This is useful for error messages that reference line
+        numbers.
+                However, this is detrimental to commands that expect the
+        file
                 to not have a bunch of newlines in it, such as formatters.
         """
         self._evaluator = _GroupAllEvaluator(

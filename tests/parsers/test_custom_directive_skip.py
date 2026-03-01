@@ -1,6 +1,4 @@
-"""
-Custom directive skip parser tests shared across markup languages.
-"""
+"""Custom directive skip parser tests shared across markup languages."""
 
 from pathlib import Path
 
@@ -13,12 +11,11 @@ from sybil_extras.languages import DirectiveBuilder, MarkupLanguage
 
 
 def test_skip(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
-    """
-    The custom directive skip parser can be used to set skips.
-    """
+    """The custom directive skip parser can be used to set skips."""
     language, directive_builder = language_directive_builder
     content = language.markup_separator.join(
         [
@@ -84,12 +81,11 @@ def test_skip(
 
 
 def test_directive_name_in_evaluate_error(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
-    """
-    The directive name is included in evaluation errors.
-    """
+    """The directive name is included in evaluation errors."""
     language, directive_builder = language_directive_builder
     content = directive_builder(
         directive="custom-skip",
@@ -114,12 +110,11 @@ def test_directive_name_in_evaluate_error(
 
 
 def test_directive_name_in_parse_error(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
-    """
-    The directive name is included in parsing errors.
-    """
+    """The directive name is included in parsing errors."""
     language, directive_builder = language_directive_builder
     content = directive_builder(
         directive="custom-skip",
@@ -142,11 +137,13 @@ def test_directive_name_in_parse_error(
 
 
 def test_directive_name_not_regex_escaped(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
     """
-    Directive names containing regex characters are matched literally.
+    Directive names containing regex characters are matched
+    literally.
     """
     language, directive_builder = language_directive_builder
     directive = "custom-skip[has_square_brackets]"

@@ -1,6 +1,4 @@
-"""
-A custom directive skip parser for MyST.
-"""
+"""A custom directive skip parser for MyST."""
 
 import re
 from collections.abc import Iterable
@@ -17,9 +15,7 @@ from sybil.parsers.myst.lexers import (
 
 @beartype
 class CustomDirectiveSkipParser:
-    """
-    A custom directive skip parser for MyST.
-    """
+    """A custom directive skip parser for MyST."""
 
     def __init__(self, directive: str) -> None:
         """
@@ -41,13 +37,9 @@ class CustomDirectiveSkipParser:
         self._abstract_skip_parser.directive = directive
 
     def __call__(self, document: Document) -> Iterable[Region]:
-        """
-        Yield skip regions.
-        """
+        """Yield skip regions."""
         return self._abstract_skip_parser(document=document)
 
     def get_skipper(self) -> Skipper:
-        """
-        Return the skipper used by the parser.
-        """
+        """Return the skipper used by the parser."""
         return self._abstract_skip_parser.skipper

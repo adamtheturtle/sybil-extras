@@ -13,7 +13,7 @@ ci:
     - check-manifest
     - deptry
     - doc8
-    - docformatter
+    - pydocstringformatter
     - interrogate
     - interrogate-docs
     - mypy
@@ -100,9 +100,9 @@ repos:
         additional_dependencies: [uv==0.9.5]
         stages: [pre-commit]
 
-      - id: docformatter
-        name: docformatter
-        entry: uv run --extra=dev -m docformatter --in-place
+      - id: pydocstringformatter
+        name: pydocstringformatter
+        entry: uv run --extra=dev pydocstringformatter
         language: python
         types_or: [python]
         additional_dependencies: [uv==0.9.5]
@@ -152,11 +152,12 @@ repos:
         pass_filenames: false
         additional_dependencies: [uv==0.9.5]
 
+      # We do not use --example-workers 0 due to https://github.com/python/mypy/issues/18283
       - id: mypy-docs
         name: mypy-docs
         stages: [pre-push]
-        entry: uvx --python=3.13 doccmd --no-write-to-file --example-workers 0 --language=python
-          --command="uv run --extra=dev mypy"
+        entry: uvx --python=3.13 doccmd --no-write-to-file --language=python --command="uv
+          run --extra=dev mypy"
         language: python
         types_or: [markdown, rst]
         additional_dependencies: [uv==0.9.5]

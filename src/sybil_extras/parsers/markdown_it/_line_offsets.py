@@ -1,6 +1,4 @@
-"""
-Line offset calculation for the markdown_it parsers.
-"""
+"""Line offset calculation for the markdown_it parsers."""
 
 from beartype import beartype
 

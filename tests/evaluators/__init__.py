@@ -1,3 +1,1 @@
-"""
-Tests for custom evaluators.
-"""
+"""Tests for custom evaluators."""

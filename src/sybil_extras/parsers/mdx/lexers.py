@@ -1,9 +1,8 @@
-"""
-Lexers for MDX parsing.
-"""
+"""Lexers for MDX parsing."""
 
 import re
 
+from beartype import beartype
 from sybil.parsers.abstract.lexers import BlockLexer
 
 DIRECTIVE_IN_JSX_COMMENT_START = (
@@ -14,6 +13,7 @@ DIRECTIVE_IN_JSX_COMMENT_START = (
 DIRECTIVE_IN_JSX_COMMENT_END = r"(?:(?<=\n){prefix})?\*/\}}"
 
 
+@beartype
 class DirectiveInJSXCommentLexer(BlockLexer):
     """A lexer for faux directives in JSX-style comments.
 
@@ -42,6 +42,7 @@ class DirectiveInJSXCommentLexer(BlockLexer):
 
     def __init__(
         self,
+        *,
         directive: str,
         arguments: str = ".*?",
         mapping: dict[str, str] | None = None,

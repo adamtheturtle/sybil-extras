@@ -1,3 +1,1 @@
-"""
-Custom reST parsers.
-"""
+"""Custom reST parsers."""

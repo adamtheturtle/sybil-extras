@@ -1,6 +1,4 @@
-"""
-Shared utilities for grouping parsers.
-"""
+"""Shared utilities for grouping parsers."""
 
 from collections.abc import Iterable, Sequence
 
@@ -12,7 +10,8 @@ from sybil.typing import Evaluator
 
 @beartype
 def count_expected_code_blocks(examples: Iterable[Example]) -> int:
-    """Count the expected number of code blocks, accounting for skip markers.
+    """Count the expected number of code blocks, accounting for skip
+    markers.
 
     Skip directives (like 'skip: next' or 'skip: start/end') only affect
     examples that come AFTER them, so we must process in position order.
@@ -58,6 +57,7 @@ def count_expected_code_blocks(examples: Iterable[Example]) -> int:
     return non_skip_count - skipped_count
 
 
+@beartype
 def _get_text(parsed: Lexeme | str) -> str:
     """Get text from a parsed value, which may be a Lexeme or a string.
 
@@ -164,6 +164,7 @@ def create_combined_region(
 
 @beartype
 def create_combined_example(
+    *,
     examples: Sequence[Example],
     region: Region,
 ) -> Example:

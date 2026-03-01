@@ -1,13 +1,13 @@
-"""
-Group-all parser tests shared across markup languages.
-"""
+"""Group-all parser tests shared across markup languages."""
 
 import subprocess
+import uuid
 from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
+from beartype import beartype
 from sybil import Document, Example, Region, Sybil
 from sybil.region import Lexeme
 
@@ -20,10 +20,14 @@ from sybil_extras.languages import (
 )
 
 
-def test_group_all(language: MarkupLanguage, tmp_path: Path) -> None:
-    """
-    All code blocks are grouped into a single block.
-    """
+@beartype
+def make_temp_file_path(*, example: Example) -> Path:
+    """Create a temporary file path for an example code block."""
+    return Path(example.path).parent / f"temp_{uuid.uuid4().hex[:8]}.py"
+
+
+def test_group_all(*, language: MarkupLanguage, tmp_path: Path) -> None:
+    """All code blocks are grouped into a single block."""
     content = language.markup_separator.join(
         [
             language.code_block_builder(code="x = []", language="python"),
@@ -63,12 +67,11 @@ def test_group_all(language: MarkupLanguage, tmp_path: Path) -> None:
 
 
 def test_group_all_single_block(
+    *,
     language: MarkupLanguage,
     tmp_path: Path,
 ) -> None:
-    """
-    Grouping a single block preserves it.
-    """
+    """Grouping a single block preserves it."""
     content = language.code_block_builder(code="x = []", language="python")
     test_document = tmp_path / "test"
     test_document.write_text(
@@ -97,12 +100,11 @@ def test_group_all_single_block(
 
 
 def test_group_all_empty_document(
+    *,
     language: MarkupLanguage,
     tmp_path: Path,
 ) -> None:
-    """
-    Empty documents do not raise errors.
-    """
+    """Empty documents do not raise errors."""
     content = "Empty document without code blocks."
     test_document = tmp_path / "test"
     test_document.write_text(
@@ -128,10 +130,8 @@ def test_group_all_empty_document(
         example.evaluate()
 
 
-def test_group_all_no_pad(language: MarkupLanguage, tmp_path: Path) -> None:
-    """
-    Groups can be combined without inserting extra padding.
-    """
+def test_group_all_no_pad(*, language: MarkupLanguage, tmp_path: Path) -> None:
+    """Groups can be combined without inserting extra padding."""
     content = language.markup_separator.join(
         [
             language.code_block_builder(code="x = []", language="python"),
@@ -168,7 +168,7 @@ def test_group_all_no_pad(language: MarkupLanguage, tmp_path: Path) -> None:
     assert document.namespace["blocks"] == [expected]
 
 
-def test_thread_safety(language: MarkupLanguage, tmp_path: Path) -> None:
+def test_thread_safety(*, language: MarkupLanguage, tmp_path: Path) -> None:
     """
     The group-all parser is thread-safe when examples are evaluated
     concurrently.
@@ -202,9 +202,7 @@ def test_thread_safety(language: MarkupLanguage, tmp_path: Path) -> None:
     examples: list[Example] = list(document.examples())
 
     def evaluate(ex: Example) -> None:
-        """
-        Evaluate the example.
-        """
+        """Evaluate the example."""
         ex.evaluate()
 
     with ThreadPoolExecutor(max_workers=4) as executor:
@@ -219,12 +217,11 @@ def test_thread_safety(language: MarkupLanguage, tmp_path: Path) -> None:
 
 
 def test_group_all_with_skip(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
-    """
-    Skip directives are honored when grouping code blocks.
-    """
+    """Skip directives are honored when grouping code blocks."""
     language, directive_builder = language_directive_builder
     skip_directive = directive_builder(directive="skip", argument="next")
     skipped_block = language.code_block_builder(
@@ -276,6 +273,7 @@ def test_group_all_with_skip(
 
 
 def test_evaluation_order_independence(
+    *,
     language: MarkupLanguage,
     tmp_path: Path,
 ) -> None:
@@ -332,10 +330,12 @@ def test_evaluation_order_independence(
 
 
 def test_state_cleanup_on_evaluator_failure(
+    *,
     language: MarkupLanguage,
     tmp_path: Path,
 ) -> None:
-    """When an evaluator raises an exception, the group-all state is cleaned
+    """When an evaluator raises an exception, the group-all state is
+    cleaned
     up.
 
     This ensures that pop_evaluator is called even when the evaluator
@@ -350,6 +350,7 @@ def test_state_cleanup_on_evaluator_failure(
 
     shell_evaluator = ShellCommandEvaluator(
         args=["sh"],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=False,
         use_pty=False,
@@ -377,6 +378,7 @@ def test_state_cleanup_on_evaluator_failure(
 
 
 def test_finalize_waits_for_code_blocks(
+    *,
     language: MarkupLanguage,
     tmp_path: Path,
 ) -> None:
@@ -420,9 +422,7 @@ def test_finalize_waits_for_code_blocks(
     # are collected, resulting in an empty or partial group.
     # With the fix, the finalize marker waits for all code blocks.
     def evaluate(ex: Example) -> None:
-        """
-        Evaluate the example.
-        """
+        """Evaluate the example."""
         ex.evaluate()
 
     # Run all three concurrently - finalize should wait for code blocks
@@ -440,6 +440,7 @@ def test_finalize_waits_for_code_blocks(
 
 
 def test_custom_parser_with_string_parsed_value(
+    *,
     language: MarkupLanguage,
     tmp_path: Path,
 ) -> None:
@@ -473,9 +474,7 @@ def test_custom_parser_with_string_parsed_value(
     def custom_parser_with_string_parsed(
         document: Document,
     ) -> Iterable[Region]:
-        """
-        A parser that creates examples with string parsed values.
-        """
+        """A parser that creates examples with string parsed values."""
         # Find two positions in the document for our custom regions
         # We'll create regions that have source lexemes but string parsed
         # values
@@ -520,6 +519,7 @@ def test_custom_parser_with_string_parsed_value(
 
 
 def test_examples_without_source_lexeme(
+    *,
     language: MarkupLanguage,
     tmp_path: Path,
 ) -> None:
@@ -555,9 +555,7 @@ def test_examples_without_source_lexeme(
     # This simulates parsers that create examples which should not be
     # collected by the group-all parser.
     def custom_parser_without_source(document: Document) -> Iterable[Region]:
-        """
-        A parser that creates an example without a source lexeme.
-        """
+        """A parser that creates an example without a source lexeme."""
         # Place the region at the end of the document to avoid overlap
         # with the code block.
         doc_end = len(document.text)

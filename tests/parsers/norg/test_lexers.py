@@ -1,6 +1,4 @@
-"""
-Tests for custom norg lexers.
-"""
+"""Tests for custom norg lexers."""
 
 from textwrap import dedent
 
@@ -12,9 +10,7 @@ from sybil_extras.parsers.norg.lexers import DirectiveInNorgCommentLexer
 
 
 def test_directive_with_argument() -> None:
-    """
-    A directive with an argument is captured along with its text.
-    """
+    """A directive with an argument is captured along with its text."""
     lexer = DirectiveInNorgCommentLexer(directive="group", arguments=r".+")
     source_text = dedent(
         text="""\
@@ -37,7 +33,8 @@ def test_directive_with_argument() -> None:
 
 def test_directive_without_argument() -> None:
     """
-    A directive without an argument yields an empty arguments lexeme.
+    A directive without an argument yields an empty arguments
+    lexeme.
     """
     lexer = DirectiveInNorgCommentLexer(directive="skip")
     source_text = ".skip\n"
@@ -54,9 +51,7 @@ def test_directive_without_argument() -> None:
 
 
 def test_directive_with_mapping() -> None:
-    """
-    Lexeme names can be remapped when requested.
-    """
+    """Lexeme names can be remapped when requested."""
     lexer = DirectiveInNorgCommentLexer(
         directive="custom",
         arguments=r".*",
@@ -76,9 +71,7 @@ def test_directive_with_mapping() -> None:
 
 
 def test_directive_with_leading_whitespace() -> None:
-    """
-    A directive with leading whitespace is matched.
-    """
+    """A directive with leading whitespace is matched."""
     lexer = DirectiveInNorgCommentLexer(directive="skip")
     source_text = "  .skip\n"
 
@@ -94,9 +87,7 @@ def test_directive_with_leading_whitespace() -> None:
 
 
 def test_verbatim_ranged_tag_lexer_no_mapping() -> None:
-    """
-    The verbatim ranged tag lexer works without a mapping.
-    """
+    """The verbatim ranged tag lexer works without a mapping."""
     lexer = NorgVerbatimRangedTagLexer(language=r"python")
     source_text = dedent(
         text="""\
@@ -120,9 +111,7 @@ def test_verbatim_ranged_tag_lexer_no_mapping() -> None:
 
 
 def test_verbatim_ranged_tag_lexer_with_mapping() -> None:
-    """
-    The verbatim ranged tag lexer works with a mapping.
-    """
+    """The verbatim ranged tag lexer works with a mapping."""
     lexer = NorgVerbatimRangedTagLexer(
         language=r"python",
         mapping={"language": "arguments", "source": "source"},
@@ -148,7 +137,8 @@ def test_verbatim_ranged_tag_lexer_with_mapping() -> None:
 
 def test_verbatim_ranged_tag_lexer_no_language() -> None:
     """
-    The verbatim ranged tag lexer handles code blocks without a language.
+    The verbatim ranged tag lexer handles code blocks without a
+    language.
     """
     # Use a pattern that matches any language including when not specified
     lexer = NorgVerbatimRangedTagLexer(language=r".+")
@@ -174,7 +164,8 @@ def test_verbatim_ranged_tag_lexer_no_language() -> None:
 
 def test_verbatim_ranged_tag_lexer_no_newline_after_opening() -> None:
     """
-    The lexer handles the case where @end immediately follows opening tag.
+    The lexer handles the case where @end immediately follows opening
+    tag.
     """
     lexer = NorgVerbatimRangedTagLexer(language=r".+")
     # @code python immediately followed by @end (no newline after opening)

@@ -1,6 +1,4 @@
-"""
-Tests for Norg code block parsing.
-"""
+"""Tests for Norg code block parsing."""
 
 from textwrap import dedent
 
@@ -10,18 +8,14 @@ from sybil_extras.languages import NORG
 
 
 def _parse(text: str) -> list[Region]:
-    """
-    Parse the supplied Norg text for Python code blocks.
-    """
+    """Parse the supplied Norg text for Python code blocks."""
     parser = NORG.code_block_parser_cls(language="python")
     document = Document(text=text, path="doc.norg")
     return list(parser(document=document))
 
 
 def test_verbatim_ranged_tag_basic() -> None:
-    """
-    A standard verbatim ranged tag code block is parsed.
-    """
+    """A standard verbatim ranged tag code block is parsed."""
     (region,) = _parse(
         text=dedent(
             text="""\
@@ -36,9 +30,7 @@ def test_verbatim_ranged_tag_basic() -> None:
 
 
 def test_verbatim_ranged_tag_without_language() -> None:
-    """
-    A code block without language specification is not parsed.
-    """
+    """A code block without language specification is not parsed."""
     regions = _parse(
         text=dedent(
             text="""\
@@ -53,9 +45,7 @@ def test_verbatim_ranged_tag_without_language() -> None:
 
 
 def test_verbatim_ranged_tag_wrong_language() -> None:
-    """
-    A code block with a different language is not parsed.
-    """
+    """A code block with a different language is not parsed."""
     regions = _parse(
         text=dedent(
             text="""\
@@ -70,9 +60,7 @@ def test_verbatim_ranged_tag_wrong_language() -> None:
 
 
 def test_verbatim_ranged_tag_multiline() -> None:
-    """
-    A multi-line code block is properly parsed.
-    """
+    """A multi-line code block is properly parsed."""
     (region,) = _parse(
         text=dedent(
             text="""\
@@ -89,9 +77,7 @@ def test_verbatim_ranged_tag_multiline() -> None:
 
 
 def test_verbatim_ranged_tag_without_closing() -> None:
-    """
-    A code block without a closing tag is not parsed.
-    """
+    """A code block without a closing tag is not parsed."""
     regions = _parse(
         text=dedent(
             text="""\
@@ -105,9 +91,7 @@ def test_verbatim_ranged_tag_without_closing() -> None:
 
 
 def test_verbatim_ranged_tag_with_leading_whitespace() -> None:
-    """
-    A code block with leading whitespace is properly parsed.
-    """
+    """A code block with leading whitespace is properly parsed."""
     (region,) = _parse(
         text=dedent(
             text="""\
@@ -122,9 +106,7 @@ def test_verbatim_ranged_tag_with_leading_whitespace() -> None:
 
 
 def test_multiple_code_blocks() -> None:
-    """
-    Multiple code blocks in the same document are all parsed.
-    """
+    """Multiple code blocks in the same document are all parsed."""
     regions = _parse(
         text=dedent(
             text="""\
@@ -148,9 +130,7 @@ def test_multiple_code_blocks() -> None:
 
 
 def test_empty_code_block() -> None:
-    """
-    An empty code block is parsed.
-    """
+    """An empty code block is parsed."""
     (region,) = _parse(
         text=dedent(
             text="""\
@@ -164,9 +144,7 @@ def test_empty_code_block() -> None:
 
 
 def test_code_block_with_blank_lines() -> None:
-    """
-    A code block with blank lines is properly parsed.
-    """
+    """A code block with blank lines is properly parsed."""
     (region,) = _parse(
         text=dedent(
             text="""\
@@ -183,9 +161,7 @@ def test_code_block_with_blank_lines() -> None:
 
 
 def test_nested_code_markers_in_content() -> None:
-    """
-    Code blocks can contain text that looks like markers.
-    """
+    """Code blocks can contain text that looks like markers."""
     (region,) = _parse(
         text=dedent(
             text="""\
@@ -201,9 +177,7 @@ def test_nested_code_markers_in_content() -> None:
 
 
 def test_trailing_whitespace_after_end() -> None:
-    """
-    A code block with trailing whitespace after @end is parsed.
-    """
+    """A code block with trailing whitespace after @end is parsed."""
     # Use a raw string to preserve the trailing spaces after @end
     text = "@code python\nx = 1\n@end   \n"
     (region,) = _parse(text=text)

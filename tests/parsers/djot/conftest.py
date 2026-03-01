@@ -1,3 +1,1 @@
-"""
-Djot parser test configuration.
-"""
+"""Djot parser test configuration."""

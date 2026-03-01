@@ -1,6 +1,4 @@
-"""
-A code block parser for MDX with attribute support.
-"""
+"""A code block parser for MDX with attribute support."""
 
 import re
 from collections.abc import Iterable
@@ -35,9 +33,7 @@ _ATTRIBUTE_PATTERN = re.compile(
 
 @beartype
 class CodeBlockParser:
-    """
-    A parser for MDX fenced code blocks that preserves attributes.
-    """
+    """A parser for MDX fenced code blocks that preserves attributes."""
 
     def __init__(
         self,
@@ -76,9 +72,7 @@ class CodeBlockParser:
         )
 
     def __call__(self, document: Document) -> Iterable[Region]:
-        """
-        Yield regions for code blocks, parsing any MDX attributes.
-        """
+        """Yield regions for code blocks, parsing any MDX attributes."""
         for region in self._parser(document):
             raw_attributes = region.lexemes.get("attributes_raw")
             parsed_attributes = self._parse_attributes(
@@ -91,9 +85,7 @@ class CodeBlockParser:
 
     @staticmethod
     def _parse_attributes(attr_string: str) -> dict[str, str]:
-        """
-        Parse key/value pairs from the info line attribute string.
-        """
+        """Parse key/value pairs from the info line attribute string."""
         if not attr_string:
             return {}
 

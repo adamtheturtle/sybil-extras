@@ -54,17 +54,26 @@ ShellCommandEvaluator
     """Use ShellCommandEvaluator to run shell commands against the code block."""
 
     import sys
+    import uuid
+    from pathlib import Path
 
     from sybil import Sybil
+    from sybil.example import Example
     from sybil.parsers.rest.codeblock import CodeBlockParser
 
     from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 
+
+    def temp_file_path_maker(*, example: Example) -> Path:
+        """Create a temporary file path for an example."""
+        return Path(example.path).parent / f"temp_{uuid.uuid4().hex[:8]}.py"
+
+
     evaluator = ShellCommandEvaluator(
         args=[sys.executable, "-m", "mypy"],
         # The code block is written to a temporary file
-        # with these suffixes.
-        tempfile_suffixes=[".example", ".py"],
+        # created by the temp_file_path_maker callable.
+        temp_file_path_maker=temp_file_path_maker,
         # Pad the temporary file with newlines so that the
         # line numbers in the error messages match the
         # line numbers in the source document.

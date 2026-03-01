@@ -1,3 +1,1 @@
-"""
-Markdown parsers using the MarkdownIt library.
-"""
+"""Markdown parsers using the MarkdownIt library."""

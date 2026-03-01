@@ -1,6 +1,4 @@
-"""
-Tests for the ShellCommandEvaluator.
-"""
+"""Tests for the ShellCommandEvaluator."""
 
 import os
 import platform
@@ -10,17 +8,28 @@ import subprocess
 import sys
 import textwrap
 import time
+import uuid
 from pathlib import Path
 
 import charset_normalizer
 import click
 import pytest
+from beartype import beartype
 from click.testing import CliRunner
 from sybil import Sybil
 from sybil.example import Example
+from sybil.parsers.markdown import (
+    CodeBlockParser as SybilMarkdownCodeBlockParser,
+)
 from sybil.parsers.rest.codeblock import CodeBlockParser
 
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
+from sybil_extras.evaluators.shell_evaluator.result_transformer import (
+    ResultTransformer,
+)
+from sybil_extras.evaluators.shell_evaluator.source_preparer import (
+    SourcePreparer,
+)
 from sybil_extras.languages import (
     DJOT,
     DOCUTILS_RST,
@@ -32,6 +41,15 @@ from sybil_extras.languages import (
     RESTRUCTUREDTEXT,
     MarkupLanguage,
 )
+from sybil_extras.parsers.markdown_it.codeblock import (
+    CodeBlockParser as MarkdownItCodeBlockParser,
+)
+
+
+@beartype
+def make_temp_file_path(*, example: Example) -> Path:
+    """Create a temporary file path for an example code block."""
+    return Path(example.path).parent / f"temp_{uuid.uuid4().hex[:8]}.py"
 
 
 @pytest.fixture(
@@ -40,11 +58,10 @@ from sybil_extras.languages import (
     params=[True, False],
 )
 def fixture_use_pty_option(
+    *,
     request: pytest.FixtureRequest,
 ) -> bool:
-    """
-    Test with and without the pseudo-terminal.
-    """
+    """Test with and without the pseudo-terminal."""
     use_pty = bool(request.param)
     if use_pty and platform.system() == "Windows":  # pragma: no cover
         pytest.skip(reason="PTY is not supported on Windows.")
@@ -52,10 +69,8 @@ def fixture_use_pty_option(
 
 
 @pytest.fixture(name="rst_file")
-def fixture_rst_file(tmp_path: Path) -> Path:
-    """
-    Fixture to create a temporary RST file with code blocks.
-    """
+def fixture_rst_file(*, tmp_path: Path) -> Path:
+    """Fixture to create a temporary RST file with code blocks."""
     # Relied upon features:
     #
     # * Includes exactly one code block
@@ -79,11 +94,13 @@ def fixture_rst_file(tmp_path: Path) -> Path:
 
 def test_error(*, rst_file: Path, use_pty_option: bool) -> None:
     """
-    A ``subprocess.CalledProcessError`` is raised if the command fails.
+    A ``subprocess.CalledProcessError`` is raised if the command
+    fails.
     """
     args = ["sh", "-c", "exit 1"]
     evaluator = ShellCommandEvaluator(
         args=args,
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=False,
         use_pty=use_pty_option,
@@ -110,15 +127,14 @@ def test_output_shown(
     capsys: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
-    """
-    Output is shown.
-    """
+    """Output is shown."""
     evaluator = ShellCommandEvaluator(
         args=[
             "sh",
             "-c",
             "echo 'Hello, Sybil!' && echo >&2 'Hello Stderr!'",
         ],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=False,
         use_pty=use_pty_option,
@@ -146,11 +162,10 @@ def test_rm(
     capsys: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
-    """
-    Output is shown.
-    """
+    """Output is shown."""
     evaluator = ShellCommandEvaluator(
         args=["rm"],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=False,
         use_pty=use_pty_option,
@@ -172,9 +187,7 @@ def test_pass_env(
     tmp_path: Path,
     use_pty_option: bool,
 ) -> None:
-    """
-    It is possible to pass environment variables to the command.
-    """
+    """It is possible to pass environment variables to the command."""
     new_file = tmp_path / "new_file.txt"
     evaluator = ShellCommandEvaluator(
         args=[
@@ -182,6 +195,7 @@ def test_pass_env(
             "-c",
             f"echo Hello, $ENV_KEY! > {new_file.as_posix()}; exit 0",
         ],
+        temp_file_path_maker=make_temp_file_path,
         env={"ENV_KEY": "ENV_VALUE"},
         pad_file=False,
         write_to_file=False,
@@ -203,9 +217,7 @@ def test_global_env(
     tmp_path: Path,
     use_pty_option: bool,
 ) -> None:
-    """
-    Global environment variables are sent to the command by default.
-    """
+    """Global environment variables are sent to the command by default."""
     env_key = "ENV_KEY"
     os.environ[env_key] = "ENV_VALUE"
     new_file = tmp_path / "new_file.txt"
@@ -215,6 +227,7 @@ def test_global_env(
             "-c",
             f"echo Hello, ${env_key}! > {new_file.as_posix()}; exit 0",
         ],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=False,
         use_pty=use_pty_option,
@@ -247,6 +260,7 @@ def test_file_is_passed(
     file_path = tmp_path / "file.txt"
     evaluator = ShellCommandEvaluator(
         args=["sh", "-c", sh_function, "_", file_path],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=False,
         use_pty=use_pty_option,
@@ -268,12 +282,12 @@ def test_file_path(
     use_pty_option: bool,
 ) -> None:
     """
-    The given file path is random and absolute, and starts with a name
-    resembling the documentation file name, but without any hyphens or periods,
-    except for the period for the final suffix.
+    The given file path is random and absolute, in the same directory as
+    the source file, and is different for each evaluation.
     """
     evaluator = ShellCommandEvaluator(
         args=["echo"],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=False,
         use_pty=use_pty_option,
@@ -291,28 +305,31 @@ def test_file_path(
     assert given_file_path.parent == rst_file.parent
     assert given_file_path.is_absolute()
     assert not given_file_path.exists()
-    assert given_file_path.name.startswith("test_document_example_rst_")
+    assert given_file_path.name.startswith("temp_")
     example.evaluate()
     output = capsys.readouterr().out
     new_given_file_path = Path(output.strip())
     assert new_given_file_path != given_file_path
 
 
-def test_file_suffix(
+def test_temp_file_path_maker(
     *,
     rst_file: Path,
     capsys: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
-    """
-    The given file suffixes are used.
-    """
-    suffixes = [".example", ".foobar"]
+    """A custom filename generator is used when provided."""
+    custom_filename = "my_custom_temp_file.py"
+
+    def custom_generator(*, example: Example) -> Path:
+        """Generate a custom temporary file path."""
+        return Path(example.path).parent / custom_filename
+
     evaluator = ShellCommandEvaluator(
         args=["echo"],
         pad_file=False,
         write_to_file=False,
-        tempfile_suffixes=suffixes,
+        temp_file_path_maker=custom_generator,
         use_pty=use_pty_option,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
@@ -325,38 +342,7 @@ def test_file_suffix(
     stripped_output = output.strip()
     assert stripped_output
     given_file_path = Path(stripped_output)
-    assert given_file_path.name.startswith("test_document_example_rst_")
-    assert given_file_path.suffixes == suffixes
-
-
-def test_file_prefix(
-    *,
-    rst_file: Path,
-    capsys: pytest.CaptureFixture[str],
-    use_pty_option: bool,
-) -> None:
-    """
-    The given file prefixes are used.
-    """
-    prefix = "custom_prefix"
-    evaluator = ShellCommandEvaluator(
-        args=["echo"],
-        pad_file=False,
-        write_to_file=False,
-        tempfile_name_prefix=prefix,
-        use_pty=use_pty_option,
-    )
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
-    sybil = Sybil(parsers=[parser])
-
-    document = sybil.parse(path=rst_file)
-    (example,) = document.examples()
-    example.evaluate()
-    output = capsys.readouterr().out
-    stripped_output = output.strip()
-    assert stripped_output
-    given_file_path = Path(stripped_output)
-    assert given_file_path.name.startswith("custom_prefix_")
+    assert given_file_path.name == custom_filename
 
 
 def test_pad(*, rst_file: Path, tmp_path: Path, use_pty_option: bool) -> None:
@@ -372,6 +358,7 @@ def test_pad(*, rst_file: Path, tmp_path: Path, use_pty_option: bool) -> None:
     file_path = tmp_path / "file.txt"
     evaluator = ShellCommandEvaluator(
         args=["sh", "-c", sh_function, "_", file_path],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=True,
         write_to_file=False,
         use_pty=use_pty_option,
@@ -398,13 +385,14 @@ def test_pad(*, rst_file: Path, tmp_path: Path, use_pty_option: bool) -> None:
 
 @pytest.mark.parametrize(argnames="write_to_file", argvalues=[True, False])
 def test_write_to_file_new_content_trailing_newlines(
-    tmp_path: Path,
     *,
+    tmp_path: Path,
     write_to_file: bool,
     use_pty_option: bool,
     markup_language: MarkupLanguage,
 ) -> None:
-    """Changes are written to the original file iff `write_to_file` is True.
+    """Changes are written to the original file iff `write_to_file` is
+    True.
 
     If the content has trailing newlines, those are included in code
     block types that allow them.
@@ -468,6 +456,7 @@ def test_write_to_file_new_content_trailing_newlines(
     file_with_new_content.write_text(data=new_content, encoding="utf-8")
     evaluator = ShellCommandEvaluator(
         args=["cp", file_with_new_content],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=write_to_file,
         use_pty=use_pty_option,
@@ -542,13 +531,14 @@ def test_write_to_file_new_content_trailing_newlines(
 
 @pytest.mark.parametrize(argnames="write_to_file", argvalues=[True, False])
 def test_write_to_file_new_content_no_trailing_newlines(
-    tmp_path: Path,
     *,
+    tmp_path: Path,
     write_to_file: bool,
     use_pty_option: bool,
     markup_language: MarkupLanguage,
 ) -> None:
-    """Changes are written to the original file iff `write_to_file` is True.
+    """Changes are written to the original file iff `write_to_file` is
+    True.
 
     If the content has no trailing newlines, the new code block is still
     valid.
@@ -610,6 +600,7 @@ def test_write_to_file_new_content_no_trailing_newlines(
     file_with_new_content.write_text(data=new_content, encoding="utf-8")
     evaluator = ShellCommandEvaluator(
         args=["cp", file_with_new_content],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=write_to_file,
         use_pty=use_pty_option,
@@ -681,12 +672,14 @@ def test_write_to_file_new_content_no_trailing_newlines(
 
 def test_pad_and_write(*, rst_file: Path, use_pty_option: bool) -> None:
     """
-    Changes are written to the original file without the added padding.
+    Changes are written to the original file without the added
+    padding.
     """
     original_content = rst_file.read_text(encoding="utf-8")
     rst_file.write_text(data=original_content, encoding="utf-8")
     evaluator = ShellCommandEvaluator(
         args=["true"],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=True,
         write_to_file=True,
         use_pty=use_pty_option,
@@ -708,9 +701,7 @@ def test_non_utf8_output(
     tmp_path: Path,
     use_pty_option: bool,
 ) -> None:
-    """
-    Non-UTF-8 output is handled.
-    """
+    """Non-UTF-8 output is handled."""
     sh_function = b"""
     echo "\xc0\x80"
     """
@@ -719,6 +710,7 @@ def test_non_utf8_output(
     script.chmod(mode=stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
     evaluator = ShellCommandEvaluator(
         args=["sh", str(object=script)],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=False,
         use_pty=use_pty_option,
@@ -737,12 +729,11 @@ def test_non_utf8_output(
 
 
 def test_no_file_left_behind_on_interruption(
+    *,
     rst_file: Path,
     tmp_path: Path,
 ) -> None:
-    """
-    No file is left behind if the process is interrupted.
-    """
+    """No file is left behind if the process is interrupted."""
     sleep_python_script_content = textwrap.dedent(
         text="""\
         import time
@@ -760,17 +751,26 @@ def test_no_file_left_behind_on_interruption(
     run_shell_command_evaluator_script_content = textwrap.dedent(
         text=f"""\
         import sys
+        import uuid
         from pathlib import PosixPath, Path
 
         from sybil import Sybil
+        from sybil.example import Example
         from sybil.parsers.rest.codeblock import CodeBlockParser
 
         from sybil_extras.evaluators.shell_evaluator import (
             ShellCommandEvaluator,
         )
 
+
+        def make_temp_file_path(*, example: Example) -> Path:
+            unique_id = uuid.uuid4().hex[:8]
+            return Path(example.path).parent / f"temp_{{unique_id}}.py"
+
+
         evaluator = ShellCommandEvaluator(
             args=[sys.executable, "{sleep_python_script.as_posix()}"],
+            temp_file_path_maker=make_temp_file_path,
             pad_file=False,
             write_to_file=True,
             use_pty=False,
@@ -815,9 +815,7 @@ def test_newline_system(
     source_newline: str,
     use_pty_option: bool,
 ) -> None:
-    """
-    The system line endings are used by default.
-    """
+    """The system line endings are used by default."""
     rst_file_contents = rst_file.read_text(encoding="utf-8")
     rst_file.write_text(data=rst_file_contents, newline=source_newline)
     sh_function = """
@@ -827,6 +825,7 @@ def test_newline_system(
     file_path = tmp_path / "file.txt"
     evaluator = ShellCommandEvaluator(
         args=["sh", "-c", sh_function, "_", file_path],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=False,
         use_pty=use_pty_option,
@@ -860,9 +859,7 @@ def test_newline_given(
     expect_crlf: bool,
     use_pty_option: bool,
 ) -> None:
-    """
-    The given line ending option is used.
-    """
+    """The given line ending option is used."""
     rst_file_contents = rst_file.read_text(encoding="utf-8")
     rst_file.write_text(data=rst_file_contents, newline=source_newline)
     sh_function = """
@@ -872,6 +869,7 @@ def test_newline_given(
     file_path = tmp_path / "file.txt"
     evaluator = ShellCommandEvaluator(
         args=["sh", "-c", sh_function, "_", file_path],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=False,
         newline=given_newline,
@@ -892,11 +890,13 @@ def test_newline_given(
 
 def test_bad_command_error(*, rst_file: Path, use_pty_option: bool) -> None:
     """
-    A ``subprocess.CalledProcessError`` is raised if the command is invalid.
+    A ``subprocess.CalledProcessError`` is raised if the command is
+    invalid.
     """
     args = ["sh", "--unknownoption"]
     evaluator = ShellCommandEvaluator(
         args=args,
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=False,
         use_pty=use_pty_option,
@@ -919,21 +919,18 @@ def test_bad_command_error(*, rst_file: Path, use_pty_option: bool) -> None:
 
 
 def test_click_runner(*, rst_file: Path, use_pty_option: bool) -> None:
-    """
-    The click runner can pick up the command output.
-    """
+    """The click runner can pick up the command output."""
 
     @click.command()
     def _main() -> None:
-        """
-        Click command to run a shell command.
-        """
+        """Click command to run a shell command."""
         evaluator = ShellCommandEvaluator(
             args=[
                 "sh",
                 "-c",
                 "echo 'Hello, Sybil!' && echo >&2 'Hello Stderr!'",
             ],
+            temp_file_path_maker=make_temp_file_path,
             pad_file=False,
             write_to_file=False,
             use_pty=use_pty_option,
@@ -969,9 +966,7 @@ def test_encoding(
     use_pty_option: bool,
     encoding: str,
 ) -> None:
-    """
-    The given encoding is used.
-    """
+    """The given encoding is used."""
     sh_function = """
     cp "$2" "$1"
     """
@@ -989,6 +984,7 @@ def test_encoding(
     rst_file.write_text(data=content, encoding=encoding)
     evaluator = ShellCommandEvaluator(
         args=["sh", "-c", sh_function, "_", file_path],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=True,
         use_pty=use_pty_option,
@@ -1016,13 +1012,12 @@ def test_custom_on_modify_no_modification(
     use_pty_option: bool,
 ) -> None:
     """
-    The custom `on_modify` function is not called when there is a modification.
+    The custom `on_modify` function is not called when there is a
+    modification.
     """
 
     def on_modify(example: Example, modified_example_content: str) -> None:
-        """
-        Raise an error if this function is called.
-        """
+        """Raise an error if this function is called."""
         del example
         del modified_example_content
         msg = "This should not be called."
@@ -1030,6 +1025,7 @@ def test_custom_on_modify_no_modification(
 
     evaluator = ShellCommandEvaluator(
         args=["true"],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=True,
         write_to_file=True,
         use_pty=use_pty_option,
@@ -1060,13 +1056,12 @@ def test_custom_on_modify_with_modification(
     tmp_path: Path,
 ) -> None:
     """
-    The custom `on_modify` function is called when there is a modification.
+    The custom `on_modify` function is called when there is a
+    modification.
     """
 
     def on_modify(example: Example, modified_example_content: str) -> None:
-        """
-        Check that the given content is as expected.
-        """
+        """Check that the given content is as expected."""
         assert modified_example_content == "foobar"
         assert example.path == str(object=rst_file)
 
@@ -1075,6 +1070,7 @@ def test_custom_on_modify_with_modification(
     file_with_new_content.write_text(data=new_content, encoding="utf-8")
     evaluator = ShellCommandEvaluator(
         args=["cp", file_with_new_content],
+        temp_file_path_maker=make_temp_file_path,
         pad_file=False,
         write_to_file=True,
         use_pty=use_pty_option,
@@ -1086,3 +1082,195 @@ def test_custom_on_modify_with_modification(
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
+
+
+@pytest.mark.parametrize(
+    argnames="parser_cls",
+    argvalues=[MarkdownItCodeBlockParser, SybilMarkdownCodeBlockParser],
+    ids=["markdown_it", "sybil_markdown"],
+)
+def test_markdown_code_block_line_number(
+    *,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    parser_cls: type,
+) -> None:
+    """Line numbers in error output match the source file for Markdown.
+
+    When a Python syntax error occurs in a Markdown code block, the
+    reported line number should match the line number in the original
+    Markdown file.
+
+    For example, in this file:
+        Line 1: Example
+        Line 2: (empty)
+        Line 3: ```python
+        Line 4: syntax error here
+        Line 5: ```
+
+    The error on line 4 should be reported as being on line 4, not line 5.
+    This is because the padding in the temporary file must correctly
+    account for the opening fence line (```python) in Markdown files.
+    """
+    # Create a Markdown file with a Python syntax error on line 4.
+    # Line 1: Example
+    # Line 2: (empty)
+    # Line 3: ```python
+    # Line 4: syntax error here
+    # Line 5: ```
+    content = textwrap.dedent(
+        text="""\
+        Example
+
+        ```python
+        syntax error here
+        ```
+        """
+    )
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    evaluator = ShellCommandEvaluator(
+        args=[sys.executable, "-m", "py_compile"],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=True,
+        write_to_file=False,
+        use_pty=False,
+    )
+
+    parser = parser_cls(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    (example,) = document.examples()
+
+    with pytest.raises(expected_exception=subprocess.CalledProcessError):
+        example.evaluate()
+
+    captured = capsys.readouterr()
+    # The error should report line 4, not line 5.
+    # The syntax error is on line 4 of the original file.
+    assert "line 4" in captured.err, (
+        f"stderr contains 'line 5' instead of 'line 4': {captured.err}"
+    )
+
+
+def test_custom_source_preparer(
+    *,
+    rst_file: Path,
+    tmp_path: Path,
+) -> None:
+    """A custom SourcePreparer can transform content before the
+    command.
+    """
+    captured_file = tmp_path / "captured.txt"
+
+    @beartype
+    class UpperSourcePreparer:
+        """Return the example's source in uppercase."""
+
+        def __call__(self, *, example: Example) -> str:
+            """Return source in uppercase."""
+            return str(object=example.parsed).upper()
+
+    assert isinstance(UpperSourcePreparer(), SourcePreparer)
+
+    # $1 is the temp file (args are: sh -c script _ <temp_file>)
+    sh_function = f'cp "$1" "{captured_file.as_posix()}"'
+
+    evaluator = ShellCommandEvaluator(
+        args=["sh", "-c", sh_function, "_"],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=False,
+        use_pty=False,
+        source_preparer=UpperSourcePreparer(),
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    example.evaluate()
+
+    written = captured_file.read_text(encoding="utf-8")
+    expected = "X = 2 + 2\nASSERT X == 4\n"
+    assert written == expected
+
+
+def test_custom_result_transformer(
+    *,
+    tmp_path: Path,
+) -> None:
+    """A custom ResultTransformer can rewrite content before write-
+    back.
+    """
+    content = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+           x = 1
+        """
+    )
+    source_file = tmp_path / "source.rst"
+    source_file.write_text(data=content, encoding="utf-8")
+
+    @beartype
+    class SuffixResultTransformer:
+        """Append a comment to the result."""
+
+        def __call__(self, *, content: str, example: Example) -> str:
+            """Append a comment."""
+            del example
+            return content.rstrip("\n") + "  # transformed\n"
+
+    assert isinstance(SuffixResultTransformer(), ResultTransformer)
+
+    evaluator = ShellCommandEvaluator(
+        args=["true"],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=True,
+        use_pty=False,
+        result_transformer=SuffixResultTransformer(),
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+
+    document = sybil.parse(path=source_file)
+    (example,) = document.examples()
+    example.evaluate()
+
+    expected = textwrap.dedent(
+        text="""\
+        Not in code block
+
+        .. code-block:: python
+
+           x = 1  # transformed
+        """
+    )
+    assert source_file.read_text(encoding="utf-8") == expected
+
+
+def test_no_write_leaves_file_unchanged(
+    *,
+    rst_file: Path,
+) -> None:
+    """With write_to_file=False the source file is left untouched."""
+    evaluator = ShellCommandEvaluator(
+        args=["true"],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=False,
+        use_pty=False,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+    # Should run without error and leave the file unchanged
+    original = rst_file.read_text(encoding="utf-8")
+    example.evaluate()
+    assert rst_file.read_text(encoding="utf-8") == original

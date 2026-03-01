@@ -1,6 +1,4 @@
-"""
-Tests for the languages module.
-"""
+"""Tests for the languages module."""
 
 from pathlib import Path
 
@@ -38,13 +36,12 @@ from sybil_extras.languages import (
     ],
 )
 def test_code_block_parser(
+    *,
     language: MarkupLanguage,
     value: int,
     tmp_path: Path,
 ) -> None:
-    """
-    Test that each language's code block parser works correctly.
-    """
+    """Test that each language's code block parser works correctly."""
     code = f"x = {value}"
     content = language.code_block_builder(code=code, language="python")
     test_document = tmp_path / "test"
@@ -67,12 +64,11 @@ def test_code_block_parser(
 
 
 def test_skip_parser(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
-    """
-    Test that each language's skip parser works correctly.
-    """
+    """Test that each language's skip parser works correctly."""
     language, directive_builder = language_directive_builder
     content = language.markup_separator.join(
         [
@@ -113,20 +109,17 @@ def test_skip_parser(
     ],
 )
 def test_code_block_empty(language: MarkupLanguage) -> None:
-    """
-    Code block builders handle empty content.
-    """
+    """Code block builders handle empty content."""
     block = language.code_block_builder(code="", language="python")
     assert block
 
 
 def test_group_parser(
+    *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
-    """
-    Test that each language's group parser works correctly.
-    """
+    """Test that each language's group parser works correctly."""
     language, directive_builder = language_directive_builder
     content = language.markup_separator.join(
         [
@@ -175,12 +168,11 @@ def test_group_parser(
     ],
 )
 def test_sphinx_jinja_parser(
+    *,
     language: MarkupLanguage,
     tmp_path: Path,
 ) -> None:
-    """
-    Test that each language's sphinx-jinja parser works correctly.
-    """
+    """Test that each language's sphinx-jinja parser works correctly."""
     assert language.sphinx_jinja_parser_cls is not None
     jinja_builder = language.jinja_block_builder
     assert jinja_builder is not None
@@ -202,7 +194,8 @@ def test_sphinx_jinja_parser(
 
 def test_markdown_no_sphinx_jinja() -> None:
     """
-    Test that Markdown-like formats do not have a sphinx-jinja parser.
+    Test that Markdown-like formats do not have a sphinx-jinja
+    parser.
     """
     for language in (MARKDOWN, MDX, DJOT, NORG):
         assert language.sphinx_jinja_parser_cls is None
@@ -210,9 +203,7 @@ def test_markdown_no_sphinx_jinja() -> None:
 
 
 def test_language_names() -> None:
-    """
-    Test that languages have the expected names.
-    """
+    """Test that languages have the expected names."""
     assert MYST.name == "MyST"
     assert RESTRUCTUREDTEXT.name == "reStructuredText"
     assert MARKDOWN.name == "Markdown"
@@ -222,9 +213,7 @@ def test_language_names() -> None:
 
 
 def test_mdx_code_block_attributes(tmp_path: Path) -> None:
-    """
-    MDX code block parsers expose attributes from the info line.
-    """
+    """MDX code block parsers expose attributes from the info line."""
     mdx_content = (
         '```python title="example.py" group="setup"\nvalue = 7\n```\n'
     )
@@ -253,7 +242,8 @@ def test_mdx_code_block_attributes(tmp_path: Path) -> None:
 
 def test_mdx_info_line_at_eof_without_newline() -> None:
     """
-    An MDX code block info line at EOF without trailing newline is recognized.
+    An MDX code block info line at EOF without trailing newline is
+    recognized.
     """
     parser = MDX.code_block_parser_cls(language="python")
     document = Document(text="```python", path="doc.mdx")

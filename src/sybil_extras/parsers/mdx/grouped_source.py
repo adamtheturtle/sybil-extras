@@ -1,6 +1,4 @@
-"""
-A group parser for MDX.
-"""
+"""A group parser for MDX."""
 
 import re
 
@@ -16,9 +14,7 @@ from sybil_extras.parsers.mdx.lexers import DirectiveInJSXCommentLexer
 
 @beartype
 class GroupedSourceParser(AbstractGroupedSourceParser):
-    """
-    A code block group parser for MDX.
-    """
+    """A code block group parser for MDX."""
 
     def __init__(
         self,

@@ -18,9 +18,7 @@ from sybil.typing import Evaluator
 
 @beartype
 def _get_within_code_block_indentation_prefix(example: Example) -> str:
-    """
-    Get the indentation of the parsed code in the example.
-    """
+    """Get the indentation of the parsed code in the example."""
     first_line = str(object=example.parsed).split(sep="\n", maxsplit=1)[0]
     region_text = example.document.text[
         example.region.start : example.region.end
@@ -68,14 +66,16 @@ def _get_within_code_block_indentation_prefix(example: Example) -> str:
 
 @beartype
 def _get_modified_region_text(
+    *,
     example: Example,
     original_region_text: str,
     new_code_block_content: str,
 ) -> str:
     """
-    Get the region text to use after the example content is replaced.
+    Get the region text to use after the example content is
+    replaced.
     """
-    first_line = original_region_text.split(sep="\n")[0]
+    first_line = original_region_text.split(maxsplit=1, sep="\n")[0]
     code_block_indent_prefix = first_line[
         : len(first_line) - len(first_line.lstrip())
     ]
@@ -188,7 +188,8 @@ def _overwrite_example_content(
 
 @beartype
 class CodeBlockWriterEvaluator:
-    """An evaluator wrapper that writes modified content back to code blocks.
+    """An evaluator wrapper that writes modified content back to code
+    blocks.
 
     This evaluator wraps another evaluator and writes any modifications
     made to the example content back to the source document. It is useful

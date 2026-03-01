@@ -1,6 +1,4 @@
-"""
-A group parser for MyST.
-"""
+"""A group parser for MyST."""
 
 import re
 
@@ -18,9 +16,7 @@ from sybil_extras.parsers.abstract.grouped_source import (
 
 @beartype
 class GroupedSourceParser(AbstractGroupedSourceParser):
-    """
-    A code block group parser for MyST.
-    """
+    """A code block group parser for MyST."""
 
     def __init__(
         self,
@@ -32,10 +28,13 @@ class GroupedSourceParser(AbstractGroupedSourceParser):
         """
         Args:
             directive: The name of the directive to use for grouping.
-            evaluator: The evaluator to use for evaluating the combined region.
+            evaluator: The evaluator to use for evaluating the combined
+        region.
             pad_groups: Whether to pad groups with empty lines.
-                This is useful for error messages that reference line numbers.
-                However, this is detrimental to commands that expect the file
+                This is useful for error messages that reference line
+        numbers.
+                However, this is detrimental to commands that expect the
+        file
                 to not have a bunch of newlines in it, such as formatters.
         """
         lexers = [

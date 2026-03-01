@@ -1,3 +1,1 @@
-"""
-Abstract parsers.
-"""
+"""Abstract parsers."""

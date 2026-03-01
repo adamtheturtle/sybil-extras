@@ -36,12 +36,11 @@ class DirectiveInHTMLCommentLexer:
 
     def __init__(
         self,
+        *,
         directive: str,
         arguments: str = ".*?",
     ) -> None:
-        """
-        Initialize the lexer.
-        """
+        """Initialize the lexer."""
         # Build a pattern to match the directive inside the HTML comment
         # The pattern matches:
         # - Optional leading whitespace (for indented comments)
@@ -58,9 +57,7 @@ class DirectiveInHTMLCommentLexer:
         )
 
     def __call__(self, document: Document) -> Iterable[Region]:
-        """
-        Parse the document and yield regions for directive comments.
-        """
+        """Parse the document and yield regions for directive comments."""
         md = MarkdownIt()
         # Disable the indented code block rule. Without this, content
         # indented by 4+ spaces would be parsed as a code_block token
