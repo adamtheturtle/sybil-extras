@@ -167,15 +167,8 @@ def _compute_positions(
 
     Returns (directive_line, content_start_line, content_end_line)
     as 1-indexed line numbers.
-
-    Raises:
-        ValueError: If the line reference is out of range.
     """
     directive = f".. code-block:: {language}".rstrip()
-
-    if ref_line < 1 or ref_line > len(lines):  # pragma: no cover
-        msg = f"Line reference {ref_line} is out of range [1, {len(lines)}]"
-        raise ValueError(msg)
 
     line_at_ref = lines[ref_line - 1]
     stripped = line_at_ref.lstrip()
@@ -220,21 +213,10 @@ def _find_content_after_directive(
     """Find first content line after directive.
 
     Returns 1-indexed.
-
-    Raises:
-        ValueError: If no content is found after the directive.
     """
-    for i in range(directive_line, len(lines)):
-        stripped = lines[i].lstrip()
-        if not stripped:
-            continue
-        return i + 1
-    # Docutils only produces literal_block nodes when there is
-    # content after the directive, so this should not be reachable.
-    msg = (  # pragma: no cover
-        f"No content found after directive at line {directive_line}"
+    return next(
+        i + 1 for i in range(directive_line, len(lines)) if lines[i].lstrip()
     )
-    raise ValueError(msg)  # pragma: no cover
 
 
 def _find_directive_before_content(
@@ -246,22 +228,10 @@ def _find_directive_before_content(
     """Find directive line before content.
 
     Returns 1-indexed.
-
-    Raises:
-        ValueError: If no directive is found before the content.
     """
     directive = f".. code-block:: {language}".rstrip()
-    for i in range(content_start_line - 2, -1, -1):
-        line = lines[i].lstrip()
-        if line.startswith(directive):
-            return i + 1
-        # Stop if we hit non-blank, non-option content
-        if line and not line.startswith(":"):  # pragma: no cover
-            break
-    # Docutils only produces literal_block nodes for valid
-    # code-block directives, so the directive should always
-    # be found before the content.
-    msg = (  # pragma: no cover
-        f"No directive found before content at line {content_start_line}"
+    return next(
+        i + 1
+        for i in range(content_start_line - 2, -1, -1)
+        if lines[i].lstrip().startswith(directive)
     )
-    raise ValueError(msg)  # pragma: no cover

@@ -110,14 +110,6 @@ class DirectiveInCommentLexer:
         start_line = line_num - 1
 
         # Calculate character positions
-        if start_line >= len(offsets):  # pragma: no cover
-            # The line number from docutils should always be within
-            # the document.
-            msg = (
-                f"Comment line {line_num} is beyond "
-                f"document length {len(offsets)}"
-            )
-            raise ValueError(msg)
         region_start = offsets[start_line]
 
         # Find the end of the comment by looking for the next non-blank,
