@@ -197,7 +197,7 @@ class CodeBlockParser:
             return None
 
         # Extract code lines (skip leading blanks).
-        # Docutils strips trailing blanks from comment astext(), so
+        # Docutils strips trailing blanks from comment ``astext()``, so
         # no trailing-blank removal is needed here.
         code_lines: list[str] = []
         found_content = False
