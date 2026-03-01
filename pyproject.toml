@@ -37,6 +37,7 @@ dynamic = [
 ]
 dependencies = [
     "beartype>=0.22.9",
+    "docutils>=0.21",
     "markdown-it-py>=3.0.0",
     "myst-parser>=5.0.0",
     "sybil>=9.3.0",
@@ -71,6 +72,7 @@ optional-dependencies.dev = [
     "sphinx-lint==1.0.2",
     "sybil==9.3.0",
     "ty==0.0.19",
+    "types-docutils==0.22.3.20260223",
     "uv==0.10.7",
     "vulture==2.14",
     "yamlfix==1.19.1",
@@ -366,6 +368,8 @@ ignore_names = [
     "spelling_word_list_filename",
     "templates_path",
     "warning_is_error",
+    # docutils settings
+    "report_level",
 ]
 # Duplicate some of .gitignore
 exclude = [ ".venv" ]
