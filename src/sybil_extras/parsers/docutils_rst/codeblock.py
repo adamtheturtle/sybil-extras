@@ -224,17 +224,10 @@ def _find_content_after_directive(
     Raises:
         ValueError: If no content is found after the directive.
     """
-    seen_blank = False
     for i in range(directive_line, len(lines)):
         stripped = lines[i].lstrip()
         if not stripped:
-            seen_blank = True
             continue
-        # Docutils strips options before creating the literal_block
-        # node, so this branch is not reachable through normal usage.
-        if not seen_blank and stripped.startswith(":"):  # pragma: no cover
-            msg = "Unexpected directive option in content"
-            raise ValueError(msg)
         return i + 1
     # Docutils only produces literal_block nodes when there is
     # content after the directive, so this should not be reachable.
