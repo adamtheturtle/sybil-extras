@@ -4,6 +4,8 @@ Changelog
 Next
 ----
 
+* Fix ``DOCUTILS_RST`` parser to preserve the trailing blank line from a single blank-line separator between consecutive same-language code blocks.
+
 2026.03.01.6
 ------------
 

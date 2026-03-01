@@ -12,7 +12,11 @@ from sybil import Example, Sybil
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
-from sybil_extras.languages import DirectiveBuilder, MarkupLanguage
+from sybil_extras.languages import (
+    DOCUTILS_RST,
+    DirectiveBuilder,
+    MarkupLanguage,
+)
 
 
 @beartype
@@ -886,9 +890,13 @@ def test_no_group_directives(
     for example in document.examples():
         example.evaluate()
 
-    # Code blocks are evaluated individually, not grouped
+    # Code blocks are evaluated individually, not grouped.
+    # For DOCUTILS_RST, the single blank line between consecutive
+    # same-language code blocks is preserved as a trailing blank in the
+    # first block's parsed text.
+    first_block = "x = [1]\n\n" if language == DOCUTILS_RST else "x = [1]\n"
     assert document.namespace["blocks"] == [
-        "x = [1]\n",
+        first_block,
         "x = [*x, 2]\n",
     ]
 
@@ -944,10 +952,18 @@ def test_no_pad_groups(
 
     # Leading padding puts the first code block's content on its original line.
     # With pad_groups=False, there's just a single newline between blocks.
+    # For DOCUTILS_RST, the single blank line between consecutive same-language
+    # code blocks is preserved as a trailing blank in the first block's parsed
+    # text, resulting in 2 blank lines between blocks (satisfying PEP 8 E302).
     leading_padding = "\n" * first_line
-    expected_output_document_content = (
-        f"{leading_padding}x = [*x, 1]\n\nx = [*x, 2]\n"
-    )
+    if language == DOCUTILS_RST:
+        expected_output_document_content = (
+            f"{leading_padding}x = [*x, 1]\n\n\nx = [*x, 2]\n"
+        )
+    else:
+        expected_output_document_content = (
+            f"{leading_padding}x = [*x, 1]\n\nx = [*x, 2]\n"
+        )
     assert output_document_content == expected_output_document_content
 
 

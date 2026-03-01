@@ -328,6 +328,14 @@ def _compute_positions(
         ):
             actual_last_content -= 1
         trailing_blank_lines = content_end_line - actual_last_content
+        # When content is directly adjacent to the separator (no
+        # intermediate blank lines), also count the separator blank line
+        # (ref_line) as trailing content if the next non-blank line is
+        # another code block directive for the same language.
+        if trailing_blank_lines == 0 and ref_line < len(lines):
+            next_stripped = lines[ref_line].lstrip()
+            if any(next_stripped.startswith(p) for p in prefixes):
+                trailing_blank_lines = 1
         content_start_line = actual_last_content - line_count + 1
         directive_line = _find_directive_before_content(
             lines=lines,

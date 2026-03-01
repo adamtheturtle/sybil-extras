@@ -15,6 +15,7 @@ from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 from sybil_extras.languages import (
+    DOCUTILS_RST,
     DirectiveBuilder,
     MarkupLanguage,
 )
@@ -162,8 +163,9 @@ def test_group_all_no_pad(*, language: MarkupLanguage, tmp_path: Path) -> None:
         example.evaluate()
 
     blocks = ["x = []", "x = [*x, 1]", "x = [*x, 2]"]
-    # When pad_groups=False, blocks are separated by 2 newlines (1 blank line)
-    padding = "\n\n"
+    # DOCUTILS_RST preserves single-blank separator as trailing blank,
+    # giving 2 blank lines when pad_groups=False. Others give 1 blank line.
+    padding = "\n\n\n" if language == DOCUTILS_RST else "\n\n"
     expected = padding.join(blocks) + "\n"
     assert document.namespace["blocks"] == [expected]
 
