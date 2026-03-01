@@ -352,3 +352,84 @@ def test_evaluator_not_none_when_omitted(tmp_path: Path) -> None:
     # Calling evaluate should raise NotImplementedError (default behavior)
     with pytest.raises(expected_exception=NotImplementedError):
         examples[0].evaluate()
+
+
+def test_invisible_code_block(tmp_path: Path) -> None:
+    """``.. invisible-code-block::`` directives are parsed as code blocks.
+
+    The ``invisible-code-block`` directive is not a standard docutils
+    directive, but it is used by Sybil for padding in groups. The parser
+    must recognize it and yield a region just like a regular
+    ``code-block``.
+    """
+    content = dedent(
+        text="""\
+        .. invisible-code-block:: python
+
+           x = 1
+    """
+    )
+    test_file = tmp_path / "test.rst"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert len(examples) == 1
+    assert examples[0].parsed.text == "x = 1\n"
+
+
+def test_invisible_code_block_no_language_filter(tmp_path: Path) -> None:
+    """``.. invisible-code-block::`` is matched without a language
+    filter.
+    """
+    content = dedent(
+        text="""\
+        .. invisible-code-block:: python
+
+           x = 1
+    """
+    )
+    test_file = tmp_path / "test.rst"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert len(examples) == 1
+    assert examples[0].region.lexemes["language"] == "python"
+
+
+def test_invisible_and_regular_code_blocks_together(tmp_path: Path) -> None:
+    """Both ``invisible-code-block`` and ``code-block`` are parsed.
+
+    When a document contains a mix of ``.. invisible-code-block::`` and
+    ``.. code-block::`` directives, all of them should be yielded.
+    """
+    content = dedent(
+        text="""\
+        .. invisible-code-block:: python
+
+           x = 1
+
+        .. code-block:: python
+
+           y = 2
+    """
+    )
+    test_file = tmp_path / "test.rst"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    expected_example_count = 2
+    assert len(examples) == expected_example_count
+    assert examples[0].parsed.text == "x = 1\n"
+    assert examples[1].parsed.text == "y = 2\n"

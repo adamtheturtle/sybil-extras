@@ -3,18 +3,46 @@
 This parser uses docutils to parse RST and extract code blocks.
 """
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
+from typing import Any, ClassVar
 
 from beartype import beartype
 from docutils import nodes
 from docutils.frontend import get_default_settings
-from docutils.parsers.rst import Parser
+from docutils.parsers.rst import Directive, Parser, directives
 from docutils.utils import new_document
 from sybil import Document, Example, Lexeme, Region
 from sybil.typing import Evaluator
 
 from sybil_extras.parsers._line_offsets import line_offsets
+
+
+class _InvisibleCodeBlock(Directive):
+    """A docutils directive that mimics ``code-block`` but is invisible.
+
+    This directive produces a ``literal_block`` node with the ``code``
+    class, just like the standard ``code-block`` directive, so that the
+    :class:`CodeBlockParser` can find and process it.
+    """
+
+    required_arguments: ClassVar[int] = 1
+    optional_arguments: ClassVar[int] = 0
+    final_argument_whitespace: ClassVar[bool] = False
+    option_spec: ClassVar[dict[str, Callable[[str], Any]]] = {}  # pyright: ignore[reportIncompatibleVariableOverride]
+    has_content: ClassVar[bool] = True
+
+    def run(self) -> list[nodes.Node]:
+        """Return a literal_block node with the code class."""
+        language = self.arguments[0]
+        code = "\n".join(self.content)
+        node = nodes.literal_block(rawsource=code, text=code)
+        node["classes"] = ["code", language]
+        node["language"] = language
+        return [node]
+
+
+directives.register_directive("invisible-code-block", _InvisibleCodeBlock)  # type: ignore[misc]
 
 
 @beartype
@@ -169,9 +197,12 @@ class _Positions:
 
 @beartype
 def _directive_prefixes(*, language: str) -> tuple[str, ...]:
-    """Build directive prefixes for both ``code-block`` and ``code``."""
+    """Build directive prefixes for ``code-block``, ``code``, and
+    ``invisible-code-block``.
+    """
     return tuple(
-        f"{d} {language}".rstrip() for d in (".. code-block::", ".. code::")
+        f"{d} {language}".rstrip()
+        for d in (".. code-block::", ".. code::", ".. invisible-code-block::")
     )
 
 

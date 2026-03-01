@@ -349,6 +349,12 @@ ignore_names = [
     "pytest_plugins",
     # pytest fixtures - we name fixtures like this for this purpose
     "fixture_*",
+    # docutils Directive base class attributes (read by framework)
+    "required_arguments",
+    "optional_arguments",
+    "final_argument_whitespace",
+    "option_spec",
+    "has_content",
     # Sphinx
     "autoclass_content",
     "autoclass_content",
