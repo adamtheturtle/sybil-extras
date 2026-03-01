@@ -1,4 +1,4 @@
-"""Tests for sphinx-jinja2 parsers shared across MyST variants."""
+"""Tests for sphinx-jinja2 parsers shared across parser variants."""
 
 import textwrap
 from pathlib import Path
@@ -7,11 +7,17 @@ import pytest
 from sybil import Sybil
 
 from sybil_extras.evaluators.no_op import NoOpEvaluator
+from sybil_extras.parsers.docutils_rst.sphinx_jinja2 import (
+    SphinxJinja2Parser as DocutilsRstSphinxJinja2Parser,
+)
 from sybil_extras.parsers.myst.sphinx_jinja2 import (
     SphinxJinja2Parser as MystSphinxJinja2Parser,
 )
 from sybil_extras.parsers.myst_parser.sphinx_jinja2 import (
     SphinxJinja2Parser as MystParserSphinxJinja2Parser,
+)
+from sybil_extras.parsers.rest.sphinx_jinja2 import (
+    SphinxJinja2Parser as RestSphinxJinja2Parser,
 )
 
 
@@ -66,6 +72,64 @@ def test_sphinx_jinja2(
     assert second_example.region.lexemes == {
         "directive": "jinja",
         "arguments": "",
+        "source": "",
+        "options": {
+            "file": "templates/example1.jinja",
+            "ctx": '{"name": "World"}',
+        },
+    }
+
+
+@pytest.mark.parametrize(
+    argnames="parser_cls",
+    argvalues=[
+        pytest.param(DocutilsRstSphinxJinja2Parser, id="docutils-rst"),
+        pytest.param(RestSphinxJinja2Parser, id="rest"),
+    ],
+)
+def test_sphinx_jinja2_rst(
+    *,
+    parser_cls: type,
+    tmp_path: Path,
+) -> None:
+    """The ``SphinxJinja2Parser`` extracts information from
+    sphinx-jinja2 blocks in reST documents.
+    """
+    # These examples are taken from the sphinx-jinja2 documentation.
+    content = textwrap.dedent(
+        text="""\
+        .. jinja::
+           :ctx: {"name": "World"}
+
+           Hallo {{ name }}!
+
+        .. jinja::
+           :file: templates/example1.jinja
+           :ctx: {"name": "World"}
+    """
+    )
+
+    test_document = tmp_path / "test.rst"
+    test_document.write_text(data=content, encoding="utf-8")
+
+    parser = parser_cls(evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_document)
+
+    first_example, second_example = document.examples()
+    assert first_example.parsed == "Hallo {{ name }}!\n"
+    assert first_example.region.lexemes == {
+        "directive": "jinja",
+        "arguments": None,
+        "source": "Hallo {{ name }}!\n",
+        "options": {"ctx": '{"name": "World"}'},
+    }
+    first_example.evaluate()
+
+    assert second_example.parsed == ""
+    assert second_example.region.lexemes == {
+        "directive": "jinja",
+        "arguments": None,
         "source": "",
         "options": {
             "file": "templates/example1.jinja",
