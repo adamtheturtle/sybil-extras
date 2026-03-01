@@ -21,6 +21,7 @@ import sybil_extras.parsers.docutils_rst.codeblock
 import sybil_extras.parsers.docutils_rst.custom_directive_skip
 import sybil_extras.parsers.docutils_rst.group_all
 import sybil_extras.parsers.docutils_rst.grouped_source
+import sybil_extras.parsers.docutils_rst.sphinx_jinja2
 import sybil_extras.parsers.markdown.custom_directive_skip
 import sybil_extras.parsers.markdown.group_all
 import sybil_extras.parsers.markdown.grouped_source
@@ -426,10 +427,10 @@ DOCUTILS_RST = MarkupLanguage(
     code_block_parser_cls=sybil_extras.parsers.docutils_rst.codeblock.CodeBlockParser,
     group_parser_cls=sybil_extras.parsers.docutils_rst.grouped_source.GroupedSourceParser,
     group_all_parser_cls=sybil_extras.parsers.docutils_rst.group_all.GroupAllParser,
-    sphinx_jinja_parser_cls=None,
+    sphinx_jinja_parser_cls=sybil_extras.parsers.docutils_rst.sphinx_jinja2.SphinxJinja2Parser,
     code_block_builder=_rst_code_block,
     directive_builders=(_rst_directive,),
-    jinja_block_builder=None,
+    jinja_block_builder=_rst_jinja_block,
 )
 
 ALL_LANGUAGES: tuple[MarkupLanguage, ...] = (
