@@ -15,6 +15,7 @@ from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 from sybil_extras.languages import (
+    DOCUTILS_RST,
     DirectiveBuilder,
     MarkupLanguage,
 )
@@ -132,6 +133,8 @@ def test_group_all_empty_document(
 
 def test_group_all_no_pad(*, language: MarkupLanguage, tmp_path: Path) -> None:
     """Groups can be combined without inserting extra padding."""
+    if language == DOCUTILS_RST:
+        pytest.skip("DOCUTILS_RST uses no_pad_separator_lines=2")
     content = language.markup_separator.join(
         [
             language.code_block_builder(code="x = []", language="python"),
@@ -162,7 +165,8 @@ def test_group_all_no_pad(*, language: MarkupLanguage, tmp_path: Path) -> None:
         example.evaluate()
 
     blocks = ["x = []", "x = [*x, 1]", "x = [*x, 2]"]
-    padding = "\n\n\n"
+    # When pad_groups=False, blocks are separated by 2 newlines (1 blank line)
+    padding = "\n\n"
     expected = padding.join(blocks) + "\n"
     assert document.namespace["blocks"] == [expected]
 

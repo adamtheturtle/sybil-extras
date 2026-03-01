@@ -36,7 +36,7 @@ class AbstractAttributeGroupedSourceParser:
         attribute_name: str,
         pad_groups: bool,
         ungrouped_evaluator: Evaluator,
-        no_pad_separator_lines: int = 2,
+        no_pad_separator_lines: int = 1,
     ) -> None:
         """
         Args:

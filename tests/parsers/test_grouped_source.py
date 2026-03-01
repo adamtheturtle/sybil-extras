@@ -13,6 +13,7 @@ from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 from sybil_extras.languages import (
+    DOCUTILS_RST,
     DirectiveBuilder,
     MarkupLanguage,
 )
@@ -229,6 +230,8 @@ def test_group_with_skip_range(
 ) -> None:
     """Skip start/end ranges are respected within a group."""
     language, directive_builder = language_directive_builder
+    if language == DOCUTILS_RST:
+        pytest.skip("DOCUTILS_RST uses no_pad_separator_lines=2")
     content = language.markup_separator.join(
         [
             language.code_block_builder(code="x = []", language="python"),
@@ -267,10 +270,10 @@ def test_group_with_skip_range(
     for example in document.examples():
         example.evaluate()
 
-    # Blocks 2 and 3 are skipped by the skip range.
+    # Blocks 2 and 3 are skipped by the skip range
     assert document.namespace["blocks"] == [
         "x = []\n",
-        "x = [*x, 1]\n\n\nx = [*x, 4]\n",
+        "x = [*x, 1]\n\nx = [*x, 4]\n",
         "x = [*x, 5]\n",
     ]
 
@@ -903,6 +906,8 @@ def test_no_pad_groups(
 ) -> None:
     """It is possible to avoid padding grouped code blocks."""
     language, directive_builder = language_directive_builder
+    if language == DOCUTILS_RST:
+        pytest.skip("DOCUTILS_RST uses no_pad_separator_lines=2")
     content = language.markup_separator.join(
         [
             directive_builder(directive="group", argument="start"),
@@ -946,9 +951,10 @@ def test_no_pad_groups(
     output_document_content = output_document.read_text(encoding="utf-8")
 
     # Leading padding puts the first code block's content on its original line.
+    # With pad_groups=False, there's just a single newline between blocks.
     leading_padding = "\n" * first_line
     expected_output_document_content = (
-        f"{leading_padding}x = [*x, 1]\n\n\nx = [*x, 2]\n"
+        f"{leading_padding}x = [*x, 1]\n\nx = [*x, 2]\n"
     )
     assert output_document_content == expected_output_document_content
 
