@@ -189,7 +189,13 @@ def test_myst_directive_code_block(*, tmp_path: Path, directive: str) -> None:
     from the second word of the info string, so they are matched when
     that language is requested.
     """
-    content = f"```{{{directive}}} python\nprint('hello')\n```\n"
+    content = textwrap.dedent(
+        text=f"""\
+        ```{{{directive}}} python
+        print('hello')
+        ```
+        """,
+    )
     test_file = tmp_path / "test.md"
     test_file.write_text(data=content, encoding="utf-8")
 
@@ -217,7 +223,13 @@ def test_myst_directive_code_block_no_language(
     When a specific language is requested, a directive block with no
     language argument (e.g., ```{code-block}```) is not matched.
     """
-    content = f"```{{{directive}}}\nprint('hello')\n```\n"
+    content = textwrap.dedent(
+        text=f"""\
+        ```{{{directive}}}
+        print('hello')
+        ```
+        """,
+    )
     test_file = tmp_path / "test.md"
     test_file.write_text(data=content, encoding="utf-8")
 
@@ -244,7 +256,13 @@ def test_myst_directive_code_block_wrong_language(
     When a specific language is requested, a directive block specifying
     a different language is not matched.
     """
-    content = f"```{{{directive}}} javascript\nconsole.log('hi');\n```\n"
+    content = textwrap.dedent(
+        text=f"""\
+        ```{{{directive}}} javascript
+        console.log('hi');
+        ```
+        """,
+    )
     test_file = tmp_path / "test.md"
     test_file.write_text(data=content, encoding="utf-8")
 
