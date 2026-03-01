@@ -352,3 +352,189 @@ def test_evaluator_not_none_when_omitted(tmp_path: Path) -> None:
     # Calling evaluate should raise NotImplementedError (default behavior)
     with pytest.raises(expected_exception=NotImplementedError):
         examples[0].evaluate()
+
+
+def test_invisible_code_block_single_colon(tmp_path: Path) -> None:
+    """Single-colon ``invisible-code-block`` directives are parsed.
+
+    ``.. invisible-code-block: python`` (single colon) is an RST
+    comment-based directive. The parser should recognize it and extract
+    its code content.
+    """
+    content = dedent(
+        text="""\
+        Some text
+
+        .. invisible-code-block: python
+
+           x = 1
+        """
+    )
+    test_file = tmp_path / "test.rst"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert len(examples) == 1
+    assert examples[0].parsed.text == "x = 1\n"
+
+
+def test_invisible_code_block_single_colon_language_filter(
+    tmp_path: Path,
+) -> None:
+    """Single-colon invisible-code-block with wrong language is
+    skipped.
+    """
+    content = dedent(
+        text="""\
+        .. invisible-code-block: python
+
+           x = 1
+
+        .. invisible-code-block: bash
+
+           echo hello
+        """
+    )
+    test_file = tmp_path / "test.rst"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert len(examples) == 1
+    assert examples[0].parsed.text == "x = 1\n"
+
+
+def test_invisible_code_block_single_colon_no_language_filter(
+    tmp_path: Path,
+) -> None:
+    """Single-colon invisible-code-block is matched without language
+    filter.
+    """
+    content = dedent(
+        text="""\
+        .. invisible-code-block: python
+
+           x = 1
+
+        .. invisible-code-block: bash
+
+           echo hello
+        """
+    )
+    test_file = tmp_path / "test.rst"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    expected_example_count = 2
+    assert len(examples) == expected_example_count
+
+
+def test_invisible_code_block_single_colon_language_lexeme(
+    tmp_path: Path,
+) -> None:
+    """Language lexeme is correct for single-colon invisible-code-
+    block.
+    """
+    content = dedent(
+        text="""\
+        .. invisible-code-block: python
+
+           x = 1
+        """
+    )
+    test_file = tmp_path / "test.rst"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert len(examples) == 1
+    assert examples[0].region.lexemes["language"] == "python"
+
+
+def test_invisible_code_block_single_colon_and_regular_together(
+    tmp_path: Path,
+) -> None:
+    """Single-colon invisible-code-block and regular code blocks work
+    together.
+    """
+    content = dedent(
+        text="""\
+        .. code-block:: python
+
+           x = 1
+
+        .. invisible-code-block: python
+
+           y = 2
+        """
+    )
+    test_file = tmp_path / "test.rst"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    expected_example_count = 2
+    assert len(examples) == expected_example_count
+    assert examples[0].parsed.text == "x = 1\n"
+    assert examples[1].parsed.text == "y = 2\n"
+
+
+def test_invisible_code_block_single_colon_multiline(tmp_path: Path) -> None:
+    """Multiline single-colon invisible-code-block is parsed correctly."""
+    content = dedent(
+        text="""\
+        .. invisible-code-block: python
+
+           def foo():
+               pass
+        """
+    )
+    test_file = tmp_path / "test.rst"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert len(examples) == 1
+    assert examples[0].parsed.text == "def foo():\n    pass\n"
+
+
+def test_invisible_code_block_single_colon_at_end_of_file(
+    tmp_path: Path,
+) -> None:
+    """Single-colon invisible-code-block at end of file is parsed."""
+    content = dedent(
+        text="""\
+        .. invisible-code-block: python
+
+           x = 1"""
+    )
+    test_file = tmp_path / "test.rst"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert len(examples) == 1
+    assert examples[0].parsed.text == "x = 1\n"

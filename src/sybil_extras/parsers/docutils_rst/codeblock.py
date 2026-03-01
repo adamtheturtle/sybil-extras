@@ -3,6 +3,7 @@
 This parser uses docutils to parse RST and extract code blocks.
 """
 
+import re
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
@@ -15,6 +16,10 @@ from sybil import Document, Example, Lexeme, Region
 from sybil.typing import Evaluator
 
 from sybil_extras.parsers._line_offsets import line_offsets
+
+_INVISIBLE_CODE_COMMENT_PATTERN = re.compile(
+    pattern=r"^invisible-code-block:\s*(?P<language>.*?)\s*$",
+)
 
 
 @beartype
@@ -66,6 +71,16 @@ class CodeBlockParser:
         for node in doc.findall(condition=nodes.literal_block):
             region = self._process_node(
                 node=node,
+                document=document,
+                offsets=offsets,
+                lines=lines,
+            )
+            if region is not None:
+                yield region
+
+        for comment_node in doc.findall(condition=nodes.comment):
+            region = self._process_invisible_comment_node(
+                node=comment_node,
                 document=document,
                 offsets=offsets,
                 lines=lines,
@@ -157,6 +172,86 @@ class CodeBlockParser:
             lexemes=lexemes,
         )
 
+    def _process_invisible_comment_node(
+        self,
+        *,
+        node: nodes.comment,
+        document: Document,
+        offsets: list[int],
+        lines: Sequence[str],
+    ) -> Region | None:
+        """Process a comment node for single-colon invisible-code-block.
+
+        Returns None if the node doesn't match the directive pattern.
+        """
+        comment_text = node.astext()
+        first_line, *rest_lines = comment_text.split(sep="\n")
+        match = _INVISIBLE_CODE_COMMENT_PATTERN.match(string=first_line)
+        if match is None:
+            return None
+
+        block_language = match.group("language")
+
+        if self._language is not None and block_language != self._language:
+            return None
+
+        # Extract code lines (skip leading blanks).
+        # Docutils strips trailing blanks from comment ``astext()``, so
+        # no trailing-blank removal is needed here.
+        code_lines: list[str] = []
+        found_content = False
+        for line in rest_lines:
+            if not found_content and not line.strip():
+                continue
+            found_content = True
+            code_lines.append(line)
+
+        source_content = "\n".join(code_lines)
+        line_count = len(code_lines)
+
+        ref_line = node.line
+        if ref_line is None:  # pragma: no cover
+            msg = "Comment node has no line reference"
+            raise ValueError(msg)
+
+        positions = _compute_positions(
+            lines=lines,
+            ref_line=ref_line,
+            line_count=line_count,
+            language=block_language,
+        )
+
+        region_start = offsets[positions.directive_line - 1]
+        source_start = offsets[positions.content_start_line - 1]
+
+        if positions.content_end_line < len(offsets):
+            source_end = offsets[positions.content_end_line]
+        else:
+            source_end = len(document.text)
+
+        source_text = source_content.rstrip("\n") + "\n"
+        region_end = source_end
+        source_offset = source_start - region_start
+
+        opening_text = document.text[region_start:source_start]
+        line_offset = max(opening_text.count("\n") - 1, 0)
+
+        source = Lexeme(
+            text=source_text,
+            offset=source_offset,
+            line_offset=line_offset,
+        )
+
+        lexemes = {"language": block_language, "source": source}
+
+        return Region(
+            start=region_start,
+            end=region_end,
+            parsed=source,
+            evaluator=self._evaluator or self.evaluate,
+            lexemes=lexemes,
+        )
+
 
 @dataclass(frozen=True)
 class _Positions:
@@ -169,10 +264,18 @@ class _Positions:
 
 @beartype
 def _directive_prefixes(*, language: str) -> tuple[str, ...]:
-    """Build directive prefixes for both ``code-block`` and ``code``."""
-    return tuple(
-        f"{d} {language}".rstrip() for d in (".. code-block::", ".. code::")
-    )
+    """Build directive prefixes for ``code-block``, ``code``, and single-
+    colon
+    ``invisible-code-block``.
+    """
+    double_colon = (".. code-block::", ".. code::")
+    prefixes = [f"{d} {language}".rstrip() for d in double_colon]
+    # Single-colon (comment-based) invisible-code-block
+    if language:
+        prefixes.append(f".. invisible-code-block: {language}")
+    else:
+        prefixes.append(".. invisible-code-block:")
+    return tuple(prefixes)
 
 
 @beartype
