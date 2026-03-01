@@ -59,7 +59,7 @@ class CodeBlockParser:
         block.
         """
         config = MdParserConfig()
-        md = create_md_parser(config, RendererHTML)
+        md = create_md_parser(config=config, renderer=RendererHTML)
         # Disable the indented code block rule so that fenced code blocks
         # inside indented sections are still recognized as fences.
         # This matches Sybil's regex-based behavior which allows fenced

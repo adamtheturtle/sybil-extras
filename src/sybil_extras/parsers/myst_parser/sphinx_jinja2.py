@@ -36,7 +36,7 @@ class SphinxJinja2Parser:
     def __call__(self, document: Document) -> Iterable[Region]:
         """Parse the document for sphinx-jinja2 blocks."""
         config = MdParserConfig()
-        md = create_md_parser(config, RendererHTML)
+        md = create_md_parser(config=config, renderer=RendererHTML)
         md.disable(names="code")
         tokens = md.parse(src=document.text)
         offsets = line_offsets(text=document.text)
@@ -68,7 +68,7 @@ class SphinxJinja2Parser:
             body_lines: list[str] = []
             in_options = True
 
-            for line in content.split("\n"):
+            for line in content.split(sep="\n"):
                 if in_options:
                     option_match = _OPTION_PATTERN.match(string=line)
                     if option_match:

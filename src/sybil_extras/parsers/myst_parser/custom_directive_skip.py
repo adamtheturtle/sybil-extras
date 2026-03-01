@@ -6,6 +6,7 @@ This parser uses the myst-parser library instead of regex.
 
 import re
 from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 from beartype import beartype
 from sybil import Document, Region
@@ -16,6 +17,9 @@ from sybil_extras.parsers.myst_parser.lexers import (
     DirectiveInHTMLCommentLexer,
     DirectiveInPercentCommentLexer,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 @beartype
@@ -31,7 +35,7 @@ class CustomDirectiveSkipParser:
         Args:
             directive: The name of the directive to use for skipping.
         """
-        lexers = [
+        lexers: list[Callable[[Document], Iterable[Region]]] = [
             DirectiveInPercentCommentLexer(
                 directive=re.escape(pattern=directive),
             ),

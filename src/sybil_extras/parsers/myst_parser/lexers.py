@@ -59,7 +59,7 @@ class DirectiveInHTMLCommentLexer:
         comments.
         """
         config = MdParserConfig()
-        md = create_md_parser(config, RendererHTML)
+        md = create_md_parser(config=config, renderer=RendererHTML)
         md.disable(names="code")
         tokens = md.parse(src=document.text)
         offsets = line_offsets(text=document.text)
@@ -148,7 +148,7 @@ class DirectiveInPercentCommentLexer:
         comments.
         """
         config = MdParserConfig()
-        md = create_md_parser(config, RendererHTML)
+        md = create_md_parser(config=config, renderer=RendererHTML)
         md.disable(names="code")
         tokens = md.parse(src=document.text)
         offsets = line_offsets(text=document.text)

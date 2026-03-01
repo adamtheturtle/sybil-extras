@@ -4,6 +4,7 @@ This parser uses the myst-parser library instead of regex.
 """
 
 import re
+from typing import TYPE_CHECKING
 
 from beartype import beartype
 from sybil.typing import Evaluator
@@ -15,6 +16,11 @@ from sybil_extras.parsers.myst_parser.lexers import (
     DirectiveInHTMLCommentLexer,
     DirectiveInPercentCommentLexer,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
+
+    from sybil import Document, Region
 
 
 @beartype
@@ -45,7 +51,7 @@ class GroupedSourceParser(AbstractGroupedSourceParser):
                 to not have a bunch of newlines in it, such as
         formatters.
         """
-        lexers = [
+        lexers: list[Callable[[Document], Iterable[Region]]] = [
             DirectiveInPercentCommentLexer(
                 directive=re.escape(pattern=directive),
             ),
