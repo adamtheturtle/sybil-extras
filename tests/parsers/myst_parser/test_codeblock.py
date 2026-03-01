@@ -182,7 +182,7 @@ def test_percent_comment_does_not_break_parsing(tmp_path: Path) -> None:
     argnames="directive",
     argvalues=["code-block", "code", "code-cell"],
 )
-def test_myst_directive_code_block(tmp_path: Path, directive: str) -> None:
+def test_myst_directive_code_block(*, tmp_path: Path, directive: str) -> None:
     """MyST directive-style code blocks are matched by language.
 
     Blocks in the form ```{directive} language``` extract the language
@@ -208,6 +208,7 @@ def test_myst_directive_code_block(tmp_path: Path, directive: str) -> None:
     argvalues=["code-block", "code", "code-cell"],
 )
 def test_myst_directive_code_block_no_language(
+    *,
     tmp_path: Path,
     directive: str,
 ) -> None:
@@ -233,6 +234,7 @@ def test_myst_directive_code_block_no_language(
     argvalues=["code-block", "code", "code-cell"],
 )
 def test_myst_directive_code_block_wrong_language(
+    *,
     tmp_path: Path,
     directive: str,
 ) -> None:
