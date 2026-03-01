@@ -230,11 +230,11 @@ def _find_content_after_directive(
         if not stripped:
             seen_blank = True
             continue
-        # Before the blank separator, skip directive options.
-        # Docutils strips options before creating the literal_block node,
-        # so this branch is not reachable through normal usage.
+        # Docutils strips options before creating the literal_block
+        # node, so this branch is not reachable through normal usage.
         if not seen_blank and stripped.startswith(":"):  # pragma: no cover
-            continue
+            msg = "Unexpected directive option in content"
+            raise ValueError(msg)
         return i + 1
     # Docutils only produces literal_block nodes when there is
     # content after the directive, so this should not be reachable.
