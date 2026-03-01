@@ -9,8 +9,15 @@ from sybil import Example, Sybil
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 from sybil_extras.languages import DOCUTILS_RST
+from sybil_extras.parsers.docutils_rst.codeblock import CodeBlockParser
 from sybil_extras.parsers.docutils_rst.custom_directive_skip import (
     CustomDirectiveSkipParser,
+)
+from sybil_extras.parsers.docutils_rst.group_all import (
+    GroupAllParser,
+)
+from sybil_extras.parsers.docutils_rst.grouped_source import (
+    GroupedSourceParser,
 )
 
 
@@ -40,12 +47,12 @@ def test_group_all_no_pad(tmp_path: Path) -> None:
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
-    group_all_parser = DOCUTILS_RST.group_all_parser_cls(
+    group_all_parser = GroupAllParser(
         evaluator=evaluator,
         pad_groups=False,
         no_pad_separator_lines=2,
     )
-    code_block_parser = DOCUTILS_RST.code_block_parser_cls(
+    code_block_parser = CodeBlockParser(
         language="python",
         evaluator=evaluator,
     )
@@ -96,13 +103,13 @@ def test_group_with_skip_range(tmp_path: Path) -> None:
     )
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
-    group_parser = DOCUTILS_RST.group_parser_cls(
+    group_parser = GroupedSourceParser(
         directive="group",
         evaluator=evaluator,
         pad_groups=False,
         no_pad_separator_lines=2,
     )
-    code_block_parser = DOCUTILS_RST.code_block_parser_cls(
+    code_block_parser = CodeBlockParser(
         language="python",
         evaluator=evaluator,
     )
@@ -154,13 +161,13 @@ def test_no_pad_groups(tmp_path: Path) -> None:
         write_to_file=False,
         use_pty=False,
     )
-    group_parser = DOCUTILS_RST.group_parser_cls(
+    group_parser = GroupedSourceParser(
         directive="group",
         evaluator=shell_evaluator,
         pad_groups=False,
         no_pad_separator_lines=2,
     )
-    code_block_parser = DOCUTILS_RST.code_block_parser_cls(language="python")
+    code_block_parser = CodeBlockParser(language="python")
 
     sybil = Sybil(parsers=[code_block_parser, group_parser])
     document = sybil.parse(path=test_document)
