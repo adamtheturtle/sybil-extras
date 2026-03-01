@@ -10,7 +10,7 @@ from beartype import beartype
 from markdown_it import MarkdownIt
 from sybil import Document, Lexeme, Region
 
-from sybil_extras.parsers.markdown_it._line_offsets import line_offsets
+from sybil_extras.parsers._line_offsets import line_offsets
 
 
 @beartype
