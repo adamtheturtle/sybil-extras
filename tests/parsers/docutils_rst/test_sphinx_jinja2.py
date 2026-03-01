@@ -1,6 +1,7 @@
 """Tests for the sphinx-jinja2 parser for reST using docutils."""
 
 from pathlib import Path
+from textwrap import dedent
 
 from sybil import Sybil
 
@@ -14,16 +15,18 @@ def test_sphinx_jinja2(*, tmp_path: Path) -> None:
     blocks.
     """
     # These examples are taken from the sphinx-jinja2 documentation.
-    content = """\
-.. jinja::
-   :ctx: {"name": "World"}
+    content = dedent(
+        text="""\
+        .. jinja::
+           :ctx: {"name": "World"}
 
-   Hallo {{ name }}!
+           Hallo {{ name }}!
 
-.. jinja::
-   :file: templates/example1.jinja
-   :ctx: {"name": "World"}
-"""
+        .. jinja::
+           :file: templates/example1.jinja
+           :ctx: {"name": "World"}
+    """
+    )
 
     test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
