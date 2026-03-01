@@ -43,6 +43,7 @@ def test_group_all_no_pad(tmp_path: Path) -> None:
     group_all_parser = DOCUTILS_RST.group_all_parser_cls(
         evaluator=evaluator,
         pad_groups=False,
+        no_pad_separator_lines=2,
     )
     code_block_parser = DOCUTILS_RST.code_block_parser_cls(
         language="python",
@@ -99,6 +100,7 @@ def test_group_with_skip_range(tmp_path: Path) -> None:
         directive="group",
         evaluator=evaluator,
         pad_groups=False,
+        no_pad_separator_lines=2,
     )
     code_block_parser = DOCUTILS_RST.code_block_parser_cls(
         language="python",
@@ -156,6 +158,7 @@ def test_no_pad_groups(tmp_path: Path) -> None:
         directive="group",
         evaluator=shell_evaluator,
         pad_groups=False,
+        no_pad_separator_lines=2,
     )
     code_block_parser = DOCUTILS_RST.code_block_parser_cls(language="python")
 

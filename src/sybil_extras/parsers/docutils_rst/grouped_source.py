@@ -28,6 +28,7 @@ class GroupedSourceParser(AbstractGroupedSourceParser):
         directive: str,
         evaluator: Evaluator,
         pad_groups: bool,
+        no_pad_separator_lines: int = 1,
     ) -> None:
         """
         Args:
@@ -40,6 +41,8 @@ class GroupedSourceParser(AbstractGroupedSourceParser):
                 However, this is detrimental to commands that expect the
         file
                 to not have a bunch of newlines in it, such as formatters.
+            no_pad_separator_lines: Number of newlines to insert between
+                blocks when ``pad_groups`` is ``False``.
         """
         lexers = [
             DirectiveInCommentLexer(
@@ -51,5 +54,5 @@ class GroupedSourceParser(AbstractGroupedSourceParser):
             evaluator=evaluator,
             directive=directive,
             pad_groups=pad_groups,
-            no_pad_separator_lines=2,
+            no_pad_separator_lines=no_pad_separator_lines,
         )
