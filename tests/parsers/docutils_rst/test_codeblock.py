@@ -249,6 +249,27 @@ def test_content_starting_with_colon(tmp_path: Path) -> None:
     assert examples[0].parsed.text == ":key: value\n"
 
 
+def test_code_directive(tmp_path: Path) -> None:
+    """The ``.. code::`` directive is handled like ``.. code-block::``."""
+    content = dedent(
+        text="""\
+        .. code:: python
+
+           print("hello")
+    """
+    )
+    test_file = tmp_path / "test.rst"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert len(examples) == 1
+    assert examples[0].parsed.text == 'print("hello")\n'
+
+
 def test_code_block_at_end_of_file(tmp_path: Path) -> None:
     """A code block at the end of the file is parsed.
 

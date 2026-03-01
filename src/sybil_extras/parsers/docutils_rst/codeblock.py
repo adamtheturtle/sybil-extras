@@ -22,7 +22,7 @@ class CodeBlockParser:
     """A parser for RST code blocks using the docutils library.
 
     This parser uses docutils to parse RST and extract code blocks
-    (``.. code-block::`` directives).
+    (``.. code-block::`` and ``.. code::`` directives).
 
     Args:
         language: The language that this parser should look for.
@@ -165,6 +165,14 @@ class _Positions:
 
 
 @beartype
+def _directive_prefixes(*, language: str) -> tuple[str, ...]:
+    """Build directive prefixes for both ``code-block`` and ``code``."""
+    return tuple(
+        f"{d} {language}".rstrip() for d in (".. code-block::", ".. code::")
+    )
+
+
+@beartype
 def _compute_positions(
     *,
     lines: Sequence[str],
@@ -176,12 +184,12 @@ def _compute_positions(
 
     Returns 1-indexed line numbers.
     """
-    directive = f".. code-block:: {language}".rstrip()
+    prefixes = _directive_prefixes(language=language)
 
     line_at_ref = lines[ref_line - 1]
     stripped = line_at_ref.lstrip()
 
-    if stripped.startswith(directive):
+    if any(stripped.startswith(p) for p in prefixes):
         # ref_line is the directive - find content after it
         directive_line = ref_line
         content_start_line = _find_content_after_directive(
@@ -243,9 +251,9 @@ def _find_directive_before_content(
 
     Returns 1-indexed.
     """
-    directive = f".. code-block:: {language}".rstrip()
+    prefixes = _directive_prefixes(language=language)
     return next(
         i + 1
         for i in range(content_start_line - 2, -1, -1)
-        if lines[i].lstrip().startswith(directive)
+        if any(lines[i].lstrip().startswith(p) for p in prefixes)
     )
