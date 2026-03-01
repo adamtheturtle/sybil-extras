@@ -37,6 +37,7 @@ from sybil_extras.languages import (
     MARKDOWN_IT,
     MDX,
     MYST,
+    MYST_PARSER,
     NORG,
     RESTRUCTUREDTEXT,
     MarkupLanguage,
@@ -446,6 +447,7 @@ def test_write_to_file_new_content_trailing_newlines(
         DJOT: markdown_content,
         NORG: norg_content,
         MYST: myst_content,
+        MYST_PARSER: markdown_content,
     }[markup_language]
     source_file = tmp_path / "source_file.txt"
     source_file.write_text(data=original_content, encoding="utf-8")
@@ -522,6 +524,7 @@ def test_write_to_file_new_content_trailing_newlines(
         DJOT: markdown_expected,
         NORG: norg_expected,
         MYST: myst_expected,
+        MYST_PARSER: markdown_expected,
     }[markup_language]
     if write_to_file:
         assert source_file_content == expected_content
@@ -592,6 +595,7 @@ def test_write_to_file_new_content_no_trailing_newlines(
         DJOT: markdown_content,
         NORG: norg_content,
         MYST: myst_content,
+        MYST_PARSER: markdown_content,
     }[markup_language]
     source_file = tmp_path / "source_file.txt"
     source_file.write_text(data=original_content, encoding="utf-8")
@@ -663,6 +667,7 @@ def test_write_to_file_new_content_no_trailing_newlines(
         DJOT: markdown_expected,
         NORG: norg_expected,
         MYST: myst_expected,
+        MYST_PARSER: markdown_expected,
     }[markup_language]
     if write_to_file:
         assert source_file_content == expected_content

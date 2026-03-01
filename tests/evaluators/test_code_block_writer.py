@@ -15,6 +15,7 @@ from sybil_extras.languages import (
     MARKDOWN_IT,
     MDX,
     MYST,
+    MYST_PARSER,
     NORG,
     RESTRUCTUREDTEXT,
     MarkupLanguage,
@@ -72,6 +73,7 @@ def test_writes_modified_content(
         DJOT: markdown_content,
         NORG: norg_content,
         MYST: myst_content,
+        MYST_PARSER: markdown_content,
     }[markup_language]
 
     source_file = tmp_path / "source_file.txt"
@@ -136,6 +138,7 @@ def test_writes_modified_content(
         DJOT: markdown_expected,
         NORG: norg_expected,
         MYST: myst_expected,
+        MYST_PARSER: markdown_expected,
     }[markup_language]
 
     assert source_file.read_text(encoding="utf-8") == expected_content
@@ -259,6 +262,7 @@ def test_empty_code_block_write_content(
         DJOT: markdown_content,
         NORG: norg_content,
         MYST: myst_content,
+        MYST_PARSER: markdown_content,
     }[markup_language]
     source_file = tmp_path / "source_file.txt"
     source_file.write_text(data=content, encoding="utf-8")
@@ -337,6 +341,7 @@ def test_empty_code_block_write_content(
         DJOT: markdown_expected,
         NORG: norg_expected,
         MYST: myst_expected,
+        MYST_PARSER: markdown_expected,
     }[markup_language]
 
     example.evaluate()
@@ -353,7 +358,7 @@ def test_empty_code_block_with_options(
     code
     block has options.
     """
-    if markup_language in (MARKDOWN, MARKDOWN_IT, DJOT, NORG):
+    if markup_language in (MARKDOWN, MARKDOWN_IT, MYST_PARSER, DJOT, NORG):
         # Markdown-like formats do not support code block options.
         return
 
@@ -776,6 +781,7 @@ def test_indented_existing_block(
         DJOT: markdown_content,
         NORG: norg_content,
         MYST: myst_content,
+        MYST_PARSER: markdown_content,
     }[markup_language]
     source_file = tmp_path / "source_file.txt"
     source_file.write_text(data=original_content, encoding="utf-8")
@@ -841,6 +847,7 @@ def test_indented_existing_block(
         DJOT: markdown_expected,
         NORG: norg_expected,
         MYST: myst_expected,
+        MYST_PARSER: markdown_expected,
     }[markup_language]
     assert source_file_content == expected_content
 
@@ -908,6 +915,7 @@ def test_indented_empty_existing_block(
         DJOT: markdown_content,
         NORG: norg_content,
         MYST: myst_content,
+        MYST_PARSER: markdown_content,
     }[markup_language]
     source_file = tmp_path / "source_file.txt"
     source_file.write_text(data=original_content, encoding="utf-8")
@@ -981,6 +989,7 @@ def test_indented_empty_existing_block(
         DJOT: markdown_expected,
         NORG: norg_expected,
         MYST: myst_expected,
+        MYST_PARSER: markdown_expected,
     }[markup_language]
     assert source_file_content == expected_content
 
