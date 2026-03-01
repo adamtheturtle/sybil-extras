@@ -236,7 +236,8 @@ def test_myst_directive_code_block_wrong_language(
     tmp_path: Path,
     directive: str,
 ) -> None:
-    """MyST directive-style code blocks with a different language are skipped.
+    """MyST directive-style code blocks with a different language are
+    skipped.
 
     When a specific language is requested, a directive block specifying
     a different language is not matched.
