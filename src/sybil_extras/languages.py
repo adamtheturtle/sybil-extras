@@ -330,7 +330,10 @@ MYST_PARSER = MarkupLanguage(
     group_all_parser_cls=sybil_extras.parsers.myst_parser.group_all.GroupAllParser,
     sphinx_jinja_parser_cls=sybil_extras.parsers.myst_parser.sphinx_jinja2.SphinxJinja2Parser,
     code_block_builder=_markdown_code_block,
-    directive_builders=(_html_comment_directive, _percent_comment_directive),
+    directive_builders=(
+        _html_comment_directive,
+        _percent_comment_directive,
+    ),
     jinja_block_builder=_myst_jinja_block,
 )
 

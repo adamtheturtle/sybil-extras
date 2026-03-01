@@ -5,6 +5,7 @@ Next
 ----
 
 * Added ``myst_parser`` parsers using the ``myst-parser`` library.
+* Drop support for Python 3.10.
 
 2026.02.27
 ----------

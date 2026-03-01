@@ -25,12 +25,15 @@ lexeme
 lexemes
 linter
 mdx
+myst
 namespace
+natively
 norg
 ons
 parametrize
 parsers
 pragma
+py
 pycon
 pyright
 pytest

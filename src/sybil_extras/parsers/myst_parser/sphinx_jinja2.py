@@ -18,6 +18,38 @@ _OPTION_PATTERN = re.compile(pattern=r"^:(?P<key>\w+):\s*(?P<value>.*)$")
 
 
 @beartype
+def _parse_options_and_body(
+    content: str,
+) -> tuple[dict[str, str], str]:
+    """Separate options from body in directive content."""
+    options: dict[str, str] = {}
+    body_lines: list[str] = []
+    in_options = True
+
+    for line in content.split(sep="\n"):
+        if in_options:
+            option_match = _OPTION_PATTERN.match(string=line)
+            if option_match:
+                options[option_match.group("key")] = option_match.group(
+                    "value"
+                )
+                continue
+            if line.strip() == "":
+                in_options = False
+                continue
+            in_options = False
+        body_lines.append(line)
+
+    body = "\n".join(body_lines)
+    if body and not body.endswith("\n"):
+        body += "\n"
+    if body == "\n":
+        body = ""
+
+    return options, body
+
+
+@beartype
 class SphinxJinja2Parser:
     """A parser for sphinx-jinja2 blocks in MyST."""
 
@@ -60,35 +92,9 @@ class SphinxJinja2Parser:
             else:
                 region_end = len(document.text)
 
-            # Parse the content to separate options from body.
-            # Options are lines matching `:key: value` at the start
-            # of the content. A blank line separates options from body.
-            content = token.content
-            options: dict[str, str] = {}
-            body_lines: list[str] = []
-            in_options = True
-
-            for line in content.split(sep="\n"):
-                if in_options:
-                    option_match = _OPTION_PATTERN.match(string=line)
-                    if option_match:
-                        options[option_match.group("key")] = (
-                            option_match.group("value")
-                        )
-                        continue
-                    if line.strip() == "":
-                        in_options = False
-                        continue
-                    in_options = False
-                body_lines.append(line)
-
-            # Reconstruct body, removing trailing empty line that comes
-            # from the content's trailing newline.
-            body = "\n".join(body_lines)
-            if body and not body.endswith("\n"):
-                body += "\n"
-            if body == "\n":
-                body = ""
+            options, body = _parse_options_and_body(
+                content=token.content,
+            )
 
             lexemes: dict[str, str | dict[str, str]] = {
                 "directive": "jinja",
