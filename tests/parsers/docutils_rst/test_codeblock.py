@@ -574,11 +574,11 @@ def test_trailing_blank_lines_preserved_in_code_block(
     # The trailing blank line between the two code blocks should be
     # preserved as part of the first block's content.
     expected_first = dedent(
-        """\
+        '''\
         def my_function() -> None:
-            \"""Do nothing.\"""
+            """Do nothing."""
 
-        """
+        '''
     )
     assert examples[0].parsed.text == expected_first
     assert examples[1].parsed.text == "my_function()\n"
@@ -614,11 +614,11 @@ def test_trailing_blank_lines_preserved_in_invisible_code_block(
     expected_example_count = 2
     assert len(examples) == expected_example_count
     expected_first = dedent(
-        """\
+        '''\
         def my_function() -> None:
-            \"""Do nothing.\"""
+            """Do nothing."""
 
-        """
+        '''
     )
     assert examples[0].parsed.text == expected_first
     assert examples[1].parsed.text == "my_function()\n"
