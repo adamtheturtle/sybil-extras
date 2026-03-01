@@ -538,3 +538,75 @@ def test_invisible_code_block_single_colon_at_end_of_file(
 
     assert len(examples) == 1
     assert examples[0].parsed.text == "x = 1\n"
+
+
+def test_trailing_blank_lines_preserved_in_code_block(
+    tmp_path: Path,
+) -> None:
+    """Trailing blank lines in code block content are preserved.
+
+    When multiple blank lines separate two code blocks, the blank lines
+    before the last one are part of the first code block's content. These
+    should be preserved in the parsed text to match the behavior of the
+    RESTRUCTUREDTEXT parser.
+    """
+    content = (
+        ".. code-block:: python\n"
+        "\n"
+        "   def my_function() -> None:\n"
+        '       """Do nothing."""\n'
+        "\n"
+        "\n"
+        ".. code-block:: python\n"
+        "\n"
+        "   my_function()\n"
+    )
+    test_file = tmp_path / "test.rst"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    expected_example_count = 2
+    assert len(examples) == expected_example_count
+    # The trailing blank line between the two code blocks should be
+    # preserved as part of the first block's content.
+    expected_first = 'def my_function() -> None:\n    """Do nothing."""\n\n'
+    assert examples[0].parsed.text == expected_first
+    assert examples[1].parsed.text == "my_function()\n"
+
+
+def test_trailing_blank_lines_preserved_in_invisible_code_block(
+    tmp_path: Path,
+) -> None:
+    """Trailing blank lines in invisible-code-block content are preserved.
+
+    When multiple blank lines separate two invisible-code-blocks, the blank
+    lines before the last one should be preserved in the parsed text.
+    """
+    content = (
+        ".. invisible-code-block: python\n"
+        "\n"
+        "   def my_function() -> None:\n"
+        '       """Do nothing."""\n'
+        "\n"
+        "\n"
+        ".. invisible-code-block: python\n"
+        "\n"
+        "   my_function()\n"
+    )
+    test_file = tmp_path / "test.rst"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    expected_example_count = 2
+    assert len(examples) == expected_example_count
+    expected_first = 'def my_function() -> None:\n    """Do nothing."""\n\n'
+    assert examples[0].parsed.text == expected_first
+    assert examples[1].parsed.text == "my_function()\n"

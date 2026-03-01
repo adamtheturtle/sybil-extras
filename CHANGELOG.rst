@@ -4,6 +4,8 @@ Changelog
 Next
 ----
 
+* Fix ``DOCUTILS_RST`` parser to preserve trailing blank lines in code block content, matching the behavior of the ``RESTRUCTUREDTEXT`` parser.
+
 2026.03.01.5
 ------------
 
