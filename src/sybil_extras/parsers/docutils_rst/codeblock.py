@@ -29,7 +29,7 @@ class _InvisibleCodeBlock(Directive):
     required_arguments: ClassVar[int] = 1
     optional_arguments: ClassVar[int] = 0
     final_argument_whitespace: ClassVar[bool] = False
-    option_spec: ClassVar[dict[str, Callable[[str], Any]]] = {}  # pyright: ignore[reportIncompatibleVariableOverride]
+    option_spec: ClassVar[dict[str, Callable[[str], Any]] | None] = {}
     has_content: ClassVar[bool] = True
 
     def run(self) -> list[nodes.Node]:
