@@ -304,7 +304,7 @@ def _compute_positions(
     line_at_ref = lines[ref_line - 1]
     stripped = line_at_ref.lstrip()
 
-    if any(stripped.startswith(p) for p in prefixes):
+    if any(stripped.startswith(prefix) for prefix in prefixes):
         # ref_line is the directive - find content after it
         directive_line = ref_line
         content_start_line = _find_content_after_directive(
@@ -334,7 +334,7 @@ def _compute_positions(
         # another code block directive for the same language.
         if trailing_blank_lines == 0 and ref_line < len(lines):
             next_stripped = lines[ref_line].lstrip()
-            if any(next_stripped.startswith(p) for p in prefixes):
+            if any(next_stripped.startswith(prefix) for prefix in prefixes):
                 trailing_blank_lines = 1
         content_start_line = actual_last_content - line_count + 1
         directive_line = _find_directive_before_content(
