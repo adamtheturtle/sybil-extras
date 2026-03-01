@@ -147,8 +147,11 @@ class CodeBlockParser:
         else:
             source_end = len(document.text)
 
-        # Ensure source has exactly one trailing newline
-        source_text = source_content.rstrip("\n") + "\n"
+        # Preserve trailing blank lines (stripped by docutils from
+        # ``rawsource``) and ensure at least one trailing newline.
+        source_text = source_content.rstrip("\n") + "\n" * (
+            1 + positions.trailing_blank_lines
+        )
 
         region_end = source_end
         source_offset = source_start - region_start
@@ -196,8 +199,9 @@ class CodeBlockParser:
             return None
 
         # Extract code lines (skip leading blanks).
-        # Docutils strips trailing blanks from comment ``astext()``, so
-        # no trailing-blank removal is needed here.
+        # Docutils strips trailing blanks from comment ``astext()``;
+        # trailing blank lines are preserved via
+        # positions.trailing_blank_lines.
         code_lines: list[str] = []
         found_content = False
         for line in rest_lines:
@@ -229,7 +233,11 @@ class CodeBlockParser:
         else:
             source_end = len(document.text)
 
-        source_text = source_content.rstrip("\n") + "\n"
+        # Preserve trailing blank lines (stripped by docutils from ``astext``)
+        # and ensure at least one trailing newline.
+        source_text = source_content.rstrip("\n") + "\n" * (
+            1 + positions.trailing_blank_lines
+        )
         region_end = source_end
         source_offset = source_start - region_start
 
@@ -260,6 +268,7 @@ class _Positions:
     directive_line: int
     content_start_line: int
     content_end_line: int
+    trailing_blank_lines: int
 
 
 @beartype
@@ -303,11 +312,23 @@ def _compute_positions(
             directive_line=directive_line,
         )
         content_end_line = content_start_line + line_count - 1
+        trailing_blank_lines = 0
 
     elif not stripped:
-        # ref_line is blank - content ends before it
+        # ref_line is blank - content ends before it.
+        # Docutils may point ref_line to a blank line that is several
+        # lines after the actual code content, with trailing blank lines
+        # in between (which docutils strips from node text).
         content_end_line = ref_line - 1
-        content_start_line = content_end_line - line_count + 1
+        # Find the actual last non-blank content line.
+        actual_last_content = content_end_line
+        while (
+            actual_last_content > 0
+            and not lines[actual_last_content - 1].strip()
+        ):
+            actual_last_content -= 1
+        trailing_blank_lines = content_end_line - actual_last_content
+        content_start_line = actual_last_content - line_count + 1
         directive_line = _find_directive_before_content(
             lines=lines,
             content_start_line=content_start_line,
@@ -318,6 +339,7 @@ def _compute_positions(
         # ref_line is content (last line of content)
         content_end_line = ref_line
         content_start_line = content_end_line - line_count + 1
+        trailing_blank_lines = 0
         directive_line = _find_directive_before_content(
             lines=lines,
             content_start_line=content_start_line,
@@ -328,6 +350,7 @@ def _compute_positions(
         directive_line=directive_line,
         content_start_line=content_start_line,
         content_end_line=content_end_line,
+        trailing_blank_lines=trailing_blank_lines,
     )
 
 
