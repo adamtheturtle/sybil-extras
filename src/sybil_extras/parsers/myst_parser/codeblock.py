@@ -74,8 +74,19 @@ class CodeBlockParser:
             # Extract just the language from the info string.
             # The info string can contain extra metadata
             # (e.g., "python title=...").
+            # MyST directive-style blocks use the format
+            # "{directive} language" (e.g., "{code-block} python"),
+            # where the actual language is the second word.
             info = token.info.strip()
-            block_language = info.split()[0] if info else ""
+            words = info.split()
+            if not words:
+                block_language = ""
+            elif words[0].startswith("{"):
+                # MyST directive style: {directive-name} language
+                # e.g., "{code-block} python" -> language is "python"
+                block_language = words[1] if len(words) > 1 else ""
+            else:
+                block_language = words[0]
 
             # Filter by language if specified
             if self._language is not None and block_language != self._language:

@@ -176,3 +176,99 @@ def test_percent_comment_does_not_break_parsing(tmp_path: Path) -> None:
     assert len(examples) == expected_count
     assert examples[0].parsed.text == "x = 1\n"
     assert examples[1].parsed.text == "y = 2\n"
+
+
+@pytest.mark.parametrize(
+    argnames="directive",
+    argvalues=["code-block", "code", "code-cell"],
+)
+def test_myst_directive_code_block(*, tmp_path: Path, directive: str) -> None:
+    """MyST directive-style code blocks are matched by language.
+
+    Blocks in the form ```{directive} language``` extract the language
+    from the second word of the info string, so they are matched when
+    that language is requested.
+    """
+    content = textwrap.dedent(
+        text=f"""\
+        ```{{{directive}}} python
+        print('hello')
+        ```
+        """,
+    )
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert len(examples) == 1
+    assert examples[0].parsed.text == "print('hello')\n"
+    assert examples[0].region.lexemes["language"] == "python"
+
+
+@pytest.mark.parametrize(
+    argnames="directive",
+    argvalues=["code-block", "code", "code-cell"],
+)
+def test_myst_directive_code_block_no_language(
+    *,
+    tmp_path: Path,
+    directive: str,
+) -> None:
+    """MyST directive-style code blocks with no language are not matched.
+
+    When a specific language is requested, a directive block with no
+    language argument (e.g., ```{code-block}```) is not matched.
+    """
+    content = textwrap.dedent(
+        text=f"""\
+        ```{{{directive}}}
+        print('hello')
+        ```
+        """,
+    )
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert len(examples) == 0
+
+
+@pytest.mark.parametrize(
+    argnames="directive",
+    argvalues=["code-block", "code", "code-cell"],
+)
+def test_myst_directive_code_block_wrong_language(
+    *,
+    tmp_path: Path,
+    directive: str,
+) -> None:
+    """MyST directive-style code blocks with a different language are
+    skipped.
+
+    When a specific language is requested, a directive block specifying
+    a different language is not matched.
+    """
+    content = textwrap.dedent(
+        text=f"""\
+        ```{{{directive}}} javascript
+        console.log('hi');
+        ```
+        """,
+    )
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert len(examples) == 0
