@@ -1,4 +1,4 @@
-"""Line offset calculation for the myst_parser parsers."""
+"""Line offset calculation for parsers."""
 
 from beartype import beartype
 
