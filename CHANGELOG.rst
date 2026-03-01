@@ -4,6 +4,10 @@ Changelog
 Next
 ----
 
+2026.03.01
+----------
+
+
 * Added ``myst_parser`` parsers using the ``myst-parser`` library.
 * Drop support for Python 3.10.
 
