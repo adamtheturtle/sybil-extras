@@ -74,6 +74,43 @@ def test_directive_without_colon(tmp_path: Path) -> None:
     assert "x" not in document.namespace
 
 
+def test_include_directive_does_not_crash(tmp_path: Path) -> None:
+    """Files with ``.. include::`` directives are parsed without error.
+
+    When an RST file contains ``.. include::`` with a relative path,
+    docutils would normally raise a ``SystemMessage`` (SEVERE/4) because
+    the source path is set to ``<sybil>`` and the file cannot be found.
+    The lexer should handle this gracefully and still find directives
+    in comments in the file.
+    """
+    content = dedent(
+        text="""\
+        .. include:: ../../CHANGELOG.rst
+
+        .. custom-skip: next
+
+        .. code-block:: python
+
+           x = 1
+    """
+    )
+    test_file = tmp_path / "test.rst"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    skip_parser = CustomDirectiveSkipParser(directive="custom-skip")
+    code_parser = CodeBlockParser(
+        language="python",
+        evaluator=PythonEvaluator(),
+    )
+    sybil = Sybil(parsers=[code_parser, skip_parser])
+    document = sybil.parse(path=test_file)
+
+    for example in document.examples():
+        example.evaluate()
+
+    assert "x" not in document.namespace
+
+
 def test_directive_at_end_of_file(tmp_path: Path) -> None:
     """A directive comment at the end of the file is recognized.
 

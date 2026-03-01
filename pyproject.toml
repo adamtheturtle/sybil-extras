@@ -376,6 +376,7 @@ ignore_names = [
     "templates_path",
     "warning_is_error",
     # docutils settings
+    "halt_level",
     "report_level",
 ]
 # Duplicate some of .gitignore
