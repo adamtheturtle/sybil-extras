@@ -492,9 +492,7 @@ def test_invisible_code_block_single_colon_and_regular_together(
 
     expected_example_count = 2
     assert len(examples) == expected_example_count
-    # The single blank between the two same-language code blocks is
-    # preserved as a trailing blank in the first block.
-    assert examples[0].parsed.text == "x = 1\n\n"
+    assert examples[0].parsed.text == "x = 1\n"
     assert examples[1].parsed.text == "y = 2\n"
 
 
@@ -604,94 +602,6 @@ def test_trailing_blank_lines_preserved_in_invisible_code_block(
            def my_function() -> None:
                """Do nothing."""
 
-
-        .. invisible-code-block: python
-
-           my_function()
-        '''
-    )
-    test_file = tmp_path / "test.rst"
-    test_file.write_text(data=content, encoding="utf-8")
-
-    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
-    sybil = Sybil(parsers=[parser])
-    document = sybil.parse(path=test_file)
-    examples = list(document.examples())
-
-    expected_example_count = 2
-    assert len(examples) == expected_example_count
-    expected_first = dedent(
-        text='''\
-        def my_function() -> None:
-            """Do nothing."""
-
-        '''
-    )
-    assert examples[0].parsed.text == expected_first
-    assert examples[1].parsed.text == "my_function()\n"
-
-
-def test_single_blank_separator_trailing_blank_preserved_in_code_block(
-    *,
-    tmp_path: Path,
-) -> None:
-    """A single blank line between code blocks is preserved as trailing.
-
-    When exactly one blank line separates two code blocks, that blank
-    line should be preserved as a trailing blank line in the first
-    block's parsed text. This ensures that when blocks are combined
-    with ``pad_groups=False``, the required two blank lines appear
-    after a function definition (PEP 8 E302).
-    """
-    content = dedent(
-        text='''\
-        .. code-block:: python
-
-           def my_function() -> None:
-               """Do nothing."""
-
-        .. code-block:: python
-
-           my_function()
-        '''
-    )
-    test_file = tmp_path / "test.rst"
-    test_file.write_text(data=content, encoding="utf-8")
-
-    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
-    sybil = Sybil(parsers=[parser])
-    document = sybil.parse(path=test_file)
-    examples = list(document.examples())
-
-    expected_example_count = 2
-    assert len(examples) == expected_example_count
-    expected_first = dedent(
-        text='''\
-        def my_function() -> None:
-            """Do nothing."""
-
-        '''
-    )
-    assert examples[0].parsed.text == expected_first
-    assert examples[1].parsed.text == "my_function()\n"
-
-
-def test_single_blank_sep_trailing_blank_in_invisible_code_block(
-    *,
-    tmp_path: Path,
-) -> None:
-    """A single blank line between invisible-code-blocks is preserved.
-
-    When exactly one blank line separates two invisible-code-blocks,
-    that blank line should be preserved as trailing content in the
-    first block's parsed text.
-    """
-    content = dedent(
-        text='''\
-        .. invisible-code-block: python
-
-           def my_function() -> None:
-               """Do nothing."""
 
         .. invisible-code-block: python
 

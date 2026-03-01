@@ -268,10 +268,13 @@ def test_group_with_skip_range(
     for example in document.examples():
         example.evaluate()
 
-    # Blocks 2 and 3 are skipped by the skip range
+    # Blocks 2 and 3 are skipped by the skip range.
+    # DOCUTILS_RST uses no_pad_separator_lines=2, so blocks in the group
+    # are separated by 2 newlines instead of 1.
+    separator = "\n\n" if language == DOCUTILS_RST else "\n"
     assert document.namespace["blocks"] == [
         "x = []\n",
-        "x = [*x, 1]\n\nx = [*x, 4]\n",
+        f"x = [*x, 1]\n{separator}x = [*x, 4]\n",
         "x = [*x, 5]\n",
     ]
 
@@ -890,13 +893,9 @@ def test_no_group_directives(
     for example in document.examples():
         example.evaluate()
 
-    # Code blocks are evaluated individually, not grouped.
-    # For DOCUTILS_RST, the single blank line between consecutive
-    # same-language code blocks is preserved as a trailing blank in the
-    # first block's parsed text.
-    first_block = "x = [1]\n\n" if language == DOCUTILS_RST else "x = [1]\n"
+    # Code blocks are evaluated individually, not grouped
     assert document.namespace["blocks"] == [
-        first_block,
+        "x = [1]\n",
         "x = [*x, 2]\n",
     ]
 
@@ -951,10 +950,8 @@ def test_no_pad_groups(
     output_document_content = output_document.read_text(encoding="utf-8")
 
     # Leading padding puts the first code block's content on its original line.
-    # With pad_groups=False, there's just a single newline between blocks.
-    # For DOCUTILS_RST, the single blank line between consecutive same-language
-    # code blocks is preserved as a trailing blank in the first block's parsed
-    # text, resulting in 2 blank lines between blocks (satisfying PEP 8 E302).
+    # DOCUTILS_RST uses no_pad_separator_lines=2 (2 blank lines between blocks
+    # when pad_groups=False), satisfying PEP 8 E302. Others use 1 blank line.
     leading_padding = "\n" * first_line
     if language == DOCUTILS_RST:
         expected_output_document_content = (

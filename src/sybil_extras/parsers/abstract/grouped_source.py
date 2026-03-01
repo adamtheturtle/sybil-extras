@@ -90,6 +90,7 @@ class _Grouper:
         evaluator: Evaluator,
         directive: str,
         pad_groups: bool,
+        no_pad_separator_lines: int = 1,
     ) -> None:
         """
         Args:
@@ -102,6 +103,8 @@ class _Grouper:
                 However, this is detrimental to commands that expect the
         file
                 to not have a bunch of newlines in it, such as formatters.
+            no_pad_separator_lines: Number of newlines to insert
+        between blocks when ``pad_groups`` is ``False``.
         """
         # State is keyed by _GroupStateKey to allow multiple groups
         # in the same document to be processed in parallel.
@@ -110,6 +113,7 @@ class _Grouper:
         self._evaluator = evaluator
         self._directive = directive
         self._pad_groups = pad_groups
+        self._no_pad_separator_lines = no_pad_separator_lines
         # Track group boundaries per document for determining membership
         self._group_boundaries: dict[Document, list[_GroupBoundary]] = {}
         self._group_boundaries_lock = threading.Lock()
@@ -240,6 +244,7 @@ class _Grouper:
                         examples=sorted_examples,
                         evaluator=self._evaluator,
                         pad_groups=self._pad_groups,
+                        no_pad_separator_lines=self._no_pad_separator_lines,
                     )
                     new_example = create_combined_example(
                         examples=sorted_examples,
@@ -309,6 +314,7 @@ class AbstractGroupedSourceParser:
         evaluator: Evaluator,
         directive: str,
         pad_groups: bool,
+        no_pad_separator_lines: int = 1,
     ) -> None:
         """
         Args:
@@ -322,12 +328,15 @@ class AbstractGroupedSourceParser:
                 However, this is detrimental to commands that expect the
         file
                 to not have a bunch of newlines in it, such as formatters.
+            no_pad_separator_lines: Number of newlines to insert
+        between blocks when ``pad_groups`` is ``False``.
         """
         self._lexers: LexerCollection = LexerCollection(lexers)
         self._grouper: _Grouper = _Grouper(
             evaluator=evaluator,
             directive=directive,
             pad_groups=pad_groups,
+            no_pad_separator_lines=no_pad_separator_lines,
         )
         self._directive = directive
 

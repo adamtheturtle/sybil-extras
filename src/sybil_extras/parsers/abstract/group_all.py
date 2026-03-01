@@ -45,6 +45,7 @@ class _GroupAllEvaluator:
         *,
         evaluator: Evaluator,
         pad_groups: bool,
+        no_pad_separator_lines: int = 1,
     ) -> None:
         """
         Args:
@@ -56,10 +57,13 @@ class _GroupAllEvaluator:
                 However, this is detrimental to commands that expect the
         file
                 to not have a bunch of newlines in it, such as formatters.
+            no_pad_separator_lines: Number of newlines to insert
+        between blocks when ``pad_groups`` is ``False``.
         """
         self._document_state: dict[Document, _GroupAllState] = {}
         self._evaluator = evaluator
         self._pad_groups = pad_groups
+        self._no_pad_separator_lines = no_pad_separator_lines
 
     def register_document(
         self,
@@ -114,6 +118,7 @@ class _GroupAllEvaluator:
                     examples=sorted_examples,
                     evaluator=self._evaluator,
                     pad_groups=self._pad_groups,
+                    no_pad_separator_lines=self._no_pad_separator_lines,
                 )
                 new_example = create_combined_example(
                     examples=sorted_examples,
@@ -159,6 +164,7 @@ class AbstractGroupAllParser:
         *,
         evaluator: Evaluator,
         pad_groups: bool,
+        no_pad_separator_lines: int = 1,
     ) -> None:
         """
         Args:
@@ -170,10 +176,13 @@ class AbstractGroupAllParser:
                 However, this is detrimental to commands that expect the
         file
                 to not have a bunch of newlines in it, such as formatters.
+            no_pad_separator_lines: Number of newlines to insert
+        between blocks when ``pad_groups`` is ``False``.
         """
         self._evaluator = _GroupAllEvaluator(
             evaluator=evaluator,
             pad_groups=pad_groups,
+            no_pad_separator_lines=no_pad_separator_lines,
         )
 
     def __call__(self, document: Document) -> Iterable[Region]:

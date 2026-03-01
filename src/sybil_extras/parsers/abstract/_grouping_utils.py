@@ -77,6 +77,7 @@ def _combine_examples_text(
     examples: Sequence[Example],
     *,
     pad_groups: bool,
+    no_pad_separator_lines: int = 1,
 ) -> Lexeme:
     """Combine text from multiple examples.
 
@@ -89,6 +90,8 @@ def _combine_examples_text(
             This is useful for error messages that reference line numbers.
             However, this is detrimental to commands that expect the file
             to not have a bunch of newlines in it, such as formatters.
+        no_pad_separator_lines: Number of newlines to insert between
+            blocks when ``pad_groups`` is ``False``.
 
     Returns:
         The combined text.
@@ -108,7 +111,7 @@ def _combine_examples_text(
         if pad_groups:
             padding_lines = example.line - examples[0].line - existing_lines
         else:
-            padding_lines = 1
+            padding_lines = no_pad_separator_lines
 
         padding = "\n" * padding_lines
         result_text = result_text + padding + _get_text(parsed=example.parsed)
@@ -139,6 +142,7 @@ def create_combined_region(
     *,
     evaluator: Evaluator,
     pad_groups: bool,
+    no_pad_separator_lines: int = 1,
 ) -> Region:
     """Create a combined region from multiple examples.
 
@@ -146,6 +150,8 @@ def create_combined_region(
         examples: The examples to combine.
         evaluator: The evaluator to use for the combined region.
         pad_groups: Whether to pad groups with empty lines.
+        no_pad_separator_lines: Number of newlines to insert between
+            blocks when ``pad_groups`` is ``False``.
 
     Returns:
         The combined region.
@@ -156,6 +162,7 @@ def create_combined_region(
         parsed=_combine_examples_text(
             examples=examples,
             pad_groups=pad_groups,
+            no_pad_separator_lines=no_pad_separator_lines,
         ),
         evaluator=evaluator,
         lexemes=examples[0].region.lexemes,
