@@ -8,7 +8,6 @@ MystParser
 Neorg
 args
 ast
-astext
 atomicity
 backtick
 beartype
@@ -40,7 +39,6 @@ py
 pycon
 pyright
 pytest
-rawsource
 rst
 stderr
 stdout

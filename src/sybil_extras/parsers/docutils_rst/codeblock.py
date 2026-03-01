@@ -147,8 +147,8 @@ class CodeBlockParser:
         else:
             source_end = len(document.text)
 
-        # Preserve trailing blank lines (stripped by docutils from rawsource)
-        # and ensure at least one trailing newline.
+        # Preserve trailing blank lines (stripped by docutils from
+        # ``rawsource``) and ensure at least one trailing newline.
         source_text = source_content.rstrip("\n") + "\n" * (
             1 + positions.trailing_blank_lines
         )
@@ -233,7 +233,7 @@ class CodeBlockParser:
         else:
             source_end = len(document.text)
 
-        # Preserve trailing blank lines (stripped by docutils from astext)
+        # Preserve trailing blank lines (stripped by docutils from ``astext``)
         # and ensure at least one trailing newline.
         source_text = source_content.rstrip("\n") + "\n" * (
             1 + positions.trailing_blank_lines
@@ -318,7 +318,7 @@ def _compute_positions(
         # ref_line is blank - content ends before it.
         # Docutils may point ref_line to a blank line that is several
         # lines after the actual code content, with trailing blank lines
-        # in between (which docutils strips from rawsource/astext).
+        # in between (which docutils strips from ``rawsource``/``astext``).
         content_end_line = ref_line - 1
         # Find the actual last non-blank content line.
         actual_last_content = content_end_line
