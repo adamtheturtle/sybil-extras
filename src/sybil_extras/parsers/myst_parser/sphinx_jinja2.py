@@ -41,7 +41,7 @@ def _parse_options_and_body(
         body_lines.append(line)
 
     body = "\n".join(body_lines)
-    if body == "\n":
+    if not body.strip():
         body = ""
 
     return options, body

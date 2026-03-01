@@ -83,3 +83,30 @@ def test_options_with_blank_body(*, tmp_path: Path) -> None:
     assert example.region.lexemes["options"] == {
         "ctx": '{"name": "World"}',
     }
+
+
+def test_options_with_many_blank_lines_body(*, tmp_path: Path) -> None:
+    """A jinja block with options and multiple blank lines for body."""
+    content = textwrap.dedent(
+        text="""\
+        ```{jinja}
+        :ctx: {"name": "World"}
+
+
+
+        ```
+        """
+    )
+
+    test_document = tmp_path / "test.md"
+    test_document.write_text(data=content, encoding="utf-8")
+
+    parser = SphinxJinja2Parser(evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_document)
+
+    (example,) = document.examples()
+    assert example.parsed == ""
+    assert example.region.lexemes["options"] == {
+        "ctx": '{"name": "World"}',
+    }
