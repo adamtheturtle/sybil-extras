@@ -675,6 +675,11 @@ This is useful for building tools that need to work consistently across multiple
     for example in document.examples():
         example.evaluate()
 
+Full documentation
+------------------
+
+See the `full documentation <https://adamtheturtle.github.io/sybil-extras/>`__.
+
 .. |Build Status| image:: https://github.com/adamtheturtle/sybil-extras/actions/workflows/ci.yml/badge.svg?branch=main
    :target: https://github.com/adamtheturtle/sybil-extras/actions
 .. |PyPI| image:: https://badge.fury.io/py/sybil-extras.svg
