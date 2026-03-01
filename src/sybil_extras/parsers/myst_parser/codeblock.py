@@ -4,7 +4,6 @@ This parser uses the myst-parser library, which extends markdown-it-py
 with MyST-specific extensions.
 """
 
-import re
 from collections.abc import Iterable
 
 from beartype import beartype
@@ -15,11 +14,6 @@ from sybil import Document, Example, Lexeme, Region
 from sybil.typing import Evaluator
 
 from sybil_extras.parsers.myst_parser._line_offsets import line_offsets
-
-# Pattern to extract just the language from the info string.
-# The info string can contain extra metadata like title="example".
-# We extract only the first word (anything that's not whitespace or backtick).
-_LANGUAGE_PATTERN = re.compile(pattern=r"^(?P<language>[^\s`]+)")
 
 
 @beartype
@@ -78,8 +72,8 @@ class CodeBlockParser:
             # Extract just the language from the info string.
             # The info string can contain extra metadata
             # (e.g., "python title=...").
-            info_match = _LANGUAGE_PATTERN.match(string=token.info)
-            block_language = info_match.group("language") if info_match else ""
+            info = token.info.strip()
+            block_language = info.split()[0] if info else ""
 
             # Filter by language if specified
             if self._language is not None and block_language != self._language:
