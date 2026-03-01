@@ -164,7 +164,7 @@ class AbstractGroupAllParser:
         *,
         evaluator: Evaluator,
         pad_groups: bool,
-        no_pad_separator_lines: int = 1,
+        no_pad_separator_lines: int = 2,
     ) -> None:
         """
         Args:

@@ -4,7 +4,7 @@ Changelog
 Next
 ----
 
-* Fix ``DOCUTILS_RST`` group parsers to use 2 separator newlines between blocks when ``pad_groups=False``, satisfying PEP 8 E302.
+* Use 2 separator newlines between blocks when ``pad_groups=False``, satisfying PEP 8 E302.
 
 2026.03.01.6
 ------------

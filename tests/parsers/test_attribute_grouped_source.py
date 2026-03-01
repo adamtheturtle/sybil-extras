@@ -256,7 +256,7 @@ def test_attribute_group_pad_groups_false(tmp_path: Path) -> None:
     for example in document.examples():
         example.evaluate()
 
-    expected = "x = 1\n\ny = 2\n"
+    expected = "x = 1\n\n\ny = 2\n"
     assert document.namespace["blocks"] == [expected]
 
 
@@ -305,8 +305,8 @@ def test_attribute_group_interleaved_groups(tmp_path: Path) -> None:
     for example in document.examples():
         example.evaluate()
 
-    expected_setup = "x = []\n\nx = [*x, 1]\n\nx = [*x, 2]\n"
-    expected_example = "y = []\n\ny = [*y, 10]\n"
+    expected_setup = "x = []\n\n\nx = [*x, 1]\n\n\nx = [*x, 2]\n"
+    expected_example = "y = []\n\n\ny = [*y, 10]\n"
     assert document.namespace["blocks"] == [expected_setup, expected_example]
 
 
@@ -352,6 +352,6 @@ def test_attribute_group_ungrouped_evaluator(tmp_path: Path) -> None:
         example.evaluate()
 
     # Grouped blocks should be combined
-    assert document.namespace["grouped"] == ["y = 2\n\nz = 3\n"]
+    assert document.namespace["grouped"] == ["y = 2\n\n\nz = 3\n"]
     # Ungrouped blocks should be evaluated individually
     assert document.namespace["ungrouped"] == ["x = 1\n", "w = 4\n"]

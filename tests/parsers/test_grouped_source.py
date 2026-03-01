@@ -13,7 +13,6 @@ from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 from sybil_extras.languages import (
-    DOCUTILS_RST,
     DirectiveBuilder,
     MarkupLanguage,
 )
@@ -269,12 +268,9 @@ def test_group_with_skip_range(
         example.evaluate()
 
     # Blocks 2 and 3 are skipped by the skip range.
-    # DOCUTILS_RST uses no_pad_separator_lines=2, so blocks in the group
-    # are separated by 2 newlines instead of 1.
-    separator = "\n\n" if language == DOCUTILS_RST else "\n"
     assert document.namespace["blocks"] == [
         "x = []\n",
-        f"x = [*x, 1]\n{separator}x = [*x, 4]\n",
+        "x = [*x, 1]\n\n\nx = [*x, 4]\n",
         "x = [*x, 5]\n",
     ]
 
@@ -950,17 +946,10 @@ def test_no_pad_groups(
     output_document_content = output_document.read_text(encoding="utf-8")
 
     # Leading padding puts the first code block's content on its original line.
-    # DOCUTILS_RST uses no_pad_separator_lines=2 (2 blank lines between blocks
-    # when pad_groups=False), satisfying PEP 8 E302. Others use 1 blank line.
     leading_padding = "\n" * first_line
-    if language == DOCUTILS_RST:
-        expected_output_document_content = (
-            f"{leading_padding}x = [*x, 1]\n\n\nx = [*x, 2]\n"
-        )
-    else:
-        expected_output_document_content = (
-            f"{leading_padding}x = [*x, 1]\n\nx = [*x, 2]\n"
-        )
+    expected_output_document_content = (
+        f"{leading_padding}x = [*x, 1]\n\n\nx = [*x, 2]\n"
+    )
     assert output_document_content == expected_output_document_content
 
 
