@@ -4,6 +4,7 @@ This parser uses docutils to parse RST and extract code blocks.
 """
 
 from collections.abc import Iterable, Sequence
+from dataclasses import dataclass
 
 from beartype import beartype
 from docutils import nodes
@@ -112,21 +113,19 @@ class CodeBlockParser:
             raise ValueError(msg)
 
         # Determine content position based on what ref_line points to
-        directive_line, content_start_line, content_end_line = (
-            _compute_positions(
-                lines=lines,
-                ref_line=ref_line,
-                line_count=line_count,
-                language=block_language,
-            )
+        positions = _compute_positions(
+            lines=lines,
+            ref_line=ref_line,
+            line_count=line_count,
+            language=block_language,
         )
 
         # Calculate byte positions
-        region_start = offsets[directive_line - 1]
-        source_start = offsets[content_start_line - 1]
+        region_start = offsets[positions.directive_line - 1]
+        source_start = offsets[positions.content_start_line - 1]
 
-        if content_end_line < len(offsets):
-            source_end = offsets[content_end_line]
+        if positions.content_end_line < len(offsets):
+            source_end = offsets[positions.content_end_line]
         else:
             source_end = len(document.text)
 
@@ -156,17 +155,26 @@ class CodeBlockParser:
         )
 
 
+@dataclass(frozen=True)
+class _Positions:
+    """Directive and content line positions (1-indexed)."""
+
+    directive_line: int
+    content_start_line: int
+    content_end_line: int
+
+
+@beartype
 def _compute_positions(
     *,
     lines: Sequence[str],
     ref_line: int,
     line_count: int,
     language: str,
-) -> tuple[int, int, int]:
+) -> _Positions:
     """Compute directive and content line positions.
 
-    Returns (directive_line, content_start_line, content_end_line)
-    as 1-indexed line numbers.
+    Returns 1-indexed line numbers.
     """
     directive = f".. code-block:: {language}".rstrip()
 
@@ -202,9 +210,14 @@ def _compute_positions(
             language=language,
         )
 
-    return (directive_line, content_start_line, content_end_line)
+    return _Positions(
+        directive_line=directive_line,
+        content_start_line=content_start_line,
+        content_end_line=content_end_line,
+    )
 
 
+@beartype
 def _find_content_after_directive(
     *,
     lines: Sequence[str],
@@ -219,6 +232,7 @@ def _find_content_after_directive(
     )
 
 
+@beartype
 def _find_directive_before_content(
     *,
     lines: Sequence[str],
