@@ -268,7 +268,7 @@ class _Positions:
     directive_line: int
     content_start_line: int
     content_end_line: int
-    trailing_blank_lines: int = 0
+    trailing_blank_lines: int
 
 
 @beartype
