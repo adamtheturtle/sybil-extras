@@ -59,184 +59,200 @@ class CodeBlockParser:
         lines = document.text.split(sep="\n")
 
         for node in doc.findall(condition=nodes.literal_block):
-            # Check if this is a code-block (has 'code' in classes)
-            node_classes: list[str] = node.get(key="classes", failobj=[])
-            if "code" not in node_classes:
-                continue
-
-            # Extract the language from classes
-            block_language = ""
-            for cls in node_classes:
-                if cls != "code":
-                    block_language = cls
-                    break
-
-            # Filter by language if specified
-            if self._language is not None and block_language != self._language:
-                continue
-
-            # Get content info
-            source_content = node.rawsource or node.astext()
-            line_count = source_content.count("\n") + 1
-            if source_content.endswith("\n"):
-                line_count -= 1
-
-            # Get line reference from node or parent
-            ref_line = node.line
-            if ref_line is None and node.parent is not None:
-                ref_line = getattr(node.parent, "line", None)
-            if ref_line is None:
-                continue
-
-            # Determine content position based on what ref_line points to
-            result = self._compute_positions(
+            region = self._process_node(
+                node=node,
+                document=document,
+                offsets=offsets,
                 lines=lines,
-                ref_line=ref_line,
-                line_count=line_count,
-                language=block_language,
             )
-            if result is None:
-                continue
+            if region is not None:
+                yield region
 
-            directive_line, content_start_line, content_end_line = result
-
-            # Calculate byte positions
-            region_start = offsets[directive_line - 1]
-            source_start = offsets[content_start_line - 1]
-
-            if content_end_line < len(offsets):
-                source_end = offsets[content_end_line]
-            else:
-                source_end = len(document.text)
-
-            # Ensure source has trailing newline
-            source_text = source_content
-            if not source_text.endswith("\n"):
-                source_text = source_text + "\n"
-
-            region_end = source_end
-            source_offset = source_start - region_start
-
-            opening_text = document.text[region_start:source_start]
-            line_offset = max(opening_text.count("\n") - 1, 0)
-
-            source = Lexeme(
-                text=source_text,
-                offset=source_offset,
-                line_offset=line_offset,
-            )
-
-            lexemes = {"language": block_language, "source": source}
-
-            yield Region(
-                start=region_start,
-                end=region_end,
-                parsed=source,
-                evaluator=self._evaluator or self.evaluate,
-                lexemes=lexemes,
-            )
-
-    def _compute_positions(
+    def _process_node(
         self,
         *,
+        node: nodes.literal_block,
+        document: Document,
+        offsets: list[int],
         lines: list[str],
-        ref_line: int,
-        line_count: int,
-        language: str,
-    ) -> tuple[int, int, int] | None:
-        """Compute directive and content line positions.
+    ) -> Region | None:
+        """Process a single literal_block node into a Region.
 
-        Returns (directive_line, content_start_line, content_end_line)
-        as 1-indexed line numbers, or None if not found.
+        Returns None if the node should be skipped.
         """
-        directive = f".. code-block:: {language}"
-
-        # Check what ref_line points to
-        if ref_line < 1 or ref_line > len(lines):
+        # Check if this is a code-block (has 'code' in classes)
+        node_classes: list[str] = node.get(key="classes", failobj=[])
+        if "code" not in node_classes:
             return None
 
-        line_at_ref = lines[ref_line - 1]
-        stripped = line_at_ref.lstrip()
-
-        if stripped.startswith(directive):
-            # ref_line is the directive - find content after it
-            directive_line = ref_line
-            content_start_line = self._find_content_after_directive(
-                lines=lines,
-                directive_line=directive_line,
-            )
-            if content_start_line is None:
-                return None
-            content_end_line = content_start_line + line_count - 1
-
-        elif not stripped:
-            # ref_line is blank - content ends before it
-            content_end_line = ref_line - 1
-            content_start_line = content_end_line - line_count + 1
-            found_directive = self._find_directive_before_content(
-                lines=lines,
-                content_start_line=content_start_line,
-                language=language,
-            )
-            if found_directive is None:
-                return None
-            directive_line = found_directive
-
-        else:
-            # ref_line is content (last line of content)
-            content_end_line = ref_line
-            content_start_line = content_end_line - line_count + 1
-            found_directive = self._find_directive_before_content(
-                lines=lines,
-                content_start_line=content_start_line,
-                language=language,
-            )
-            if found_directive is None:
-                return None
-            directive_line = found_directive
-
-        return (directive_line, content_start_line, content_end_line)
-
-    def _find_content_after_directive(
-        self,
-        *,
-        lines: list[str],
-        directive_line: int,
-    ) -> int | None:
-        """Find first content line after directive.
-
-        Returns 1-indexed.
-        """
-        for i in range(directive_line, len(lines)):
-            line = lines[i]
-            # Skip blank lines and option lines (starting with :)
-            stripped = line.lstrip()
-            if not stripped or stripped.startswith(":"):
-                continue
-            # Skip the directive line itself
-            if ".. code-block::" in stripped:
-                continue
-            # Found content
-            return i + 1
-        return None
-
-    def _find_directive_before_content(
-        self,
-        *,
-        lines: list[str],
-        content_start_line: int,
-        language: str,
-    ) -> int | None:
-        """Find directive line before content.
-
-        Returns 1-indexed.
-        """
-        directive = f".. code-block:: {language}"
-        for i in range(content_start_line - 2, -1, -1):
-            line = lines[i].lstrip()
-            if line.startswith(directive):
-                return i + 1
-            # Stop if we hit non-blank, non-option content
-            if line and not line.startswith(":"):
+        # Extract the language from classes
+        block_language = ""
+        for cls in node_classes:
+            if cls != "code":
+                block_language = cls
                 break
+
+        # Filter by language if specified
+        if self._language is not None and block_language != self._language:
+            return None
+
+        # Get content info
+        source_content = node.rawsource or node.astext()
+        line_count = source_content.count("\n") + 1
+        if source_content.endswith("\n"):  # pragma: no cover
+            line_count -= 1
+
+        # Get line reference from node or parent
+        ref_line = node.line
+        if ref_line is None and node.parent is not None:
+            ref_line = getattr(node.parent, "line", None)
+        if ref_line is None:  # pragma: no cover
+            return None
+
+        # Determine content position based on what ref_line points to
+        result = _compute_positions(
+            lines=lines,
+            ref_line=ref_line,
+            line_count=line_count,
+            language=block_language,
+        )
+        if result is None:  # pragma: no cover
+            return None
+
+        directive_line, content_start_line, content_end_line = result
+
+        # Calculate byte positions
+        region_start = offsets[directive_line - 1]
+        source_start = offsets[content_start_line - 1]
+
+        if content_end_line < len(offsets):
+            source_end = offsets[content_end_line]
+        else:
+            source_end = len(document.text)
+
+        # Ensure source has exactly one trailing newline
+        source_text = source_content.rstrip("\n") + "\n"
+
+        region_end = source_end
+        source_offset = source_start - region_start
+
+        opening_text = document.text[region_start:source_start]
+        line_offset = max(opening_text.count("\n") - 1, 0)
+
+        source = Lexeme(
+            text=source_text,
+            offset=source_offset,
+            line_offset=line_offset,
+        )
+
+        lexemes = {"language": block_language, "source": source}
+
+        return Region(
+            start=region_start,
+            end=region_end,
+            parsed=source,
+            evaluator=self._evaluator or self.evaluate,
+            lexemes=lexemes,
+        )
+
+
+def _compute_positions(
+    *,
+    lines: list[str],
+    ref_line: int,
+    line_count: int,
+    language: str,
+) -> tuple[int, int, int] | None:
+    """Compute directive and content line positions.
+
+    Returns (directive_line, content_start_line, content_end_line)
+    as 1-indexed line numbers, or None if not found.
+    """
+    directive = f".. code-block:: {language}".rstrip()
+
+    # Check what ref_line points to
+    if ref_line < 1 or ref_line > len(lines):  # pragma: no cover
         return None
+
+    line_at_ref = lines[ref_line - 1]
+    stripped = line_at_ref.lstrip()
+
+    if stripped.startswith(directive):
+        # ref_line is the directive - find content after it
+        directive_line = ref_line
+        content_start_line = _find_content_after_directive(
+            lines=lines,
+            directive_line=directive_line,
+        )
+        if content_start_line is None:  # pragma: no cover
+            return None
+        content_end_line = content_start_line + line_count - 1
+
+    elif not stripped:
+        # ref_line is blank - content ends before it
+        content_end_line = ref_line - 1
+        content_start_line = content_end_line - line_count + 1
+        found_directive = _find_directive_before_content(
+            lines=lines,
+            content_start_line=content_start_line,
+            language=language,
+        )
+        if found_directive is None:  # pragma: no cover
+            return None
+        directive_line = found_directive
+
+    else:
+        # ref_line is content (last line of content)
+        content_end_line = ref_line
+        content_start_line = content_end_line - line_count + 1
+        found_directive = _find_directive_before_content(
+            lines=lines,
+            content_start_line=content_start_line,
+            language=language,
+        )
+        if found_directive is None:  # pragma: no cover
+            return None
+        directive_line = found_directive
+
+    return (directive_line, content_start_line, content_end_line)
+
+
+def _find_content_after_directive(
+    *,
+    lines: list[str],
+    directive_line: int,
+) -> int | None:
+    """Find first content line after directive.
+
+    Returns 1-indexed.
+    """
+    for i in range(directive_line, len(lines)):
+        line = lines[i]
+        # Skip blank lines and option lines (starting with :)
+        stripped = line.lstrip()
+        if not stripped or stripped.startswith(":"):
+            continue
+        # Found content
+        return i + 1
+    return None  # pragma: no cover
+
+
+def _find_directive_before_content(
+    *,
+    lines: list[str],
+    content_start_line: int,
+    language: str,
+) -> int | None:
+    """Find directive line before content.
+
+    Returns 1-indexed.
+    """
+    directive = f".. code-block:: {language}".rstrip()
+    for i in range(content_start_line - 2, -1, -1):
+        line = lines[i].lstrip()
+        if line.startswith(directive):
+            return i + 1
+        # Stop if we hit non-blank, non-option content
+        if line and not line.startswith(":"):  # pragma: no cover
+            break
+    return None  # pragma: no cover

@@ -149,6 +149,77 @@ def test_multiline_code_block(tmp_path: Path) -> None:
     assert examples[0].parsed.text == expected
 
 
+def test_literal_block_skipped(tmp_path: Path) -> None:
+    """Literal blocks (``::`` syntax) are skipped.
+
+    Docutils literal blocks (created with ``::`` syntax) produce
+    ``literal_block`` nodes without the ``code`` class. These should
+    not be matched by the parser.
+    """
+    content = """Some text::
+
+   x = 1
+
+.. code-block:: python
+
+   y = 2
+"""
+    test_file = tmp_path / "test.rst"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert len(examples) == 1
+    assert examples[0].parsed.text == "y = 2\n"
+
+
+def test_code_block_without_language(tmp_path: Path) -> None:
+    """A code block without a language is matched.
+
+    When ``.. code-block::`` is used without specifying a language,
+    the block should be matched when no language filter is set and
+    should have an empty language lexeme.
+    """
+    content = """
+.. code-block::
+
+   x = 1
+"""
+    test_file = tmp_path / "test.rst"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert len(examples) == 1
+    assert examples[0].region.lexemes["language"] == ""
+
+
+def test_code_block_at_end_of_file(tmp_path: Path) -> None:
+    """A code block at the end of the file is parsed.
+
+    When a code block is the last content in the file (with no
+    trailing content after it), the region end is set to the end
+    of the document.
+    """
+    content = ".. code-block:: python\n\n   x = 1"
+    test_file = tmp_path / "test.rst"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert len(examples) == 1
+    assert examples[0].parsed.text == "x = 1\n"
+
+
 def test_evaluator_not_none_when_omitted(tmp_path: Path) -> None:
     """When no evaluator is provided, the region still has an evaluator.
 

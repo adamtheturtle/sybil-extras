@@ -14,6 +14,7 @@ blockquote
 blockquotes
 dedents
 djot
+docutils
 env
 formatter
 formatters
@@ -24,6 +25,7 @@ lexeme
 lexemes
 linter
 mdx
+multiline
 namespace
 norg
 ons

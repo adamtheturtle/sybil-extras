@@ -82,7 +82,7 @@ class DirectiveInCommentLexer:
 
             # Get the line number (1-indexed in docutils)
             line_num = node.line
-            if line_num is None:
+            if line_num is None:  # pragma: no cover
                 continue
 
             # Convert to 0-indexed
@@ -91,7 +91,7 @@ class DirectiveInCommentLexer:
             # Calculate character positions
             if start_line < len(offsets):
                 region_start = offsets[start_line]
-            else:
+            else:  # pragma: no cover
                 continue
 
             # Find the end of the comment by looking for the next non-blank,
