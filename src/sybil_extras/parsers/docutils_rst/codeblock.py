@@ -452,7 +452,7 @@ def _compute_positions_nested(
     Returns 1-indexed line positions.
     """
     prefixes = _directive_prefixes(language=language)
-    rawsource_lines = rawsource.split("\n")
+    rawsource_lines = rawsource.split(sep="\n")
 
     # Search forward from parent_line (0-indexed: parent_line - 1) for the
     # directive, then verify content matches rawsource.
@@ -482,7 +482,7 @@ def _compute_positions_nested(
 
         # Verify content matches rawsource by comparing stripped lines
         match = True
-        for i, raw_line in enumerate(rawsource_lines):
+        for i, raw_line in enumerate(iterable=rawsource_lines):
             doc_line_idx = content_start_line - 1 + i
             if doc_line_idx >= len(lines):
                 break
