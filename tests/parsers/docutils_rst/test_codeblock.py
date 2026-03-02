@@ -705,3 +705,37 @@ def test_invisible_code_block_nested_in_directive(tmp_path: Path) -> None:
 
     assert len(examples) == 1
     assert examples[0].parsed.text == "x = 1\n"
+
+
+def test_code_block_nested_multiple_same_language(tmp_path: Path) -> None:
+    """Two same-language code blocks nested inside the same directive.
+
+    When multiple code blocks share the same parent directive and language,
+    the content-matching logic in _compute_positions_nested must correctly
+    skip the first block's directive/content when searching for the second.
+    """
+    content = dedent(
+        text="""\
+        .. note::
+
+           .. code-block:: python
+
+              x = 1
+
+           .. code-block:: python
+
+              y = 2
+        """
+    )
+    test_file = tmp_path / "test.rst"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    expected_example_count = 2
+    assert len(examples) == expected_example_count
+    assert examples[0].parsed.text == "x = 1\n"
+    assert examples[1].parsed.text == "y = 2\n"

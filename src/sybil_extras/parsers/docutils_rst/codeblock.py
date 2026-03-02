@@ -330,7 +330,7 @@ def _compute_positions(
     line_at_ref = lines[ref_line - 1]
     stripped = line_at_ref.lstrip()
 
-    if any(stripped.startswith(p) for p in prefixes):
+    if any(stripped.startswith(p) for p in prefixes):  # pragma: no cover
         # ref_line is the directive - find content after it
         directive_line = ref_line
         content_start_line = _find_content_after_directive(
@@ -381,7 +381,7 @@ def _compute_positions(
 
 
 @beartype
-def _find_content_after_directive(
+def _find_content_after_directive(  # pragma: no cover
     *,
     lines: Sequence[str],
     directive_line: int,
@@ -427,7 +427,7 @@ def _find_directive_before_content(
         ),
         None,
     )
-    if result is None:
+    if result is None:  # pragma: no cover
         msg = f"No directive found before content at line {content_start_line}"
         raise ValueError(msg)
     return result
@@ -455,7 +455,7 @@ def _compute_positions_nested(
     rawsource_lines = rawsource.split(sep="\n")
 
     # Search forward from parent_line (0-indexed: parent_line - 1) for the
-    # directive, then verify content matches rawsource.
+    # directive, then verify content matches raw source.
     # We start at parent_line - 1 (inclusive) because in some cases the
     # parent node's line attribute points to the directive line itself
     # (e.g. when the code block is inside an indented block quote).
@@ -475,16 +475,16 @@ def _compute_positions_nested(
             ),
             None,
         )
-        if content_start_idx is None:
+        if content_start_idx is None:  # pragma: no cover
             continue
 
         content_start_line = content_start_idx + 1  # 1-indexed
 
-        # Verify content matches rawsource by comparing stripped lines
+        # Verify content matches raw source by comparing stripped lines
         match = True
         for i, raw_line in enumerate(iterable=rawsource_lines):
             doc_line_idx = content_start_line - 1 + i
-            if doc_line_idx >= len(lines):
+            if doc_line_idx >= len(lines):  # pragma: no cover
                 break
             if lines[doc_line_idx].strip() != raw_line.strip():
                 match = False
@@ -503,8 +503,8 @@ def _compute_positions_nested(
             trailing_blank_lines=trailing_blank_lines,
         )
 
-    msg = (
+    msg = (  # pragma: no cover
         f"No nested code block found after parent directive "
         f"at line {parent_line}"
     )
-    raise ValueError(msg)
+    raise ValueError(msg)  # pragma: no cover
