@@ -707,6 +707,35 @@ def test_invisible_code_block_nested_in_directive(tmp_path: Path) -> None:
     assert examples[0].parsed.text == "x = 1\n"
 
 
+def test_code_block_nested_with_options(tmp_path: Path) -> None:
+    """Code blocks nested inside a directive with RST options are parsed.
+
+    When a nested code block has RST directive options (e.g. ``:linenos:``)
+    between the directive header and the blank-line separator,
+    those option lines must be skipped when locating the content start.
+    """
+    content = dedent(
+        text="""\
+        .. note::
+
+           .. code-block:: python
+              :number-lines:
+
+              x = 1
+        """
+    )
+    test_file = tmp_path / "test.rst"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert len(examples) == 1
+    assert examples[0].parsed.text == "x = 1\n"
+
+
 def test_code_block_nested_multiple_same_language(tmp_path: Path) -> None:
     """Two same-language code blocks nested inside the same directive.
 

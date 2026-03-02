@@ -466,11 +466,23 @@ def _compute_positions_nested(
 
         directive_line = line_idx + 1  # 1-indexed
 
-        # Find the first non-blank line after the directive
-        content_start_idx = next(
+        # Find content start: in RST, content follows the first blank line
+        # after the directive header (options, if any, precede this blank).
+        blank_line_idx = next(
             (
                 idx
                 for idx in range(directive_line, len(lines))
+                if not lines[idx].lstrip()
+            ),
+            None,
+        )
+        if blank_line_idx is None:  # pragma: no cover
+            continue
+
+        content_start_idx = next(
+            (
+                idx
+                for idx in range(blank_line_idx + 1, len(lines))
                 if lines[idx].lstrip()
             ),
             None,
@@ -485,6 +497,7 @@ def _compute_positions_nested(
         for i, raw_line in enumerate(iterable=rawsource_lines):
             doc_line_idx = content_start_line - 1 + i
             if doc_line_idx >= len(lines):  # pragma: no cover
+                match = False
                 break
             if lines[doc_line_idx].strip() != raw_line.strip():
                 match = False
