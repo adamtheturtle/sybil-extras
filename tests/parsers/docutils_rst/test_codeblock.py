@@ -627,3 +627,81 @@ def test_trailing_blank_lines_preserved_in_invisible_code_block(
     )
     assert examples[0].parsed.text == expected_first
     assert examples[1].parsed.text == "my_function()\n"
+
+
+def test_code_block_nested_in_directive(tmp_path: Path) -> None:
+    """Code blocks nested inside RST directives like .. note:: are parsed.
+
+    When a code block is inside a parent directive (e.g. ``.. note::``),
+    the docutils node has ``node.line = None``. The parser should still
+    find and return the code block correctly.
+    """
+    content = dedent(
+        text="""\
+        .. note::
+
+           Some text.
+
+           .. code-block:: bash
+
+              echo hello
+        """
+    )
+    test_file = tmp_path / "test.rst"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="bash", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert len(examples) == 1
+    assert examples[0].parsed.text == "echo hello\n"
+
+
+def test_code_block_nested_multiline(tmp_path: Path) -> None:
+    """Multi-line code blocks nested inside RST directives are parsed."""
+    content = dedent(
+        text="""\
+        .. warning::
+
+           .. code-block:: bash
+
+              echo hello
+              echo world
+              echo three
+        """
+    )
+    test_file = tmp_path / "test.rst"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="bash", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert len(examples) == 1
+    assert examples[0].parsed.text == "echo hello\necho world\necho three\n"
+
+
+def test_invisible_code_block_nested_in_directive(tmp_path: Path) -> None:
+    """Invisible-code-block nested inside a directive is parsed."""
+    content = dedent(
+        text="""\
+        .. note::
+
+           .. invisible-code-block: python
+
+              x = 1
+        """
+    )
+    test_file = tmp_path / "test.rst"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert len(examples) == 1
+    assert examples[0].parsed.text == "x = 1\n"

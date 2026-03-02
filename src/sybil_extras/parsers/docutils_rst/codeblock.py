@@ -121,6 +121,7 @@ class CodeBlockParser:
         line_count = source_content.count("\n") + 1
 
         # Get line reference from node or parent
+        node_line_is_none = node.line is None
         ref_line = node.line
         if ref_line is None and node.parent is not None:
             ref_line = getattr(node.parent, "line", None)
@@ -131,12 +132,23 @@ class CodeBlockParser:
             raise ValueError(msg)
 
         # Determine content position based on what ref_line points to
-        positions = _compute_positions(
-            lines=lines,
-            ref_line=ref_line,
-            line_count=line_count,
-            language=block_language,
-        )
+        if node_line_is_none:
+            # node is nested inside another directive; ref_line is the
+            # parent directive line, not the code block's own line.
+            positions = _compute_positions_nested(
+                lines=lines,
+                parent_line=ref_line,
+                rawsource=source_content,
+                line_count=line_count,
+                language=block_language,
+            )
+        else:
+            positions = _compute_positions(
+                lines=lines,
+                ref_line=ref_line,
+                line_count=line_count,
+                language=block_language,
+            )
 
         # Calculate byte positions
         region_start = offsets[positions.directive_line - 1]
@@ -213,17 +225,31 @@ class CodeBlockParser:
         source_content = "\n".join(code_lines)
         line_count = len(code_lines)
 
+        node_line_is_none = node.line is None
         ref_line = node.line
+        if ref_line is None and node.parent is not None:
+            ref_line = getattr(node.parent, "line", None)
         if ref_line is None:  # pragma: no cover
             msg = "Comment node has no line reference"
             raise ValueError(msg)
 
-        positions = _compute_positions(
-            lines=lines,
-            ref_line=ref_line,
-            line_count=line_count,
-            language=block_language,
-        )
+        if node_line_is_none:
+            # node is nested inside another directive; ref_line is the
+            # parent directive line, not the comment's own line.
+            positions = _compute_positions_nested(
+                lines=lines,
+                parent_line=ref_line,
+                rawsource=source_content,
+                line_count=line_count,
+                language=block_language,
+            )
+        else:
+            positions = _compute_positions(
+                lines=lines,
+                ref_line=ref_line,
+                line_count=line_count,
+                language=block_language,
+            )
 
         region_start = offsets[positions.directive_line - 1]
         source_start = offsets[positions.content_start_line - 1]
@@ -364,11 +390,18 @@ def _find_content_after_directive(
 
     Returns 1-indexed.
     """
-    return next(
-        line_idx + 1
-        for line_idx in range(directive_line, len(lines))
-        if lines[line_idx].lstrip()
+    result = next(
+        (
+            line_idx + 1
+            for line_idx in range(directive_line, len(lines))
+            if lines[line_idx].lstrip()
+        ),
+        None,
     )
+    if result is None:
+        msg = f"No content found after directive at line {directive_line}"
+        raise ValueError(msg)
+    return result
 
 
 @beartype
@@ -383,10 +416,95 @@ def _find_directive_before_content(
     Returns 1-indexed.
     """
     prefixes = _directive_prefixes(language=language)
-    return next(
-        line_idx + 1
-        for line_idx in range(content_start_line - 2, -1, -1)
-        if any(
-            lines[line_idx].lstrip().startswith(prefix) for prefix in prefixes
-        )
+    result = next(
+        (
+            line_idx + 1
+            for line_idx in range(content_start_line - 2, -1, -1)
+            if any(
+                lines[line_idx].lstrip().startswith(prefix)
+                for prefix in prefixes
+            )
+        ),
+        None,
     )
+    if result is None:
+        msg = f"No directive found before content at line {content_start_line}"
+        raise ValueError(msg)
+    return result
+
+
+@beartype
+def _compute_positions_nested(
+    *,
+    lines: Sequence[str],
+    parent_line: int,
+    rawsource: str,
+    line_count: int,
+    language: str,
+) -> _Positions:
+    """Compute positions for a code block nested inside another directive.
+
+    When ``node.line`` is ``None``, the node is inside a parent directive
+    and ``parent_line`` is the 1-indexed line of that parent directive.
+    We search forward from there for the matching code block directive
+    and its content.
+
+    Returns 1-indexed line positions.
+    """
+    prefixes = _directive_prefixes(language=language)
+    rawsource_lines = rawsource.split("\n")
+
+    # Search forward from parent_line (0-indexed: parent_line - 1) for the
+    # directive, then verify content matches rawsource.
+    # We start at parent_line - 1 (inclusive) because in some cases the
+    # parent node's line attribute points to the directive line itself
+    # (e.g. when the code block is inside an indented block quote).
+    for line_idx in range(parent_line - 1, len(lines)):
+        line_stripped = lines[line_idx].lstrip()
+        if not any(line_stripped.startswith(p) for p in prefixes):
+            continue
+
+        directive_line = line_idx + 1  # 1-indexed
+
+        # Find the first non-blank line after the directive
+        content_start_idx = next(
+            (
+                idx
+                for idx in range(directive_line, len(lines))
+                if lines[idx].lstrip()
+            ),
+            None,
+        )
+        if content_start_idx is None:
+            continue
+
+        content_start_line = content_start_idx + 1  # 1-indexed
+
+        # Verify content matches rawsource by comparing stripped lines
+        match = True
+        for i, raw_line in enumerate(rawsource_lines):
+            doc_line_idx = content_start_line - 1 + i
+            if doc_line_idx >= len(lines):
+                break
+            if lines[doc_line_idx].strip() != raw_line.strip():
+                match = False
+                break
+
+        if not match:
+            continue
+
+        content_end_line = content_start_line + line_count - 1
+        trailing_blank_lines = 0
+
+        return _Positions(
+            directive_line=directive_line,
+            content_start_line=content_start_line,
+            content_end_line=content_end_line,
+            trailing_blank_lines=trailing_blank_lines,
+        )
+
+    msg = (
+        f"No nested code block found after parent directive "
+        f"at line {parent_line}"
+    )
+    raise ValueError(msg)
