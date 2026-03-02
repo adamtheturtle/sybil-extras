@@ -190,8 +190,7 @@ CustomDirectiveSkipParser
     # sybil_extras.parsers.markdown_it.custom_directive_skip,
     # sybil_extras.parsers.mdx.custom_directive_skip,
     # sybil_extras.parsers.myst.custom_directive_skip,
-    # sybil_extras.parsers.myst_parser.custom_directive_skip and
-    # sybil_extras.parsers.docutils_rst.custom_directive_skip.
+    # sybil_extras.parsers.myst_parser.custom_directive_skip.
     from sybil_extras.parsers.rest.custom_directive_skip import (
         CustomDirectiveSkipParser,
     )
@@ -229,8 +228,7 @@ GroupedSourceParser
     # sybil_extras.parsers.markdown_it.grouped_source,
     # sybil_extras.parsers.mdx.grouped_source,
     # sybil_extras.parsers.myst.grouped_source,
-    # sybil_extras.parsers.myst_parser.grouped_source and
-    # sybil_extras.parsers.docutils_rst.grouped_source.
+    # sybil_extras.parsers.myst_parser.grouped_source.
     from sybil_extras.parsers.rest.grouped_source import GroupedSourceParser
 
 
@@ -331,8 +329,7 @@ GroupAllParser
     # sybil_extras.parsers.markdown_it.group_all,
     # sybil_extras.parsers.mdx.group_all,
     # sybil_extras.parsers.myst.group_all,
-    # sybil_extras.parsers.myst_parser.group_all and
-    # sybil_extras.parsers.docutils_rst.group_all.
+    # sybil_extras.parsers.myst_parser.group_all.
     from sybil_extras.parsers.rest.group_all import GroupAllParser
 
 
@@ -613,32 +610,6 @@ The module also provides ``CustomDirectiveSkipParser``, ``GroupedSourceParser``,
 ``GroupAllParser``, ``SphinxJinja2Parser``, ``DirectiveInHTMLCommentLexer``, and
 ``DirectiveInPercentCommentLexer`` that use the myst-parser library.
 
-DocutilsRST code block parser
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The ``docutils_rst`` module provides reStructuredText parsers that use the
-`docutils <https://docutils.sourceforge.io/>`_ library instead of regex.
-This provides more accurate parsing of reStructuredText documents, supporting
-both ``.. code-block::`` and ``.. code::`` directives.
-
-.. code-block:: python
-
-    """Use the docutils_rst CodeBlockParser for reStructuredText documents."""
-
-    from sybil import Sybil
-
-    from sybil_extras.evaluators.no_op import NoOpEvaluator
-    from sybil_extras.parsers.docutils_rst.codeblock import CodeBlockParser
-
-    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
-    sybil = Sybil(parsers=[parser])
-
-    pytest_collect_file = sybil.pytest()
-
-The module also provides ``CustomDirectiveSkipParser``, ``GroupedSourceParser``,
-``GroupAllParser``, and ``DirectiveInCommentLexer`` that use the docutils
-library.
-
 Markup Languages
 ----------------
 
@@ -657,7 +628,6 @@ tools that need to work consistently across multiple markup languages.
     from sybil_extras.evaluators.no_op import NoOpEvaluator
     from sybil_extras.languages import (
         DJOT,
-        DOCUTILS_RST,
         MARKDOWN,
         MDX,
         MYST,
@@ -673,7 +643,6 @@ tools that need to work consistently across multiple markup languages.
     assert DJOT.name == "Djot"
     assert NORG.name == "Norg"
     assert RESTRUCTUREDTEXT.name == "reStructuredText"
-    assert DOCUTILS_RST.name == "DocutilsRST"
 
     code_parser = RESTRUCTUREDTEXT.code_block_parser_cls(
         language="python",

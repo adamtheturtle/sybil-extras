@@ -7,9 +7,6 @@ import pytest
 from sybil import Sybil
 
 from sybil_extras.evaluators.no_op import NoOpEvaluator
-from sybil_extras.parsers.docutils_rst.sphinx_jinja2 import (
-    SphinxJinja2Parser as DocutilsRstSphinxJinja2Parser,
-)
 from sybil_extras.parsers.myst.sphinx_jinja2 import (
     SphinxJinja2Parser as MystSphinxJinja2Parser,
 )
@@ -83,7 +80,6 @@ def test_sphinx_jinja2(
 @pytest.mark.parametrize(
     argnames="parser_cls",
     argvalues=[
-        pytest.param(DocutilsRstSphinxJinja2Parser, id="docutils-rst"),
         pytest.param(RestSphinxJinja2Parser, id="rest"),
     ],
 )
