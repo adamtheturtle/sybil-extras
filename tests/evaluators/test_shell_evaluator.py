@@ -32,7 +32,6 @@ from sybil_extras.evaluators.shell_evaluator.source_preparer import (
 )
 from sybil_extras.languages import (
     DJOT,
-    DOCUTILS_RST,
     MARKDOWN,
     MARKDOWN_IT,
     MDX,
@@ -440,7 +439,6 @@ def test_write_to_file_new_content_trailing_newlines(
     )
     original_content = {
         RESTRUCTUREDTEXT: rst_original_content,
-        DOCUTILS_RST: rst_original_content,
         MARKDOWN: markdown_content,
         MARKDOWN_IT: markdown_content,
         MDX: markdown_content,
@@ -517,7 +515,6 @@ def test_write_to_file_new_content_trailing_newlines(
     )
     expected_content = {
         RESTRUCTUREDTEXT: rst_expected,
-        DOCUTILS_RST: rst_expected,
         MARKDOWN: markdown_expected,
         MARKDOWN_IT: markdown_expected,
         MDX: markdown_expected,
@@ -588,7 +585,6 @@ def test_write_to_file_new_content_no_trailing_newlines(
     )
     original_content = {
         RESTRUCTUREDTEXT: rst_original_content,
-        DOCUTILS_RST: rst_original_content,
         MARKDOWN: markdown_content,
         MARKDOWN_IT: markdown_content,
         MDX: markdown_content,
@@ -660,7 +656,6 @@ def test_write_to_file_new_content_no_trailing_newlines(
     )
     expected_content = {
         RESTRUCTUREDTEXT: rst_expected,
-        DOCUTILS_RST: rst_expected,
         MARKDOWN: markdown_expected,
         MARKDOWN_IT: markdown_expected,
         MDX: markdown_expected,

@@ -10,7 +10,6 @@ from sybil_extras.evaluators.code_block_writer import CodeBlockWriterEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.languages import (
     DJOT,
-    DOCUTILS_RST,
     MARKDOWN,
     MARKDOWN_IT,
     MDX,
@@ -66,7 +65,6 @@ def test_writes_modified_content(
     )
     original_content = {
         RESTRUCTUREDTEXT: rst_content,
-        DOCUTILS_RST: rst_content,
         MARKDOWN: markdown_content,
         MARKDOWN_IT: markdown_content,
         MDX: markdown_content,
@@ -131,7 +129,6 @@ def test_writes_modified_content(
     )
     expected_content = {
         RESTRUCTUREDTEXT: rst_expected,
-        DOCUTILS_RST: rst_expected,
         MARKDOWN: markdown_expected,
         MARKDOWN_IT: markdown_expected,
         MDX: markdown_expected,
@@ -206,11 +203,6 @@ def test_empty_code_block_write_content(
     markup_language: MarkupLanguage,
 ) -> None:
     """Content can be written to an empty code block."""
-    if markup_language == DOCUTILS_RST:
-        # Docutils treats empty code blocks as errors and doesn't parse them
-        # as valid code-block directives.
-        return
-
     rst_content = textwrap.dedent(
         text="""\
         Not in code block
@@ -255,7 +247,6 @@ def test_empty_code_block_write_content(
 
     content = {
         RESTRUCTUREDTEXT: rst_content,
-        DOCUTILS_RST: rst_content,
         MARKDOWN: markdown_content,
         MARKDOWN_IT: markdown_content,
         MDX: markdown_content,
@@ -334,7 +325,6 @@ def test_empty_code_block_write_content(
     )
     expected_content = {
         RESTRUCTUREDTEXT: rst_expected,
-        DOCUTILS_RST: rst_expected,
         MARKDOWN: markdown_expected,
         MARKDOWN_IT: markdown_expected,
         MDX: markdown_expected,
@@ -360,11 +350,6 @@ def test_empty_code_block_with_options(
     """
     if markup_language in (MARKDOWN, MARKDOWN_IT, MYST_PARSER, DJOT, NORG):
         # Markdown-like formats do not support code block options.
-        return
-
-    if markup_language == DOCUTILS_RST:
-        # Docutils treats empty code blocks as errors and doesn't parse them
-        # as valid code-block directives.
         return
 
     rst_content = textwrap.dedent(
@@ -403,7 +388,6 @@ def test_empty_code_block_with_options(
 
     content = {
         RESTRUCTUREDTEXT: rst_content,
-        DOCUTILS_RST: rst_content,
         MYST: myst_content,
         MDX: mdx_content,
     }[markup_language]
@@ -450,7 +434,6 @@ def test_empty_code_block_with_options(
     )
     expected_content = {
         RESTRUCTUREDTEXT: rst_expected,
-        DOCUTILS_RST: rst_expected,
         MYST: myst_expected,
         MDX: textwrap.dedent(
             text="""\
@@ -774,7 +757,6 @@ def test_indented_existing_block(
     )
     original_content = {
         RESTRUCTUREDTEXT: rst_original_content,
-        DOCUTILS_RST: rst_original_content,
         MARKDOWN: markdown_content,
         MARKDOWN_IT: markdown_content,
         MDX: markdown_content,
@@ -840,7 +822,6 @@ def test_indented_existing_block(
     )
     expected_content = {
         RESTRUCTUREDTEXT: rst_expected,
-        DOCUTILS_RST: rst_expected,
         MARKDOWN: markdown_expected,
         MARKDOWN_IT: markdown_expected,
         MDX: markdown_expected,
@@ -860,11 +841,6 @@ def test_indented_empty_existing_block(
     """Changes are written to indented empty code blocks."""
     if markup_language == NORG:
         # Norg does not support indented code blocks in the same way.
-        return
-
-    if markup_language == DOCUTILS_RST:
-        # Docutils treats empty code blocks as errors and doesn't parse them
-        # as valid code-block directives.
         return
 
     markdown_content = textwrap.dedent(
@@ -908,7 +884,6 @@ def test_indented_empty_existing_block(
     )
     original_content = {
         RESTRUCTUREDTEXT: rst_original_content,
-        DOCUTILS_RST: rst_original_content,
         MARKDOWN: markdown_content,
         MARKDOWN_IT: markdown_content,
         MDX: markdown_content,
@@ -982,7 +957,6 @@ def test_indented_empty_existing_block(
     )
     expected_content = {
         RESTRUCTUREDTEXT: rst_expected,
-        DOCUTILS_RST: rst_expected,
         MARKDOWN: markdown_expected,
         MARKDOWN_IT: markdown_expected,
         MDX: markdown_expected,
