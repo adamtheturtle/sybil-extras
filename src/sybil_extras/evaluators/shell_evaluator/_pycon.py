@@ -201,21 +201,20 @@ def _render_pycon_from_python(
     # chunk count directly, use a simple 1:1 mapping.  Otherwise, ignore
     # separator groups (bare ``>>>`` blank lines added by formatters) and
     # check if the *substantive* groups match the original chunks.
+    chunk_for_group: list[int | None]
     if len(groups) == len(original_chunks):
         # Direct 1:1 match - every group gets its chunk's output.
-        chunk_for_group: list[int | None] = list(range(len(groups)))
+        chunk_for_group = list(range(len(groups)))
     else:
         substantive = [
             i
             for i, g in enumerate(iterable=groups)
             if not _is_separator_group(group=g)
         ]
+        chunk_for_group = [None for _ in groups]
         if len(substantive) == len(original_chunks):
-            chunk_for_group = [None] * len(groups)
             for c_idx, group_idx in enumerate(iterable=substantive):
                 chunk_for_group[group_idx] = c_idx
-        else:
-            chunk_for_group = [None] * len(groups)
 
     result: list[str] = []
     for i, group in enumerate(iterable=groups):
