@@ -36,7 +36,7 @@ class _GroupStateKey:
 
 
 @beartype
-@dataclass
+@dataclass(frozen=True)
 class _GroupBoundary:
     """Boundary information for a group."""
 
@@ -46,7 +46,7 @@ class _GroupBoundary:
 
 
 @beartype
-@dataclass
+@dataclass(frozen=True)
 class _GroupMarker:
     """A marker for a group start or end."""
 
