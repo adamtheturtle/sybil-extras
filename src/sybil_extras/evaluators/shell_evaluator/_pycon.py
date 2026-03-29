@@ -61,7 +61,7 @@ def pycon_to_python(*, pycon_text: str) -> str:
 
 
 @beartype
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class _PyconChunk:
     """A parsed pycon interaction chunk."""
 
@@ -69,7 +69,7 @@ class _PyconChunk:
 
 
 @beartype
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class _PyconTranscript:
     """A parsed pycon transcript."""
 
