@@ -288,7 +288,7 @@ class _CodeBlockParser(Protocol):
 
 
 @beartype
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class MarkupLanguage:
     """A markup language."""
 
