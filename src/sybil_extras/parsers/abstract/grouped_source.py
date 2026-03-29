@@ -27,7 +27,7 @@ from ._grouping_utils import (
 
 
 @beartype
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class _GroupStateKey:
     """Key for looking up group state."""
 
@@ -36,7 +36,7 @@ class _GroupStateKey:
 
 
 @beartype
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class _GroupBoundary:
     """Boundary information for a group."""
 
@@ -46,7 +46,7 @@ class _GroupBoundary:
 
 
 @beartype
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class _GroupMarker:
     """A marker for a group start or end."""
 
