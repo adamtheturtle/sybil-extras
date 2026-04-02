@@ -43,7 +43,7 @@ dependencies = [
 ]
 optional-dependencies.dev = [
     "actionlint-py==1.7.12.24",
-    "charset-normalizer==3.4.6",
+    "charset-normalizer==3.4.7",
     "check-manifest==0.51",
     "click==8.3.1",
     "deptry==0.25.1",
