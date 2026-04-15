@@ -37,22 +37,19 @@ def count_expected_code_blocks(examples: Iterable[Example]) -> int:
     for ex in examples_sorted:
         parsed: object = ex.parsed
         # Skip markers have parsed values like ('next', None)
-        if (
-            isinstance(parsed, tuple)
-            and parsed
-            and parsed[0] in {"next", "start", "end"}
-        ):
-            if parsed[0] == "next":
+        match parsed:
+            case ("next", object()):
                 skip_next = True
-            elif parsed[0] == "start":
+            case ("start", object()):
                 in_skip_range = True
-            else:
+            case ("end", object()):
                 in_skip_range = False
-        elif has_source(example=ex):
-            non_skip_count += 1
-            if skip_next or in_skip_range:
-                skipped_count += 1
-                skip_next = False
+            case _:
+                if has_source(example=ex):
+                    non_skip_count += 1
+                    if skip_next or in_skip_range:
+                        skipped_count += 1
+                        skip_next = False
 
     return non_skip_count - skipped_count
 
@@ -67,9 +64,11 @@ def _get_text(parsed: Lexeme | str) -> str:
     Returns:
         The text content.
     """
-    if isinstance(parsed, Lexeme):
-        return parsed.text
-    return parsed
+    match parsed:
+        case Lexeme():
+            return parsed.text
+        case _:
+            return parsed
 
 
 @beartype
@@ -94,14 +93,15 @@ def _combine_examples_text(
         The combined text.
     """
     first_parsed = examples[0].parsed
-    if isinstance(first_parsed, Lexeme):
-        result_text = first_parsed.text
-        result_offset = first_parsed.offset
-        result_line_offset = first_parsed.line_offset
-    else:
-        result_text = str(object=first_parsed)
-        result_offset = examples[0].region.start
-        result_line_offset = 0
+    match first_parsed:
+        case Lexeme():
+            result_text = first_parsed.text
+            result_offset = first_parsed.offset
+            result_line_offset = first_parsed.line_offset
+        case _:
+            result_text = str(object=first_parsed)
+            result_offset = examples[0].region.start
+            result_line_offset = 0
 
     for example in examples[1:]:
         existing_lines = len(result_text.splitlines())
