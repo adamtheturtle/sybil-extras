@@ -138,19 +138,16 @@ class DjotRawFencedCodeBlockLexer:
     def __call__(self, document: Document) -> Iterable[Region]:
         """Yield regions for Djot fenced code blocks."""
         index = 0
-        while True:
-            opening = FENCE.search(string=document.text, pos=index)
-            if opening is None:
-                break
-
+        while (
+            opening := FENCE.search(string=document.text, pos=index)
+        ) is not None:
             closing: Match[str] | None = None
             search_index = opening.end()
-            while True:
-                candidate = FENCE.search(
+            while (
+                candidate := FENCE.search(
                     string=document.text, pos=search_index
                 )
-                if candidate is None:
-                    break
+            ) is not None:
                 search_index = candidate.end()
                 if _match_closes_existing(current=candidate, existing=opening):
                     closing = candidate
