@@ -38,17 +38,18 @@ def count_expected_code_blocks(examples: Iterable[Example]) -> int:
         parsed: object = ex.parsed
         # Skip markers have parsed values like ('next', None)
         match parsed:
-            case ("next", _):
+            case ("next", object()):
                 skip_next = True
-            case ("start", _):
+            case ("start", object()):
                 in_skip_range = True
-            case ("end", _):
+            case ("end", object()):
                 in_skip_range = False
-            case _ if has_source(example=ex):
-                non_skip_count += 1
-                if skip_next or in_skip_range:
-                    skipped_count += 1
-                    skip_next = False
+            case _:
+                if has_source(example=ex):
+                    non_skip_count += 1
+                    if skip_next or in_skip_range:
+                        skipped_count += 1
+                        skip_next = False
 
     return non_skip_count - skipped_count
 
