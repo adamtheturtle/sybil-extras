@@ -57,12 +57,11 @@ class NorgVerbatimRangedTagLexer:
     def __call__(self, document: Document) -> Iterable[Region]:
         """Yield regions for Norg verbatim ranged tags."""
         index = 0
-        while True:
-            opening = self._opening_pattern.search(
+        while (
+            opening := self._opening_pattern.search(
                 string=document.text, pos=index
             )
-            if opening is None:
-                break
+        ) is not None:
 
             # Find the matching @end tag
             closing = self._closing_pattern.search(
