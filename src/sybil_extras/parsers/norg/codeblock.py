@@ -62,7 +62,6 @@ class NorgVerbatimRangedTagLexer:
                 string=document.text, pos=index
             )
         ) is not None:
-
             # Find the matching @end tag
             closing = self._closing_pattern.search(
                 string=document.text, pos=opening.end()
