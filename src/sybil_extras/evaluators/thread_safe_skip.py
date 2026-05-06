@@ -25,6 +25,20 @@ from sybil.example import NotEvaluated
 from sybil.region import Region
 
 
+def _make_skip(reason: object) -> SkipTest:
+    """Build a :class:`unittest.SkipTest` carrying ``reason``.
+
+    Typeshed declares ``SkipTest.__init__(self, reason: str)``, but at
+    runtime the class only inherits ``BaseException.__init__``, which
+    accepts a variadic ``*args``. Initializing via ``BaseException``
+    avoids the typeshed/runtime mismatch and the project's
+    strict-kwargs mypy plugin.
+    """
+    exception = SkipTest.__new__(SkipTest)
+    BaseException.__init__(exception, reason)
+    return exception
+
+
 @dataclass
 class _SkipDirective:
     """Resolved metadata about a ``skip`` directive in a document."""
@@ -199,14 +213,14 @@ class ThreadSafeSkipper(Skipper):
             condition = text[2:]
             text = "if_" + condition
             namespace["if_"] = If(default_reason=condition)
-        result = eval(  # type: ignore[misc]  # noqa: S307  # pylint: disable=eval-used
+        result = eval(  # noqa: S307  # pylint: disable=eval-used
             text,
-            namespace,
+            globals=namespace,
         )
         if result:
             return _Decision(
                 kind="raise",
-                exception=SkipTest(result),  # type: ignore[misc]
+                exception=_make_skip(reason=result),
             )
         return _Decision(kind="fall_through")
 
