@@ -17,6 +17,7 @@ dedents
 djot
 docutils
 env
+falsy
 formatter
 formatters
 hardcode
@@ -43,7 +44,9 @@ rst
 stderr
 stdout
 str
+subclasses
 syntaxes
+truthy
 unclosed
 ungrouped
 whitespace

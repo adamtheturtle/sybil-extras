@@ -16,7 +16,6 @@ the result cached so concurrent evaluators all see the same decision.
 
 import threading
 from dataclasses import dataclass, field
-from typing import Optional
 from unittest import SkipTest
 
 from beartype import beartype
@@ -34,7 +33,7 @@ class _SkipDirective:
     action: str
     reason: str | None
     sequence_error: ValueError | None = None
-    decision: Optional["_Decision"] = None
+    decision: "_Decision | None" = None
     decision_lock: "threading.Lock" = field(
         default_factory=threading.Lock,
     )
@@ -97,61 +96,70 @@ class ThreadSafeSkipper(Skipper):
                 document.push_evaluator(evaluator=self)
             return plan
 
+    def _validate_skip_action(
+        self,
+        *,
+        action: str,
+        reason: str | None,
+        last_action: str | None,
+    ) -> ValueError | None:
+        """Return a sequence error for ``action``, or ``None`` if
+        valid.
+        """
+        directive = self.directive
+        if action not in ("start", "next", "end"):
+            return ValueError("Bad skip action: " + action)
+        if last_action is None and action not in ("start", "next"):
+            return ValueError(
+                f"'{directive}: {action}' must follow '{directive}: start'",
+            )
+        if last_action and action != "end":
+            return ValueError(
+                f"'{directive}: {action}' cannot follow "
+                f"'{directive}: {last_action}'",
+            )
+        if action == "end" and reason:
+            return ValueError("Cannot have condition on 'skip: end'")
+        return None
+
     def _build_plan(self, document: Document) -> _DocumentPlan:
         """Walk ``document.regions`` and resolve each region's skip
         state.
         """
         plan = _DocumentPlan()
-        directive = self.directive
         last_action: str | None = None
         pending_next: _SkipDirective | None = None
         active_start: _SkipDirective | None = None
 
         for _, region in document.regions:
-            if region.evaluator is self:
-                action, reason = region.parsed
-                entry = _SkipDirective(
-                    region=region, action=action, reason=reason
-                )
-                plan.directives.append(entry)
+            if region.evaluator is not self:
+                if pending_next is not None:
+                    plan.directive_for_region[id(region)] = pending_next
+                    pending_next = None
+                    last_action = "start" if active_start is not None else None
+                elif active_start is not None:
+                    plan.directive_for_region[id(region)] = active_start
+                continue
 
-                if action not in ("start", "next", "end"):
-                    entry.sequence_error = ValueError(
-                        "Bad skip action: " + action
-                    )
-                    continue
-                if last_action is None and action not in ("start", "next"):
-                    entry.sequence_error = ValueError(
-                        f"'{directive}: {action}' must follow "
-                        f"'{directive}: start'"
-                    )
-                    continue
-                if last_action and action != "end":
-                    entry.sequence_error = ValueError(
-                        f"'{directive}: {action}' cannot follow "
-                        f"'{directive}: {last_action}'"
-                    )
-                    continue
-                if action == "end" and reason:
-                    entry.sequence_error = ValueError(
-                        "Cannot have condition on 'skip: end'"
-                    )
-                    continue
+            action, reason = region.parsed
+            entry = _SkipDirective(region=region, action=action, reason=reason)
+            plan.directives.append(entry)
+            entry.sequence_error = self._validate_skip_action(
+                action=action,
+                reason=reason,
+                last_action=last_action,
+            )
+            if entry.sequence_error is not None:
+                continue
 
-                last_action = action
-                if action == "next":
-                    pending_next = entry
-                elif action == "start":
-                    active_start = entry
-                else:
-                    active_start = None
-                    last_action = None
-            elif pending_next is not None:
-                plan.directive_for_region[id(region)] = pending_next
-                pending_next = None
-                last_action = "start" if active_start is not None else None
-            elif active_start is not None:
-                plan.directive_for_region[id(region)] = active_start
+            last_action = action
+            if action == "next":
+                pending_next = entry
+            elif action == "start":
+                active_start = entry
+            else:
+                active_start = None
+                last_action = None
 
         return plan
 
@@ -186,7 +194,7 @@ class ThreadSafeSkipper(Skipper):
             condition = text[2:]
             text = "if_" + condition
             namespace["if_"] = If(default_reason=condition)
-        result = eval(  # type: ignore[misc]  # noqa: S307
+        result = eval(  # type: ignore[misc]  # noqa: S307  # pylint: disable=eval-used
             text,
             namespace,
         )
