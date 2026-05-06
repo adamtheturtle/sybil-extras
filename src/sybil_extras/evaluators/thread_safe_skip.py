@@ -46,13 +46,15 @@ class _Decision:
     ``kind`` is one of:
 
     * ``"silent"`` - the example is silently skipped (no exception).
-    * ``"raise"`` - the example is skipped by raising ``exception``.
+    * ``"raise"`` - the example is skipped by raising
+      ``SkipTest(skip_reason)``. A fresh exception instance is built at
+      each raise site to avoid sharing ``__traceback__`` across threads.
     * ``"fall_through"`` - the directive does not apply (a conditional
       ``if`` evaluated falsy); the example evaluates normally.
     """
 
     kind: str
-    exception: Exception | None
+    skip_reason: object | None
 
 
 @dataclass
@@ -208,7 +210,7 @@ class ThreadSafeSkipper(Skipper):
         """Compute the decision for a directive without caching."""
         reason = directive.reason
         if not reason:
-            return _Decision(kind="silent", exception=None)
+            return _Decision(kind="silent", skip_reason=None)
 
         namespace = document.namespace.copy()
         text = reason.lstrip()
@@ -219,11 +221,8 @@ class ThreadSafeSkipper(Skipper):
             namespace["if_"] = If(default_reason=condition)
         result = eval(text, namespace)  # noqa: S307  # pylint: disable=eval-used
         if result:
-            return _Decision(
-                kind="raise",
-                exception=_make_skip(reason=result),
-            )
-        return _Decision(kind="fall_through", exception=None)
+            return _Decision(kind="raise", skip_reason=result)
+        return _Decision(kind="fall_through", skip_reason=None)
 
     def evaluate_skip_example(self, example: Example) -> None:
         """Validate the skip directive at ``example``'s region.
@@ -247,8 +246,10 @@ class ThreadSafeSkipper(Skipper):
         )
         if decision.kind == "fall_through":
             raise NotEvaluated
-        if decision.kind == "raise" and decision.exception is not None:
-            raise decision.exception
+        if decision.kind == "raise":
+            # Build a fresh ``SkipTest`` per raise so concurrent threads
+            # do not race on a shared ``__traceback__`` attribute.
+            raise _make_skip(reason=decision.skip_reason)
 
     def __call__(self, example: Example) -> None:
         """Evaluate ``example`` against this skipper."""
