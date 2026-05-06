@@ -209,6 +209,45 @@ the Sybil documentation for skipping examples in
 MDX, and `MyST <https://sybil.readthedocs.io/en/latest/myst.html#skipping-examples>`_ files,
 but with custom text, e.g. ``custom-marker-skip`` replacing the word ``skip``.
 
+ThreadSafeSkipParser
+^^^^^^^^^^^^^^^^^^^^
+
+The ``ThreadSafeSkipParser`` is a thread-safe drop-in replacement for the standard skip parser.
+Use it when examples from a single document may be evaluated concurrently (e.g. dispatched across a thread pool).
+
+The upstream ``sybil.evaluators.skip.Skipper`` mutates per-document state as examples are evaluated, so concurrent evaluation can race and produce non-deterministic skip decisions (see `simplistix/sybil#166 <https://github.com/simplistix/sybil/issues/166>`_).
+``ThreadSafeSkipParser`` resolves each non-skip example to its governing skip directive at parse time by walking ``document.regions`` once under a per-document lock.
+Conditional ``if`` reasons are evaluated lazily and cached per directive, so concurrent evaluators all see the same decision.
+
+.. code-block:: python
+
+    """Use ThreadSafeSkipParser for concurrent example evaluation."""
+
+    from sybil import Sybil
+    from sybil.parsers.rest.codeblock import PythonCodeBlockParser
+
+    # Similar parsers are available at
+    # sybil_extras.parsers.djot.thread_safe_skip,
+    # sybil_extras.parsers.markdown.thread_safe_skip,
+    # sybil_extras.parsers.markdown_it.thread_safe_skip,
+    # sybil_extras.parsers.mdx.thread_safe_skip,
+    # sybil_extras.parsers.myst.thread_safe_skip,
+    # sybil_extras.parsers.myst_parser.thread_safe_skip,
+    # sybil_extras.parsers.norg.thread_safe_skip.
+    from sybil_extras.parsers.rest.thread_safe_skip import (
+        ThreadSafeSkipParser,
+    )
+
+    skip_parser = ThreadSafeSkipParser(directive="skip")
+    code_block_parser = PythonCodeBlockParser()
+
+    sybil = Sybil(parsers=[skip_parser, code_block_parser])
+
+    pytest_collect_file = sybil.pytest()
+
+The directive syntax (``skip: start`` / ``skip: next`` / ``skip: end``, including conditional ``skip: next if(...)`` reasons) matches upstream Sybil exactly, so existing documents do not need to change.
+Like ``CustomDirectiveSkipParser``, the directive name is configurable, so the parser can also be used as a thread-safe replacement for custom skip markers.
+
 GroupedSourceParser
 ^^^^^^^^^^^^^^^^^^^
 
