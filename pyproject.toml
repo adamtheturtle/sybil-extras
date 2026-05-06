@@ -319,6 +319,16 @@ report.exclude_also = [
 ]
 report.show_missing = true
 
+[tool.mypy_strict_kwargs]
+# ``builtins.eval`` has a version-gated typeshed signature: on
+# 3.13+ ``globals`` and ``locals`` are positional-or-keyword, but
+# at the project's minimum Python (3.11) they are positional-only
+# at runtime. Letting the plugin transform them on 3.13+ produces
+# code that fails on 3.11/3.12, and conflicts with ``ty`` which
+# pins the signature to the minimum-supported version. Opt the
+# call out so we can pass arguments positionally everywhere.
+ignore_names = [ "builtins.eval" ]
+
 [tool.pydocstringformatter]
 write = true
 split-summary-body = false
