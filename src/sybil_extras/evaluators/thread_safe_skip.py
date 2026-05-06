@@ -25,20 +25,6 @@ from sybil.example import NotEvaluated
 from sybil.region import Region
 
 
-def _make_skip(reason: object) -> SkipTest:
-    """Build a :class:`unittest.SkipTest` carrying ``reason``.
-
-    Typeshed declares ``SkipTest.__init__(self, reason: str)``, but at
-    runtime the class only inherits ``BaseException.__init__``, which
-    accepts a variadic ``*args``. Initializing via ``BaseException``
-    avoids the typeshed/runtime mismatch and the project's
-    strict-kwargs mypy plugin.
-    """
-    exception = SkipTest.__new__(SkipTest)
-    BaseException.__init__(exception, reason)
-    return exception
-
-
 @dataclass(frozen=True)
 class _Decision:
     """Cached skip decision for a directive's governed examples.
@@ -248,8 +234,12 @@ class ThreadSafeSkipper(Skipper):
             raise NotEvaluated
         if decision.kind == "raise":
             # Build a fresh ``SkipTest`` per raise so concurrent threads
-            # do not race on a shared ``__traceback__`` attribute.
-            raise _make_skip(reason=decision.skip_reason)
+            # do not race on a shared ``__traceback__`` attribute. The
+            # ``type: ignore`` is needed until typeshed PR
+            # https://github.com/python/typeshed/pull/15703 reaches the
+            # bundled stubs and the project's strict-kwargs mypy plugin
+            # therefore stops rejecting the positional call.
+            raise SkipTest(str(object=decision.skip_reason))  # type: ignore[misc]
 
     def __call__(self, example: Example) -> None:
         """Evaluate ``example`` against this skipper."""
