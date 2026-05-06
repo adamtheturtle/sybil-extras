@@ -17,34 +17,42 @@ import sybil_extras.parsers.djot.codeblock
 import sybil_extras.parsers.djot.custom_directive_skip
 import sybil_extras.parsers.djot.group_all
 import sybil_extras.parsers.djot.grouped_source
+import sybil_extras.parsers.djot.thread_safe_skip
 import sybil_extras.parsers.markdown.custom_directive_skip
 import sybil_extras.parsers.markdown.group_all
 import sybil_extras.parsers.markdown.grouped_source
+import sybil_extras.parsers.markdown.thread_safe_skip
 import sybil_extras.parsers.markdown_it.codeblock
 import sybil_extras.parsers.markdown_it.custom_directive_skip
 import sybil_extras.parsers.markdown_it.group_all
 import sybil_extras.parsers.markdown_it.grouped_source
+import sybil_extras.parsers.markdown_it.thread_safe_skip
 import sybil_extras.parsers.mdx.codeblock
 import sybil_extras.parsers.mdx.custom_directive_skip
 import sybil_extras.parsers.mdx.group_all
 import sybil_extras.parsers.mdx.grouped_source
+import sybil_extras.parsers.mdx.thread_safe_skip
 import sybil_extras.parsers.myst.custom_directive_skip
 import sybil_extras.parsers.myst.group_all
 import sybil_extras.parsers.myst.grouped_source
 import sybil_extras.parsers.myst.sphinx_jinja2
+import sybil_extras.parsers.myst.thread_safe_skip
 import sybil_extras.parsers.myst_parser.codeblock
 import sybil_extras.parsers.myst_parser.custom_directive_skip
 import sybil_extras.parsers.myst_parser.group_all
 import sybil_extras.parsers.myst_parser.grouped_source
 import sybil_extras.parsers.myst_parser.sphinx_jinja2
+import sybil_extras.parsers.myst_parser.thread_safe_skip
 import sybil_extras.parsers.norg.codeblock
 import sybil_extras.parsers.norg.custom_directive_skip
 import sybil_extras.parsers.norg.group_all
 import sybil_extras.parsers.norg.grouped_source
+import sybil_extras.parsers.norg.thread_safe_skip
 import sybil_extras.parsers.rest.custom_directive_skip
 import sybil_extras.parsers.rest.group_all
 import sybil_extras.parsers.rest.grouped_source
 import sybil_extras.parsers.rest.sphinx_jinja2
+import sybil_extras.parsers.rest.thread_safe_skip
 
 
 @runtime_checkable
@@ -295,6 +303,7 @@ class MarkupLanguage:
     name: str
     markup_separator: str
     skip_parser_cls: type[_SkipParser]
+    thread_safe_skip_parser_cls: type[_SkipParser]
     code_block_parser_cls: type[_CodeBlockParser]
     group_parser_cls: type[_GroupedSourceParser]
     group_all_parser_cls: type[_GroupAllParser]
@@ -310,6 +319,9 @@ MYST = MarkupLanguage(
     skip_parser_cls=(
         sybil_extras.parsers.myst.custom_directive_skip.CustomDirectiveSkipParser
     ),
+    thread_safe_skip_parser_cls=(
+        sybil_extras.parsers.myst.thread_safe_skip.ThreadSafeSkipParser
+    ),
     code_block_parser_cls=sybil.parsers.myst.CodeBlockParser,
     group_parser_cls=sybil_extras.parsers.myst.grouped_source.GroupedSourceParser,
     group_all_parser_cls=sybil_extras.parsers.myst.group_all.GroupAllParser,
@@ -324,6 +336,9 @@ MYST_PARSER = MarkupLanguage(
     markup_separator="\n\n",
     skip_parser_cls=(
         sybil_extras.parsers.myst_parser.custom_directive_skip.CustomDirectiveSkipParser
+    ),
+    thread_safe_skip_parser_cls=(
+        sybil_extras.parsers.myst_parser.thread_safe_skip.ThreadSafeSkipParser
     ),
     code_block_parser_cls=sybil_extras.parsers.myst_parser.codeblock.CodeBlockParser,
     group_parser_cls=sybil_extras.parsers.myst_parser.grouped_source.GroupedSourceParser,
@@ -341,6 +356,9 @@ RESTRUCTUREDTEXT = MarkupLanguage(
     name="reStructuredText",
     markup_separator="\n\n",
     skip_parser_cls=sybil_extras.parsers.rest.custom_directive_skip.CustomDirectiveSkipParser,
+    thread_safe_skip_parser_cls=(
+        sybil_extras.parsers.rest.thread_safe_skip.ThreadSafeSkipParser
+    ),
     code_block_parser_cls=sybil.parsers.rest.CodeBlockParser,
     group_parser_cls=sybil_extras.parsers.rest.grouped_source.GroupedSourceParser,
     group_all_parser_cls=sybil_extras.parsers.rest.group_all.GroupAllParser,
@@ -354,6 +372,9 @@ MARKDOWN = MarkupLanguage(
     name="Markdown",
     markup_separator="\n",
     skip_parser_cls=sybil_extras.parsers.markdown.custom_directive_skip.CustomDirectiveSkipParser,
+    thread_safe_skip_parser_cls=(
+        sybil_extras.parsers.markdown.thread_safe_skip.ThreadSafeSkipParser
+    ),
     code_block_parser_cls=sybil.parsers.markdown.CodeBlockParser,
     group_parser_cls=sybil_extras.parsers.markdown.grouped_source.GroupedSourceParser,
     group_all_parser_cls=sybil_extras.parsers.markdown.group_all.GroupAllParser,
@@ -367,6 +388,9 @@ MARKDOWN_IT = MarkupLanguage(
     name="MarkdownIt",
     markup_separator="\n",
     skip_parser_cls=sybil_extras.parsers.markdown_it.custom_directive_skip.CustomDirectiveSkipParser,
+    thread_safe_skip_parser_cls=(
+        sybil_extras.parsers.markdown_it.thread_safe_skip.ThreadSafeSkipParser
+    ),
     code_block_parser_cls=sybil_extras.parsers.markdown_it.codeblock.CodeBlockParser,
     group_parser_cls=sybil_extras.parsers.markdown_it.grouped_source.GroupedSourceParser,
     group_all_parser_cls=sybil_extras.parsers.markdown_it.group_all.GroupAllParser,
@@ -380,6 +404,9 @@ MDX = MarkupLanguage(
     name="MDX",
     markup_separator="\n",
     skip_parser_cls=sybil_extras.parsers.mdx.custom_directive_skip.CustomDirectiveSkipParser,
+    thread_safe_skip_parser_cls=(
+        sybil_extras.parsers.mdx.thread_safe_skip.ThreadSafeSkipParser
+    ),
     code_block_parser_cls=sybil_extras.parsers.mdx.codeblock.CodeBlockParser,
     group_parser_cls=sybil_extras.parsers.mdx.grouped_source.GroupedSourceParser,
     group_all_parser_cls=sybil_extras.parsers.mdx.group_all.GroupAllParser,
@@ -393,6 +420,9 @@ DJOT = MarkupLanguage(
     name="Djot",
     markup_separator="\n",
     skip_parser_cls=sybil_extras.parsers.djot.custom_directive_skip.CustomDirectiveSkipParser,
+    thread_safe_skip_parser_cls=(
+        sybil_extras.parsers.djot.thread_safe_skip.ThreadSafeSkipParser
+    ),
     code_block_parser_cls=sybil_extras.parsers.djot.codeblock.CodeBlockParser,
     group_parser_cls=sybil_extras.parsers.djot.grouped_source.GroupedSourceParser,
     group_all_parser_cls=sybil_extras.parsers.djot.group_all.GroupAllParser,
@@ -406,6 +436,9 @@ NORG = MarkupLanguage(
     name="Norg",
     markup_separator="\n",
     skip_parser_cls=sybil_extras.parsers.norg.custom_directive_skip.CustomDirectiveSkipParser,
+    thread_safe_skip_parser_cls=(
+        sybil_extras.parsers.norg.thread_safe_skip.ThreadSafeSkipParser
+    ),
     code_block_parser_cls=sybil_extras.parsers.norg.codeblock.CodeBlockParser,
     group_parser_cls=sybil_extras.parsers.norg.grouped_source.GroupedSourceParser,
     group_all_parser_cls=sybil_extras.parsers.norg.group_all.GroupAllParser,
