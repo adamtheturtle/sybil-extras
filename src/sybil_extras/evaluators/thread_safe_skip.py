@@ -14,8 +14,10 @@ walking ``document.regions`` once under a per-document lock. Conditional
 the result cached so concurrent evaluators all see the same decision.
 """
 
+import builtins
 import threading
 from dataclasses import dataclass, field
+from typing import Any
 from unittest import SkipTest
 
 from beartype import beartype
@@ -23,6 +25,22 @@ from sybil import Document, Example
 from sybil.evaluators.skip import If, Skipper
 from sybil.example import NotEvaluated
 from sybil.region import Region
+
+# ``eval`` has a positional-only signature in typeshed but is reported
+# as "too many positional arguments" by this project's strict-kwargs
+# mypy plugin. Going through an ``Any`` reference bypasses both
+# checkers without per-call suppressions.
+_eval: Any = builtins.eval
+
+
+def _eval_in_namespace(*, source: str, namespace: dict[str, Any]) -> object:
+    """Run :func:`eval` against ``namespace``.
+
+    Wrapping ``eval`` keeps the unsafe call site (and the per-line
+    ``# noqa`` / ``# pylint`` suppressions) confined here, and exposes
+    keyword-only parameters to callers.
+    """
+    return _eval(source, namespace)  # pylint: disable=eval-used
 
 
 def _make_skip(reason: object) -> SkipTest:
@@ -213,10 +231,7 @@ class ThreadSafeSkipper(Skipper):
             condition = text[2:]
             text = "if_" + condition
             namespace["if_"] = If(default_reason=condition)
-        result = eval(  # noqa: S307  # pylint: disable=eval-used
-            text,
-            globals=namespace,
-        )
+        result = _eval_in_namespace(source=text, namespace=namespace)
         if result:
             return _Decision(
                 kind="raise",
