@@ -26,7 +26,6 @@ from sybil.example import NotEvaluated
 from sybil.region import Region
 
 
-@beartype
 @dataclass
 class _SkipDirective:
     """Resolved metadata about a ``skip`` directive in a document."""
@@ -36,10 +35,11 @@ class _SkipDirective:
     reason: str | None
     sequence_error: ValueError | None = None
     decision: Optional["_Decision"] = None
-    decision_lock: threading.Lock = field(default_factory=threading.Lock)
+    decision_lock: "threading.Lock" = field(
+        default_factory=threading.Lock,
+    )
 
 
-@beartype
 @dataclass(frozen=True)
 class _Decision:
     """Cached skip decision for a directive's governed examples.
@@ -56,7 +56,6 @@ class _Decision:
     exception: Exception | None = None
 
 
-@beartype
 @dataclass
 class _DocumentPlan:
     """Per-document skip plan built from regions in source order."""
