@@ -29,18 +29,17 @@ from sybil.region import Region
 # ``eval`` has a positional-only signature in typeshed but is reported
 # as "too many positional arguments" by this project's strict-kwargs
 # mypy plugin. Going through an ``Any`` reference bypasses both
-# checkers without per-call suppressions.
+# checkers.
 _eval: Any = builtins.eval
 
 
 def _eval_in_namespace(*, source: str, namespace: dict[str, Any]) -> object:
     """Run :func:`eval` against ``namespace``.
 
-    Wrapping ``eval`` keeps the unsafe call site (and the per-line
-    ``# noqa`` / ``# pylint`` suppressions) confined here, and exposes
+    Wrapping ``eval`` keeps the call site confined here and exposes
     keyword-only parameters to callers.
     """
-    return _eval(source, namespace)  # pylint: disable=eval-used
+    return _eval(source, namespace)
 
 
 def _make_skip(reason: object) -> SkipTest:
