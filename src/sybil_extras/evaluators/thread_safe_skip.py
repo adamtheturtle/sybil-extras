@@ -15,7 +15,7 @@ the result cached so concurrent evaluators all see the same decision.
 """
 
 import threading
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from unittest import SkipTest
 
 from beartype import beartype
@@ -39,20 +39,6 @@ def _make_skip(reason: object) -> SkipTest:
     return exception
 
 
-@dataclass
-class _SkipDirective:
-    """Resolved metadata about a ``skip`` directive in a document."""
-
-    region: Region
-    action: str
-    reason: str | None
-    sequence_error: ValueError | None = None
-    decision: "_Decision | None" = None
-    decision_lock: "threading.Lock" = field(
-        default_factory=threading.Lock,
-    )
-
-
 @dataclass(frozen=True)
 class _Decision:
     """Cached skip decision for a directive's governed examples.
@@ -66,19 +52,27 @@ class _Decision:
     """
 
     kind: str
-    exception: Exception | None = None
+    exception: Exception | None
+
+
+@dataclass
+class _SkipDirective:
+    """Resolved metadata about a ``skip`` directive in a document."""
+
+    region: Region
+    action: str
+    reason: str | None
+    sequence_error: ValueError | None
+    decision: _Decision | None
+    decision_lock: "threading.Lock"
 
 
 @dataclass
 class _DocumentPlan:
     """Per-document skip plan built from regions in source order."""
 
-    directive_for_region: dict[int, _SkipDirective] = field(
-        default_factory=dict[int, _SkipDirective],
-    )
-    skip_directive_for_region: dict[int, _SkipDirective] = field(
-        default_factory=dict[int, _SkipDirective],
-    )
+    directive_for_region: dict[int, _SkipDirective]
+    skip_directive_for_region: dict[int, _SkipDirective]
 
 
 @beartype
@@ -139,7 +133,10 @@ class ThreadSafeSkipper(Skipper):
         """Walk ``document.regions`` and resolve each region's skip
         state.
         """
-        plan = _DocumentPlan()
+        plan = _DocumentPlan(
+            directive_for_region={},
+            skip_directive_for_region={},
+        )
         last_action: str | None = None
         pending_next: _SkipDirective | None = None
         active_start: _SkipDirective | None = None
@@ -155,7 +152,14 @@ class ThreadSafeSkipper(Skipper):
                 continue
 
             action, reason = region.parsed
-            entry = _SkipDirective(region=region, action=action, reason=reason)
+            entry = _SkipDirective(
+                region=region,
+                action=action,
+                reason=reason,
+                sequence_error=None,
+                decision=None,
+                decision_lock=threading.Lock(),
+            )
             plan.skip_directive_for_region[id(region)] = entry
             entry.sequence_error = self._validate_skip_action(
                 action=action,
@@ -204,7 +208,7 @@ class ThreadSafeSkipper(Skipper):
         """Compute the decision for a directive without caching."""
         reason = directive.reason
         if not reason:
-            return _Decision(kind="silent")
+            return _Decision(kind="silent", exception=None)
 
         namespace = document.namespace.copy()
         text = reason.lstrip()
@@ -219,7 +223,7 @@ class ThreadSafeSkipper(Skipper):
                 kind="raise",
                 exception=_make_skip(reason=result),
             )
-        return _Decision(kind="fall_through")
+        return _Decision(kind="fall_through", exception=None)
 
     def evaluate_skip_example(self, example: Example) -> None:
         """Validate the skip directive at ``example``'s region.
