@@ -3,17 +3,46 @@ languages.
 """
 
 import threading
+from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Protocol, cast
 from unittest import SkipTest
 
 import pytest
-from sybil import Example, Sybil
+from sybil import Document, Example, Region, Sybil
 from sybil.evaluators.python import PythonEvaluator
 from sybil.typing import Evaluator
 
 from sybil_extras.evaluators.thread_safe_skip import ThreadSafeSkipper
 from sybil_extras.languages import DirectiveBuilder, MarkupLanguage
+
+
+class _ThreadSafeSkipParserProtocol(Protocol):
+    """Minimal shape of a thread-safe skip parser used in these tests."""
+
+    def __init__(self, directive: str) -> None:
+        """Construct a skip parser for ``directive``."""
+        ...  # pylint: disable=unnecessary-ellipsis
+
+    def __call__(self, document: Document) -> Iterable[Region]:
+        """Yield skip regions for ``document``."""
+        ...  # pylint: disable=unnecessary-ellipsis
+
+    def get_skipper(self) -> ThreadSafeSkipper:
+        """Return the thread-safe skipper backing this parser."""
+        ...  # pylint: disable=unnecessary-ellipsis
+
+
+@dataclass(frozen=True)
+class _SybilFixture:
+    """Bundle of a configured ``Sybil`` and its thread-safe skip
+    parser.
+    """
+
+    sybil: Sybil
+    skip_parser: _ThreadSafeSkipParserProtocol
 
 
 class _RecordingEvaluator:
@@ -37,19 +66,20 @@ def _build_sybil(
     language: MarkupLanguage,
     directive_name: str,
     code_block_evaluator: Evaluator,
-) -> tuple[Sybil, object]:
+) -> _SybilFixture:
     """Build a Sybil instance with the thread-safe skip parser
     configured.
     """
-    skip_parser = language.thread_safe_skip_parser_cls(
-        directive=directive_name,
+    skip_parser = cast(
+        "_ThreadSafeSkipParserProtocol",
+        language.thread_safe_skip_parser_cls(directive=directive_name),
     )
     code_block_parser = language.code_block_parser_cls(
         language="python",
         evaluator=code_block_evaluator,
     )
     sybil = Sybil(parsers=[code_block_parser, skip_parser])
-    return sybil, skip_parser
+    return _SybilFixture(sybil=sybil, skip_parser=skip_parser)
 
 
 def test_skip_next_sequential(
@@ -72,12 +102,12 @@ def test_skip_next_sequential(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
-    sybil, _ = _build_sybil(
+    fixture = _build_sybil(
         language=language,
         directive_name="custom-skip",
         code_block_evaluator=PythonEvaluator(),
     )
-    document = sybil.parse(path=test_document)
+    document = fixture.sybil.parse(path=test_document)
     for example in document.examples():
         example.evaluate()
     assert document.namespace["x"] == [3]
@@ -105,12 +135,12 @@ def test_skip_start_end_sequential(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
-    sybil, _ = _build_sybil(
+    fixture = _build_sybil(
         language=language,
         directive_name="custom-skip",
         code_block_evaluator=PythonEvaluator(),
     )
-    document = sybil.parse(path=test_document)
+    document = fixture.sybil.parse(path=test_document)
     for example in document.examples():
         example.evaluate()
     assert document.namespace["x"] == [1, 4]
@@ -138,12 +168,12 @@ def test_skip_next_with_reason(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
-    sybil, _ = _build_sybil(
+    fixture = _build_sybil(
         language=language,
         directive_name="custom-skip",
         code_block_evaluator=PythonEvaluator(),
     )
-    document = sybil.parse(path=test_document)
+    document = fixture.sybil.parse(path=test_document)
     examples = list(document.examples())
     examples[0].evaluate()
     with pytest.raises(expected_exception=SkipTest, match="always"):
@@ -170,12 +200,12 @@ def test_skip_next_conditional_truthy(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
-    sybil, _ = _build_sybil(
+    fixture = _build_sybil(
         language=language,
         directive_name="custom-skip",
         code_block_evaluator=PythonEvaluator(),
     )
-    document = sybil.parse(path=test_document)
+    document = fixture.sybil.parse(path=test_document)
     examples = list(document.examples())
     examples[0].evaluate()
     with pytest.raises(expected_exception=SkipTest):
@@ -202,12 +232,12 @@ def test_skip_next_conditional_falsy(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
-    sybil, _ = _build_sybil(
+    fixture = _build_sybil(
         language=language,
         directive_name="custom-skip",
         code_block_evaluator=PythonEvaluator(),
     )
-    document = sybil.parse(path=test_document)
+    document = fixture.sybil.parse(path=test_document)
     for example in document.examples():
         example.evaluate()
     assert document.namespace["x"] == 1
@@ -246,12 +276,12 @@ def test_concurrent_evaluation_deterministic(
 
     for _ in range(50):
         recorder = _RecordingEvaluator()
-        sybil, _parser = _build_sybil(
+        fixture = _build_sybil(
             language=language,
             directive_name="custom-skip",
             code_block_evaluator=recorder,
         )
-        document = sybil.parse(path=test_document)
+        document = fixture.sybil.parse(path=test_document)
         examples: list[Example] = list(document.examples())
         first_code, _start, second_code, third_code, _end, fourth_code = (
             examples
@@ -294,12 +324,12 @@ def test_concurrent_skip_next(
 
     for _ in range(50):
         recorder = _RecordingEvaluator()
-        sybil, _parser = _build_sybil(
+        fixture = _build_sybil(
             language=language,
             directive_name="custom-skip",
             code_block_evaluator=recorder,
         )
-        document = sybil.parse(path=test_document)
+        document = fixture.sybil.parse(path=test_document)
         examples: list[Example] = list(document.examples())
         first_code, _skip_next, skipped_code, third_code = examples
 
@@ -329,12 +359,12 @@ def test_sequence_error_directive_name(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
-    sybil, _ = _build_sybil(
+    fixture = _build_sybil(
         language=language,
         directive_name="custom-skip",
         code_block_evaluator=PythonEvaluator(),
     )
-    document = sybil.parse(path=test_document)
+    document = fixture.sybil.parse(path=test_document)
     (example,) = document.examples()
     with pytest.raises(
         expected_exception=ValueError,
@@ -356,12 +386,12 @@ def test_sequence_error_bad_action(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
-    sybil, _ = _build_sybil(
+    fixture = _build_sybil(
         language=language,
         directive_name="custom-skip",
         code_block_evaluator=PythonEvaluator(),
     )
-    document = sybil.parse(path=test_document)
+    document = fixture.sybil.parse(path=test_document)
     (example,) = document.examples()
     with pytest.raises(
         expected_exception=ValueError,
@@ -390,12 +420,12 @@ def test_sequence_error_double_start(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
-    sybil, _ = _build_sybil(
+    fixture = _build_sybil(
         language=language,
         directive_name="custom-skip",
         code_block_evaluator=PythonEvaluator(),
     )
-    document = sybil.parse(path=test_document)
+    document = fixture.sybil.parse(path=test_document)
     examples = list(document.examples())
     examples[0].evaluate()
     with pytest.raises(
@@ -425,12 +455,12 @@ def test_sequence_error_end_with_reason(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
-    sybil, _ = _build_sybil(
+    fixture = _build_sybil(
         language=language,
         directive_name="custom-skip",
         code_block_evaluator=PythonEvaluator(),
     )
-    document = sybil.parse(path=test_document)
+    document = fixture.sybil.parse(path=test_document)
     examples = list(document.examples())
     examples[0].evaluate()
     with pytest.raises(
@@ -465,12 +495,12 @@ def test_multiple_intervals_in_one_document(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
-    sybil, _ = _build_sybil(
+    fixture = _build_sybil(
         language=language,
         directive_name="custom-skip",
         code_block_evaluator=PythonEvaluator(),
     )
-    document = sybil.parse(path=test_document)
+    document = fixture.sybil.parse(path=test_document)
     for example in document.examples():
         example.evaluate()
     assert "a" in document.namespace
@@ -504,12 +534,12 @@ def test_end_cancels_pending_next(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
-    sybil, _ = _build_sybil(
+    fixture = _build_sybil(
         language=language,
         directive_name="custom-skip",
         code_block_evaluator=PythonEvaluator(),
     )
-    document = sybil.parse(path=test_document)
+    document = fixture.sybil.parse(path=test_document)
     for example in document.examples():
         example.evaluate()
     assert document.namespace["a"] == 1
@@ -528,12 +558,12 @@ def test_no_skip_directives(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
-    sybil, _ = _build_sybil(
+    fixture = _build_sybil(
         language=language,
         directive_name="custom-skip",
         code_block_evaluator=PythonEvaluator(),
     )
-    document = sybil.parse(path=test_document)
+    document = fixture.sybil.parse(path=test_document)
     for example in document.examples():
         example.evaluate()
     assert document.namespace["a"] == 1
