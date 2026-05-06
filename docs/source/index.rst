@@ -215,7 +215,7 @@ ThreadSafeSkipParser
 The ``ThreadSafeSkipParser`` is a thread-safe drop-in replacement for the standard skip parser.
 Use it when examples from a single document may be evaluated concurrently (e.g. dispatched across a thread pool).
 
-The upstream :class:`sybil.evaluators.skip.Skipper` mutates per-document state as examples are evaluated, so concurrent evaluation can race and produce non-deterministic skip decisions (see `simplistix/sybil#166 <https://github.com/simplistix/sybil/issues/166>`_).
+The upstream ``sybil.evaluators.skip.Skipper`` mutates per-document state as examples are evaluated, so concurrent evaluation can race and produce non-deterministic skip decisions (see `simplistix/sybil#166 <https://github.com/simplistix/sybil/issues/166>`_).
 ``ThreadSafeSkipParser`` resolves each non-skip example to its governing skip directive at parse time by walking ``document.regions`` once under a per-document lock.
 Conditional ``if`` reasons are evaluated lazily and cached per directive, so concurrent evaluators all see the same decision.
 
