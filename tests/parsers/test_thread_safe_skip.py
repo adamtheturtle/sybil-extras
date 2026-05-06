@@ -35,8 +35,8 @@ class _RecordingEvaluator:
 def _build_sybil(
     *,
     language: MarkupLanguage,
-    directive_name: str = "custom-skip",
-    code_block_evaluator: Evaluator | None = None,
+    directive_name: str,
+    code_block_evaluator: Evaluator,
 ) -> tuple[Sybil, object]:
     """Build a Sybil instance with the thread-safe skip parser
     configured.
@@ -46,7 +46,7 @@ def _build_sybil(
     )
     code_block_parser = language.code_block_parser_cls(
         language="python",
-        evaluator=code_block_evaluator or PythonEvaluator(),
+        evaluator=code_block_evaluator,
     )
     sybil = Sybil(parsers=[code_block_parser, skip_parser])
     return sybil, skip_parser
@@ -72,7 +72,11 @@ def test_skip_next_sequential(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
-    sybil, _ = _build_sybil(language=language)
+    sybil, _ = _build_sybil(
+        language=language,
+        directive_name="custom-skip",
+        code_block_evaluator=PythonEvaluator(),
+    )
     document = sybil.parse(path=test_document)
     for example in document.examples():
         example.evaluate()
@@ -101,7 +105,11 @@ def test_skip_start_end_sequential(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
-    sybil, _ = _build_sybil(language=language)
+    sybil, _ = _build_sybil(
+        language=language,
+        directive_name="custom-skip",
+        code_block_evaluator=PythonEvaluator(),
+    )
     document = sybil.parse(path=test_document)
     for example in document.examples():
         example.evaluate()
@@ -130,7 +138,11 @@ def test_skip_next_with_reason(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
-    sybil, _ = _build_sybil(language=language)
+    sybil, _ = _build_sybil(
+        language=language,
+        directive_name="custom-skip",
+        code_block_evaluator=PythonEvaluator(),
+    )
     document = sybil.parse(path=test_document)
     examples = list(document.examples())
     examples[0].evaluate()
@@ -158,7 +170,11 @@ def test_skip_next_conditional_truthy(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
-    sybil, _ = _build_sybil(language=language)
+    sybil, _ = _build_sybil(
+        language=language,
+        directive_name="custom-skip",
+        code_block_evaluator=PythonEvaluator(),
+    )
     document = sybil.parse(path=test_document)
     examples = list(document.examples())
     examples[0].evaluate()
@@ -186,7 +202,11 @@ def test_skip_next_conditional_falsy(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
-    sybil, _ = _build_sybil(language=language)
+    sybil, _ = _build_sybil(
+        language=language,
+        directive_name="custom-skip",
+        code_block_evaluator=PythonEvaluator(),
+    )
     document = sybil.parse(path=test_document)
     for example in document.examples():
         example.evaluate()
@@ -227,7 +247,9 @@ def test_concurrent_evaluation_deterministic(
     for _ in range(50):
         recorder = _RecordingEvaluator()
         sybil, _parser = _build_sybil(
-            language=language, code_block_evaluator=recorder
+            language=language,
+            directive_name="custom-skip",
+            code_block_evaluator=recorder,
         )
         document = sybil.parse(path=test_document)
         examples: list[Example] = list(document.examples())
@@ -273,7 +295,9 @@ def test_concurrent_skip_next(
     for _ in range(50):
         recorder = _RecordingEvaluator()
         sybil, _parser = _build_sybil(
-            language=language, code_block_evaluator=recorder
+            language=language,
+            directive_name="custom-skip",
+            code_block_evaluator=recorder,
         )
         document = sybil.parse(path=test_document)
         examples: list[Example] = list(document.examples())
@@ -305,7 +329,11 @@ def test_sequence_error_directive_name(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
-    sybil, _ = _build_sybil(language=language)
+    sybil, _ = _build_sybil(
+        language=language,
+        directive_name="custom-skip",
+        code_block_evaluator=PythonEvaluator(),
+    )
     document = sybil.parse(path=test_document)
     (example,) = document.examples()
     with pytest.raises(
@@ -328,7 +356,11 @@ def test_sequence_error_bad_action(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
-    sybil, _ = _build_sybil(language=language)
+    sybil, _ = _build_sybil(
+        language=language,
+        directive_name="custom-skip",
+        code_block_evaluator=PythonEvaluator(),
+    )
     document = sybil.parse(path=test_document)
     (example,) = document.examples()
     with pytest.raises(
@@ -358,7 +390,11 @@ def test_sequence_error_double_start(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
-    sybil, _ = _build_sybil(language=language)
+    sybil, _ = _build_sybil(
+        language=language,
+        directive_name="custom-skip",
+        code_block_evaluator=PythonEvaluator(),
+    )
     document = sybil.parse(path=test_document)
     examples = list(document.examples())
     examples[0].evaluate()
@@ -389,7 +425,11 @@ def test_sequence_error_end_with_reason(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
-    sybil, _ = _build_sybil(language=language)
+    sybil, _ = _build_sybil(
+        language=language,
+        directive_name="custom-skip",
+        code_block_evaluator=PythonEvaluator(),
+    )
     document = sybil.parse(path=test_document)
     examples = list(document.examples())
     examples[0].evaluate()
@@ -425,7 +465,11 @@ def test_multiple_intervals_in_one_document(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
-    sybil, _ = _build_sybil(language=language)
+    sybil, _ = _build_sybil(
+        language=language,
+        directive_name="custom-skip",
+        code_block_evaluator=PythonEvaluator(),
+    )
     document = sybil.parse(path=test_document)
     for example in document.examples():
         example.evaluate()
@@ -460,7 +504,11 @@ def test_end_cancels_pending_next(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
-    sybil, _ = _build_sybil(language=language)
+    sybil, _ = _build_sybil(
+        language=language,
+        directive_name="custom-skip",
+        code_block_evaluator=PythonEvaluator(),
+    )
     document = sybil.parse(path=test_document)
     for example in document.examples():
         example.evaluate()
@@ -480,7 +528,11 @@ def test_no_skip_directives(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
-    sybil, _ = _build_sybil(language=language)
+    sybil, _ = _build_sybil(
+        language=language,
+        directive_name="custom-skip",
+        code_block_evaluator=PythonEvaluator(),
+    )
     document = sybil.parse(path=test_document)
     for example in document.examples():
         example.evaluate()

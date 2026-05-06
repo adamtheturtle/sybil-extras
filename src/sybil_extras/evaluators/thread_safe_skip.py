@@ -62,8 +62,8 @@ class _DocumentPlan:
     directive_for_region: dict[int, _SkipDirective] = field(
         default_factory=dict[int, _SkipDirective],
     )
-    directives: list[_SkipDirective] = field(
-        default_factory=list[_SkipDirective],
+    skip_directive_for_region: dict[int, _SkipDirective] = field(
+        default_factory=dict[int, _SkipDirective],
     )
 
 
@@ -142,7 +142,7 @@ class ThreadSafeSkipper(Skipper):
 
             action, reason = region.parsed
             entry = _SkipDirective(region=region, action=action, reason=reason)
-            plan.directives.append(entry)
+            plan.skip_directive_for_region[id(region)] = entry
             entry.sequence_error = self._validate_skip_action(
                 action=action,
                 reason=reason,
@@ -217,18 +217,9 @@ class ThreadSafeSkipper(Skipper):
         the message and ordering of upstream ``Skipper``.
         """
         plan = self._plan_for(document=example.document)
-        for entry in plan.directives:
-            if entry.region is example.region:
-                if entry.sequence_error is not None:
-                    raise entry.sequence_error
-                return
-        # The plan is built from the same document.regions that produced
-        # this example, so a missing entry means the document was mutated
-        # under us; surface a clear error rather than silently passing.
-        message = (  # pragma: no cover
-            "skip directive evaluated without a matching plan entry"
-        )
-        raise RuntimeError(message)  # pragma: no cover
+        entry = plan.skip_directive_for_region[id(example.region)]
+        if entry.sequence_error is not None:
+            raise entry.sequence_error
 
     def evaluate_other_example(self, example: Example) -> None:
         """Apply the resolved skip decision for a non-skip ``example``."""
