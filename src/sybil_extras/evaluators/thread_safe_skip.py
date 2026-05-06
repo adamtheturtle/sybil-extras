@@ -93,7 +93,6 @@ class ThreadSafeSkipper(Skipper):
             if plan is None:
                 plan = self._build_plan(document=document)
                 self._plans[document] = plan
-                document.push_evaluator(evaluator=self)
             return plan
 
     def _validate_skip_action(
@@ -158,7 +157,13 @@ class ThreadSafeSkipper(Skipper):
             elif action == "start":
                 active_start = entry
             else:
+                # ``end`` cancels both an open ``start`` interval and
+                # any pending ``next`` directive that has not yet been
+                # consumed by a non-skip example, matching the upstream
+                # ``Skipper.remove`` call which clears per-document
+                # state.
                 active_start = None
+                pending_next = None
                 last_action = None
 
         return plan

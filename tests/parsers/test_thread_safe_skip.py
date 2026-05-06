@@ -436,6 +436,37 @@ def test_multiple_intervals_in_one_document(
     assert "d" not in document.namespace
 
 
+def test_end_cancels_pending_next(
+    *,
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
+    tmp_path: Path,
+) -> None:
+    """``skip: end`` cancels an unconsumed ``skip: next``.
+
+    Mirrors upstream ``Skipper.remove`` clearing per-document state:
+    the example after ``end`` should run normally rather than being
+    treated as the target of the prior ``next``.
+    """
+    language, directive_builder = language_directive_builder
+    content = language.markup_separator.join(
+        [
+            directive_builder(directive="custom-skip", argument="next"),
+            directive_builder(directive="custom-skip", argument="end"),
+            language.code_block_builder(code="a = 1", language="python"),
+        ]
+    )
+    test_document = tmp_path / "test"
+    test_document.write_text(
+        data=f"{content}{language.markup_separator}",
+        encoding="utf-8",
+    )
+    sybil, _ = _build_sybil(language=language)
+    document = sybil.parse(path=test_document)
+    for example in document.examples():
+        example.evaluate()
+    assert document.namespace["a"] == 1
+
+
 def test_no_skip_directives(
     *,
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
