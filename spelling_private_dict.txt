@@ -2,6 +2,7 @@ Djot
 Docusaurus
 EOF
 JSX
+Lex
 MDX
 MarkdownIt
 MystParser
