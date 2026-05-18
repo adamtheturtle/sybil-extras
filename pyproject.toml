@@ -76,6 +76,7 @@ optional-dependencies.dev = [
     "sphinx-pyproject==0.3.0",
     "sphinx-substitution-extensions==2026.1.12",
     "sphinxcontrib-spelling==8.0.2",
+    "strict-kwargs==2026.5.18.post1",
     "sybil==10.0.1",
     "ty==0.0.36",
     "uv==0.11.14",
@@ -330,6 +331,18 @@ report.show_missing = true
 # pins the signature to the minimum-supported version. Opt the
 # call out so we can pass arguments positionally everywhere.
 ignore_names = [ "builtins.eval" ]
+
+[tool.strict_kwargs]
+ignore_names = [
+    # ``builtins.eval`` has a version-gated typeshed signature: on
+    # 3.13+ ``globals`` and ``locals`` are positional-or-keyword,
+    # but at the project's minimum Python (3.11) they are
+    # positional-only at runtime.
+    "builtins.eval",
+    # ``LexerCollection`` inherits ``list.__init__``, whose first
+    # argument is positional-only at runtime.
+    "sybil.parsers.abstract.lexers.LexerCollection.__call__",
+]
 
 [tool.pydocstringformatter]
 write = true
