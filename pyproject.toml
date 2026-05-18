@@ -76,7 +76,7 @@ optional-dependencies.dev = [
     "sphinx-pyproject==0.3.0",
     "sphinx-substitution-extensions==2026.1.12",
     "sphinxcontrib-spelling==8.0.2",
-    "strict-kwargs==2026.5.18.post3",
+    "strict-kwargs==2026.5.18.post4",
     "sybil==10.0.1",
     "ty==0.0.36",
     "uv==0.11.14",
@@ -339,9 +339,6 @@ ignore_names = [
     # but at the project's minimum Python (3.11) they are
     # positional-only at runtime.
     "builtins.eval",
-    # ``LexerCollection`` inherits ``list.__init__``, whose first
-    # argument is positional-only at runtime.
-    "sybil.parsers.abstract.lexers.LexerCollection.__call__",
 ]
 
 [tool.pydocstringformatter]
