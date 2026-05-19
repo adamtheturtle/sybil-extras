@@ -920,6 +920,8 @@ def test_bad_command_error(*, rst_file: Path, use_pty_option: bool) -> None:
 
 def test_click_runner(*, rst_file: Path, use_pty_option: bool) -> None:
     """The click runner can pick up the command output."""
+    if sys.platform == "win32":  # pragma: no cover
+        pytest.skip(reason='Click does not support capture="fd" on Windows.')
 
     @click.command()
     def _main() -> None:

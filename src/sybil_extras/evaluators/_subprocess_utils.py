@@ -22,7 +22,7 @@ def _forward_stream_to_fd(
 ) -> None:
     """Write from an input stream to an output file descriptor."""
     chunk_size = 1024
-    while chunk := os.read(stream_fileno, chunk_size):
+    while chunk := os.read(stream_fileno, chunk_size):  # pragma: no branch
         os.write(output_fileno, chunk)
 
 
