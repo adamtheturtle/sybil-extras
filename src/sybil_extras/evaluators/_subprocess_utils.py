@@ -80,8 +80,8 @@ def run_command(
             # I think that this may be described in
             # https://bugs.python.org/issue5380#msg82827
             with contextlib.suppress(OSError):
-                # Click's fd capture redirects file descriptor 1, while
-                # ``sys.stdout.fileno()`` points at the saved original fd.
+                # Click capture redirects file descriptor 1, while
+                # ``sys.stdout.fileno()`` points at the saved original.
                 _forward_stream_to_fd(
                     stream_fileno=stdout_master_fd,
                     output_fileno=STDOUT_FILENO,
