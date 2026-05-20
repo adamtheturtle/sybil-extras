@@ -8,24 +8,26 @@ import contextlib
 import os
 import subprocess
 import sys
+import threading
 from collections.abc import Mapping
+from io import BytesIO
 from pathlib import Path
+from typing import IO
 
 from beartype import beartype
 
-STDOUT_FILENO = 1
-
 
 @beartype
-def _forward_stream_to_fd(
+def _process_stream(
     *,
     stream_fileno: int,
-    output_fileno: int,
+    output: IO[bytes] | BytesIO,
 ) -> None:
-    """Write from an input stream to an output file descriptor."""
+    """Write from an input stream to an output stream."""
     chunk_size = 1024
-    while chunk := os.read(stream_fileno, chunk_size):  # pragma: no branch
-        os.write(output_fileno, chunk)
+    while chunk := os.read(stream_fileno, chunk_size):
+        output.write(chunk)
+        output.flush()
 
 
 @beartype
@@ -80,23 +82,64 @@ def run_command(
             # I think that this may be described in
             # https://bugs.python.org/issue5380#msg82827
             with contextlib.suppress(OSError):
-                # Click capture redirects file descriptor 1, while
-                # ``sys.stdout.fileno()`` points at the saved original.
-                _forward_stream_to_fd(
+                _process_stream(
                     stream_fileno=stdout_master_fd,
-                    output_fileno=STDOUT_FILENO,
+                    output=sys.stdout.buffer,
                 )
 
             os.close(fd=stdout_master_fd)
-            return_code = process.wait()
 
     else:
+        # We use ``subprocess.PIPE`` + threads rather than passing
+        # ``stdout=sys.stdout.buffer`` directly to ``Popen``.
+        #
+        # ``Popen`` accepts a file-like object for ``stdout``/``stderr``
+        # only if it exposes a real OS file descriptor via ``fileno()``.
+        # When test frameworks such as pytest replace ``sys.stdout`` with
+        # a ``StringIO``-based capture object, ``sys.stdout.buffer.fileno()``
+        # raises ``io.UnsupportedOperation``.
+        #
+        # By routing data through ``subprocess.PIPE`` we always get genuine
+        # OS-level pipe file descriptors.  The background threads then read
+        # from those descriptors and write into ``sys.stdout.buffer`` /
+        # ``sys.stderr.buffer``, which may be the real terminal or a
+        # test-framework capture object — either way the write is safe.
+        # This preserves live streaming: output is forwarded chunk-by-chunk
+        # rather than being buffered until the process exits.
         with subprocess.Popen(
             args=command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             stdin=subprocess.PIPE,
             env=env,
         ) as process:
-            return_code = process.wait()
+            if (
+                process.stdout is None or process.stderr is None
+            ):  # pragma: no cover
+                raise ValueError
+
+            stdout_thread = threading.Thread(
+                target=_process_stream,
+                kwargs={
+                    "stream_fileno": process.stdout.fileno(),
+                    "output": sys.stdout.buffer,
+                },
+            )
+            stderr_thread = threading.Thread(
+                target=_process_stream,
+                kwargs={
+                    "stream_fileno": process.stderr.fileno(),
+                    "output": sys.stderr.buffer,
+                },
+            )
+
+            stdout_thread.start()
+            stderr_thread.start()
+
+            stdout_thread.join()
+            stderr_thread.join()
+
+    return_code = process.wait()
 
     return subprocess.CompletedProcess(
         args=command,
