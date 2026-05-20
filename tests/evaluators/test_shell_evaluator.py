@@ -124,7 +124,7 @@ def test_error(*, rst_file: Path, use_pty_option: bool) -> None:
 def test_output_shown(
     *,
     rst_file: Path,
-    capfd: pytest.CaptureFixture[str],
+    capsys: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
     """Output is shown."""
@@ -145,7 +145,7 @@ def test_output_shown(
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
-    outerr = capfd.readouterr()
+    outerr = capsys.readouterr()
     expected_output = "Hello, Sybil!\n"
     expected_stderr = "Hello Stderr!\n"
     if use_pty_option:
@@ -159,7 +159,7 @@ def test_output_shown(
 def test_rm(
     *,
     rst_file: Path,
-    capfd: pytest.CaptureFixture[str],
+    capsys: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
     """Output is shown."""
@@ -176,7 +176,7 @@ def test_rm(
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
-    outerr = capfd.readouterr()
+    outerr = capsys.readouterr()
     assert outerr.out == ""
     assert outerr.err == ""
 
@@ -278,7 +278,7 @@ def test_file_is_passed(
 def test_file_path(
     *,
     rst_file: Path,
-    capfd: pytest.CaptureFixture[str],
+    capsys: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
     """
@@ -298,7 +298,7 @@ def test_file_path(
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
-    output = capfd.readouterr().out
+    output = capsys.readouterr().out
     stripped_output = output.strip()
     assert stripped_output
     given_file_path = Path(stripped_output)
@@ -307,7 +307,7 @@ def test_file_path(
     assert not given_file_path.exists()
     assert given_file_path.name.startswith("temp_")
     example.evaluate()
-    output = capfd.readouterr().out
+    output = capsys.readouterr().out
     new_given_file_path = Path(output.strip())
     assert new_given_file_path != given_file_path
 
@@ -315,7 +315,7 @@ def test_file_path(
 def test_temp_file_path_maker(
     *,
     rst_file: Path,
-    capfd: pytest.CaptureFixture[str],
+    capsys: pytest.CaptureFixture[str],
     use_pty_option: bool,
 ) -> None:
     """A custom filename generator is used when provided."""
@@ -338,7 +338,7 @@ def test_temp_file_path_maker(
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
-    output = capfd.readouterr().out
+    output = capsys.readouterr().out
     stripped_output = output.strip()
     assert stripped_output
     given_file_path = Path(stripped_output)
@@ -697,7 +697,7 @@ def test_pad_and_write(*, rst_file: Path, use_pty_option: bool) -> None:
 def test_non_utf8_output(
     *,
     rst_file: Path,
-    capfdbinary: pytest.CaptureFixture[bytes],
+    capsysbinary: pytest.CaptureFixture[bytes],
     tmp_path: Path,
     use_pty_option: bool,
 ) -> None:
@@ -721,7 +721,7 @@ def test_non_utf8_output(
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
-    output = capfdbinary.readouterr().out
+    output = capsysbinary.readouterr().out
     expected_output = b"\xc0\x80\n"
     if use_pty_option:
         expected_output = expected_output.replace(b"\n", b"\r\n")
@@ -920,8 +920,6 @@ def test_bad_command_error(*, rst_file: Path, use_pty_option: bool) -> None:
 
 def test_click_runner(*, rst_file: Path, use_pty_option: bool) -> None:
     """The click runner can pick up the command output."""
-    if sys.platform == "win32":  # pragma: no cover
-        pytest.skip(reason='Click does not support capture="fd" on Windows.')
 
     @click.command()
     def _main() -> None:
@@ -944,7 +942,7 @@ def test_click_runner(*, rst_file: Path, use_pty_option: bool) -> None:
         (example,) = document.examples()
         example.evaluate()
 
-    runner = CliRunner(capture="fd")
+    runner = CliRunner()
     result = runner.invoke(cli=_main)
     assert result.exit_code == 0, (result.stdout, result.stderr)
     expected_output = "Hello, Sybil!\n"
@@ -1094,7 +1092,7 @@ def test_custom_on_modify_with_modification(
 def test_markdown_code_block_line_number(
     *,
     tmp_path: Path,
-    capfd: pytest.CaptureFixture[str],
+    capsys: pytest.CaptureFixture[str],
     parser_cls: type,
 ) -> None:
     """Line numbers in error output match the source file for Markdown.
@@ -1148,7 +1146,7 @@ def test_markdown_code_block_line_number(
     with pytest.raises(expected_exception=subprocess.CalledProcessError):
         example.evaluate()
 
-    captured = capfd.readouterr()
+    captured = capsys.readouterr()
     # The error should report line 4, not line 5.
     # The syntax error is on line 4 of the original file.
     assert "line 4" in captured.err, (
