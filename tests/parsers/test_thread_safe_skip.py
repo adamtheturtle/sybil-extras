@@ -7,7 +7,7 @@ from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Protocol, cast
+from typing import Protocol, cast  # noqa: TID251
 from unittest import SkipTest
 
 import pytest

@@ -58,7 +58,7 @@ def run_command(
         # ``contextlib.suppress(AttributeError)`` so that ``mypy`` can narrow
         # the type on Windows, where ``os.openpty`` does not exist.
         # We also check ``sys.platform`` so that pyright can narrow the type.
-        if sys.platform != "win32" and hasattr(
+        if sys.platform != "win32" and hasattr(  # pylint: disable=bad-builtin
             os, "openpty"
         ):  # pragma: no branch
             stdout_master_fd, slave_fd = os.openpty()
