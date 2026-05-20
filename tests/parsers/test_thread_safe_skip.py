@@ -70,7 +70,7 @@ def _build_sybil(
     """Build a Sybil instance with the thread-safe skip parser
     configured.
     """
-    skip_parser = cast(  # noqa: TID251
+    skip_parser = cast(
         "_ThreadSafeSkipParserProtocol",
         language.thread_safe_skip_parser_cls(directive=directive_name),
     )
