@@ -118,6 +118,82 @@ def test_code_block_inside_blockquote(tmp_path: Path) -> None:
     assert examples[0].region.lexemes["language"] == "python"
 
 
+def test_invisible_code_block_html_comment(tmp_path: Path) -> None:
+    """``invisible-code-block`` HTML comments are matched like fences.
+
+    Matches the behavior of
+    ``sybil.parsers.markdown.codeblock.CodeBlockParser`` which registers
+    a ``DirectiveInHTMLCommentLexer`` alongside its fence lexer.
+    Regression test for
+    https://github.com/adamtheturtle/sybil-extras/issues/973.
+    """
+    content = "```text\n1\n```\n\n<!-- invisible-code-block text\n2\n-->\n"
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="text", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert [e.parsed.text for e in examples] == ["1\n", "2\n"]
+    assert [e.region.lexemes["language"] for e in examples] == ["text", "text"]
+
+
+def test_invisible_code_block_language_filter(tmp_path: Path) -> None:
+    """``invisible-code-block`` honors the ``language`` filter."""
+    content = (
+        "<!-- invisible-code-block python\n"
+        "x = 1\n"
+        "-->\n"
+        "\n"
+        "<!-- invisible-code-block text\n"
+        "skip me\n"
+        "-->\n"
+    )
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert [e.parsed.text for e in examples] == ["x = 1\n"]
+
+
+def test_invisible_code_block_unclosed_comment(tmp_path: Path) -> None:
+    """An invisible-code-block HTML comment with no closing ``-->`` is
+    ignored.
+    """
+    content = "<!-- invisible-code-block text\n2\n"
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="text", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert not examples
+
+
+def test_invisible_code_block_no_trailing_newline(tmp_path: Path) -> None:
+    """An invisible-code-block HTML comment without a trailing newline is
+    still matched.
+    """
+    content = "<!-- invisible-code-block text\n2\n-->"
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="text", evaluator=NoOpEvaluator())
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    examples = list(document.examples())
+
+    assert [e.parsed.text for e in examples] == ["2\n"]
+
+
 def test_evaluator_not_none_when_omitted(tmp_path: Path) -> None:
     """When no evaluator is provided, the region still has an evaluator.
 
