@@ -141,9 +141,7 @@ def test_invisible_code_block_html_comment(tmp_path: Path) -> None:
 
 
 def test_invisible_code_block_language_filter(tmp_path: Path) -> None:
-    """``invisible-code-block`` honors the parser's ``language``
-    filter.
-    """
+    """``invisible-code-block`` honors the ``language`` filter."""
     content = (
         "<!-- invisible-code-block python\n"
         "x = 1\n"
@@ -177,7 +175,7 @@ def test_invisible_code_block_unclosed_comment(tmp_path: Path) -> None:
     document = sybil.parse(path=test_file)
     examples = list(document.examples())
 
-    assert examples == []
+    assert not examples
 
 
 def test_invisible_code_block_no_trailing_newline(tmp_path: Path) -> None:
