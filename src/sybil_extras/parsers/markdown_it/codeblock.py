@@ -8,6 +8,7 @@ from collections.abc import Iterable
 
 from beartype import beartype
 from markdown_it import MarkdownIt
+from markdown_it.token import Token
 from sybil import Document, Example, Lexeme, Region
 from sybil.typing import Evaluator
 
@@ -17,6 +18,17 @@ from sybil_extras.parsers._line_offsets import line_offsets
 # The info string can contain extra metadata like title="example".
 # We extract only the first word (anything that's not whitespace or backtick).
 _LANGUAGE_PATTERN = re.compile(pattern=r"^(?P<language>[^\s`]+)")
+
+# Pattern to match an ``invisible-code-block`` directive inside an HTML
+# comment. Mirrors ``sybil.parsers.markdown.codeblock.CodeBlockParser``
+# which registers ``DirectiveInHTMLCommentLexer`` with
+# ``directive=r'(invisible-)?code(-block)?'`` and ``arguments='.+'``.
+_INVISIBLE_CODE_BLOCK_PATTERN = re.compile(
+    pattern=r"^[ \t]*<!--+\s*(?:;\s*)?(?:invisible-)?code(?:-block)?:?"
+    r"[ \t]*(?P<language>\S+)[ \t]*"
+    r"(?:\n|(?=--+>))",
+)
+_HTML_COMMENT_END_PATTERN = re.compile(pattern=r"--+>")
 
 
 @beartype
@@ -63,6 +75,15 @@ class CodeBlockParser:
         offsets = line_offsets(text=document.text)
 
         for token in tokens:
+            if token.type == "html_block":
+                region = self._html_comment_region(
+                    token=token,
+                    document=document,
+                    offsets=offsets,
+                )
+                if region is not None:
+                    yield region
+                continue
             if token.type != "fence":
                 continue
 
@@ -128,3 +149,51 @@ class CodeBlockParser:
                 evaluator=self._evaluator or self.evaluate,
                 lexemes=lexemes,
             )
+
+    def _html_comment_region(
+        self,
+        *,
+        token: Token,
+        document: Document,
+        offsets: list[int],
+    ) -> Region | None:
+        """Build a region for an ``invisible-code-block`` HTML comment.
+
+        Returns ``None`` if the HTML comment is not an invisible code
+        block, or if the language filter does not match.
+        """
+        assert token.map is not None  # noqa: S101  # always set for html_block
+        content = token.content
+        match = _INVISIBLE_CODE_BLOCK_PATTERN.match(string=content)
+        if match is None:
+            return None
+        block_language = match.group("language")
+        if self._language is not None and block_language != self._language:
+            return None
+        end_match = _HTML_COMMENT_END_PATTERN.search(
+            string=content,
+            pos=match.end(),
+        )
+        if end_match is None:
+            return None
+
+        start_line, end_line = token.map
+        region_start = offsets[start_line]
+        if end_line < len(offsets):
+            region_end = offsets[end_line]
+        else:
+            region_end = len(document.text)
+
+        source = Lexeme(
+            text=content[match.end() : end_match.start()],
+            offset=match.end(),
+            line_offset=content[: match.end()].count("\n") - 1,
+        )
+        lexemes = {"language": block_language, "source": source}
+        return Region(
+            start=region_start,
+            end=region_end,
+            parsed=source,
+            evaluator=self._evaluator or self.evaluate,
+            lexemes=lexemes,
+        )

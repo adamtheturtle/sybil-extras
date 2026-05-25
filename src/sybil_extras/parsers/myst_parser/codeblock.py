@@ -4,16 +4,29 @@ This parser uses the myst-parser library, which extends markdown-it-py
 with MyST-specific extensions.
 """
 
+import re
 from collections.abc import Iterable
 
 from beartype import beartype
 from markdown_it.renderer import RendererHTML
+from markdown_it.token import Token
 from myst_parser.config.main import MdParserConfig
 from myst_parser.parsers.mdit import create_md_parser
 from sybil import Document, Example, Lexeme, Region
 from sybil.typing import Evaluator
 
 from sybil_extras.parsers._line_offsets import line_offsets
+
+# Pattern to match an ``invisible-code-block`` directive inside an HTML
+# comment. Mirrors ``sybil.parsers.markdown.codeblock.CodeBlockParser``
+# which registers ``DirectiveInHTMLCommentLexer`` with
+# ``directive=r'(invisible-)?code(-block)?'`` and ``arguments='.+'``.
+_INVISIBLE_CODE_BLOCK_PATTERN = re.compile(
+    pattern=r"^[ \t]*<!--+\s*(?:;\s*)?(?:invisible-)?code(?:-block)?:?"
+    r"[ \t]*(?P<language>\S+)[ \t]*"
+    r"(?:\n|(?=--+>))",
+)
+_HTML_COMMENT_END_PATTERN = re.compile(pattern=r"--+>")
 
 
 @beartype
@@ -63,81 +76,122 @@ class CodeBlockParser:
         offsets = line_offsets(text=document.text)
 
         for token in tokens:
-            if token.type != "fence":
+            if token.type == "html_block":
+                region = self._html_comment_region(
+                    token=token,
+                    document=document,
+                    offsets=offsets,
+                )
+            elif token.type == "fence":
+                region = self._fence_region(
+                    token=token,
+                    document=document,
+                    offsets=offsets,
+                )
+            else:
                 continue
+            if region is not None:
+                yield region
 
-            # MarkdownIt always provides map for fence tokens.
-            if token.map is None:  # pragma: no cover
-                # This should never happen; map is always set for fence tokens.
-                raise ValueError(token)
+    def _fence_region(
+        self,
+        *,
+        token: Token,
+        document: Document,
+        offsets: list[int],
+    ) -> Region | None:
+        """Build a region for a fenced code block token."""
+        if token.map is None:  # pragma: no cover
+            raise ValueError(token)
 
-            # Extract just the language from the info string.
-            # The info string can contain extra metadata
-            # (e.g., "python title=...").
-            # MyST directive-style blocks use the format
-            # "{directive} language" (e.g., "{code-block} python"),
-            # where the actual language is the second word.
-            info = token.info.strip()
-            words = info.split()
-            if not words:
-                block_language = ""
-            elif words[0].startswith("{"):
-                # MyST directive style: {directive-name} language
-                # e.g., "{code-block} python" -> language is "python"
-                block_language = words[1] if len(words) > 1 else ""
-            else:
-                block_language = words[0]
+        # Extract just the language from the info string. The info string
+        # can contain extra metadata (e.g., "python title=..."). MyST
+        # directive-style blocks use the format "{directive} language"
+        # (e.g., "{code-block} python"), where the actual language is the
+        # second word.
+        words = token.info.strip().split()
+        if not words:
+            block_language = ""
+        elif words[0].startswith("{"):
+            block_language = words[1] if len(words) > 1 else ""
+        else:
+            block_language = words[0]
 
-            # Filter by language if specified
-            if self._language is not None and block_language != self._language:
-                continue
+        if self._language is not None and block_language != self._language:
+            return None
 
-            start_line, end_line = token.map
+        start_line, end_line = token.map
+        region_start = offsets[start_line]
+        if end_line < len(offsets):
+            region_end = offsets[end_line] - 1
+        else:
+            region_end = len(document.text)
 
-            # Calculate character positions
-            region_start = offsets[start_line]
+        if start_line + 1 < len(offsets):
+            opening_fence_end = offsets[start_line + 1]
+        else:
+            opening_fence_end = len(document.text)
+        source_offset = opening_fence_end - region_start
 
-            # end_line is exclusive in MarkdownIt, pointing to the line
-            # after the closing fence. We want the region to end at the
-            # end of the closing fence line, not including the trailing
-            # newline. This matches Sybil's regex-based behavior.
-            if end_line < len(offsets):
-                # Get the start of the line after the block
-                next_line_start = offsets[end_line]
-                # The region end excludes the trailing newline after the
-                # closing fence.
-                region_end = next_line_start - 1
-            else:
-                region_end = len(document.text)
+        source = Lexeme(
+            text=token.content,
+            offset=source_offset,
+            line_offset=0,
+        )
+        lexemes = {"language": block_language, "source": source}
+        return Region(
+            start=region_start,
+            end=region_end,
+            parsed=source,
+            evaluator=self._evaluator or self.evaluate,
+            lexemes=lexemes,
+        )
 
-            # The source content is in token.content
-            # We need to calculate the offset within the region where
-            # the source starts.
-            if start_line + 1 < len(offsets):
-                opening_fence_end = offsets[start_line + 1]
-            else:
-                # Edge case: document ends without a newline after the
-                # fence.
-                opening_fence_end = len(document.text)
-            opening_fence_line = document.text[region_start:opening_fence_end]
-            source_offset = len(opening_fence_line)
+    def _html_comment_region(
+        self,
+        *,
+        token: Token,
+        document: Document,
+        offsets: list[int],
+    ) -> Region | None:
+        """Build a region for an ``invisible-code-block`` HTML comment.
 
-            source = Lexeme(
-                text=token.content,
-                offset=source_offset,
-                # line_offset is the number of newlines in the opening
-                # delimiter minus 1. For Markdown fenced code blocks,
-                # the opening line (e.g., "```python\n") has exactly one
-                # newline, so line_offset is always 0.
-                line_offset=0,
-            )
+        Returns ``None`` if the HTML comment is not an invisible code
+        block, or if the language filter does not match.
+        """
+        if token.map is None:  # pragma: no cover
+            raise ValueError(token)
+        content = token.content
+        match = _INVISIBLE_CODE_BLOCK_PATTERN.match(string=content)
+        if match is None:
+            return None
+        block_language = match.group("language")
+        if self._language is not None and block_language != self._language:
+            return None
+        end_match = _HTML_COMMENT_END_PATTERN.search(
+            string=content,
+            pos=match.end(),
+        )
+        if end_match is None:
+            return None
 
-            lexemes = {"language": block_language, "source": source}
+        start_line, end_line = token.map
+        region_start = offsets[start_line]
+        if end_line < len(offsets):
+            region_end = offsets[end_line]
+        else:
+            region_end = len(document.text)
 
-            yield Region(
-                start=region_start,
-                end=region_end,
-                parsed=source,
-                evaluator=self._evaluator or self.evaluate,
-                lexemes=lexemes,
-            )
+        source = Lexeme(
+            text=content[match.end() : end_match.start()],
+            offset=match.end(),
+            line_offset=content[: match.end()].count("\n") - 1,
+        )
+        lexemes = {"language": block_language, "source": source}
+        return Region(
+            start=region_start,
+            end=region_end,
+            parsed=source,
+            evaluator=self._evaluator or self.evaluate,
+            lexemes=lexemes,
+        )
