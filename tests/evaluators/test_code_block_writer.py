@@ -454,12 +454,12 @@ def test_empty_code_block_with_options(
 
 @pytest.mark.parametrize(
     argnames="new_content",
-    argvalues=[
+    argvalues=(
         "",
         # Code blocks in reStructuredText cannot contain just newlines.
         # Therefore we treat this as an empty code block.
         "\n\n",
-    ],
+    ),
 )
 def test_empty_code_block_write_empty(
     *,

@@ -26,7 +26,7 @@ from sybil_extras.languages import (
 
 @pytest.mark.parametrize(
     argnames=("language", "value"),
-    argvalues=[
+    argvalues=(
         pytest.param(MYST, 1, id="myst-code-block"),
         pytest.param(MYST_PARSER, 8, id="myst-parser-code-block"),
         pytest.param(RESTRUCTUREDTEXT, 2, id="rest-code-block"),
@@ -35,7 +35,7 @@ from sybil_extras.languages import (
         pytest.param(MDX, 4, id="mdx-code-block"),
         pytest.param(DJOT, 5, id="djot-code-block"),
         pytest.param(NORG, 6, id="norg-code-block"),
-    ],
+    ),
 )
 def test_code_block_parser(
     *,
@@ -101,7 +101,7 @@ def test_skip_parser(
 
 @pytest.mark.parametrize(
     argnames=("language"),
-    argvalues=[
+    argvalues=(
         pytest.param(MYST, id="myst-empty"),
         pytest.param(MYST_PARSER, id="myst-parser-empty"),
         pytest.param(RESTRUCTUREDTEXT, id="rest-empty"),
@@ -109,7 +109,7 @@ def test_skip_parser(
         pytest.param(MDX, id="mdx-empty"),
         pytest.param(DJOT, id="djot-empty"),
         pytest.param(NORG, id="norg-empty"),
-    ],
+    ),
 )
 def test_code_block_empty(language: MarkupLanguage) -> None:
     """Code block builders handle empty content."""
@@ -165,11 +165,11 @@ def test_group_parser(
 
 @pytest.mark.parametrize(
     argnames=("language"),
-    argvalues=[
+    argvalues=(
         pytest.param(MYST, id="myst-jinja"),
         pytest.param(MYST_PARSER, id="myst-parser-jinja"),
         pytest.param(RESTRUCTUREDTEXT, id="rest-jinja"),
-    ],
+    ),
 )
 def test_sphinx_jinja_parser(
     *,
