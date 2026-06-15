@@ -20,10 +20,10 @@ from sybil_extras.parsers.rest.sphinx_jinja2 import (
 
 @pytest.mark.parametrize(
     argnames="parser_cls",
-    argvalues=[
+    argvalues=(
         pytest.param(MystSphinxJinja2Parser, id="myst"),
         pytest.param(MystParserSphinxJinja2Parser, id="myst-parser"),
-    ],
+    ),
 )
 def test_sphinx_jinja2(
     *,
@@ -79,9 +79,7 @@ def test_sphinx_jinja2(
 
 @pytest.mark.parametrize(
     argnames="parser_cls",
-    argvalues=[
-        pytest.param(RestSphinxJinja2Parser, id="rest"),
-    ],
+    argvalues=(pytest.param(RestSphinxJinja2Parser, id="rest"),),
 )
 def test_sphinx_jinja2_rst(
     *,

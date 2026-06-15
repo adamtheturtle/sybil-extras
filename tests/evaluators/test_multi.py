@@ -80,7 +80,7 @@ def test_multi_evaluator_raises_on_failure(rst_file: Path) -> None:
 
 @pytest.mark.parametrize(
     argnames="failure_string",
-    argvalues=["This check failed", ""],
+    argvalues=("This check failed", ""),
     ids=["non-empty", "empty"],
 )
 def test_multi_evaluator_propagates_failure_string(

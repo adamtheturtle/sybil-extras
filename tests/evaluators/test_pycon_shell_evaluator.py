@@ -194,7 +194,7 @@ def test_no_change_leaves_file_unmodified(
 
 @pytest.mark.parametrize(
     argnames="pycon_block",
-    argvalues=[
+    argvalues=(
         pytest.param(
             textwrap.dedent(
                 text="""\
@@ -268,7 +268,7 @@ def test_no_change_leaves_file_unmodified(
             ),
             id="decorated_function",
         ),
-    ],
+    ),
 )
 def test_write_to_file_round_trip(
     *,
@@ -299,7 +299,7 @@ def test_write_to_file_round_trip(
 
 @pytest.mark.parametrize(
     argnames=("pycon_block", "expected_match"),
-    argvalues=[
+    argvalues=(
         pytest.param(
             textwrap.dedent(
                 text="""\
@@ -327,7 +327,7 @@ def test_write_to_file_round_trip(
             "appears before the first",
             id="blank_line_before_first_prompt",
         ),
-    ],
+    ),
 )
 def test_invalid_pycon_raises(
     *,

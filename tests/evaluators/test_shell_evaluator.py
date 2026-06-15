@@ -383,7 +383,7 @@ def test_pad(*, rst_file: Path, tmp_path: Path, use_pty_option: bool) -> None:
     assert given_file_content == expected_content
 
 
-@pytest.mark.parametrize(argnames="write_to_file", argvalues=[True, False])
+@pytest.mark.parametrize(argnames="write_to_file", argvalues=(True, False))
 def test_write_to_file_new_content_trailing_newlines(
     *,
     tmp_path: Path,
@@ -529,7 +529,7 @@ def test_write_to_file_new_content_trailing_newlines(
         assert source_file_content == original_content
 
 
-@pytest.mark.parametrize(argnames="write_to_file", argvalues=[True, False])
+@pytest.mark.parametrize(argnames="write_to_file", argvalues=(True, False))
 def test_write_to_file_new_content_no_trailing_newlines(
     *,
     tmp_path: Path,
@@ -807,7 +807,7 @@ def test_no_file_left_behind_on_interruption(
     }
 
 
-@pytest.mark.parametrize(argnames="source_newline", argvalues=["\n", "\r\n"])
+@pytest.mark.parametrize(argnames="source_newline", argvalues=("\n", "\r\n"))
 def test_newline_system(
     *,
     rst_file: Path,
@@ -842,13 +842,13 @@ def test_newline_system(
     assert includes_crlf == default_is_crlf
 
 
-@pytest.mark.parametrize(argnames="source_newline", argvalues=["\n", "\r\n"])
+@pytest.mark.parametrize(argnames="source_newline", argvalues=("\n", "\r\n"))
 @pytest.mark.parametrize(
     argnames=("given_newline", "expect_crlf"),
-    argvalues=[
+    argvalues=(
         ("\n", False),
         ("\r\n", True),
-    ],
+    ),
 )
 def test_newline_given(
     *,
@@ -957,7 +957,7 @@ def test_click_runner(*, rst_file: Path, use_pty_option: bool) -> None:
 
 @pytest.mark.parametrize(
     argnames="encoding",
-    argvalues=["utf_8", "utf_16"],
+    argvalues=("utf_8", "utf_16"),
 )
 def test_encoding(
     *,
@@ -1086,7 +1086,7 @@ def test_custom_on_modify_with_modification(
 
 @pytest.mark.parametrize(
     argnames="parser_cls",
-    argvalues=[MarkdownItCodeBlockParser, SybilMarkdownCodeBlockParser],
+    argvalues=(MarkdownItCodeBlockParser, SybilMarkdownCodeBlockParser),
     ids=["markdown_it", "sybil_markdown"],
 )
 def test_markdown_code_block_line_number(
