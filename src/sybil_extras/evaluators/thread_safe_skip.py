@@ -235,11 +235,8 @@ class ThreadSafeSkipper(Skipper):
         if decision.kind == "raise":
             # Build a fresh ``SkipTest`` per raise so concurrent threads
             # do not race on a shared ``__traceback__`` attribute. The
-            # ``type: ignore`` is needed until typeshed PR
-            # https://github.com/python/typeshed/pull/15703 reaches the
-            # bundled stubs and the project's strict-kwargs mypy plugin
-            # therefore stops rejecting the positional call.
-            raise SkipTest(str(object=decision.skip_reason))  # type: ignore[misc]
+            # skip reason is normalized through ``str``.
+            raise SkipTest(str(object=decision.skip_reason))
 
     def __call__(self, example: Example) -> None:
         """Evaluate ``example`` against this skipper."""
