@@ -17,6 +17,17 @@ from sybil.typing import Evaluator
 
 
 @beartype
+def _get_container_prefix(*, region_text: str) -> str:
+    """Get a fenced block's indentation and block quote prefix."""
+    fence_pattern = re.compile(
+        pattern=r"^(?P<prefix>[ \t]*(?:>[ \t]*)*)(?P<fence>`{3,})",
+        flags=re.MULTILINE,
+    )
+    fence_match = fence_pattern.match(string=region_text)
+    return fence_match.group("prefix") if fence_match else ""
+
+
+@beartype
 def _get_within_code_block_indentation_prefix(example: Example) -> str:
     """Get the indentation of the parsed code in the example."""
     first_line = str(object=example.parsed).split(sep="\n", maxsplit=1)[0]
@@ -24,14 +35,9 @@ def _get_within_code_block_indentation_prefix(example: Example) -> str:
         example.region.start : example.region.end
     ]
 
-    # Extract blockquote/container prefix from the region text
-    # This handles Djot/Markdown blockquotes (lines starting with "> ")
-    fence_pattern = re.compile(
-        pattern=r"^(?P<prefix>[ \t]*(?:>[ \t]*)*)(?P<fence>`{3,})",
-        flags=re.MULTILINE,
+    container_prefix = _get_container_prefix(
+        region_text=region_text,
     )
-    fence_match = fence_pattern.match(string=region_text)
-    container_prefix = fence_match.group("prefix") if fence_match else ""
 
     region_lines = region_text.splitlines()
     region_lines_matching_first_line = [
@@ -90,7 +96,9 @@ def _get_modified_region_text(
     # to know about markup language specifics here.
     elif original_region_text.endswith("```"):
         # Markdown or MyST
-        within_code_block_indent_prefix = code_block_indent_prefix
+        within_code_block_indent_prefix = _get_container_prefix(
+            region_text=original_region_text,
+        )
         replace_old_not_indented = "\n"
         replace_new_prefix = "\n"
     elif original_region_text.rstrip().endswith("@end"):
