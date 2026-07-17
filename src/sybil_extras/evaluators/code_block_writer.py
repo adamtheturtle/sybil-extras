@@ -79,6 +79,7 @@ def _get_modified_region_text(
     code_block_indent_prefix = first_line[
         : len(first_line) - len(first_line.lstrip())
     ]
+    replacement_search_text = original_region_text
 
     if example.parsed:
         within_code_block_indent_prefix = (
@@ -98,6 +99,12 @@ def _get_modified_region_text(
         within_code_block_indent_prefix = code_block_indent_prefix
         replace_old_not_indented = "\n"
         replace_new_prefix = "\n"
+    elif original_region_text.lstrip().startswith("<!-- invisible-code-block"):
+        # Invisible code block
+        within_code_block_indent_prefix = code_block_indent_prefix
+        replace_old_not_indented = "\n"
+        replace_new_prefix = "\n"
+        replacement_search_text = original_region_text.rstrip("\n")
     else:
         # reStructuredText
         within_code_block_indent_prefix = code_block_indent_prefix + "   "
@@ -116,7 +123,9 @@ def _get_modified_region_text(
     if not replacement_text.endswith("\n"):
         replacement_text += "\n"
 
-    text_to_replace_index = original_region_text.rfind(indented_example_parsed)
+    text_to_replace_index = replacement_search_text.rfind(
+        indented_example_parsed
+    )
     text_before_replacement = original_region_text[:text_to_replace_index]
     text_after_replacement = original_region_text[
         text_to_replace_index + len(indented_example_parsed) :
