@@ -4,8 +4,44 @@ from collections.abc import Iterable, Sequence
 
 from beartype import beartype
 from sybil import Example, Region
+from sybil.evaluators.skip import If
 from sybil.region import Lexeme
 from sybil.typing import Evaluator
+
+_SKIP_MARKER_ITEM_COUNT = 2
+
+
+@beartype
+def _skip_condition_is_truthy(*, example: Example, reason: object) -> bool:
+    """Return whether a skip directive's condition applies."""
+    if not reason:
+        return True
+    if not isinstance(reason, str):
+        return True
+
+    text = reason.lstrip()
+    if not text.startswith("if"):
+        return True
+
+    condition = text[2:]
+    namespace = example.document.namespace.copy()
+    namespace["if_"] = If(default_reason=condition)
+    return bool(eval("if_" + condition, namespace))  # noqa: S307
+
+
+@beartype
+def _as_skip_marker(parsed: object) -> tuple[str, object] | None:
+    """Return a typed skip marker when ``parsed`` has the right shape."""
+    if not isinstance(parsed, tuple):
+        return None
+    values: tuple[object, ...] = (  # pyright: ignore[reportUnknownVariableType]
+        parsed
+    )
+    if len(values) != _SKIP_MARKER_ITEM_COUNT or not isinstance(
+        values[0], str
+    ):
+        return None
+    return values[0], values[1]
 
 
 @beartype
@@ -37,19 +73,30 @@ def count_expected_code_blocks(examples: Iterable[Example]) -> int:
     for ex in examples_sorted:
         parsed: object = ex.parsed
         # Skip markers have parsed values like ('next', None)
-        match parsed:
-            case ("next", object()):
-                skip_next = True
-            case ("start", object()):
-                in_skip_range = True
-            case ("end", object()):
+        skip_marker = _as_skip_marker(parsed=parsed)
+        if skip_marker is not None:
+            action, reason = skip_marker
+            if action == "next":
+                skip_next = _skip_condition_is_truthy(
+                    example=ex,
+                    reason=reason,
+                )
+                continue
+            if action == "start":
+                in_skip_range = _skip_condition_is_truthy(
+                    example=ex,
+                    reason=reason,
+                )
+                continue
+            if action == "end":
                 in_skip_range = False
-            case _:
-                if has_source(example=ex):
-                    non_skip_count += 1
-                    if skip_next or in_skip_range:
-                        skipped_count += 1
-                        skip_next = False
+                continue
+
+        if has_source(example=ex):
+            non_skip_count += 1
+            if skip_next or in_skip_range:
+                skipped_count += 1
+                skip_next = False
 
     return non_skip_count - skipped_count
 
