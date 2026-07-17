@@ -22,7 +22,7 @@ def test_abandoned_documents_are_released(
     language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
     tmp_path: Path,
 ) -> None:
-    """Parsed documents are released when their finalizers never run."""
+    """Parsed documents are released when their end markers never run."""
     language, directive_builder = language_directive_builder
     evaluator = NoOpEvaluator()
     group_parser = language.group_parser_cls(

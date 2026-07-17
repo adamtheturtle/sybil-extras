@@ -27,7 +27,7 @@ def test_abandoned_documents_are_released(
     language: MarkupLanguage,
     tmp_path: Path,
 ) -> None:
-    """Parsed documents are released when their finalizers never run."""
+    """Parsed documents are released when their end markers never run."""
     evaluator = NoOpEvaluator()
     group_all_parser = language.group_all_parser_cls(
         evaluator=evaluator,
