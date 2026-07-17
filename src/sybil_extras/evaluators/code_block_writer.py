@@ -37,13 +37,22 @@ def _get_within_code_block_indentation_prefix(example: Example) -> str:
     region_lines_matching_first_line = [
         line
         for line in region_lines
-        if line.removeprefix(container_prefix).lstrip() == first_line.lstrip()
+        if (
+            ""
+            if line == container_prefix.rstrip()
+            else line.removeprefix(container_prefix)
+        ).lstrip()
+        == first_line.lstrip()
     ]
     first_region_line_matching_first_line = region_lines_matching_first_line[0]
 
     # After removing the container prefix, calculate any additional indentation
     line_without_container = (
-        first_region_line_matching_first_line.removeprefix(container_prefix)
+        ""
+        if first_region_line_matching_first_line == container_prefix.rstrip()
+        else first_region_line_matching_first_line.removeprefix(
+            container_prefix
+        )
     )
     left_padding_region_line = len(line_without_container) - len(
         line_without_container.lstrip()
@@ -108,6 +117,23 @@ def _get_modified_region_text(
         text=replace_old_not_indented,
         prefix=within_code_block_indent_prefix,
     )
+    if ">" in within_code_block_indent_prefix:
+        prefixed_blank_lines = textwrap.indent(
+            text=replace_old_not_indented,
+            prefix=within_code_block_indent_prefix,
+            predicate=lambda _line: True,
+        )
+        bare_prefixed_blank_lines = re.sub(
+            pattern=(
+                rf"(?m)^{re.escape(pattern=within_code_block_indent_prefix)}(?=\n)"
+            ),
+            repl=within_code_block_indent_prefix.rstrip(),
+            string=prefixed_blank_lines,
+        )
+        if bare_prefixed_blank_lines in original_region_text:
+            indented_example_parsed = bare_prefixed_blank_lines
+        else:
+            indented_example_parsed = prefixed_blank_lines
     replacement_text = textwrap.indent(
         text=new_code_block_content,
         prefix=within_code_block_indent_prefix,
