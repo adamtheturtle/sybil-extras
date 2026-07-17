@@ -1,11 +1,41 @@
 """Shared utilities for grouping parsers."""
 
 from collections.abc import Iterable, Sequence
+from dataclasses import dataclass
 
 from beartype import beartype
-from sybil import Example, Region
+from sybil import Document, Example, Region
 from sybil.region import Lexeme
 from sybil.typing import Evaluator
+
+
+@beartype
+@dataclass(frozen=True, kw_only=True)
+class CollectedExample:
+    """An example snapshot that does not retain its document."""
+
+    line: int
+    column: int
+    region: Region
+
+    @classmethod
+    def from_example(cls, *, example: Example) -> "CollectedExample":
+        """Create a document-free snapshot of an example."""
+        return cls(
+            line=example.line,
+            column=example.column,
+            region=example.region,
+        )
+
+    def restore(self, *, document: Document) -> Example:
+        """Restore the example for a live document."""
+        return Example(
+            document=document,
+            line=self.line,
+            column=self.column,
+            region=self.region,
+            namespace=document.namespace,
+        )
 
 
 @beartype

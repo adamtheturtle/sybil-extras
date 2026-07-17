@@ -1,7 +1,9 @@
 """Group-all parser tests shared across markup languages."""
 
+import gc
 import subprocess
 import uuid
+import weakref
 from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -18,6 +20,44 @@ from sybil_extras.languages import (
     DirectiveBuilder,
     MarkupLanguage,
 )
+
+
+def test_abandoned_documents_are_released(
+    *,
+    language: MarkupLanguage,
+    tmp_path: Path,
+) -> None:
+    """Parsed documents are released when their finalizers never run."""
+    evaluator = NoOpEvaluator()
+    group_all_parser = language.group_all_parser_cls(
+        evaluator=evaluator,
+        pad_groups=False,
+    )
+    code_block_parser = language.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
+    sybil = Sybil(parsers=[code_block_parser, group_all_parser])
+    references: list[weakref.ReferenceType[Document]] = []
+
+    def parse_reference(*, path: Path) -> weakref.ReferenceType[Document]:
+        """Parse a document without preserving a local strong
+        reference.
+        """
+        document = sybil.parse(path=path)
+        return weakref.ref(document)
+
+    for index in range(3):
+        test_document = tmp_path / f"test-{index}"
+        test_document.write_text(
+            data=language.code_block_builder(code="pass", language="python"),
+            encoding="utf-8",
+        )
+        references.append(parse_reference(path=test_document))
+
+    gc.collect()
+
+    assert all(reference() is None for reference in references)
 
 
 @beartype

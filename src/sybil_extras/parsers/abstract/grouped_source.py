@@ -11,6 +11,7 @@ import threading
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from typing import Literal
+from weakref import WeakKeyDictionary
 
 from beartype import beartype
 from sybil import Document, Example, Region
@@ -19,20 +20,12 @@ from sybil.parsers.abstract.lexers import LexerCollection
 from sybil.typing import Evaluator, Lexer
 
 from ._grouping_utils import (
+    CollectedExample,
     count_expected_code_blocks,
     create_combined_example,
     create_combined_region,
     has_source,
 )
-
-
-@beartype
-@dataclass(frozen=True, kw_only=True)
-class _GroupStateKey:
-    """Key for looking up group state."""
-
-    document: Document
-    group_id: int
 
 
 @beartype
@@ -74,7 +67,7 @@ class _GroupState:
         self.start_position = start_position
         self.end_position = end_position
         self.expected_code_blocks = expected_code_blocks
-        self.examples: list[Example] = []
+        self.examples: list[CollectedExample] = []
         self.lock = threading.Lock()
         self.ready = threading.Condition(lock=self.lock)
         self.collected_count = 0
@@ -103,15 +96,19 @@ class _Grouper:
         file
                 to not have a bunch of newlines in it, such as formatters.
         """
-        # State is keyed by _GroupStateKey to allow multiple groups
-        # in the same document to be processed in parallel.
-        self._group_state: dict[_GroupStateKey, _GroupState] = {}
+        # Nested state allows multiple groups in the same document while
+        # retaining the document only as a weak key.
+        self._group_state: WeakKeyDictionary[
+            Document, dict[int, _GroupState]
+        ] = WeakKeyDictionary()
         self._group_state_lock = threading.Lock()
         self._evaluator = evaluator
         self._directive = directive
         self._pad_groups = pad_groups
         # Track group boundaries per document for determining membership
-        self._group_boundaries: dict[Document, list[_GroupBoundary]] = {}
+        self._group_boundaries: WeakKeyDictionary[
+            Document, list[_GroupBoundary]
+        ] = WeakKeyDictionary()
         self._group_boundaries_lock = threading.Lock()
 
     def register_group(
@@ -141,8 +138,9 @@ class _Grouper:
                     end_position=end_position,
                 )
             )
-            key = _GroupStateKey(document=document, group_id=group_id)
-            self._group_state[key] = _GroupState(
+            if document not in self._group_state:
+                self._group_state[document] = {}
+            self._group_state[document][group_id] = _GroupState(
                 start_position=start_position,
                 end_position=end_position,
                 expected_code_blocks=expected_code_blocks,
@@ -163,14 +161,13 @@ class _Grouper:
         boundary and retrieving the state.
         """
         with self._group_boundaries_lock, self._group_state_lock:
-            boundaries = self._group_boundaries.get(document, [])
+            boundaries = self._group_boundaries.get(
+                key=document,
+                default=list[_GroupBoundary](),
+            )
             for boundary in boundaries:
                 if boundary.start_position < position < boundary.end_position:
-                    key = _GroupStateKey(
-                        document=document,
-                        group_id=boundary.group_id,
-                    )
-                    return self._group_state[key]
+                    return self._group_state[document][boundary.group_id]
         return None
 
     def _get_group_state(
@@ -180,9 +177,8 @@ class _Grouper:
         group_id: int,
     ) -> _GroupState:
         """Get the state for a specific group."""
-        key = _GroupStateKey(document=document, group_id=group_id)
         with self._group_state_lock:
-            return self._group_state[key]
+            return self._group_state[document][group_id]
 
     def _cleanup_group_state(
         self,
@@ -198,10 +194,9 @@ class _Grouper:
         multiple threads could both see an empty boundary list and call
         pop_evaluator.
         """
-        key = _GroupStateKey(document=document, group_id=group_id)
         # Hold both locks to ensure atomic cleanup and pop_evaluator call
         with self._group_boundaries_lock, self._group_state_lock:
-            del self._group_state[key]
+            del self._group_state[document][group_id]
             self._group_boundaries[document] = [
                 boundary
                 for boundary in self._group_boundaries[document]
@@ -209,6 +204,7 @@ class _Grouper:
             ]
             if not self._group_boundaries[document]:
                 del self._group_boundaries[document]
+                del self._group_state[document]
                 document.pop_evaluator(evaluator=self)
 
     def _evaluate_grouper_example(self, example: Example) -> None:
@@ -232,10 +228,14 @@ class _Grouper:
                     # Sort examples by their position in the document to ensure
                     # correct order regardless of evaluation order
                     # (for thread-safety).
-                    sorted_examples = sorted(
+                    sorted_collected_examples = sorted(
                         state.examples,
-                        key=lambda ex: ex.region.start,
+                        key=lambda collected: collected.region.start,
                     )
+                    sorted_examples = [
+                        collected.restore(document=example.document)
+                        for collected in sorted_collected_examples
+                    ]
                     region = create_combined_region(
                         examples=sorted_examples,
                         evaluator=self._evaluator,
@@ -268,7 +268,9 @@ class _Grouper:
 
         with state.ready:
             if has_source(example=example):
-                state.examples.append(example)
+                state.examples.append(
+                    CollectedExample.from_example(example=example)
+                )
                 state.collected_count += 1
                 state.ready.notify_all()
                 return
