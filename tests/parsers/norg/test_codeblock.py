@@ -105,6 +105,18 @@ def test_verbatim_ranged_tag_with_leading_whitespace() -> None:
     assert region.parsed == "x = 1\n"
 
 
+def test_region_excludes_blank_lines_before_opening() -> None:
+    """A region starts on its ``@code`` line, not an earlier blank
+    line.
+    """
+    text = "Introduction\n\n\n@code python\nx = 1\n@end\n"
+
+    (region,) = _parse(text=text)
+
+    assert region.start == text.index("@code")
+    assert text[region.start :].startswith("@code python")
+
+
 def test_multiple_code_blocks() -> None:
     """Multiple code blocks in the same document are all parsed."""
     regions = _parse(

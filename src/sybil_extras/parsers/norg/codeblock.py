@@ -42,7 +42,7 @@ class NorgVerbatimRangedTagLexer:
         # Must be at start of line (with optional leading whitespace)
         # Use [^\S\n]+ instead of \s+ to avoid matching newlines
         self._opening_pattern = re.compile(
-            pattern=rf"^\s*@code(?:[^\S\n]+(?P<language>{language}))?$",
+            pattern=rf"^[^\S\n]*@code(?:[^\S\n]+(?P<language>{language}))?$",
             flags=re.MULTILINE,
         )
         # Pattern to match closing tag: @end
