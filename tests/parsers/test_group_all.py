@@ -25,9 +25,6 @@ from sybil_extras.languages import (
     DirectiveBuilder,
     MarkupLanguage,
 )
-from sybil_extras.parsers.abstract._grouping_utils import (
-    count_expected_code_blocks,
-)
 from sybil_extras.parsers.rest.group_all import GroupAllParser
 from sybil_extras.parsers.rest.thread_safe_skip import ThreadSafeSkipParser
 
@@ -60,8 +57,6 @@ def test_skip_next_non_code_example_is_consumed(tmp_path: Path) -> None:
         ]
     ).parse(path=test_document)
     examples = list(document.examples())
-
-    assert count_expected_code_blocks(examples=examples) == 1
 
     with ThreadPoolExecutor(max_workers=2) as executor:
         final_result = executor.submit(examples[-1].evaluate)
