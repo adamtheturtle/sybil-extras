@@ -9,11 +9,80 @@ reStructuredText.
 
 import re
 import textwrap
+import threading
+from collections.abc import Generator
+from contextlib import contextmanager
+from dataclasses import dataclass
 from pathlib import Path
 
 from beartype import beartype
-from sybil import Example
+from sybil import Document, Example
 from sybil.typing import Evaluator
+
+
+@dataclass
+class _CapturedValue:
+    """A namespace value isolated to one evaluator call."""
+
+    value: object | None = None
+
+
+class _WriterLocal(threading.local):
+    """Per-thread stack of namespace captures."""
+
+    def __init__(self) -> None:
+        """Initialize an empty capture stack for the current thread."""
+        self.captures: dict[str, list[_CapturedValue]] = {}
+
+
+class _WriterNamespace(dict[str, object]):
+    """A document namespace with isolated writer result slots."""
+
+    def __init__(self, *, namespace: dict[str, object]) -> None:
+        """Initialize from an existing document namespace."""
+        super().__init__(namespace)
+        self._local = _WriterLocal()
+        self._capture_lock = threading.Lock()
+        self.write_lock = threading.RLock()
+
+    def _active_capture(self, *, key: str) -> _CapturedValue | None:
+        """Return this thread's innermost capture for ``key``."""
+        captures = self._local.captures.get(key, ())
+        return captures[-1] if captures else None
+
+    @contextmanager
+    def capture(self, *, key: str) -> Generator[_CapturedValue]:
+        """Capture writes to ``key`` in the current thread."""
+        with self._capture_lock:
+            captured = _CapturedValue(value=super().pop(key, None))
+        captures = self._local.captures.setdefault(key, [])
+        captures.append(captured)
+        try:
+            yield captured
+        finally:
+            captures.pop()
+
+    def __setitem__(self, key: str, value: object) -> None:
+        """Store captured writer content separately for each thread."""
+        capture = self._active_capture(key=key)
+        if capture is None:
+            super().__setitem__(key, value)
+            return
+        capture.value = value
+
+
+_NAMESPACE_INSTALL_LOCK = threading.Lock()
+
+
+@beartype
+def _writer_namespace(*, document: Document) -> _WriterNamespace:
+    """Return the shared writer-aware namespace for ``document``."""
+    with _NAMESPACE_INSTALL_LOCK:
+        namespace = document.namespace
+        if not isinstance(namespace, _WriterNamespace):
+            namespace = _WriterNamespace(namespace=namespace)
+            document.namespace = namespace
+        return namespace
 
 
 @beartype
@@ -231,19 +300,24 @@ class CodeBlockWriterEvaluator:
         that formatters or auto-fixers can update files even when other
         checks (like linter checks) fail.
         """
-        try:
-            self._evaluator(example)
-        finally:
-            modified_content = example.document.namespace.get(
-                self._namespace_key
-            )
-            if modified_content is not None:
-                # Clear the namespace key to prevent stale data affecting
-                # subsequent examples.
-                del example.document.namespace[self._namespace_key]
-                if modified_content != example.parsed:
-                    _overwrite_example_content(
-                        example=example,
-                        new_content=modified_content,
-                        encoding=self._encoding,
-                    )
+        namespace = _writer_namespace(document=example.document)
+        with namespace.capture(key=self._namespace_key) as captured:
+            try:
+                self._evaluator(example)
+            finally:
+                modified_content = captured.value
+                if modified_content is not None and not isinstance(
+                    modified_content, str
+                ):
+                    msg = "Modified code block content must be a string"
+                    raise TypeError(msg)
+                if (
+                    modified_content is not None
+                    and modified_content != example.parsed
+                ):
+                    with namespace.write_lock:
+                        _overwrite_example_content(
+                            example=example,
+                            new_content=modified_content,
+                            encoding=self._encoding,
+                        )

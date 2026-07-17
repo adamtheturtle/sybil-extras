@@ -1,6 +1,7 @@
 """Tests for the code_block_writer module."""
 
 import textwrap
+import threading
 from pathlib import Path
 
 import pytest
@@ -19,6 +20,74 @@ from sybil_extras.languages import (
     RESTRUCTUREDTEXT,
     MarkupLanguage,
 )
+
+
+def test_concurrent_writes_keep_each_edit(tmp_path: Path) -> None:
+    """Concurrent evaluations retain both code block edits."""
+    content = textwrap.dedent(
+        text="""\
+        ```python
+        first
+        ```
+
+        ```python
+        second
+        ```
+        """
+    )
+    source_file = tmp_path / "source_file.md"
+    source_file.write_text(data=content, encoding="utf-8")
+    first_ready = threading.Event()
+    release_first = threading.Event()
+
+    def modifying_evaluator(example: Example) -> None:
+        """Uppercase the block after arranging an overlapping call."""
+        source = str(object=example.parsed)
+        example.document.namespace["modified_content"] = source.upper()
+        if source.strip() == "first":
+            first_ready.set()
+            assert release_first.wait(timeout=5)
+
+    writer_evaluator = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)
+    parser = MARKDOWN.code_block_parser_cls(
+        language="python",
+        evaluator=writer_evaluator,
+    )
+    document = Sybil(parsers=[parser]).parse(path=source_file)
+    first, second = document.examples()
+    first_thread = threading.Thread(target=first.evaluate)
+
+    first_thread.start()
+    assert first_ready.wait(timeout=5)
+    second.evaluate()
+    release_first.set()
+    first_thread.join(timeout=5)
+
+    assert not first_thread.is_alive()
+    expected = content.replace("first", "FIRST").replace("second", "SECOND")
+    assert source_file.read_text(encoding="utf-8") == expected
+    document.namespace["ordinary"] = "shared"
+    assert document.namespace["ordinary"] == "shared"
+
+
+def test_non_string_modified_content_raises(tmp_path: Path) -> None:
+    """Modified code block content must remain a string."""
+    source_file = tmp_path / "source_file.md"
+    source_file.write_text(data="```python\noriginal\n```\n", encoding="utf-8")
+
+    def modifying_evaluator(example: Example) -> None:
+        """Store an invalid modified content value."""
+        example.document.namespace["modified_content"] = 1
+
+    writer_evaluator = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)
+    parser = MARKDOWN.code_block_parser_cls(
+        language="python",
+        evaluator=writer_evaluator,
+    )
+    (example,) = Sybil(parsers=[parser]).parse(path=source_file).examples()
+
+    with pytest.raises(expected_exception=TypeError, match="must be a string"):
+        example.evaluate()
 
 
 def test_writes_modified_content(
