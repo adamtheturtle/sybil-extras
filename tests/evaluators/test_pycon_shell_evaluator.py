@@ -13,7 +13,6 @@ from sybil.parsers.markdown import (
 )
 
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
-from sybil_extras.evaluators.shell_evaluator._pycon import python_to_pycon
 from sybil_extras.evaluators.shell_evaluator.exceptions import (
     InvalidPyconError,
 )
@@ -29,28 +28,6 @@ from sybil_extras.evaluators.shell_evaluator.source_preparer import (
 def make_temp_file_path(*, example: Example) -> Path:
     """Create a temporary file path for an example code block."""
     return Path(example.path).parent / f"temp_{uuid.uuid4().hex[:8]}.py"
-
-
-def test_changed_statement_drops_stale_output() -> None:
-    """Output is dropped when its statement changes meaning."""
-    original = ">>> 1 + 1\n2\n>>> 2 + 2\n4\n"
-
-    result = python_to_pycon(
-        python_text="1 + 2\n2 + 2\n",
-        original_pycon=original,
-    )
-
-    assert result == ">>> 1 + 2\n>>> 2 + 2\n4\n"
-
-
-def test_invalid_original_statement_drops_stale_output() -> None:
-    """Output is dropped when the original statement cannot be parsed."""
-    result = python_to_pycon(
-        python_text="pass\n",
-        original_pycon=">>> def (\nSyntaxError\n",
-    )
-
-    assert result == ">>> pass\n"
 
 
 @beartype
@@ -173,6 +150,113 @@ def test_write_to_file_reformats_pycon(
         >>> x = 1 + 1
         >>> x
         2
+        ```
+        """,
+    )
+
+
+def test_changed_statement_drops_stale_output(
+    *,
+    tmp_path: Path,
+) -> None:
+    """Output is dropped when its statement changes meaning."""
+    content = textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> 1 + 1
+        2
+        >>> 2 + 2
+        4
+        ```
+        """,
+    )
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    script = tmp_path / "fmt.py"
+    script.write_text(
+        data=textwrap.dedent(
+            text="""\
+            import pathlib
+            import sys
+
+            path = pathlib.Path(sys.argv[1])
+            path.write_text(path.read_text().replace("1 + 1", "1 + 2"))
+            """,
+        ),
+        encoding="utf-8",
+    )
+
+    evaluator = _make_pycon_evaluator(
+        args=["python3", str(object=script)],
+        write_to_file=True,
+    )
+    parser = SybilMarkdownCodeBlockParser(
+        language="pycon",
+        evaluator=evaluator,
+    )
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    (example,) = document.examples()
+    example.evaluate()
+
+    assert test_file.read_text(encoding="utf-8") == textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> 1 + 2
+        >>> 2 + 2
+        4
+        ```
+        """,
+    )
+
+
+def test_invalid_original_statement_drops_stale_output(
+    *,
+    tmp_path: Path,
+) -> None:
+    """Output is dropped when the original statement cannot be parsed."""
+    content = textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> def (
+        SyntaxError
+        ```
+        """,
+    )
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    script = tmp_path / "fmt.py"
+    script.write_text(
+        data=textwrap.dedent(
+            text="""\
+            import pathlib
+            import sys
+
+            pathlib.Path(sys.argv[1]).write_text("pass\\n")
+            """,
+        ),
+        encoding="utf-8",
+    )
+
+    evaluator = _make_pycon_evaluator(
+        args=["python3", str(object=script)],
+        write_to_file=True,
+    )
+    parser = SybilMarkdownCodeBlockParser(
+        language="pycon",
+        evaluator=evaluator,
+    )
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    (example,) = document.examples()
+    example.evaluate()
+
+    assert test_file.read_text(encoding="utf-8") == textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> pass
         ```
         """,
     )
