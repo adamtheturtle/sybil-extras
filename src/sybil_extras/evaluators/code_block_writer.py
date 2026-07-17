@@ -223,7 +223,7 @@ class CodeBlockWriterEvaluator:
         self._namespace_key = namespace_key
         self._encoding = encoding
 
-    def __call__(self, example: Example) -> None:
+    def __call__(self, example: Example) -> str | None:
         """Run the wrapped evaluator and write any modifications back.
 
         If the wrapped evaluator raises an exception, modifications are
@@ -232,7 +232,7 @@ class CodeBlockWriterEvaluator:
         checks (like linter checks) fail.
         """
         try:
-            self._evaluator(example)
+            return self._evaluator(example)
         finally:
             modified_content = example.document.namespace.get(
                 self._namespace_key
