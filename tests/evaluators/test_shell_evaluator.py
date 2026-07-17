@@ -157,7 +157,7 @@ def test_output_shown(
 
 
 def test_command_reading_stdin_receives_eof(*, use_pty_option: bool) -> None:
-    """Commands reading stdin receive EOF instead of hanging."""
+    """Commands reading standard input receive EOF instead of hanging."""
     script = textwrap.dedent(
         text=f"""\
         import sys
