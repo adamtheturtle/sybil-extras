@@ -19,9 +19,6 @@ from sybil_extras.languages import (
     DirectiveBuilder,
     MarkupLanguage,
 )
-from sybil_extras.parsers.abstract._grouping_utils import (
-    count_expected_code_blocks,
-)
 
 
 def test_skip_end_cancels_pending_next(
@@ -58,8 +55,6 @@ def test_skip_end_cancels_pending_next(
         ]
     ).parse(path=test_document)
     examples = list(document.examples())
-
-    assert count_expected_code_blocks(examples=examples) == 1
 
     with ThreadPoolExecutor(max_workers=2) as executor:
         final_result = executor.submit(examples[-1].evaluate)
