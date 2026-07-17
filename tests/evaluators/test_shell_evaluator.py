@@ -156,6 +156,28 @@ def test_output_shown(
     assert outerr.err == expected_stderr
 
 
+def test_command_reading_stdin_receives_eof(*, use_pty_option: bool) -> None:
+    """Commands reading stdin receive EOF instead of hanging."""
+    script = textwrap.dedent(
+        text=f"""\
+        import sys
+
+        from sybil_extras.evaluators._subprocess_utils import run_command
+
+        run_command(
+            command=[sys.executable, "-c", "import sys; sys.stdin.read()"],
+            use_pty={use_pty_option!r},
+        )
+        """,
+    )
+
+    subprocess.run(
+        args=[sys.executable, "-c", script],
+        check=True,
+        timeout=5,
+    )
+
+
 def test_rm(
     *,
     rst_file: Path,
