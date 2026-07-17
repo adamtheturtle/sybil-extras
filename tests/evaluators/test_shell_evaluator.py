@@ -728,6 +728,37 @@ def test_non_utf8_output(
     assert output == expected_output
 
 
+def test_deleted_temp_file_does_not_erase_code(tmp_path: Path) -> None:
+    """A deleted formatter result raises and leaves the source
+    unchanged.
+    """
+    original_content = "```python\nimportant = True\n```\n"
+    source_file = tmp_path / "example.md"
+    source_file.write_text(data=original_content, encoding="utf-8")
+    evaluator = ShellCommandEvaluator(
+        args=[
+            sys.executable,
+            "-c",
+            "import pathlib, sys; pathlib.Path(sys.argv[1]).unlink()",
+        ],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=True,
+        use_pty=False,
+    )
+    parser = SybilMarkdownCodeBlockParser(
+        language="python",
+        evaluator=evaluator,
+    )
+    document = Sybil(parsers=[parser]).parse(path=source_file)
+    (example,) = document.examples()
+
+    with pytest.raises(expected_exception=FileNotFoundError):
+        example.evaluate()
+
+    assert source_file.read_text(encoding="utf-8") == original_content
+
+
 def test_no_file_left_behind_on_interruption(
     *,
     rst_file: Path,

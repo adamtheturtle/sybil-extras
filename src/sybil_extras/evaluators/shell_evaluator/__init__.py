@@ -155,7 +155,7 @@ class _ShellCommandRunner:
             newline=self._newline,
         )
 
-        temp_file_content = ""
+        temp_file_content = new_source
         try:
             result = run_command(
                 command=[
@@ -165,7 +165,7 @@ class _ShellCommandRunner:
                 use_pty=self._use_pty,
             )
 
-            with contextlib.suppress(FileNotFoundError):
+            if self._write_to_file or self._on_modify is not None:
                 temp_file_content = temp_file.read_text(
                     encoding=self._encoding
                 )
