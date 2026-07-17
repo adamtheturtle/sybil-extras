@@ -14,11 +14,11 @@ from sybil.typing import Evaluator
 
 from sybil_extras.parsers._line_offsets import line_offsets
 
-_OPTION_PATTERN = re.compile(pattern=r"^:(?P<key>\w+):\s*(?P<value>.*)$")
+_OPTION_PATTERN = re.compile(pattern=r"^:(?P<key>[\w-]+):\s*(?P<value>.*)$")
 
 
 @beartype
-def _parse_options_and_body(
+def parse_options_and_body(
     content: str,
 ) -> tuple[dict[str, str], str]:
     """Separate options from body in directive content."""
@@ -92,7 +92,7 @@ class SphinxJinja2Parser:
             else:
                 region_end = len(document.text)
 
-            options, body = _parse_options_and_body(
+            options, body = parse_options_and_body(
                 content=token.content,
             )
 
