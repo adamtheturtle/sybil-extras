@@ -156,26 +156,25 @@ def test_output_shown(
     assert outerr.err == expected_stderr
 
 
-def test_command_reading_stdin_receives_eof(*, use_pty_option: bool) -> None:
+def test_command_reading_stdin_receives_eof(
+    *,
+    rst_file: Path,
+    use_pty_option: bool,
+) -> None:
     """Commands reading standard input receive EOF instead of hanging."""
-    script = textwrap.dedent(
-        text=f"""\
-        import sys
-
-        from sybil_extras.evaluators._subprocess_utils import run_command
-
-        run_command(
-            command=[sys.executable, "-c", "import sys; sys.stdin.read()"],
-            use_pty={use_pty_option!r},
-        )
-        """,
+    evaluator = ShellCommandEvaluator(
+        args=[sys.executable, "-c", "import sys; sys.stdin.read()"],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=False,
+        use_pty=use_pty_option,
     )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
 
-    subprocess.run(
-        args=[sys.executable, "-c", script],
-        check=True,
-        timeout=5,
-    )
+    example.evaluate()
 
 
 def test_rm(
