@@ -1,4 +1,4 @@
-"""Tests for pycon source preparer and result transformer."""
+"""Tests for pycon source preparation and result transformation."""
 
 import textwrap
 import uuid
@@ -13,6 +13,7 @@ from sybil.parsers.markdown import (
 )
 
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
+from sybil_extras.evaluators.shell_evaluator._pycon import python_to_pycon
 from sybil_extras.evaluators.shell_evaluator.exceptions import (
     InvalidPyconError,
 )
@@ -28,6 +29,28 @@ from sybil_extras.evaluators.shell_evaluator.source_preparer import (
 def make_temp_file_path(*, example: Example) -> Path:
     """Create a temporary file path for an example code block."""
     return Path(example.path).parent / f"temp_{uuid.uuid4().hex[:8]}.py"
+
+
+def test_changed_statement_drops_stale_output() -> None:
+    """Output is dropped when its statement changes meaning."""
+    original = ">>> 1 + 1\n2\n>>> 2 + 2\n4\n"
+
+    result = python_to_pycon(
+        python_text="1 + 2\n2 + 2\n",
+        original_pycon=original,
+    )
+
+    assert result == ">>> 1 + 2\n>>> 2 + 2\n4\n"
+
+
+def test_invalid_original_statement_drops_stale_output() -> None:
+    """Output is dropped when the original statement cannot be parsed."""
+    result = python_to_pycon(
+        python_text="pass\n",
+        original_pycon=">>> def (\nSyntaxError\n",
+    )
+
+    assert result == ">>> pass\n"
 
 
 @beartype

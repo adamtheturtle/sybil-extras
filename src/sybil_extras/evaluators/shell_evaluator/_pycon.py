@@ -65,6 +65,7 @@ def pycon_to_python(*, pycon_text: str) -> str:
 class _PyconChunk:
     """A parsed pycon interaction chunk."""
 
+    python_text: str
     output_lines: list[str]
 
 
@@ -89,6 +90,7 @@ class _PyconTranscript:
             A parsed transcript.
         """
         chunks: list[_PyconChunk] = []
+        current_input: list[str] = []
         current_output: list[str] = []
         seen_prompt = False
 
@@ -96,15 +98,31 @@ class _PyconTranscript:
             stripped = line.rstrip("\n\r")
             if stripped == ">>>" or line.startswith(">>> "):
                 if seen_prompt:
-                    chunks.append(_PyconChunk(output_lines=current_output))
+                    chunks.append(
+                        _PyconChunk(
+                            python_text="".join(current_input),
+                            output_lines=current_output,
+                        )
+                    )
+                    current_input = []
                     current_output = []
                 seen_prompt = True
+                current_input.append(
+                    line[4:] if line.startswith(">>> ") else line[3:]
+                )
             elif stripped == "..." or line.startswith("... "):
-                pass
+                current_input.append(
+                    line[4:] if line.startswith("... ") else line[3:]
+                )
             else:
                 current_output.append(line)
 
-        chunks.append(_PyconChunk(output_lines=current_output))
+        chunks.append(
+            _PyconChunk(
+                python_text="".join(current_input),
+                output_lines=current_output,
+            )
+        )
 
         return cls(chunks=chunks)
 
@@ -170,6 +188,22 @@ def _is_separator_group(*, group: list[str]) -> bool:
 
 
 @beartype
+def _statements_are_equivalent(
+    *,
+    group: list[str],
+    chunk: _PyconChunk,
+) -> bool:
+    """Return whether a rendered group matches its original statement."""
+    group_python = pycon_to_python(pycon_text="".join(group))
+    try:
+        group_tree = ast.parse(source=group_python)
+        chunk_tree = ast.parse(source=chunk.python_text)
+    except SyntaxError:
+        return group_python == chunk.python_text
+    return ast.dump(node=group_tree) == ast.dump(node=chunk_tree)
+
+
+@beartype
 def _render_pycon_from_python(
     *,
     python_text: str,
@@ -220,7 +254,10 @@ def _render_pycon_from_python(
     for i, group in enumerate(iterable=groups):
         result.extend(group)
         matched_chunk = chunk_for_group[i]
-        if matched_chunk is not None:
+        if matched_chunk is not None and _statements_are_equivalent(
+            group=group,
+            chunk=original_chunks[matched_chunk],
+        ):
             result.extend(original_chunks[matched_chunk].output_lines)
 
     return "".join(result)
@@ -233,8 +270,8 @@ def python_to_pycon(*, python_text: str, original_pycon: str) -> str:
     Adds ``>>> `` to the first line of each top-level statement and ``... ``
     to continuation lines.  Lines not belonging to any AST statement (such
     as comments or blank lines) also receive ``>>> ``.  Output lines from
-    the original pycon content are preserved when the number of ``>>>``
-    groups matches the number of original pycon chunks.
+    the original pycon content are preserved when the corresponding
+    statement remains equivalent.
 
     Args:
         python_text: Formatted Python source code (no prompts).
