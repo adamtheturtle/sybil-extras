@@ -25,6 +25,36 @@ from sybil_extras.parsers.rest.sphinx_jinja2 import (
         pytest.param(MystParserSphinxJinja2Parser, id="myst-parser"),
     ),
 )
+def test_sphinx_jinja2_named_context(
+    *,
+    parser_cls: type,
+    tmp_path: Path,
+) -> None:
+    """MyST jinja directives expose their named context argument."""
+    content = textwrap.dedent(
+        text="""\
+        ```{jinja} ctx1
+        Hello {{ name }}!
+        ```
+        """,
+    )
+    test_document = tmp_path / "test.md"
+    test_document.write_text(data=content, encoding="utf-8")
+    parser = parser_cls(evaluator=NoOpEvaluator())
+
+    (example,) = Sybil(parsers=[parser]).parse(path=test_document).examples()
+
+    assert example.parsed == "Hello {{ name }}!\n"
+    assert example.region.lexemes["arguments"] == "ctx1"
+
+
+@pytest.mark.parametrize(
+    argnames="parser_cls",
+    argvalues=(
+        pytest.param(MystSphinxJinja2Parser, id="myst"),
+        pytest.param(MystParserSphinxJinja2Parser, id="myst-parser"),
+    ),
+)
 def test_sphinx_jinja2(
     *,
     parser_cls: type,
