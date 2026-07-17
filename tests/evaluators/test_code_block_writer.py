@@ -141,6 +141,32 @@ def test_writes_modified_content(
     assert source_file.read_text(encoding="utf-8") == expected_content
 
 
+def test_preserves_source_newline_convention(tmp_path: Path) -> None:
+    """Writing a code block preserves CRLF newlines in the source file."""
+    source_file = tmp_path / "source_file.md"
+    source_file.write_bytes(
+        data=b"before\r\n\r\n```python\r\nfirst\r\n```\r\n\r\nafter\r\n"
+    )
+
+    def modifying_evaluator(example: Example) -> None:
+        """Store modified content in the namespace."""
+        example.document.namespace["modified_content"] = "FIRST\n"
+
+    writer_evaluator = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)
+    parser = MARKDOWN_IT.code_block_parser_cls(
+        language="python",
+        evaluator=writer_evaluator,
+    )
+    document = Sybil(parsers=[parser]).parse(path=source_file)
+    (example,) = document.examples()
+
+    example.evaluate()
+
+    assert source_file.read_bytes() == (
+        b"before\r\n\r\n```python\r\nFIRST\r\n```\r\n\r\nafter\r\n"
+    )
+
+
 def test_writes_on_evaluator_exception(tmp_path: Path) -> None:
     """When the wrapped evaluator raises an exception, modifications are
     still

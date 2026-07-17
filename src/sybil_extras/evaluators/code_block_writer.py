@@ -17,6 +17,16 @@ from sybil.typing import Evaluator
 
 
 @beartype
+def _get_source_newline(*, path: Path, encoding: str | None) -> str | None:
+    """Return the first newline convention used by a source file."""
+    with path.open(mode="r", encoding=encoding, newline="") as source_file:
+        source_text = source_file.read()
+
+    newline_match = re.search(pattern=r"\r\n|\r|\n", string=source_text)
+    return newline_match.group() if newline_match else None
+
+
+@beartype
 def _get_within_code_block_indentation_prefix(example: Example) -> str:
     """Get the indentation of the parsed code in the example."""
     first_line = str(object=example.parsed).split(sep="\n", maxsplit=1)[0]
@@ -164,6 +174,8 @@ def _overwrite_example_content(
     )
 
     if modified_region_text != original_region_text:
+        path = Path(example.path)
+        source_newline = _get_source_newline(path=path, encoding=encoding)
         existing_file_content = example.document.text
         modified_document_content = (
             existing_file_content[: example.region.start]
@@ -180,9 +192,10 @@ def _overwrite_example_content(
         for region in subsequent_regions:
             region.start += offset
             region.end += offset
-        Path(example.path).write_text(
+        path.write_text(
             data=modified_document_content,
             encoding=encoding,
+            newline=source_newline,
         )
 
 
