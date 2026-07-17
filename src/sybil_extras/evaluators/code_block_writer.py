@@ -88,7 +88,7 @@ def _get_modified_region_text(
         replace_new_prefix = ""
     # This is a break of the abstraction, - we really should not have
     # to know about markup language specifics here.
-    elif original_region_text.endswith("```"):
+    elif original_region_text.rstrip().endswith("```"):
         # Markdown or MyST
         within_code_block_indent_prefix = code_block_indent_prefix
         replace_old_not_indented = "\n"

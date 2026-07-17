@@ -338,6 +338,44 @@ def test_empty_code_block_write_content(
     assert source_file.read_text(encoding="utf-8") == expected_content
 
 
+@pytest.mark.parametrize(
+    argnames="markup_language",
+    argvalues=(MARKDOWN_IT, MYST_PARSER),
+)
+def test_empty_fence_with_trailing_spaces(
+    *,
+    tmp_path: Path,
+    markup_language: MarkupLanguage,
+) -> None:
+    """Trailing spaces do not prevent recognizing an empty fence."""
+    source_file = tmp_path / "source_file.md"
+    source_file.write_text(
+        data="```python\n```   \n",
+        encoding="utf-8",
+    )
+
+    def modifying_evaluator(example: Example) -> None:
+        """Store modified content in the namespace."""
+        example.document.namespace["modified_content"] = "inserted"
+
+    writer_evaluator = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)
+    parser = markup_language.code_block_parser_cls(
+        language="python",
+        evaluator=writer_evaluator,
+    )
+    document = Sybil(parsers=[parser]).parse(path=source_file)
+    (example,) = document.examples()
+
+    example.evaluate()
+
+    assert source_file.read_text(encoding="utf-8") == (
+        "```python\ninserted\n```   \n"
+    )
+    reparsed_document = Sybil(parsers=[parser]).parse(path=source_file)
+    (reparsed_example,) = reparsed_document.examples()
+    assert str(object=reparsed_example.parsed) == "inserted\n"
+
+
 def test_empty_code_block_with_options(
     *,
     tmp_path: Path,
