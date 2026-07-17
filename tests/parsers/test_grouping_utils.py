@@ -1,15 +1,61 @@
 """Tests for shared grouping-parser utilities."""
 
+# pylint: disable=import-private-name,wrong-spelling-in-comment
+
 from pathlib import Path
 
 import pytest
-from sybil import Sybil
+from sybil import Document, Example, Region, Sybil
 
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.languages import DirectiveBuilder, MarkupLanguage
 from sybil_extras.parsers.abstract._grouping_utils import (
+    _as_skip_marker,  # pyright: ignore[reportPrivateUsage]
+    _skip_condition_is_truthy,  # pyright: ignore[reportPrivateUsage]
     count_expected_code_blocks,
 )
+
+
+def _example(*, parsed: object) -> Example:
+    """Build a minimal example for grouping utility tests."""
+    return Example(
+        document=Document(text="", path="test"),
+        line=1,
+        column=1,
+        region=Region(start=0, end=0, parsed=parsed),
+        namespace={},
+    )
+
+
+@pytest.mark.parametrize(
+    argnames="reason",
+    argvalues=(object(), "because"),
+)
+def test_unconditional_skip_reason(*, reason: object) -> None:
+    """Non-conditional reasons always activate a skip marker."""
+    assert _skip_condition_is_truthy(
+        example=_example(parsed=("next", reason)),
+        reason=reason,
+    )
+
+
+@pytest.mark.parametrize(
+    argnames="parsed",
+    argvalues=(("next",), (1, None)),
+)
+def test_invalid_skip_marker_shape(*, parsed: tuple[object, ...]) -> None:
+    """Malformed tuples are not treated as skip markers."""
+    assert _as_skip_marker(parsed=parsed) is None
+
+
+def test_unknown_skip_action() -> None:
+    """Unknown tuple actions are ignored."""
+    assert (
+        count_expected_code_blocks(
+            examples=[_example(parsed=("unknown", None))]
+        )
+        == 0
+    )
 
 
 @pytest.mark.parametrize(

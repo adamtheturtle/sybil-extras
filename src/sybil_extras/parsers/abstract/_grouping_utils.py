@@ -1,5 +1,7 @@
 """Shared utilities for grouping parsers."""
 
+# pylint: disable=wrong-spelling-in-comment
+
 from collections.abc import Iterable, Sequence
 
 from beartype import beartype
@@ -26,7 +28,12 @@ def _skip_condition_is_truthy(*, example: Example, reason: object) -> bool:
     condition = text[2:]
     namespace = example.document.namespace.copy()
     namespace["if_"] = If(default_reason=condition)
-    return bool(eval("if_" + condition, namespace))  # noqa: S307
+    return bool(
+        eval(  # noqa: S307  # pylint: disable=eval-used
+            "if_" + condition,
+            namespace,
+        )
+    )
 
 
 @beartype
