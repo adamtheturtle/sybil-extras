@@ -19,6 +19,55 @@ from sybil_extras.languages import (
     RESTRUCTUREDTEXT,
     MarkupLanguage,
 )
+from sybil_extras.parsers.markdown.group_all import GroupAllParser
+
+
+def test_grouped_example_write_is_rejected_without_corruption(
+    tmp_path: Path,
+) -> None:
+    """A non-contiguous grouped region fails before writing the file."""
+    content = textwrap.dedent(
+        text="""\
+        ```python
+        first
+        ```
+
+        ```python
+        second
+        ```
+        """
+    )
+    source_file = tmp_path / "source_file.md"
+    source_file.write_text(data=content, encoding="utf-8")
+
+    def modifying_evaluator(example: Example) -> None:
+        """Uppercase the grouped source."""
+        example.document.namespace["modified_content"] = str(
+            object=example.parsed
+        ).upper()
+
+    writer_evaluator = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)
+    document = Sybil(
+        parsers=[
+            MARKDOWN.code_block_parser_cls(
+                language="python",
+                evaluator=NoOpEvaluator(),
+            ),
+            GroupAllParser(evaluator=writer_evaluator, pad_groups=False),
+        ]
+    ).parse(path=source_file)
+
+    examples = list(document.examples())
+    for example in examples[:-1]:
+        example.evaluate()
+
+    with pytest.raises(
+        expected_exception=ValueError,
+        match="grouped examples cannot be written",
+    ):
+        examples[-1].evaluate()
+
+    assert source_file.read_text(encoding="utf-8") == content
 
 
 def test_writes_modified_content(
