@@ -338,6 +338,30 @@ def test_empty_code_block_write_content(
     assert source_file.read_text(encoding="utf-8") == expected_content
 
 
+def test_empty_tilde_fenced_block(tmp_path: Path) -> None:
+    """Content is inserted without indentation inside a tilde fence."""
+    source_file = tmp_path / "source_file.md"
+    source_file.write_text(data="~~~python\n~~~\n", encoding="utf-8")
+
+    def modifying_evaluator(example: Example) -> None:
+        """Store modified content in the namespace."""
+        example.document.namespace["modified_content"] = "inserted"
+
+    writer_evaluator = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)
+    parser = MARKDOWN_IT.code_block_parser_cls(
+        language="python",
+        evaluator=writer_evaluator,
+    )
+    document = Sybil(parsers=[parser]).parse(path=source_file)
+    (example,) = document.examples()
+
+    example.evaluate()
+
+    assert source_file.read_text(encoding="utf-8") == (
+        "~~~python\ninserted\n~~~\n"
+    )
+
+
 def test_empty_code_block_with_options(
     *,
     tmp_path: Path,
