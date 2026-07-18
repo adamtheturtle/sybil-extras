@@ -150,7 +150,7 @@ class _RegionEdit:
 
 
 @beartype
-def _source_offset(*, example: Example) -> int | None:
+def _source_offset(*, example: Example) -> int:
     """Return where the code content starts within the example's region.
 
     Sybil records this on the ``source`` lexeme -- which is
@@ -158,13 +158,11 @@ def _source_offset(*, example: Example) -> int | None:
     the character position of the content relative to the region start.
     Every markup language populates it, including the stock Sybil parsers,
     so the writer can locate a block's delimiters without knowing which
-    language produced the region. ``None`` is returned for the unusual case
-    of a region whose parsed value is not a lexeme.
+    language produced the region.
     """
     parsed = example.parsed
-    if isinstance(parsed, Lexeme):
-        return parsed.offset
-    return None
+    assert isinstance(parsed, Lexeme)  # noqa: S101
+    return parsed.offset
 
 
 @beartype
@@ -172,7 +170,7 @@ def _empty_block_region_edit(
     *,
     original_region_text: str,
     code_block_indent_prefix: str,
-    source_offset: int | None,
+    source_offset: int,
 ) -> _RegionEdit:
     """Describe how to insert content into an *empty* code block.
 
@@ -189,16 +187,9 @@ def _empty_block_region_edit(
     * No closing delimiter means an indented literal block (as in
       reStructuredText), whose content is an indented sub-block separated
       from the opening line by a blank line.
-
-    Only the indented-literal shape needs the second branch, and every
-    parser that produces one records a ``source_offset``; a missing offset
-    therefore falls back to the delimited shape.
     """
-    if source_offset is None:
-        has_closing_delimiter = True
-    else:
-        closing_delimiter = original_region_text[source_offset:]
-        has_closing_delimiter = bool(closing_delimiter.strip())
+    closing_delimiter = original_region_text[source_offset:]
+    has_closing_delimiter = bool(closing_delimiter.strip())
 
     if has_closing_delimiter:
         return _RegionEdit(
