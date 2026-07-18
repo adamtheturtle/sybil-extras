@@ -22,10 +22,19 @@ from sybil_extras.languages import (
 from sybil_extras.parsers.markdown.group_all import GroupAllParser
 
 
-def test_grouped_example_write_is_rejected_without_corruption(
+def test_write_back_of_group_spanning_multiple_blocks_is_rejected(
     tmp_path: Path,
 ) -> None:
-    """A non-contiguous grouped region fails before writing the file."""
+    """Writing back a group made of separate code blocks is rejected.
+
+    ``GroupAllParser`` combines several code blocks into one example whose
+    parsed source is the concatenation of every block's code.  In the
+    document those blocks are separated by fences and blank lines, so the
+    combined code never appears as one contiguous run of text in the
+    source.  There is therefore nowhere to slice the replacement in, and
+    attempting to write it back would corrupt the file.  The writer raises
+    instead, and the file is left unchanged.
+    """
     content = textwrap.dedent(
         text="""\
         ```python
