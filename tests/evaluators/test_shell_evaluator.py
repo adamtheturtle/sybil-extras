@@ -1105,6 +1105,56 @@ def test_custom_on_modify_with_modification(
     example.evaluate()
 
 
+def test_custom_on_modify_receives_unpadded_content(tmp_path: Path) -> None:
+    """The modification callback does not receive line-number padding."""
+    source_file = tmp_path / "example.md"
+    source_file.write_text(
+        data="heading\n\n```python\nx=1\n```\n",
+        encoding="utf-8",
+    )
+    formatter = tmp_path / "formatter.py"
+    formatter.write_text(
+        data=textwrap.dedent(
+            text="""\
+            import pathlib
+            import sys
+
+            path = pathlib.Path(sys.argv[1])
+            path.write_text(path.read_text().replace("x=1", "x = 1"))
+            """
+        ),
+        encoding="utf-8",
+    )
+    modified_contents: list[str] = []
+
+    def on_modify(example: Example, modified_example_content: str) -> None:
+        """Capture the modified example content."""
+        del example
+        modified_contents.append(modified_example_content)
+
+    evaluator = ShellCommandEvaluator(
+        args=[sys.executable, formatter],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=True,
+        write_to_file=True,
+        use_pty=False,
+        on_modify=on_modify,
+    )
+    parser = SybilMarkdownCodeBlockParser(
+        language="python",
+        evaluator=evaluator,
+    )
+    document = Sybil(parsers=[parser]).parse(path=source_file)
+    (example,) = document.examples()
+
+    example.evaluate()
+
+    assert modified_contents == ["x = 1\n"]
+    reparsed_document = Sybil(parsers=[parser]).parse(path=source_file)
+    (reparsed_example,) = reparsed_document.examples()
+    assert str(object=reparsed_example.parsed) == modified_contents[0]
+
+
 @pytest.mark.parametrize(
     argnames="parser_cls",
     argvalues=(MarkdownItCodeBlockParser, SybilMarkdownCodeBlockParser),
