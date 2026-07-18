@@ -2,6 +2,7 @@
 
 # pylint: disable=wrong-spelling-in-comment
 
+import textwrap
 from collections.abc import Iterable
 from contextlib import suppress
 from pathlib import Path
@@ -147,11 +148,13 @@ def test_unusual_parsed_markers_do_not_break_grouping(
     parsed: object,
 ) -> None:
     """Unusual parsed marker shapes do not prevent grouping from finishing."""
-    content = """\
-.. code-block:: python
+    content = textwrap.dedent(
+        text="""\
+        .. code-block:: python
 
-   x = 1
-"""
+           x = 1
+        """,
+    )
     test_document = tmp_path / "test.rst"
     test_document.write_text(data=content, encoding="utf-8")
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
