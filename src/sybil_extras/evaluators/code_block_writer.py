@@ -178,10 +178,10 @@ def _empty_block_region_edit(
     content is inserted where that content would have started: the position
     Sybil records as ``source_offset``. The text after that offset is the
     block's closing delimiter, and whether it exists tells us how the block
-    is shaped -- without having to recognise any particular markup language:
+    is shaped -- without having to recognize any particular markup language:
 
     * A non-empty closing delimiter (a fenced block's closing backtick or
-      tilde line, Norg's ``@end``, ...) sits on its own line after the
+      tilde line, the Norg ``@end`` tag, ...) sits on its own line after the
       content, so the content goes at the block's own indentation, just
       before that line.
     * No closing delimiter means an indented literal block (as in
