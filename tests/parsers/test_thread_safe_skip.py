@@ -2,7 +2,9 @@
 languages.
 """
 
+import gc
 import threading
+import weakref
 from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
@@ -578,3 +580,39 @@ def test_get_skipper_returns_thread_safe(
     parser = language.thread_safe_skip_parser_cls(directive="custom-skip")
     skipper = parser.get_skipper()
     assert isinstance(skipper, ThreadSafeSkipper)
+
+
+def test_completed_document_is_not_retained(
+    *,
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
+    tmp_path: Path,
+) -> None:
+    """The reusable skip parser does not retain completed documents."""
+    language, directive_builder = language_directive_builder
+    content = language.markup_separator.join(
+        [
+            directive_builder(directive="custom-skip", argument="next"),
+            language.code_block_builder(code="x = 1", language="python"),
+        ]
+    )
+    test_document = tmp_path / "test"
+    test_document.write_text(
+        data=f"{content}{language.markup_separator}",
+        encoding="utf-8",
+    )
+    fixture = _build_sybil(
+        language=language,
+        directive_name="custom-skip",
+        code_block_evaluator=PythonEvaluator(),
+    )
+    document = fixture.sybil.parse(path=test_document)
+    example: Example | None = None
+    for example in document.examples():
+        example.evaluate()
+
+    document_reference = weakref.ref(document)
+    example = None
+    del document
+    gc.collect()
+
+    assert document_reference() is None
