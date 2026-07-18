@@ -11,30 +11,30 @@ from sybil.parsers.rest.codeblock import CodeBlockParser
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 
 
-class _ConcurrencyCheckingNamespace(dict[str, object]):
-    """A namespace that rejects overlapping reads."""
+class _ConcurrencyTrackingNamespace(dict[str, object]):
+    """A namespace that records the peak overlap of concurrent reads."""
 
     def __init__(self) -> None:
         """Initialize the namespace."""
         super().__init__()
-        self._active = False
+        self._active = 0
+        self.max_concurrent = 0
         self._lock = threading.Lock()
 
     def get(self, key: object, default: object = None) -> object:
-        """Get a value while checking that access is serialized."""
+        """Get a value while recording how many reads overlap."""
         with self._lock:
-            if self._active:  # pragma: no cover
-                msg = "concurrent namespace access"
-                raise RuntimeError(msg)
-            self._active = True
+            self._active += 1
+            self.max_concurrent = max(self.max_concurrent, self._active)
         try:
             time.sleep(0.05)
-            if not isinstance(key, str):  # pragma: no cover
-                return default
+            # ``key`` is typed ``object`` to match ``dict.get`` across type
+            # checkers; the namespace is only ever queried with string keys.
+            assert isinstance(key, str)
             return super().get(key, default)
         finally:
             with self._lock:
-                self._active = False
+                self._active -= 1
 
 
 def test_concurrent_evaluation_retains_all_blocks(tmp_path: Path) -> None:
@@ -53,7 +53,8 @@ def test_concurrent_evaluation_retains_all_blocks(tmp_path: Path) -> None:
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     document = Sybil(parsers=[parser]).parse(path=test_document)
-    document.namespace = _ConcurrencyCheckingNamespace()
+    namespace = _ConcurrencyTrackingNamespace()
+    document.namespace = namespace
     examples = list(document.examples())
     start = threading.Barrier(parties=2)
 
@@ -65,6 +66,7 @@ def test_concurrent_evaluation_retains_all_blocks(tmp_path: Path) -> None:
     with ThreadPoolExecutor(max_workers=2) as executor:
         list(executor.map(evaluate, examples))
 
+    assert namespace.max_concurrent == 1
     blocks_object: object = document.namespace["blocks"]
     assert blocks_object in (
         ["first\n", "second"],
