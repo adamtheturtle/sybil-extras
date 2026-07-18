@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from beartype import beartype
-from sybil import Document, Example
+from sybil import Document, Example, Lexeme
 from sybil.typing import Evaluator
 
 
@@ -134,6 +134,87 @@ def _get_within_code_block_indentation_prefix(example: Example) -> str:
 
 
 @beartype
+@dataclass(frozen=True, kw_only=True)
+class _RegionEdit:
+    """How to splice new content into a code block region.
+
+    The writer locates ``replace_old_not_indented`` (after indenting it by
+    ``within_code_block_indent_prefix``) within the region, and replaces it
+    with the new content -- also indented by that prefix -- preceded by
+    ``replace_new_prefix``.
+    """
+
+    within_code_block_indent_prefix: str
+    replace_old_not_indented: str
+    replace_new_prefix: str
+
+
+@beartype
+def _source_offset(*, example: Example) -> int | None:
+    """Return where the code content starts within the example's region.
+
+    Sybil records this on the ``source`` lexeme -- which is
+    ``example.parsed`` for a code block -- as :attr:`sybil.Lexeme.offset`,
+    the character position of the content relative to the region start.
+    Every markup language populates it, including the stock Sybil parsers,
+    so the writer can locate a block's delimiters without knowing which
+    language produced the region. ``None`` is returned for the unusual case
+    of a region whose parsed value is not a lexeme.
+    """
+    parsed = example.parsed
+    if isinstance(parsed, Lexeme):
+        return parsed.offset
+    return None
+
+
+@beartype
+def _empty_block_region_edit(
+    *,
+    original_region_text: str,
+    code_block_indent_prefix: str,
+    source_offset: int | None,
+) -> _RegionEdit:
+    """Describe how to insert content into an *empty* code block.
+
+    An empty block has no parsed content to locate and replace, so the new
+    content is inserted where that content would have started: the position
+    Sybil records as ``source_offset``. The text after that offset is the
+    block's closing delimiter, and whether it exists tells us how the block
+    is shaped -- without having to recognise any particular markup language:
+
+    * A non-empty closing delimiter (a fenced block's closing backtick or
+      tilde line, Norg's ``@end``, ...) sits on its own line after the
+      content, so the content goes at the block's own indentation, just
+      before that line.
+    * No closing delimiter means an indented literal block (as in
+      reStructuredText), whose content is an indented sub-block separated
+      from the opening line by a blank line.
+
+    Only the indented-literal shape needs the second branch, and every
+    parser that produces one records a ``source_offset``; a missing offset
+    therefore falls back to the delimited shape.
+    """
+    if source_offset is None:
+        has_closing_delimiter = True
+    else:
+        closing_delimiter = original_region_text[source_offset:]
+        has_closing_delimiter = bool(closing_delimiter.strip())
+
+    if has_closing_delimiter:
+        return _RegionEdit(
+            within_code_block_indent_prefix=code_block_indent_prefix,
+            replace_old_not_indented="\n",
+            replace_new_prefix="\n",
+        )
+
+    return _RegionEdit(
+        within_code_block_indent_prefix=code_block_indent_prefix + "   ",
+        replace_old_not_indented="\n",
+        replace_new_prefix="\n\n",
+    )
+
+
+@beartype
 def _get_modified_region_text(
     *,
     example: Example,
@@ -150,36 +231,27 @@ def _get_modified_region_text(
     ]
 
     if example.parsed:
-        within_code_block_indent_prefix = (
-            _get_within_code_block_indentation_prefix(example=example)
+        edit = _RegionEdit(
+            within_code_block_indent_prefix=(
+                _get_within_code_block_indentation_prefix(example=example)
+            ),
+            replace_old_not_indented=example.parsed,
+            replace_new_prefix="",
         )
-        replace_old_not_indented = example.parsed
-        replace_new_prefix = ""
-    # This is a break of the abstraction, - we really should not have
-    # to know about markup language specifics here.
-    elif original_region_text.endswith(("```", "~~~")):
-        # Markdown or MyST
-        within_code_block_indent_prefix = code_block_indent_prefix
-        replace_old_not_indented = "\n"
-        replace_new_prefix = "\n"
-    elif original_region_text.rstrip().endswith("@end"):
-        # Norg
-        within_code_block_indent_prefix = code_block_indent_prefix
-        replace_old_not_indented = "\n"
-        replace_new_prefix = "\n"
     else:
-        # reStructuredText
-        within_code_block_indent_prefix = code_block_indent_prefix + "   "
-        replace_old_not_indented = "\n"
-        replace_new_prefix = "\n\n"
+        edit = _empty_block_region_edit(
+            original_region_text=original_region_text,
+            code_block_indent_prefix=code_block_indent_prefix,
+            source_offset=_source_offset(example=example),
+        )
 
     indented_example_parsed = textwrap.indent(
-        text=replace_old_not_indented,
-        prefix=within_code_block_indent_prefix,
+        text=edit.replace_old_not_indented,
+        prefix=edit.within_code_block_indent_prefix,
     )
     replacement_text = textwrap.indent(
         text=new_code_block_content,
-        prefix=within_code_block_indent_prefix,
+        prefix=edit.within_code_block_indent_prefix,
     )
 
     if not replacement_text.endswith("\n"):
@@ -192,7 +264,7 @@ def _get_modified_region_text(
     ]
     region_with_replaced_text = (
         text_before_replacement
-        + replace_new_prefix
+        + edit.replace_new_prefix
         + replacement_text
         + text_after_replacement
     )
