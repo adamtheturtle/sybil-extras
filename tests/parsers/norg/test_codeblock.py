@@ -160,6 +160,16 @@ def test_code_block_with_blank_lines() -> None:
     assert region.parsed == "x = 1\n\ny = 2\n"
 
 
+def test_code_block_preserves_blank_lines_before_end() -> None:
+    """Blank lines immediately before ``@end`` remain in the source."""
+    text = "@code python\nx = 1\n\n\n@end\n"
+
+    (region,) = _parse(text=text)
+
+    assert region.parsed == "x = 1\n\n\n"
+    assert text[region.start : region.end] == text.rstrip("\n")
+
+
 def test_nested_code_markers_in_content() -> None:
     """Code blocks can contain text that looks like markers."""
     (region,) = _parse(

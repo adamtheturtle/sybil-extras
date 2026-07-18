@@ -49,7 +49,7 @@ class NorgVerbatimRangedTagLexer:
         # Must be at start of line (with optional leading whitespace)
         # Allow trailing whitespace after @end for consistency with opening
         self._closing_pattern = re.compile(
-            pattern=r"^\s*@end[^\S\n]*$",
+            pattern=r"^[^\S\n]*@end[^\S\n]*$",
             flags=re.MULTILINE,
         )
         self._mapping = mapping
