@@ -104,9 +104,6 @@ package-data.sybil_extras = [
 ]
 zip-safe = false
 
-[tool.distutils]
-bdist_wheel.universal = true
-
 [tool.setuptools_scm]
 
 [tool.ruff]
