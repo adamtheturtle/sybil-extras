@@ -1,4 +1,4 @@
-"""Tests for pycon source preparer and result transformer."""
+"""Tests for pycon source preparation and result transformation."""
 
 import textwrap
 import uuid
@@ -153,6 +153,46 @@ def test_write_to_file_reformats_pycon(
         ```
         """,
     )
+
+
+def test_preserves_output_after_formatter_removes_final_newline(
+    *,
+    tmp_path: Path,
+) -> None:
+    """Preserved output remains separate from input without a final
+    newline.
+    """
+    content = "```pycon\n>>> 1 + 1\n2\n```\n"
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+    script = tmp_path / "fmt.py"
+    script.write_text(
+        data=textwrap.dedent(
+            text="""\
+            import pathlib
+            import sys
+
+            path = pathlib.Path(sys.argv[1])
+            path.write_text(path.read_text().rstrip("\\n"))
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    evaluator = _make_pycon_evaluator(
+        args=["python3", script],
+        write_to_file=True,
+    )
+    parser = SybilMarkdownCodeBlockParser(
+        language="pycon",
+        evaluator=evaluator,
+    )
+    document = Sybil(parsers=[parser]).parse(path=test_file)
+    (example,) = document.examples()
+
+    example.evaluate()
+
+    assert test_file.read_text(encoding="utf-8") == content
 
 
 def test_no_change_leaves_file_unmodified(

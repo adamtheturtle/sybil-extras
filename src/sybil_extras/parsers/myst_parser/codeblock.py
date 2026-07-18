@@ -27,6 +27,7 @@ _INVISIBLE_CODE_BLOCK_PATTERN = re.compile(
     r"(?:\n|(?=--+>))",
 )
 _HTML_COMMENT_END_PATTERN = re.compile(pattern=r"--+>")
+_CODE_DIRECTIVES = frozenset({"{code}", "{code-block}", "{code-cell}"})
 
 
 @beartype
@@ -112,8 +113,10 @@ class CodeBlockParser:
         words = token.info.strip().split()
         if not words:
             block_language = ""
-        elif words[0].startswith("{"):
+        elif words[0] in _CODE_DIRECTIVES:
             block_language = words[1] if len(words) > 1 else ""
+        elif words[0].startswith("{"):
+            return None
         else:
             block_language = words[0]
 

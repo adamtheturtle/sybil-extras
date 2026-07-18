@@ -9,11 +9,80 @@ reStructuredText.
 
 import re
 import textwrap
+import threading
+from collections.abc import Generator
+from contextlib import contextmanager
+from dataclasses import dataclass
 from pathlib import Path
 
 from beartype import beartype
-from sybil import Example
+from sybil import Document, Example, Lexeme
 from sybil.typing import Evaluator
+
+
+@dataclass
+class _CapturedValue:
+    """A namespace value isolated to one evaluator call."""
+
+    value: object | None = None
+
+
+class _WriterLocal(threading.local):
+    """Per-thread stack of namespace captures."""
+
+    def __init__(self) -> None:
+        """Initialize an empty capture stack for the current thread."""
+        self.captures: dict[str, list[_CapturedValue]] = {}
+
+
+class _WriterNamespace(dict[str, object]):
+    """A document namespace with isolated writer result slots."""
+
+    def __init__(self, *, namespace: dict[str, object]) -> None:
+        """Initialize from an existing document namespace."""
+        super().__init__(namespace)
+        self._local = _WriterLocal()
+        self._capture_lock = threading.Lock()
+        self.write_lock = threading.RLock()
+
+    def _active_capture(self, *, key: str) -> _CapturedValue | None:
+        """Return this thread's innermost capture for ``key``."""
+        captures = self._local.captures.get(key, ())
+        return captures[-1] if captures else None
+
+    @contextmanager
+    def capture(self, *, key: str) -> Generator[_CapturedValue]:
+        """Capture writes to ``key`` in the current thread."""
+        with self._capture_lock:
+            captured = _CapturedValue(value=super().pop(key, None))
+        captures = self._local.captures.setdefault(key, [])
+        captures.append(captured)
+        try:
+            yield captured
+        finally:
+            captures.pop()
+
+    def __setitem__(self, key: str, value: object) -> None:
+        """Store captured writer content separately for each thread."""
+        capture = self._active_capture(key=key)
+        if capture is None:
+            super().__setitem__(key, value)
+            return
+        capture.value = value
+
+
+_NAMESPACE_INSTALL_LOCK = threading.Lock()
+
+
+@beartype
+def _writer_namespace(*, document: Document) -> _WriterNamespace:
+    """Return the shared writer-aware namespace for ``document``."""
+    with _NAMESPACE_INSTALL_LOCK:
+        namespace = document.namespace
+        if not isinstance(namespace, _WriterNamespace):
+            namespace = _WriterNamespace(namespace=namespace)
+            document.namespace = namespace
+        return namespace
 
 
 @beartype
@@ -65,6 +134,78 @@ def _get_within_code_block_indentation_prefix(example: Example) -> str:
 
 
 @beartype
+@dataclass(frozen=True, kw_only=True)
+class _RegionEdit:
+    """How to splice new content into a code block region.
+
+    The writer locates ``replace_old_not_indented`` (after indenting it by
+    ``within_code_block_indent_prefix``) within the region, and replaces it
+    with the new content -- also indented by that prefix -- preceded by
+    ``replace_new_prefix``.
+    """
+
+    within_code_block_indent_prefix: str
+    replace_old_not_indented: str
+    replace_new_prefix: str
+
+
+@beartype
+def _source_offset(*, example: Example) -> int:
+    """Return where the code content starts within the example's region.
+
+    Sybil records this on the ``source`` lexeme -- which is
+    ``example.parsed`` for a code block -- as :attr:`sybil.Lexeme.offset`,
+    the character position of the content relative to the region start.
+    Every markup language populates it, including the stock Sybil parsers,
+    so the writer can locate a block's delimiters without knowing which
+    language produced the region.
+    """
+    parsed = example.parsed
+    assert isinstance(parsed, Lexeme)  # noqa: S101
+    return parsed.offset
+
+
+@beartype
+def _empty_block_region_edit(
+    *,
+    original_region_text: str,
+    code_block_indent_prefix: str,
+    source_offset: int,
+) -> _RegionEdit:
+    """Describe how to insert content into an *empty* code block.
+
+    An empty block has no parsed content to locate and replace, so the new
+    content is inserted where that content would have started: the position
+    Sybil records as ``source_offset``. The text after that offset is the
+    block's closing delimiter, and whether it exists tells us how the block
+    is shaped -- without having to recognize any particular markup language:
+
+    * A non-empty closing delimiter (a fenced block's closing backtick or
+      tilde line, the Norg ``@end`` tag, ...) sits on its own line after the
+      content, so the content goes at the block's own indentation, just
+      before that line.
+    * No closing delimiter means an indented literal block (as in
+      reStructuredText), whose content is an indented sub-block separated
+      from the opening line by a blank line.
+    """
+    closing_delimiter = original_region_text[source_offset:]
+    has_closing_delimiter = bool(closing_delimiter.strip())
+
+    if has_closing_delimiter:
+        return _RegionEdit(
+            within_code_block_indent_prefix=code_block_indent_prefix,
+            replace_old_not_indented="\n",
+            replace_new_prefix="\n",
+        )
+
+    return _RegionEdit(
+        within_code_block_indent_prefix=code_block_indent_prefix + "   ",
+        replace_old_not_indented="\n",
+        replace_new_prefix="\n\n",
+    )
+
+
+@beartype
 def _get_modified_region_text(
     *,
     example: Example,
@@ -81,49 +222,46 @@ def _get_modified_region_text(
     ]
 
     if example.parsed:
-        within_code_block_indent_prefix = (
-            _get_within_code_block_indentation_prefix(example=example)
+        edit = _RegionEdit(
+            within_code_block_indent_prefix=(
+                _get_within_code_block_indentation_prefix(example=example)
+            ),
+            replace_old_not_indented=example.parsed,
+            replace_new_prefix="",
         )
-        replace_old_not_indented = example.parsed
-        replace_new_prefix = ""
-    # This is a break of the abstraction, - we really should not have
-    # to know about markup language specifics here.
-    elif original_region_text.endswith("```"):
-        # Markdown or MyST
-        within_code_block_indent_prefix = code_block_indent_prefix
-        replace_old_not_indented = "\n"
-        replace_new_prefix = "\n"
-    elif original_region_text.rstrip().endswith("@end"):
-        # Norg
-        within_code_block_indent_prefix = code_block_indent_prefix
-        replace_old_not_indented = "\n"
-        replace_new_prefix = "\n"
     else:
-        # reStructuredText
-        within_code_block_indent_prefix = code_block_indent_prefix + "   "
-        replace_old_not_indented = "\n"
-        replace_new_prefix = "\n\n"
+        edit = _empty_block_region_edit(
+            original_region_text=original_region_text,
+            code_block_indent_prefix=code_block_indent_prefix,
+            source_offset=_source_offset(example=example),
+        )
 
     indented_example_parsed = textwrap.indent(
-        text=replace_old_not_indented,
-        prefix=within_code_block_indent_prefix,
+        text=edit.replace_old_not_indented,
+        prefix=edit.within_code_block_indent_prefix,
     )
     replacement_text = textwrap.indent(
         text=new_code_block_content,
-        prefix=within_code_block_indent_prefix,
+        prefix=edit.within_code_block_indent_prefix,
     )
 
     if not replacement_text.endswith("\n"):
         replacement_text += "\n"
 
     text_to_replace_index = original_region_text.rfind(indented_example_parsed)
+    if text_to_replace_index < 0:
+        msg = (
+            "Parsed code is not contiguous in its source region; "
+            "grouped examples cannot be written"
+        )
+        raise ValueError(msg)
     text_before_replacement = original_region_text[:text_to_replace_index]
     text_after_replacement = original_region_text[
         text_to_replace_index + len(indented_example_parsed) :
     ]
     region_with_replaced_text = (
         text_before_replacement
-        + replace_new_prefix
+        + edit.replace_new_prefix
         + replacement_text
         + text_after_replacement
     )
@@ -231,19 +369,25 @@ class CodeBlockWriterEvaluator:
         that formatters or auto-fixers can update files even when other
         checks (like linter checks) fail.
         """
-        try:
-            return self._evaluator(example)
-        finally:
-            modified_content = example.document.namespace.get(
-                self._namespace_key
-            )
-            if modified_content is not None:
-                # Clear the namespace key to prevent stale data affecting
-                # subsequent examples.
-                del example.document.namespace[self._namespace_key]
-                if modified_content != example.parsed:
-                    _overwrite_example_content(
-                        example=example,
-                        new_content=modified_content,
-                        encoding=self._encoding,
-                    )
+        namespace = _writer_namespace(document=example.document)
+        with namespace.capture(key=self._namespace_key) as captured:
+            try:
+                result = self._evaluator(example)
+            finally:
+                modified_content = captured.value
+                if modified_content is not None and not isinstance(
+                    modified_content, str
+                ):
+                    msg = "Modified code block content must be a string"
+                    raise TypeError(msg)
+                if (
+                    modified_content is not None
+                    and modified_content != example.parsed
+                ):
+                    with namespace.write_lock:
+                        _overwrite_example_content(
+                            example=example,
+                            new_content=modified_content,
+                            encoding=self._encoding,
+                        )
+        return result
