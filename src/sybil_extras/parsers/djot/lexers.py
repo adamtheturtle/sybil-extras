@@ -43,7 +43,7 @@ class DirectiveInDjotCommentLexer:
         # Arguments use (?:(?!\%\}).)*? to stop at %} but allow % otherwise.
         # The user's arguments pattern is applied as a filter afterwards.
         pattern = (
-            rf"^\s*\{{\%\s*(?P<directive>{directive})"
+            rf"^[^\S\n]*\{{\%\s*(?P<directive>{directive})"
             rf"(?:\s*:\s*(?P<arguments>(?:(?!\%\}}).)*?))?\s*\%\}}"
         )
         self.pattern: re.Pattern[str] = re.compile(
