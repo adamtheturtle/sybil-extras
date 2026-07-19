@@ -54,5 +54,6 @@ truthy
 typeshed
 unclosed
 ungrouped
+unindented
 variadic
 whitespace
