@@ -229,12 +229,15 @@ def _get_modified_region_text(
             replace_old_not_indented=example.parsed,
             replace_new_prefix="",
         )
+        search_region_text = original_region_text
     else:
+        source_offset = _source_offset(example=example)
         edit = _empty_block_region_edit(
             original_region_text=original_region_text,
             code_block_indent_prefix=code_block_indent_prefix,
-            source_offset=_source_offset(example=example),
+            source_offset=source_offset,
         )
+        search_region_text = original_region_text[:source_offset]
 
     indented_example_parsed = textwrap.indent(
         text=edit.replace_old_not_indented,
@@ -248,7 +251,7 @@ def _get_modified_region_text(
     if not replacement_text.endswith("\n"):
         replacement_text += "\n"
 
-    text_to_replace_index = original_region_text.rfind(indented_example_parsed)
+    text_to_replace_index = search_region_text.rfind(indented_example_parsed)
     if text_to_replace_index < 0:
         msg = (
             "Parsed code is not contiguous in its source region; "

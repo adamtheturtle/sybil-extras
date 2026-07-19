@@ -497,6 +497,44 @@ def test_empty_code_block_write_content(
     assert source_file.read_text(encoding="utf-8") == expected_content
 
 
+@pytest.mark.parametrize(
+    argnames="markup_language",
+    argvalues=(MARKDOWN_IT, MYST_PARSER),
+)
+def test_empty_invisible_code_block_write_content(
+    *,
+    tmp_path: Path,
+    markup_language: MarkupLanguage,
+) -> None:
+    """Content is written inside an empty invisible code block."""
+    source_file = tmp_path / "source_file.md"
+    source_file.write_text(
+        data="<!-- invisible-code-block python\n-->\n",
+        encoding="utf-8",
+    )
+
+    def modifying_evaluator(example: Example) -> None:
+        """Store modified content in the namespace."""
+        example.document.namespace["modified_content"] = "inserted"
+
+    writer_evaluator = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)
+    parser = markup_language.code_block_parser_cls(
+        language="python",
+        evaluator=writer_evaluator,
+    )
+    document = Sybil(parsers=[parser]).parse(path=source_file)
+    (example,) = document.examples()
+
+    example.evaluate()
+
+    assert source_file.read_text(encoding="utf-8") == (
+        "<!-- invisible-code-block python\ninserted\n-->\n"
+    )
+    reparsed_document = Sybil(parsers=[parser]).parse(path=source_file)
+    (reparsed_example,) = reparsed_document.examples()
+    assert str(object=reparsed_example.parsed) == "inserted\n"
+
+
 def test_empty_tilde_fenced_block(tmp_path: Path) -> None:
     """Content is inserted without indentation inside a tilde fence."""
     source_file = tmp_path / "source_file.md"
