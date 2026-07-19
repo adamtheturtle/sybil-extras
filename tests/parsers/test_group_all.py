@@ -1,6 +1,7 @@
 """Group-all parser tests shared across markup languages."""
 
 import subprocess
+import textwrap
 import time
 import uuid
 from collections.abc import Iterable
@@ -10,6 +11,12 @@ from pathlib import Path
 import pytest
 from beartype import beartype
 from sybil import Document, Example, Region, Sybil
+from sybil.parsers.rest import (
+    CodeBlockParser as RestCodeBlockParser,
+)
+from sybil.parsers.rest import (
+    DocTestParser,
+)
 from sybil.region import Lexeme
 
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
@@ -19,6 +26,49 @@ from sybil_extras.languages import (
     DirectiveBuilder,
     MarkupLanguage,
 )
+from sybil_extras.parsers.rest.group_all import GroupAllParser
+from sybil_extras.parsers.rest.thread_safe_skip import ThreadSafeSkipParser
+
+
+def test_skip_next_non_code_example_is_consumed(tmp_path: Path) -> None:
+    """A non-code example consumes ``skip: next`` before grouping."""
+    content = textwrap.dedent(
+        text="""\
+        .. custom-skip: next
+
+        >>> 1 + 1
+        2
+
+        .. code-block:: python
+
+           x = 1
+        """,
+    )
+    test_document = tmp_path / "test.rst"
+    test_document.write_text(data=content, encoding="utf-8")
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
+    group_parser = GroupAllParser(evaluator=evaluator, pad_groups=False)
+    document = Sybil(
+        parsers=[
+            RestCodeBlockParser(
+                language="python",
+                evaluator=NoOpEvaluator(),
+            ),
+            DocTestParser(),
+            ThreadSafeSkipParser(directive="custom-skip"),
+            group_parser,
+        ]
+    ).parse(path=test_document)
+    examples = list(document.examples())
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        final_result = executor.submit(examples[-1].evaluate)
+        time.sleep(0.05)
+        for example in examples[:-1]:
+            example.evaluate()
+        final_result.result(timeout=1)
+
+    assert document.namespace["blocks"] == ["x = 1"]
 
 
 def test_skip_end_cancels_pending_next(

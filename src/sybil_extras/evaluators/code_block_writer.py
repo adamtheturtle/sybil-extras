@@ -86,6 +86,27 @@ def _writer_namespace(*, document: Document) -> _WriterNamespace:
 
 
 @beartype
+def _get_container_prefix(*, region_text: str) -> str:
+    """Get a fenced block's indentation and block quote prefix."""
+    fence_pattern = re.compile(
+        pattern=r"^(?P<prefix>[ \t]*(?:>[ \t]*)*)(?P<fence>`{3,})",
+        flags=re.MULTILINE,
+    )
+    fence_match = fence_pattern.match(string=region_text)
+    return fence_match.group("prefix") if fence_match else ""
+
+
+@beartype
+def _get_source_newline(*, path: Path, encoding: str | None) -> str | None:
+    """Return the first newline convention used by a source file."""
+    with path.open(mode="r", encoding=encoding, newline="") as source_file:
+        source_text = source_file.read()
+
+    newline_match = re.search(pattern=r"\r\n|\r|\n", string=source_text)
+    return newline_match.group() if newline_match else None
+
+
+@beartype
 def _get_within_code_block_indentation_prefix(example: Example) -> str:
     """Get the indentation of the parsed code in the example."""
     first_line = str(object=example.parsed).split(sep="\n", maxsplit=1)[0]
@@ -93,26 +114,30 @@ def _get_within_code_block_indentation_prefix(example: Example) -> str:
         example.region.start : example.region.end
     ]
 
-    # Extract blockquote/container prefix from the region text
-    # This handles Djot/Markdown blockquotes (lines starting with "> ")
-    fence_pattern = re.compile(
-        pattern=r"^(?P<prefix>[ \t]*(?:>[ \t]*)*)(?P<fence>`{3,})",
-        flags=re.MULTILINE,
+    container_prefix = _get_container_prefix(
+        region_text=region_text,
     )
-    fence_match = fence_pattern.match(string=region_text)
-    container_prefix = fence_match.group("prefix") if fence_match else ""
 
     region_lines = region_text.splitlines()
     region_lines_matching_first_line = [
         line
         for line in region_lines
-        if line.removeprefix(container_prefix).lstrip() == first_line.lstrip()
+        if (
+            ""
+            if line == container_prefix.rstrip()
+            else line.removeprefix(container_prefix)
+        ).lstrip()
+        == first_line.lstrip()
     ]
     first_region_line_matching_first_line = region_lines_matching_first_line[0]
 
     # After removing the container prefix, calculate any additional indentation
     line_without_container = (
-        first_region_line_matching_first_line.removeprefix(container_prefix)
+        ""
+        if first_region_line_matching_first_line == container_prefix.rstrip()
+        else first_region_line_matching_first_line.removeprefix(
+            container_prefix
+        )
     )
     left_padding_region_line = len(line_without_container) - len(
         line_without_container.lstrip()
@@ -192,8 +217,13 @@ def _empty_block_region_edit(
     has_closing_delimiter = bool(closing_delimiter.strip())
 
     if has_closing_delimiter:
+        container_prefix = _get_container_prefix(
+            region_text=original_region_text,
+        )
         return _RegionEdit(
-            within_code_block_indent_prefix=code_block_indent_prefix,
+            within_code_block_indent_prefix=(
+                container_prefix or code_block_indent_prefix
+            ),
             replace_old_not_indented="\n",
             replace_new_prefix="\n",
         )
@@ -229,17 +259,38 @@ def _get_modified_region_text(
             replace_old_not_indented=example.parsed,
             replace_new_prefix="",
         )
+        search_region_text = original_region_text
     else:
+        source_offset = _source_offset(example=example)
         edit = _empty_block_region_edit(
             original_region_text=original_region_text,
             code_block_indent_prefix=code_block_indent_prefix,
-            source_offset=_source_offset(example=example),
+            source_offset=source_offset,
         )
+        search_region_text = original_region_text[:source_offset]
 
     indented_example_parsed = textwrap.indent(
         text=edit.replace_old_not_indented,
         prefix=edit.within_code_block_indent_prefix,
     )
+    if ">" in edit.within_code_block_indent_prefix:
+        prefixed_blank_lines = textwrap.indent(
+            text=edit.replace_old_not_indented,
+            prefix=edit.within_code_block_indent_prefix,
+            predicate=lambda _line: True,
+        )
+        bare_prefixed_blank_lines = re.sub(
+            pattern=(
+                rf"(?m)^{re.escape(pattern=edit.within_code_block_indent_prefix)}"
+                r"(?=\n)"
+            ),
+            repl=edit.within_code_block_indent_prefix.rstrip(),
+            string=prefixed_blank_lines,
+        )
+        if bare_prefixed_blank_lines in original_region_text:
+            indented_example_parsed = bare_prefixed_blank_lines
+        else:
+            indented_example_parsed = prefixed_blank_lines
     replacement_text = textwrap.indent(
         text=new_code_block_content,
         prefix=edit.within_code_block_indent_prefix,
@@ -248,7 +299,7 @@ def _get_modified_region_text(
     if not replacement_text.endswith("\n"):
         replacement_text += "\n"
 
-    text_to_replace_index = original_region_text.rfind(indented_example_parsed)
+    text_to_replace_index = search_region_text.rfind(indented_example_parsed)
     if text_to_replace_index < 0:
         msg = (
             "Parsed code is not contiguous in its source region; "
@@ -302,6 +353,8 @@ def _overwrite_example_content(
     )
 
     if modified_region_text != original_region_text:
+        path = Path(example.path)
+        source_newline = _get_source_newline(path=path, encoding=encoding)
         existing_file_content = example.document.text
         modified_document_content = (
             existing_file_content[: example.region.start]
@@ -318,9 +371,10 @@ def _overwrite_example_content(
         for region in subsequent_regions:
             region.start += offset
             region.end += offset
-        Path(example.path).write_text(
+        path.write_text(
             data=modified_document_content,
             encoding=encoding,
+            newline=source_newline,
         )
 
 
@@ -361,7 +415,7 @@ class CodeBlockWriterEvaluator:
         self._namespace_key = namespace_key
         self._encoding = encoding
 
-    def __call__(self, example: Example) -> None:
+    def __call__(self, example: Example) -> str | None:
         """Run the wrapped evaluator and write any modifications back.
 
         If the wrapped evaluator raises an exception, modifications are
@@ -372,7 +426,7 @@ class CodeBlockWriterEvaluator:
         namespace = _writer_namespace(document=example.document)
         with namespace.capture(key=self._namespace_key) as captured:
             try:
-                self._evaluator(example)
+                result = self._evaluator(example)
             finally:
                 modified_content = captured.value
                 if modified_content is not None and not isinstance(
@@ -390,3 +444,4 @@ class CodeBlockWriterEvaluator:
                             new_content=modified_content,
                             encoding=self._encoding,
                         )
+        return result

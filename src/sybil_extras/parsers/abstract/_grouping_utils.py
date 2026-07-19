@@ -99,11 +99,12 @@ def count_expected_code_blocks(examples: Iterable[Example]) -> int:
                 skip_next = False
                 continue
 
+        skip_current = skip_next or in_skip_range
+        skip_next = False
         if has_source(example=ex):
             non_skip_count += 1
-            if skip_next or in_skip_range:
+            if skip_current:
                 skipped_count += 1
-                skip_next = False
 
     return non_skip_count - skipped_count
 
