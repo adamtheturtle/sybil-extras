@@ -19,6 +19,10 @@ from beartype import beartype
 from sybil import Document, Example, Lexeme
 from sybil.typing import Evaluator
 
+CONTENT_INDENT_LEXEME = "content_indent"
+
+CONTENT_SEPARATOR_LEXEME = "content_separator"
+
 
 @dataclass
 class _CapturedValue:
@@ -196,6 +200,8 @@ def _empty_block_region_edit(
     original_region_text: str,
     code_block_indent_prefix: str,
     source_offset: int,
+    content_indent: str,
+    content_separator: str,
 ) -> _RegionEdit:
     """Describe how to insert content into an *empty* code block.
 
@@ -210,8 +216,11 @@ def _empty_block_region_edit(
       content, so the content goes at the block's own indentation, just
       before that line.
     * No closing delimiter means an indented literal block (as in
-      reStructuredText), whose content is an indented sub-block separated
-      from the opening line by a blank line.
+      reStructuredText), whose content is an indented sub-block. Its
+      placement -- the extra ``content_indent`` beyond the block's own
+      indentation and the ``content_separator`` between the opening line and
+      the content -- is supplied by the parser, so no markup-specific
+      formatting lives here.
     """
     closing_delimiter = original_region_text[source_offset:]
     has_closing_delimiter = bool(closing_delimiter.strip())
@@ -229,9 +238,10 @@ def _empty_block_region_edit(
         )
 
     return _RegionEdit(
-        within_code_block_indent_prefix=code_block_indent_prefix + "   ",
+        within_code_block_indent_prefix=code_block_indent_prefix
+        + content_indent,
         replace_old_not_indented="\n",
-        replace_new_prefix="\n\n",
+        replace_new_prefix=content_separator,
     )
 
 
@@ -262,10 +272,15 @@ def _get_modified_region_text(
         search_region_text = original_region_text
     else:
         source_offset = _source_offset(example=example)
+        lexemes = example.region.lexemes
         edit = _empty_block_region_edit(
             original_region_text=original_region_text,
             code_block_indent_prefix=code_block_indent_prefix,
             source_offset=source_offset,
+            content_indent=str(object=lexemes.get(CONTENT_INDENT_LEXEME, "")),
+            content_separator=str(
+                object=lexemes.get(CONTENT_SEPARATOR_LEXEME, "\n")
+            ),
         )
         search_region_text = original_region_text[:source_offset]
 

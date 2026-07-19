@@ -663,6 +663,46 @@ def test_empty_tilde_fenced_block(tmp_path: Path) -> None:
     )
 
 
+@pytest.mark.parametrize(
+    argnames="markup_language",
+    argvalues=(MARKDOWN_IT, MYST_PARSER),
+)
+def test_empty_fenced_block_closing_fence_trailing_spaces(
+    *,
+    tmp_path: Path,
+    markup_language: MarkupLanguage,
+) -> None:
+    """Trailing spaces after an empty block's closing fence are preserved.
+
+    Trailing spaces after a closing fence are legal Markdown, and the block
+    is still empty. Content is inserted unindented between the fences and
+    the trailing spaces are left untouched.
+    """
+    source_file = tmp_path / "source_file.md"
+    source_file.write_text(data="```python\n```   \n", encoding="utf-8")
+
+    def modifying_evaluator(example: Example) -> None:
+        """Store modified content in the namespace."""
+        example.document.namespace["modified_content"] = "inserted"
+
+    writer_evaluator = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)
+    parser = markup_language.code_block_parser_cls(
+        language="python",
+        evaluator=writer_evaluator,
+    )
+    document = Sybil(parsers=[parser]).parse(path=source_file)
+    (example,) = document.examples()
+
+    example.evaluate()
+
+    assert source_file.read_text(encoding="utf-8") == (
+        "```python\ninserted\n```   \n"
+    )
+    reparsed_document = Sybil(parsers=[parser]).parse(path=source_file)
+    (reparsed_example,) = reparsed_document.examples()
+    assert str(object=reparsed_example.parsed) == "inserted\n"
+
+
 def test_empty_code_block_with_options(
     *,
     tmp_path: Path,

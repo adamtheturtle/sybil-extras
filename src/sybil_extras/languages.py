@@ -7,7 +7,6 @@ from typing import Protocol, runtime_checkable
 
 import sybil.parsers.markdown
 import sybil.parsers.myst
-import sybil.parsers.rest
 from beartype import beartype
 from sybil import Document, Region
 from sybil.evaluators.skip import Skipper
@@ -48,6 +47,7 @@ import sybil_extras.parsers.norg.custom_directive_skip
 import sybil_extras.parsers.norg.group_all
 import sybil_extras.parsers.norg.grouped_source
 import sybil_extras.parsers.norg.thread_safe_skip
+import sybil_extras.parsers.rest.codeblock
 import sybil_extras.parsers.rest.custom_directive_skip
 import sybil_extras.parsers.rest.group_all
 import sybil_extras.parsers.rest.grouped_source
@@ -359,7 +359,7 @@ RESTRUCTUREDTEXT = MarkupLanguage(
     thread_safe_skip_parser_cls=(
         sybil_extras.parsers.rest.thread_safe_skip.ThreadSafeSkipParser
     ),
-    code_block_parser_cls=sybil.parsers.rest.CodeBlockParser,
+    code_block_parser_cls=sybil_extras.parsers.rest.codeblock.CodeBlockParser,
     group_parser_cls=sybil_extras.parsers.rest.grouped_source.GroupedSourceParser,
     group_all_parser_cls=sybil_extras.parsers.rest.group_all.GroupAllParser,
     sphinx_jinja_parser_cls=sybil_extras.parsers.rest.sphinx_jinja2.SphinxJinja2Parser,

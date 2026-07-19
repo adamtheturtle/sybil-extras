@@ -147,6 +147,8 @@ def test_sphinx_jinja2_rst(
         "arguments": None,
         "source": "Hallo {{ name }}!\n",
         "options": {"ctx": '{"name": "World"}'},
+        "content_indent": "   ",
+        "content_separator": "\n\n",
     }
     first_example.evaluate()
 
@@ -159,4 +161,6 @@ def test_sphinx_jinja2_rst(
             "file": "templates/example1.jinja",
             "ctx": '{"name": "World"}',
         },
+        "content_indent": "   ",
+        "content_separator": "\n\n",
     }
