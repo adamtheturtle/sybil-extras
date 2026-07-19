@@ -9,6 +9,7 @@ collected before combining them.
 
 import threading
 from collections.abc import Iterable
+from weakref import WeakKeyDictionary
 
 from beartype import beartype
 from sybil import Document, Example, Region
@@ -16,6 +17,7 @@ from sybil.example import NotEvaluated
 from sybil.typing import Evaluator
 
 from ._grouping_utils import (
+    CollectedExample,
     count_expected_code_blocks,
     create_combined_example,
     create_combined_region,
@@ -30,7 +32,7 @@ class _GroupAllState:
     def __init__(self, *, expected_code_blocks: int) -> None:
         """Initialize the group all state."""
         self.expected_code_blocks = expected_code_blocks
-        self.examples: list[Example] = []
+        self.examples: list[CollectedExample] = []
         self.lock = threading.Lock()
         self.ready = threading.Condition(lock=self.lock)
         self.collected_count = 0
@@ -57,7 +59,9 @@ class _GroupAllEvaluator:
         file
                 to not have a bunch of newlines in it, such as formatters.
         """
-        self._document_state: dict[Document, _GroupAllState] = {}
+        self._document_state: WeakKeyDictionary[Document, _GroupAllState] = (
+            WeakKeyDictionary()
+        )
         self._evaluator = evaluator
         self._pad_groups = pad_groups
 
@@ -81,7 +85,9 @@ class _GroupAllEvaluator:
 
         with state.ready:
             if has_source(example=example):
-                state.examples.append(example)
+                state.examples.append(
+                    CollectedExample.from_example(example=example)
+                )
                 state.collected_count += 1
                 state.ready.notify_all()
                 return
@@ -105,10 +111,14 @@ class _GroupAllEvaluator:
 
             # Sort examples by their position in the document to ensure
             # correct order regardless of evaluation order (thread-safety)
-            sorted_examples = sorted(
+            sorted_collected_examples = sorted(
                 state.examples,
-                key=lambda ex: ex.region.start,
+                key=lambda collected: collected.region.start,
             )
+            sorted_examples = [
+                collected.restore(document=example.document)
+                for collected in sorted_collected_examples
+            ]
             try:
                 region = create_combined_region(
                     examples=sorted_examples,
