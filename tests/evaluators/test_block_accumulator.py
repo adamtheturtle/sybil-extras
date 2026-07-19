@@ -1,11 +1,77 @@
 """Tests for the BlockAccumulatorEvaluator."""
 
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from sybil import Sybil
+from sybil import Example, Sybil
 from sybil.parsers.rest.codeblock import CodeBlockParser
 
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
+
+
+class _ConcurrencyTrackingNamespace(dict[str, object]):
+    """A namespace that records the peak overlap of concurrent reads."""
+
+    def __init__(self) -> None:
+        """Initialize the namespace."""
+        super().__init__()
+        self._active = 0
+        self.max_concurrent = 0
+        self._lock = threading.Lock()
+
+    def get(self, key: object, default: object = None) -> object:
+        """Get a value while recording how many reads overlap."""
+        with self._lock:
+            self._active += 1
+            self.max_concurrent = max(self.max_concurrent, self._active)
+        try:
+            time.sleep(0.05)
+            # ``key`` is typed ``object`` to match ``dict.get`` across type
+            # checkers; the namespace is only ever queried with string keys.
+            assert isinstance(key, str)
+            return super().get(key, default)
+        finally:
+            with self._lock:
+                self._active -= 1
+
+
+def test_concurrent_evaluation_retains_all_blocks(tmp_path: Path) -> None:
+    """Concurrent evaluations serialize namespace updates."""
+    content = """\
+.. code-block:: python
+
+   first
+
+.. code-block:: python
+
+   second
+"""
+    test_document = tmp_path / "test.rst"
+    test_document.write_text(data=content, encoding="utf-8")
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    document = Sybil(parsers=[parser]).parse(path=test_document)
+    namespace = _ConcurrencyTrackingNamespace()
+    document.namespace = namespace
+    examples = list(document.examples())
+    start = threading.Barrier(parties=2)
+
+    def evaluate(example: Example) -> None:
+        """Evaluate an example after both workers are ready."""
+        start.wait()
+        example.evaluate()
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        list(executor.map(evaluate, examples))
+
+    assert namespace.max_concurrent == 1
+    blocks_object: object = document.namespace["blocks"]
+    assert blocks_object in (
+        ["first\n", "second"],
+        ["second", "first\n"],
+    )
 
 
 def test_accumulates_blocks(tmp_path: Path) -> None:

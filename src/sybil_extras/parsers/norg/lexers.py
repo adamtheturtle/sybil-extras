@@ -41,7 +41,7 @@ class DirectiveInNorgCommentLexer:
         # The tag must be at the beginning of a line (with optional leading
         # whitespace)
         pattern = (
-            rf"^\s*\.(?P<directive>{directive})"
+            rf"^[^\S\n]*\.(?P<directive>{directive})"
             rf"(?:\s*:\s*(?P<arguments>{arguments}))?$"
         )
         self.pattern: re.Pattern[str] = re.compile(

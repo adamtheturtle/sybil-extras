@@ -155,7 +155,7 @@ class _ShellCommandRunner:
             newline=self._newline,
         )
 
-        temp_file_content = ""
+        temp_file_content = new_source
         try:
             result = run_command(
                 command=[
@@ -165,7 +165,7 @@ class _ShellCommandRunner:
                 use_pty=self._use_pty,
             )
 
-            with contextlib.suppress(FileNotFoundError):
+            if self._write_to_file or self._on_modify is not None:
                 temp_file_content = temp_file.read_text(
                     encoding=self._encoding
                 )
@@ -173,10 +173,15 @@ class _ShellCommandRunner:
             with contextlib.suppress(FileNotFoundError):
                 temp_file.unlink()
 
+        modified_example_content = lstrip_newlines(
+            input_string=temp_file_content,
+            number_of_newlines=padding_line,
+        )
+
         if new_source != temp_file_content and self._on_modify is not None:
             self._on_modify(
                 example=example,
-                modified_example_content=temp_file_content,
+                modified_example_content=modified_example_content,
             )
 
         if self._write_to_file:
@@ -184,12 +189,8 @@ class _ShellCommandRunner:
             # While it is possible that a formatter added leading newlines,
             # we assume that this is not the case, and we remove any leading
             # newlines from the replacement which were added by the padding.
-            new_region_content = lstrip_newlines(
-                input_string=temp_file_content,
-                number_of_newlines=padding_line,
-            )
             new_region_content = self._result_transformer(
-                content=new_region_content,
+                content=modified_example_content,
                 example=example,
             )
             example.document.namespace[self._namespace_key] = (

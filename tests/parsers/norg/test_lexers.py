@@ -86,6 +86,18 @@ def test_directive_with_leading_whitespace() -> None:
     )
 
 
+def test_directive_region_excludes_preceding_blank_lines() -> None:
+    """A directive region starts on its own line."""
+    lexer = DirectiveInNorgCommentLexer(directive="skip", arguments=r".+")
+    source_text = "Introduction\n\n\n  .skip: next\n"
+    document = Document(text=source_text, path="sample.norg")
+
+    (region,) = list(lexer(document))
+
+    assert region.start == source_text.index("  .skip")
+    assert source_text[region.start : region.end] == "  .skip: next"
+
+
 def test_verbatim_ranged_tag_lexer_no_mapping() -> None:
     """The verbatim ranged tag lexer works without a mapping."""
     lexer = NorgVerbatimRangedTagLexer(language=r"python")
