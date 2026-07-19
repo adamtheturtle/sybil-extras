@@ -1,18 +1,67 @@
 """Grouped source parser tests shared across markup languages."""
 
+import gc
 import subprocess
 import uuid
+import weakref
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
 from beartype import beartype
-from sybil import Example, Sybil
+from sybil import Document, Example, Sybil
 
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 from sybil_extras.languages import DirectiveBuilder, MarkupLanguage
+
+
+def test_abandoned_documents_are_released(
+    *,
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
+    tmp_path: Path,
+) -> None:
+    """Parsed documents are released when their end markers never run."""
+    language, directive_builder = language_directive_builder
+    evaluator = NoOpEvaluator()
+    group_parser = language.group_parser_cls(
+        directive="group",
+        evaluator=evaluator,
+        pad_groups=False,
+    )
+    code_block_parser = language.code_block_parser_cls(
+        language="python",
+        evaluator=evaluator,
+    )
+    sybil = Sybil(parsers=[code_block_parser, group_parser])
+    references: list[weakref.ReferenceType[Document]] = []
+    content = language.markup_separator.join(
+        [
+            directive_builder(directive="group", argument="start"),
+            language.code_block_builder(code="pass", language="python"),
+            directive_builder(directive="group", argument="end"),
+        ]
+    )
+
+    def parse_reference(*, path: Path) -> weakref.ReferenceType[Document]:
+        """Parse a document without preserving a local strong
+        reference.
+        """
+        document = sybil.parse(path=path)
+        return weakref.ref(document)
+
+    for index in range(3):
+        test_document = tmp_path / f"test-{index}"
+        test_document.write_text(
+            data=f"{content}{language.markup_separator}",
+            encoding="utf-8",
+        )
+        references.append(parse_reference(path=test_document))
+
+    gc.collect()
+
+    assert all(reference() is None for reference in references)
 
 
 @beartype
