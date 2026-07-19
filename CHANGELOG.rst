@@ -3,6 +3,11 @@ Changelog
 
 .. towncrier release notes start
 
+2026.07.19
+----------
+
+- The pycon shell evaluator now raises a clear error when a command changes a statement's meaning, instead of silently reattaching the original (now stale) recorded output.
+
 2026.05.25
 ----------
 

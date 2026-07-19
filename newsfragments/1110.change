@@ -1,1 +1,0 @@
-The pycon shell evaluator now raises a clear error when a command changes a statement's meaning, instead of silently reattaching the original (now stale) recorded output.
