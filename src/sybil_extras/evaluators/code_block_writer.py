@@ -273,7 +273,7 @@ def _get_modified_region_text(
         text=edit.replace_old_not_indented,
         prefix=edit.within_code_block_indent_prefix,
     )
-    if ">" in edit.within_code_block_indent_prefix:
+    if example.parsed and ">" in edit.within_code_block_indent_prefix:
         prefixed_blank_lines = textwrap.indent(
             text=edit.replace_old_not_indented,
             prefix=edit.within_code_block_indent_prefix,
