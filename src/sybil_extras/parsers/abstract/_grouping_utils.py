@@ -4,7 +4,7 @@ from collections.abc import Iterable, Sequence
 
 from beartype import beartype
 from sybil import Example, Region
-from sybil.evaluators.skip import If
+from sybil.evaluators.skip import Skipper, SkipState
 from sybil.region import Lexeme
 from sybil.typing import Evaluator
 
@@ -13,25 +13,26 @@ _SKIP_MARKER_ITEM_COUNT = 2
 
 @beartype
 def _skip_condition_is_truthy(*, example: Example, reason: object) -> bool:
-    """Return whether a skip directive's condition applies."""
-    if not reason:
-        return True
+    """Return whether a skip directive's condition applies.
+
+    Only ``if(...)`` conditions are evaluated; unconditional skips (and any
+    other reason shape) always apply.  Evaluation is delegated to Sybil's
+    own :class:`~sybil.evaluators.skip.Skipper`, so the grouping counter
+    uses exactly the same semantics as runtime skipping instead of a
+    parallel implementation.
+    """
     if not isinstance(reason, str):
         return True
-
-    text = reason.lstrip()
-    if not text.startswith("if"):
+    if not reason.lstrip().startswith("if"):
         return True
 
-    condition = text[2:]
-    namespace = example.document.namespace.copy()
-    namespace["if_"] = If(default_reason=condition)
-    return bool(
-        eval(  # noqa: S307  # pylint: disable=eval-used
-            "if_" + condition,
-            namespace,
-        )
-    )
+    skipper = Skipper(directive="skip")
+    state = SkipState()
+    try:
+        skipper.install(example=example, state=state, reason=reason)
+    finally:
+        example.document.pop_evaluator(evaluator=skipper)
+    return state.exception is not None
 
 
 @beartype
