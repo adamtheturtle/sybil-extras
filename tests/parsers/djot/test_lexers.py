@@ -69,6 +69,18 @@ def test_directive_with_mapping() -> None:
     )
 
 
+def test_directive_region_excludes_preceding_blank_lines() -> None:
+    """A directive region starts on its own line."""
+    lexer = DirectiveInDjotCommentLexer(directive="skip", arguments=r".+")
+    source_text = "Introduction\n\n\n  {% skip: next %}\n"
+    document = Document(text=source_text, path="sample.djot")
+
+    (region,) = list(lexer(document))
+
+    assert region.start == source_text.index("  {% skip")
+    assert source_text[region.start : region.end] == "  {% skip: next %}"
+
+
 def test_directive_stops_at_first_closing_delimiter() -> None:
     """Djot comments end at the first ``%}``, so text after it is not
     captured.
