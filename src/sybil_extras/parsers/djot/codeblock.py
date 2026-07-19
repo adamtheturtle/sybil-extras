@@ -26,7 +26,12 @@ def _match_closes_existing(current: Match[str], existing: Match[str]) -> bool:
     same_type = current_fence[0] == existing_fence[0]
     sufficient_length = len(current_fence) >= len(existing_fence)
     same_prefix = current.group("prefix") == existing.group("prefix")
-    return same_type and sufficient_length and same_prefix
+    line_end = current.string.find("\n", current.end())
+    if line_end == -1:
+        line_end = len(current.string)
+    trailing_text = current.string[current.end() : line_end]
+    fence_only = not trailing_text.strip(" \t\r")
+    return same_type and sufficient_length and same_prefix and fence_only
 
 
 @beartype

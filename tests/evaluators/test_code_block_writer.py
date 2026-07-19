@@ -1,6 +1,7 @@
 """Tests for the code_block_writer module."""
 
 import textwrap
+import threading
 from pathlib import Path
 
 import pytest
@@ -19,6 +20,132 @@ from sybil_extras.languages import (
     RESTRUCTUREDTEXT,
     MarkupLanguage,
 )
+from sybil_extras.parsers.markdown.group_all import GroupAllParser
+
+
+def test_write_back_of_group_spanning_multiple_blocks_is_rejected(
+    tmp_path: Path,
+) -> None:
+    """Writing back a group made of separate code blocks is rejected.
+
+    ``GroupAllParser`` combines several code blocks into one example whose
+    parsed source is the concatenation of every block's code.  In the
+    document those blocks are separated by fences and blank lines, so the
+    combined code never appears as one contiguous run of text in the
+    source.  There is therefore nowhere to slice the replacement in, and
+    attempting to write it back would corrupt the file.  The writer raises
+    instead, and the file is left unchanged.
+    """
+    content = textwrap.dedent(
+        text="""\
+        ```python
+        first
+        ```
+
+        ```python
+        second
+        ```
+        """
+    )
+    source_file = tmp_path / "source_file.md"
+    source_file.write_text(data=content, encoding="utf-8")
+
+    def modifying_evaluator(example: Example) -> None:
+        """Uppercase the grouped source."""
+        example.document.namespace["modified_content"] = str(
+            object=example.parsed
+        ).upper()
+
+    writer_evaluator = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)
+    document = Sybil(
+        parsers=[
+            MARKDOWN.code_block_parser_cls(
+                language="python",
+                evaluator=NoOpEvaluator(),
+            ),
+            GroupAllParser(evaluator=writer_evaluator, pad_groups=False),
+        ]
+    ).parse(path=source_file)
+
+    examples = list(document.examples())
+    for example in examples[:-1]:
+        example.evaluate()
+
+    with pytest.raises(
+        expected_exception=ValueError,
+        match="grouped examples cannot be written",
+    ):
+        examples[-1].evaluate()
+
+    assert source_file.read_text(encoding="utf-8") == content
+
+
+def test_concurrent_writes_keep_each_edit(tmp_path: Path) -> None:
+    """Concurrent evaluations retain both code block edits."""
+    content = textwrap.dedent(
+        text="""\
+        ```python
+        first
+        ```
+
+        ```python
+        second
+        ```
+        """
+    )
+    source_file = tmp_path / "source_file.md"
+    source_file.write_text(data=content, encoding="utf-8")
+    first_ready = threading.Event()
+    release_first = threading.Event()
+
+    def modifying_evaluator(example: Example) -> None:
+        """Uppercase the block after arranging an overlapping call."""
+        source = str(object=example.parsed)
+        example.document.namespace["modified_content"] = source.upper()
+        if source.strip() == "first":
+            first_ready.set()
+            assert release_first.wait(timeout=5)
+
+    writer_evaluator = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)
+    parser = MARKDOWN.code_block_parser_cls(
+        language="python",
+        evaluator=writer_evaluator,
+    )
+    document = Sybil(parsers=[parser]).parse(path=source_file)
+    first, second = document.examples()
+    first_thread = threading.Thread(target=first.evaluate)
+
+    first_thread.start()
+    assert first_ready.wait(timeout=5)
+    second.evaluate()
+    release_first.set()
+    first_thread.join(timeout=5)
+
+    assert not first_thread.is_alive()
+    expected = content.replace("first", "FIRST").replace("second", "SECOND")
+    assert source_file.read_text(encoding="utf-8") == expected
+    document.namespace["ordinary"] = "shared"
+    assert document.namespace["ordinary"] == "shared"
+
+
+def test_non_string_modified_content_raises(tmp_path: Path) -> None:
+    """Modified code block content must remain a string."""
+    source_file = tmp_path / "source_file.md"
+    source_file.write_text(data="```python\noriginal\n```\n", encoding="utf-8")
+
+    def modifying_evaluator(example: Example) -> None:
+        """Store an invalid modified content value."""
+        example.document.namespace["modified_content"] = 1
+
+    writer_evaluator = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)
+    parser = MARKDOWN.code_block_parser_cls(
+        language="python",
+        evaluator=writer_evaluator,
+    )
+    (example,) = Sybil(parsers=[parser]).parse(path=source_file).examples()
+
+    with pytest.raises(expected_exception=TypeError, match="must be a string"):
+        example.evaluate()
 
 
 def test_writes_modified_content(
@@ -376,6 +503,30 @@ def test_quoted_code_block_starting_with_blank_line(
     reparsed_document = Sybil(parsers=[parser]).parse(path=source_file)
     (reparsed_example,) = reparsed_document.examples()
     assert str(object=reparsed_example.parsed) == "value = 2\n"
+
+
+def test_empty_tilde_fenced_block(tmp_path: Path) -> None:
+    """Content is inserted without indentation inside a tilde fence."""
+    source_file = tmp_path / "source_file.md"
+    source_file.write_text(data="~~~python\n~~~\n", encoding="utf-8")
+
+    def modifying_evaluator(example: Example) -> None:
+        """Store modified content in the namespace."""
+        example.document.namespace["modified_content"] = "inserted"
+
+    writer_evaluator = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)
+    parser = MARKDOWN_IT.code_block_parser_cls(
+        language="python",
+        evaluator=writer_evaluator,
+    )
+    document = Sybil(parsers=[parser]).parse(path=source_file)
+    (example,) = document.examples()
+
+    example.evaluate()
+
+    assert source_file.read_text(encoding="utf-8") == (
+        "~~~python\ninserted\n~~~\n"
+    )
 
 
 def test_empty_code_block_with_options(
