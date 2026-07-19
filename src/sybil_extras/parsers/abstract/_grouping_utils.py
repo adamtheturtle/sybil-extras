@@ -1,7 +1,5 @@
 """Shared utilities for grouping parsers."""
 
-# pylint: disable=wrong-spelling-in-comment
-
 from collections.abc import Iterable, Sequence
 
 from beartype import beartype
@@ -41,6 +39,7 @@ def _as_skip_marker(parsed: object) -> tuple[str, object] | None:
     """Return a typed skip marker when ``parsed`` has the right shape."""
     if not isinstance(parsed, tuple):
         return None
+    # pylint: disable-next=wrong-spelling-in-comment
     values: tuple[object, ...] = (  # pyright: ignore[reportUnknownVariableType]
         parsed
     )
@@ -79,7 +78,6 @@ def count_expected_code_blocks(examples: Iterable[Example]) -> int:
 
     for ex in examples_sorted:
         parsed: object = ex.parsed
-        # Skip markers have parsed values like ('next', None)
         skip_marker = _as_skip_marker(parsed=parsed)
         if skip_marker is not None:
             action, reason = skip_marker
@@ -97,6 +95,7 @@ def count_expected_code_blocks(examples: Iterable[Example]) -> int:
                 continue
             if action == "end":
                 in_skip_range = False
+                skip_next = False
                 continue
 
         if has_source(example=ex):

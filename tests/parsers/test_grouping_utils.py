@@ -1,7 +1,5 @@
 """Public-interface tests for conditional skip counting in grouping."""
 
-# pylint: disable=wrong-spelling-in-comment
-
 import textwrap
 from collections.abc import Iterable
 from contextlib import suppress
