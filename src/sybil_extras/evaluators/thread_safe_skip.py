@@ -15,6 +15,7 @@ the result cached so concurrent evaluators all see the same decision.
 """
 
 import threading
+import weakref
 from dataclasses import dataclass
 from unittest import SkipTest
 
@@ -79,13 +80,15 @@ class ThreadSafeSkipper(Skipper):
             directive: The directive name (e.g. ``"skip"``).
         """
         super().__init__(directive=directive)
-        self._plans: dict[Document, _DocumentPlan] = {}
+        self._plans: weakref.WeakKeyDictionary[Document, _DocumentPlan] = (
+            weakref.WeakKeyDictionary()
+        )
         self._lock = threading.RLock()
 
     def _plan_for(self, document: Document) -> _DocumentPlan:
         """Return the plan for ``document``, building it under lock."""
         with self._lock:
-            plan = self._plans.get(document)
+            plan = self._plans.get(key=document)
             if plan is None:
                 plan = self._build_plan(document=document)
                 self._plans[document] = plan

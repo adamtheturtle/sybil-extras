@@ -44,10 +44,9 @@ def count_expected_code_blocks(examples: Iterable[Example]) -> int:
                 in_skip_range = True
             case ("end", object()):
                 in_skip_range = False
+                skip_next = False
             case _:
                 skip_current = skip_next or in_skip_range
-                # ``skip: next`` targets the next non-marker example,
-                # whether or not that example has a source lexeme.
                 skip_next = False
                 if has_source(example=ex):
                     non_skip_count += 1

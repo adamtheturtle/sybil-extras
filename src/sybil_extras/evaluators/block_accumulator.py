@@ -1,5 +1,7 @@
 """Block accumulator evaluator."""
 
+import threading
+
 from beartype import beartype
 from sybil.example import Example
 
@@ -24,6 +26,7 @@ class BlockAccumulatorEvaluator:
                 storing accumulated blocks.
         """
         self._namespace_key = namespace_key
+        self._lock = threading.Lock()
 
     def __call__(self, example: Example) -> None:
         """Add the parsed code block content to the namespace.
@@ -31,11 +34,12 @@ class BlockAccumulatorEvaluator:
         Args:
             example: The example to evaluate.
         """
-        existing_blocks = example.document.namespace.get(
-            self._namespace_key,
-            [],
-        )
-        example.document.namespace[self._namespace_key] = [
-            *existing_blocks,
-            example.parsed,
-        ]
+        with self._lock:
+            existing_blocks = example.document.namespace.get(
+                self._namespace_key,
+                [],
+            )
+            example.document.namespace[self._namespace_key] = [
+                *existing_blocks,
+                example.parsed,
+            ]

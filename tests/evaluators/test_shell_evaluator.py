@@ -156,6 +156,27 @@ def test_output_shown(
     assert outerr.err == expected_stderr
 
 
+def test_command_reading_stdin_receives_eof(
+    *,
+    rst_file: Path,
+    use_pty_option: bool,
+) -> None:
+    """Commands reading standard input receive EOF instead of hanging."""
+    evaluator = ShellCommandEvaluator(
+        args=[sys.executable, "-c", "import sys; sys.stdin.read()"],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=False,
+        use_pty=use_pty_option,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=rst_file)
+    (example,) = document.examples()
+
+    example.evaluate()
+
+
 def test_rm(
     *,
     rst_file: Path,
@@ -728,6 +749,37 @@ def test_non_utf8_output(
     assert output == expected_output
 
 
+def test_deleted_temp_file_does_not_erase_code(tmp_path: Path) -> None:
+    """A deleted formatter result raises and leaves the source
+    unchanged.
+    """
+    original_content = "```python\nimportant = True\n```\n"
+    source_file = tmp_path / "example.md"
+    source_file.write_text(data=original_content, encoding="utf-8")
+    evaluator = ShellCommandEvaluator(
+        args=[
+            sys.executable,
+            "-c",
+            "import pathlib, sys; pathlib.Path(sys.argv[1]).unlink()",
+        ],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=True,
+        use_pty=False,
+    )
+    parser = SybilMarkdownCodeBlockParser(
+        language="python",
+        evaluator=evaluator,
+    )
+    document = Sybil(parsers=[parser]).parse(path=source_file)
+    (example,) = document.examples()
+
+    with pytest.raises(expected_exception=FileNotFoundError):
+        example.evaluate()
+
+    assert source_file.read_text(encoding="utf-8") == original_content
+
+
 def test_no_file_left_behind_on_interruption(
     *,
     rst_file: Path,
@@ -1082,6 +1134,56 @@ def test_custom_on_modify_with_modification(
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
     example.evaluate()
+
+
+def test_custom_on_modify_receives_unpadded_content(tmp_path: Path) -> None:
+    """The modification callback does not receive line-number padding."""
+    source_file = tmp_path / "example.md"
+    source_file.write_text(
+        data="heading\n\n```python\nx=1\n```\n",
+        encoding="utf-8",
+    )
+    formatter = tmp_path / "formatter.py"
+    formatter.write_text(
+        data=textwrap.dedent(
+            text="""\
+            import pathlib
+            import sys
+
+            path = pathlib.Path(sys.argv[1])
+            path.write_text(path.read_text().replace("x=1", "x = 1"))
+            """
+        ),
+        encoding="utf-8",
+    )
+    modified_contents: list[str] = []
+
+    def on_modify(example: Example, modified_example_content: str) -> None:
+        """Capture the modified example content."""
+        del example
+        modified_contents.append(modified_example_content)
+
+    evaluator = ShellCommandEvaluator(
+        args=[sys.executable, formatter],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=True,
+        write_to_file=True,
+        use_pty=False,
+        on_modify=on_modify,
+    )
+    parser = SybilMarkdownCodeBlockParser(
+        language="python",
+        evaluator=evaluator,
+    )
+    document = Sybil(parsers=[parser]).parse(path=source_file)
+    (example,) = document.examples()
+
+    example.evaluate()
+
+    assert modified_contents == ["x = 1\n"]
+    reparsed_document = Sybil(parsers=[parser]).parse(path=source_file)
+    (reparsed_example,) = reparsed_document.examples()
+    assert str(object=reparsed_example.parsed) == modified_contents[0]
 
 
 @pytest.mark.parametrize(

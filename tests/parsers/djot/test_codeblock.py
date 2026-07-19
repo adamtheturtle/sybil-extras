@@ -31,6 +31,22 @@ def test_fenced_code_block_outside_blockquote() -> None:
     assert region.parsed == "x = 1\n"
 
 
+def test_backticks_with_trailing_text_are_content() -> None:
+    """A backtick line with trailing text does not close the block."""
+    (region,) = _parse(
+        text=dedent(
+            text="""\
+            ```python
+            ```not-a-closing-fence
+            still_code
+            ```
+            """,
+        )
+    )
+
+    assert region.parsed == "```not-a-closing-fence\nstill_code\n"
+
+
 def test_code_block_in_blockquote_without_closing_fence() -> None:
     """A Djot code block can be closed by the end of its blockquote."""
     (region,) = _parse(
