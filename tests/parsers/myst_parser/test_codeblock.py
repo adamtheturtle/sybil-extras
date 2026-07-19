@@ -317,6 +317,40 @@ def test_non_code_myst_directive_is_skipped(
     argnames="directive",
     argvalues=("code-block", "code", "code-cell"),
 )
+def test_myst_directive_code_block_options(
+    *,
+    tmp_path: Path,
+    directive: str,
+) -> None:
+    """MyST directive options are excluded from executable source."""
+    content = textwrap.dedent(
+        text=f"""\
+        ```{{{directive}}} python
+        :linenos:
+        :lineno-start: 3
+        :emphasize-lines: 1
+        :caption: Example
+
+        print('hello')
+        ```
+        """,
+    )
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    document = Sybil(parsers=[parser]).parse(path=test_file)
+    (example,) = document.examples()
+
+    assert example.parsed.text == "print('hello')\n"
+    expected_offset = content.index("print('hello')")
+    assert example.region.start + example.parsed.offset == expected_offset
+
+
+@pytest.mark.parametrize(
+    argnames="directive",
+    argvalues=("code-block", "code", "code-cell"),
+)
 def test_myst_directive_code_block_no_language(
     *,
     tmp_path: Path,
