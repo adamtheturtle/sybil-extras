@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 from sybil import Example, Sybil
+from sybil.example import SybilFailure
 
 from sybil_extras.evaluators.code_block_writer import CodeBlockWriterEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
@@ -322,6 +323,37 @@ def test_writes_on_evaluator_exception(tmp_path: Path) -> None:
     updated_content = source_file.read_text(encoding="utf-8")
     assert updated_content != original_content
     assert "modified" in updated_content
+
+
+def test_returns_wrapped_evaluator_failure(tmp_path: Path) -> None:
+    """A textual failure from the wrapped evaluator is returned to
+    Sybil.
+    """
+    source_file = tmp_path / "source_file.md"
+    source_file.write_text(
+        data="```python\npass\n```\n",
+        encoding="utf-8",
+    )
+
+    def failing_evaluator(example: Example) -> str:
+        """Return a textual failure without modifying the example."""
+        del example
+        return "formatter reported a failure"
+
+    writer_evaluator = CodeBlockWriterEvaluator(evaluator=failing_evaluator)
+    parser = MARKDOWN.code_block_parser_cls(
+        language="python",
+        evaluator=writer_evaluator,
+    )
+    document = Sybil(parsers=[parser]).parse(path=source_file)
+    (example,) = document.examples()
+
+    assert writer_evaluator(example) == "formatter reported a failure"
+    with pytest.raises(
+        expected_exception=SybilFailure,
+        match="formatter reported a failure",
+    ):
+        example.evaluate()
 
 
 def test_empty_code_block_write_content(

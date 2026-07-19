@@ -361,7 +361,7 @@ class CodeBlockWriterEvaluator:
         self._namespace_key = namespace_key
         self._encoding = encoding
 
-    def __call__(self, example: Example) -> None:
+    def __call__(self, example: Example) -> str | None:
         """Run the wrapped evaluator and write any modifications back.
 
         If the wrapped evaluator raises an exception, modifications are
@@ -372,7 +372,7 @@ class CodeBlockWriterEvaluator:
         namespace = _writer_namespace(document=example.document)
         with namespace.capture(key=self._namespace_key) as captured:
             try:
-                self._evaluator(example)
+                result = self._evaluator(example)
             finally:
                 modified_content = captured.value
                 if modified_content is not None and not isinstance(
@@ -390,3 +390,4 @@ class CodeBlockWriterEvaluator:
                             new_content=modified_content,
                             encoding=self._encoding,
                         )
+        return result
