@@ -12,6 +12,7 @@ from beartype import beartype
 
 from sybil_extras.evaluators.shell_evaluator.exceptions import (
     InvalidPyconError,
+    PyconOutputMismatchError,
 )
 
 
@@ -66,6 +67,7 @@ class _PyconChunk:
     """A parsed pycon interaction chunk."""
 
     output_lines: list[str]
+    python_text: str
 
 
 @beartype
@@ -90,21 +92,38 @@ class _PyconTranscript:
         """
         chunks: list[_PyconChunk] = []
         current_output: list[str] = []
+        current_input: list[str] = []
         seen_prompt = False
 
         for line in pycon_text.splitlines(keepends=True):
             stripped = line.rstrip("\n\r")
             if stripped == ">>>" or line.startswith(">>> "):
                 if seen_prompt:
-                    chunks.append(_PyconChunk(output_lines=current_output))
+                    chunks.append(
+                        _PyconChunk(
+                            output_lines=current_output,
+                            python_text=pycon_to_python(
+                                pycon_text="".join(current_input),
+                            ),
+                        )
+                    )
                     current_output = []
+                    current_input = []
                 seen_prompt = True
+                current_input.append(line)
             elif stripped == "..." or line.startswith("... "):
-                pass
+                current_input.append(line)
             else:
                 current_output.append(line)
 
-        chunks.append(_PyconChunk(output_lines=current_output))
+        chunks.append(
+            _PyconChunk(
+                output_lines=current_output,
+                python_text=pycon_to_python(
+                    pycon_text="".join(current_input),
+                ),
+            )
+        )
 
         return cls(chunks=chunks)
 
@@ -170,6 +189,55 @@ def _is_separator_group(*, group: list[str]) -> bool:
 
 
 @beartype
+def _ast_equivalent(*, first: str, second: str) -> bool:
+    """Return True if two Python snippets are equivalent.
+
+    Equivalence is determined by comparing the abstract syntax trees, so
+    pure reformatting (such as ``1+1`` and ``1 + 1``) is treated as
+    equivalent while meaning-changing rewrites (such as ``1 + 1`` and
+    ``1 + 2``) are not.  If either snippet cannot be parsed, fall back to
+    comparing the text exactly.
+    """
+    try:
+        first_tree = ast.parse(source=first)
+        second_tree = ast.parse(source=second)
+    except SyntaxError:
+        return first == second
+    return ast.dump(node=first_tree) == ast.dump(node=second_tree)
+
+
+@beartype
+def _require_preservable_output(
+    *,
+    groups: list[list[str]],
+    chunks: list[_PyconChunk],
+) -> None:
+    """Ensure each reformatted group can keep its chunk's recorded output.
+
+    For a 1:1 group-to-chunk mapping, a group's output may only be
+    preserved when the reformatted statement is still equivalent to the
+    original.  When a chunk with recorded output maps to a group whose
+    meaning changed, raise rather than reattach stale output.
+
+    Raises:
+        PyconOutputMismatchError: If a reformatted statement changed the
+            meaning of an original chunk that has recorded output.
+    """
+    for group, chunk in zip(groups, chunks, strict=True):
+        if not chunk.output_lines:
+            continue
+        reformatted = pycon_to_python(pycon_text="".join(group))
+        if not _ast_equivalent(first=reformatted, second=chunk.python_text):
+            msg = (
+                "The command changed the meaning of a pycon statement "
+                f"(from {chunk.python_text!r} to {reformatted!r}), so its "
+                "recorded output can no longer be safely preserved. Update "
+                "the pycon transcript manually to reflect the new output."
+            )
+            raise PyconOutputMismatchError(msg)
+
+
+@beartype
 def _render_pycon_from_python(
     *,
     python_text: str,
@@ -203,7 +271,11 @@ def _render_pycon_from_python(
     # check if the *substantive* groups match the original chunks.
     chunk_for_group: list[int | None]
     if len(groups) == len(original_chunks):
-        # Direct 1:1 match - every group gets its chunk's output.
+        # Direct 1:1 match - every group gets its chunk's output, but only
+        # when the reformatted statement still means the same thing as the
+        # original.  Otherwise the recorded output would be reattached to a
+        # statement it no longer describes.
+        _require_preservable_output(groups=groups, chunks=original_chunks)
         chunk_for_group = list(range(len(groups)))
     else:
         substantive = [
@@ -246,6 +318,11 @@ def python_to_pycon(*, python_text: str, original_pycon: str) -> str:
 
     Returns:
         The pycon-formatted version of ``python_text``.
+
+    Raises:
+        PyconOutputMismatchError: If a reformatted statement mapped 1:1 to
+            an original chunk changed the statement's meaning, so its
+            recorded output can no longer be safely preserved.
     """
     transcript = _PyconTranscript.from_text(pycon_text=original_pycon)
     return _render_pycon_from_python(

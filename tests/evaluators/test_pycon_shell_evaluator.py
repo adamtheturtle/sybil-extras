@@ -15,6 +15,7 @@ from sybil.parsers.markdown import (
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 from sybil_extras.evaluators.shell_evaluator.exceptions import (
     InvalidPyconError,
+    PyconOutputMismatchError,
 )
 from sybil_extras.evaluators.shell_evaluator.result_transformer import (
     PyconResultTransformer,
@@ -502,6 +503,164 @@ def test_write_to_file_statement_count_mismatch(
         ```
         """,
     )
+
+
+def test_write_to_file_preserves_output_on_equivalent_reformat(
+    *,
+    tmp_path: Path,
+) -> None:
+    """Pure reformatting of a statement keeps its recorded output.
+
+    ``1+1`` and ``1 + 1`` are AST-equivalent, so the recorded ``2`` output
+    is preserved even though the statement text changed.
+    """
+    content = textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> 1+1
+        2
+        ```
+        """,
+    )
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    script = tmp_path / "fmt.py"
+    script.write_text(
+        data=textwrap.dedent(
+            text="""\
+            import sys, pathlib
+            path = pathlib.Path(sys.argv[1])
+            path.write_text(path.read_text().replace("1+1", "1 + 1"))
+            """,
+        ),
+        encoding="utf-8",
+    )
+
+    evaluator = _make_pycon_evaluator(
+        args=["python3", str(object=script)],
+        write_to_file=True,
+    )
+    parser = SybilMarkdownCodeBlockParser(
+        language="pycon",
+        evaluator=evaluator,
+    )
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    (example,) = document.examples()
+    example.evaluate()
+
+    result = test_file.read_text(encoding="utf-8")
+    assert result == textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> 1 + 1
+        2
+        ```
+        """,
+    )
+
+
+def test_write_to_file_meaning_change_raises(
+    *,
+    tmp_path: Path,
+) -> None:
+    """A statement whose meaning changed cannot keep its recorded output.
+
+    Rewriting ``1 + 1`` to ``1 + 2`` changes the AST, so reattaching the
+    recorded ``2`` would be wrong.  The evaluator raises instead, and the
+    source file is left untouched.
+    """
+    content = textwrap.dedent(
+        text="""\
+        ```pycon
+        >>> 1 + 1
+        2
+        ```
+        """,
+    )
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    script = tmp_path / "fmt.py"
+    script.write_text(
+        data=textwrap.dedent(
+            text="""\
+            import sys, pathlib
+            path = pathlib.Path(sys.argv[1])
+            path.write_text(path.read_text().replace("1 + 1", "1 + 2"))
+            """,
+        ),
+        encoding="utf-8",
+    )
+
+    evaluator = _make_pycon_evaluator(
+        args=["python3", str(object=script)],
+        write_to_file=True,
+    )
+    parser = SybilMarkdownCodeBlockParser(
+        language="pycon",
+        evaluator=evaluator,
+    )
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    (example,) = document.examples()
+
+    with pytest.raises(
+        expected_exception=PyconOutputMismatchError,
+        match="changed the meaning of a pycon statement",
+    ):
+        example.evaluate()
+
+    # The source file is not silently corrupted.
+    assert test_file.read_text(encoding="utf-8") == content
+
+
+def test_write_to_file_unparseable_original_change_raises(
+    *,
+    tmp_path: Path,
+) -> None:
+    """An original statement that cannot be parsed uses the text fallback.
+
+    The original statement is indented, so it cannot be AST-parsed on its
+    own.  The formatter dedents it, changing the text, so the recorded
+    output can no longer be safely preserved and an error is raised.
+    """
+    content = "```pycon\n>>>     x = 1\n1\n```\n"
+    test_file = tmp_path / "test.md"
+    test_file.write_text(data=content, encoding="utf-8")
+
+    script = tmp_path / "fmt.py"
+    script.write_text(
+        data=textwrap.dedent(
+            text="""\
+            import sys, pathlib
+            path = pathlib.Path(sys.argv[1])
+            path.write_text(path.read_text().lstrip())
+            """,
+        ),
+        encoding="utf-8",
+    )
+
+    evaluator = _make_pycon_evaluator(
+        args=["python3", str(object=script)],
+        write_to_file=True,
+    )
+    parser = SybilMarkdownCodeBlockParser(
+        language="pycon",
+        evaluator=evaluator,
+    )
+    sybil = Sybil(parsers=[parser])
+    document = sybil.parse(path=test_file)
+    (example,) = document.examples()
+
+    with pytest.raises(
+        expected_exception=PyconOutputMismatchError,
+        match="changed the meaning of a pycon statement",
+    ):
+        example.evaluate()
+
+    assert test_file.read_text(encoding="utf-8") == content
 
 
 def test_write_to_file_preserves_output_when_formatter_adds_blank_line(
