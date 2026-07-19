@@ -86,6 +86,17 @@ def _writer_namespace(*, document: Document) -> _WriterNamespace:
 
 
 @beartype
+def _get_container_prefix(*, region_text: str) -> str:
+    """Get a fenced block's indentation and block quote prefix."""
+    fence_pattern = re.compile(
+        pattern=r"^(?P<prefix>[ \t]*(?:>[ \t]*)*)(?P<fence>`{3,})",
+        flags=re.MULTILINE,
+    )
+    fence_match = fence_pattern.match(string=region_text)
+    return fence_match.group("prefix") if fence_match else ""
+
+
+@beartype
 def _get_source_newline(*, path: Path, encoding: str | None) -> str | None:
     """Return the first newline convention used by a source file."""
     with path.open(mode="r", encoding=encoding, newline="") as source_file:
@@ -103,14 +114,9 @@ def _get_within_code_block_indentation_prefix(example: Example) -> str:
         example.region.start : example.region.end
     ]
 
-    # Extract blockquote/container prefix from the region text
-    # This handles Djot/Markdown blockquotes (lines starting with "> ")
-    fence_pattern = re.compile(
-        pattern=r"^(?P<prefix>[ \t]*(?:>[ \t]*)*)(?P<fence>`{3,})",
-        flags=re.MULTILINE,
+    container_prefix = _get_container_prefix(
+        region_text=region_text,
     )
-    fence_match = fence_pattern.match(string=region_text)
-    container_prefix = fence_match.group("prefix") if fence_match else ""
 
     region_lines = region_text.splitlines()
     region_lines_matching_first_line = [
@@ -211,8 +217,13 @@ def _empty_block_region_edit(
     has_closing_delimiter = bool(closing_delimiter.strip())
 
     if has_closing_delimiter:
+        container_prefix = _get_container_prefix(
+            region_text=original_region_text,
+        )
         return _RegionEdit(
-            within_code_block_indent_prefix=code_block_indent_prefix,
+            within_code_block_indent_prefix=(
+                container_prefix or code_block_indent_prefix
+            ),
             replace_old_not_indented="\n",
             replace_new_prefix="\n",
         )
