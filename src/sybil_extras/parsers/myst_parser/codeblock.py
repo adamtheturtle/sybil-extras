@@ -16,6 +16,9 @@ from sybil import Document, Example, Lexeme, Region
 from sybil.typing import Evaluator
 
 from sybil_extras.parsers._line_offsets import line_offsets
+from sybil_extras.parsers.myst_parser.sphinx_jinja2 import (
+    parse_options_and_body,
+)
 
 # Pattern to match an ``invisible-code-block`` directive inside an HTML
 # comment. Mirrors ``sybil.parsers.markdown.codeblock.CodeBlockParser``
@@ -111,9 +114,10 @@ class CodeBlockParser:
         # (e.g., "{code-block} python"), where the actual language is the
         # second word.
         words = token.info.strip().split()
+        is_directive = bool(words) and words[0] in _CODE_DIRECTIVES
         if not words:
             block_language = ""
-        elif words[0] in _CODE_DIRECTIVES:
+        elif is_directive:
             block_language = words[1] if len(words) > 1 else ""
         elif words[0].startswith("{"):
             return None
@@ -130,14 +134,23 @@ class CodeBlockParser:
         else:
             region_end = len(document.text)
 
-        if start_line + 1 < len(offsets):
-            opening_fence_end = offsets[start_line + 1]
+        source_text = token.content
+        removed_prefix = ""
+        if is_directive:
+            _, source_text = parse_options_and_body(content=token.content)
+            source_length = len(source_text)
+            removed_length = len(token.content) - source_length
+            removed_prefix = token.content[:removed_length]
+
+        source_start_line = start_line + 1 + removed_prefix.count("\n")
+        if source_start_line < len(offsets):
+            opening_fence_end = offsets[source_start_line]
         else:
             opening_fence_end = len(document.text)
         source_offset = opening_fence_end - region_start
 
         source = Lexeme(
-            text=token.content,
+            text=source_text,
             offset=source_offset,
             line_offset=0,
         )

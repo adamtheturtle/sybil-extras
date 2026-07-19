@@ -97,6 +97,16 @@ def _get_container_prefix(*, region_text: str) -> str:
 
 
 @beartype
+def _get_source_newline(*, path: Path, encoding: str | None) -> str | None:
+    """Return the first newline convention used by a source file."""
+    with path.open(mode="r", encoding=encoding, newline="") as source_file:
+        source_text = source_file.read()
+
+    newline_match = re.search(pattern=r"\r\n|\r|\n", string=source_text)
+    return newline_match.group() if newline_match else None
+
+
+@beartype
 def _get_within_code_block_indentation_prefix(example: Example) -> str:
     """Get the indentation of the parsed code in the example."""
     first_line = str(object=example.parsed).split(sep="\n", maxsplit=1)[0]
@@ -240,12 +250,15 @@ def _get_modified_region_text(
             replace_old_not_indented=example.parsed,
             replace_new_prefix="",
         )
+        search_region_text = original_region_text
     else:
+        source_offset = _source_offset(example=example)
         edit = _empty_block_region_edit(
             original_region_text=original_region_text,
             code_block_indent_prefix=code_block_indent_prefix,
-            source_offset=_source_offset(example=example),
+            source_offset=source_offset,
         )
+        search_region_text = original_region_text[:source_offset]
 
     indented_example_parsed = textwrap.indent(
         text=edit.replace_old_not_indented,
@@ -259,7 +272,7 @@ def _get_modified_region_text(
     if not replacement_text.endswith("\n"):
         replacement_text += "\n"
 
-    text_to_replace_index = original_region_text.rfind(indented_example_parsed)
+    text_to_replace_index = search_region_text.rfind(indented_example_parsed)
     if text_to_replace_index < 0:
         msg = (
             "Parsed code is not contiguous in its source region; "
@@ -313,6 +326,8 @@ def _overwrite_example_content(
     )
 
     if modified_region_text != original_region_text:
+        path = Path(example.path)
+        source_newline = _get_source_newline(path=path, encoding=encoding)
         existing_file_content = example.document.text
         modified_document_content = (
             existing_file_content[: example.region.start]
@@ -329,9 +344,10 @@ def _overwrite_example_content(
         for region in subsequent_regions:
             region.start += offset
             region.end += offset
-        Path(example.path).write_text(
+        path.write_text(
             data=modified_document_content,
             encoding=encoding,
+            newline=source_newline,
         )
 
 
@@ -372,7 +388,7 @@ class CodeBlockWriterEvaluator:
         self._namespace_key = namespace_key
         self._encoding = encoding
 
-    def __call__(self, example: Example) -> None:
+    def __call__(self, example: Example) -> str | None:
         """Run the wrapped evaluator and write any modifications back.
 
         If the wrapped evaluator raises an exception, modifications are
@@ -383,7 +399,7 @@ class CodeBlockWriterEvaluator:
         namespace = _writer_namespace(document=example.document)
         with namespace.capture(key=self._namespace_key) as captured:
             try:
-                self._evaluator(example)
+                result = self._evaluator(example)
             finally:
                 modified_content = captured.value
                 if modified_content is not None and not isinstance(
@@ -401,3 +417,4 @@ class CodeBlockWriterEvaluator:
                             new_content=modified_content,
                             encoding=self._encoding,
                         )
+        return result

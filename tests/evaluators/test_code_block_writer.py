@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 from sybil import Example, Sybil
+from sybil.example import SybilFailure
 
 from sybil_extras.evaluators.code_block_writer import CodeBlockWriterEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
@@ -268,6 +269,32 @@ def test_writes_modified_content(
     assert source_file.read_text(encoding="utf-8") == expected_content
 
 
+def test_preserves_source_newline_convention(tmp_path: Path) -> None:
+    """Writing a code block preserves CRLF newlines in the source file."""
+    source_file = tmp_path / "source_file.md"
+    source_file.write_bytes(
+        data=b"before\r\n\r\n```python\r\nfirst\r\n```\r\n\r\nafter\r\n"
+    )
+
+    def modifying_evaluator(example: Example) -> None:
+        """Store modified content in the namespace."""
+        example.document.namespace["modified_content"] = "FIRST\n"
+
+    writer_evaluator = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)
+    parser = MARKDOWN_IT.code_block_parser_cls(
+        language="python",
+        evaluator=writer_evaluator,
+    )
+    document = Sybil(parsers=[parser]).parse(path=source_file)
+    (example,) = document.examples()
+
+    example.evaluate()
+
+    assert source_file.read_bytes() == (
+        b"before\r\n\r\n```python\r\nFIRST\r\n```\r\n\r\nafter\r\n"
+    )
+
+
 def test_writes_on_evaluator_exception(tmp_path: Path) -> None:
     """When the wrapped evaluator raises an exception, modifications are
     still
@@ -322,6 +349,37 @@ def test_writes_on_evaluator_exception(tmp_path: Path) -> None:
     updated_content = source_file.read_text(encoding="utf-8")
     assert updated_content != original_content
     assert "modified" in updated_content
+
+
+def test_returns_wrapped_evaluator_failure(tmp_path: Path) -> None:
+    """A textual failure from the wrapped evaluator is returned to
+    Sybil.
+    """
+    source_file = tmp_path / "source_file.md"
+    source_file.write_text(
+        data="```python\npass\n```\n",
+        encoding="utf-8",
+    )
+
+    def failing_evaluator(example: Example) -> str:
+        """Return a textual failure without modifying the example."""
+        del example
+        return "formatter reported a failure"
+
+    writer_evaluator = CodeBlockWriterEvaluator(evaluator=failing_evaluator)
+    parser = MARKDOWN.code_block_parser_cls(
+        language="python",
+        evaluator=writer_evaluator,
+    )
+    document = Sybil(parsers=[parser]).parse(path=source_file)
+    (example,) = document.examples()
+
+    assert writer_evaluator(example) == "formatter reported a failure"
+    with pytest.raises(
+        expected_exception=SybilFailure,
+        match="formatter reported a failure",
+    ):
+        example.evaluate()
 
 
 def test_empty_code_block_write_content(
@@ -497,6 +555,44 @@ def test_empty_blockquote_code_block_write_content(
 
     assert source_file.read_text(encoding="utf-8") == (
         "> ```python\n> inserted\n> ```\n"
+    )
+    reparsed_document = Sybil(parsers=[parser]).parse(path=source_file)
+    (reparsed_example,) = reparsed_document.examples()
+    assert str(object=reparsed_example.parsed) == "inserted\n"
+
+
+@pytest.mark.parametrize(
+    argnames="markup_language",
+    argvalues=(MARKDOWN_IT, MYST_PARSER),
+)
+def test_empty_invisible_code_block_write_content(
+    *,
+    tmp_path: Path,
+    markup_language: MarkupLanguage,
+) -> None:
+    """Content is written inside an empty invisible code block."""
+    source_file = tmp_path / "source_file.md"
+    source_file.write_text(
+        data="<!-- invisible-code-block python\n-->\n",
+        encoding="utf-8",
+    )
+
+    def modifying_evaluator(example: Example) -> None:
+        """Store modified content in the namespace."""
+        example.document.namespace["modified_content"] = "inserted"
+
+    writer_evaluator = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)
+    parser = markup_language.code_block_parser_cls(
+        language="python",
+        evaluator=writer_evaluator,
+    )
+    document = Sybil(parsers=[parser]).parse(path=source_file)
+    (example,) = document.examples()
+
+    example.evaluate()
+
+    assert source_file.read_text(encoding="utf-8") == (
+        "<!-- invisible-code-block python\ninserted\n-->\n"
     )
     reparsed_document = Sybil(parsers=[parser]).parse(path=source_file)
     (reparsed_example,) = reparsed_document.examples()
