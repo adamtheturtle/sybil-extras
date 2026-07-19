@@ -221,7 +221,10 @@ def _render_pycon_from_python(
         result.extend(group)
         matched_chunk = chunk_for_group[i]
         if matched_chunk is not None:
-            result.extend(original_chunks[matched_chunk].output_lines)
+            output_lines = original_chunks[matched_chunk].output_lines
+            if output_lines and not result[-1].endswith(("\n", "\r")):
+                result.append("\n")
+            result.extend(output_lines)
 
     return "".join(result)
 
