@@ -9,6 +9,10 @@ from sybil.parsers.abstract.lexers import LexerCollection
 from sybil.parsers.rest.lexers import DirectiveLexer
 from sybil.typing import Evaluator
 
+from sybil_extras.parsers.rest._content_placement import (
+    attach_content_placement,
+)
+
 
 @beartype
 class SphinxJinja2Parser:
@@ -36,4 +40,5 @@ class SphinxJinja2Parser:
         for region in self._lexers(document):
             region.parsed = region.lexemes["source"]
             region.evaluator = self._evaluator
+            attach_content_placement(region=region)
             yield region
