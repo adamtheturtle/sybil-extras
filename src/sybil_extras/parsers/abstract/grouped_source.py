@@ -96,8 +96,6 @@ class _Grouper:
         file
                 to not have a bunch of newlines in it, such as formatters.
         """
-        # Nested state allows multiple groups in the same document while
-        # retaining the document only as a weak key.
         self._group_state: WeakKeyDictionary[
             Document, dict[int, _GroupState]
         ] = WeakKeyDictionary()

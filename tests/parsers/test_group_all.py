@@ -2,6 +2,7 @@
 
 import gc
 import subprocess
+import time
 import uuid
 import weakref
 from collections.abc import Iterable
@@ -58,6 +59,51 @@ def test_abandoned_documents_are_released(
     gc.collect()
 
     assert all(reference() is None for reference in references)
+
+
+def test_skip_end_cancels_pending_next(
+    *,
+    language_directive_builder: tuple[MarkupLanguage, DirectiveBuilder],
+    tmp_path: Path,
+) -> None:
+    """``skip: end`` cancels ``skip: next`` before block counting."""
+    language, directive_builder = language_directive_builder
+    content = language.markup_separator.join(
+        [
+            directive_builder(directive="custom-skip", argument="next"),
+            directive_builder(directive="custom-skip", argument="end"),
+            language.code_block_builder(code="x = 1", language="python"),
+        ]
+    )
+    test_document = tmp_path / "test"
+    test_document.write_text(
+        data=f"{content}{language.markup_separator}",
+        encoding="utf-8",
+    )
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
+    document = Sybil(
+        parsers=[
+            language.code_block_parser_cls(
+                language="python",
+                evaluator=NoOpEvaluator(),
+            ),
+            language.thread_safe_skip_parser_cls(directive="custom-skip"),
+            language.group_all_parser_cls(
+                evaluator=evaluator,
+                pad_groups=False,
+            ),
+        ]
+    ).parse(path=test_document)
+    examples = list(document.examples())
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        final_result = executor.submit(examples[-1].evaluate)
+        time.sleep(0.05)
+        for example in examples[:-1]:
+            example.evaluate()
+        final_result.result(timeout=1)
+
+    assert document.namespace["blocks"] == ["x = 1\n"]
 
 
 @beartype

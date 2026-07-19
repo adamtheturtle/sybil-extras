@@ -71,7 +71,7 @@ def run_command(
             args=command,
             stdout=stdout,
             stderr=stderr,
-            stdin=subprocess.PIPE,
+            stdin=subprocess.DEVNULL,
             env=env,
             close_fds=True,
         ) as process:
@@ -110,7 +110,7 @@ def run_command(
             args=command,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            stdin=subprocess.PIPE,
+            stdin=subprocess.DEVNULL,
             env=env,
         ) as process:
             if (

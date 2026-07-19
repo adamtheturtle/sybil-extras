@@ -74,6 +74,7 @@ def count_expected_code_blocks(examples: Iterable[Example]) -> int:
                 in_skip_range = True
             case ("end", object()):
                 in_skip_range = False
+                skip_next = False
             case _:
                 if has_source(example=ex):
                     non_skip_count += 1
