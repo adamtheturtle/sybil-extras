@@ -7,45 +7,6 @@ fail_fast: true
 # See https://pre-commit.com/hooks.html for more hooks
 default_install_hook_types: [pre-commit, pre-push]
 
-ci:
-  # We use system Python, with required dependencies specified in pyproject.toml.
-  # We therefore cannot use those dependencies in pre-commit CI.
-  skip:
-    - actionlint
-    - check-manifest
-    - deptry
-    - doc8
-    - pydocstringformatter
-    - interrogate
-    - interrogate-docs
-    - mypy
-    - mypy-docs
-    - pylint
-    - pylint-docs
-    - pyproject-fmt-fix
-    - pyright
-    - pyright-docs
-    - pyright-verifytypes
-    - ty
-    - ty-docs
-    - pyroma
-    - ruff-check-fix
-    - ruff-check-fix-docs
-    - ruff-format-fix
-    - ruff-format-fix-docs
-    - shellcheck
-    - shellcheck-docs
-    - shfmt
-    - shfmt-docs
-    - sphinx-lint
-    - strict-kwargs-fix
-    - vulture
-    - vulture-docs
-    - yamlfix
-    - pyrefly
-    - pyrefly-docs
-    - zizmor
-
 repos:
   - repo: meta
     hooks:
