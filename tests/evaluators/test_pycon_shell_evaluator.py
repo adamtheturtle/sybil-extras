@@ -35,9 +35,9 @@ def make_temp_file_path(*, example: Example) -> Path:
 def _make_pycon_evaluator(
     *,
     args: list[str | Path],
-    pad_file: bool = False,
-    write_to_file: bool = False,
-    use_pty: bool = False,
+    pad_file: bool = False,  # noqa: NOD001
+    write_to_file: bool = False,  # noqa: NOD001
+    use_pty: bool = False,  # noqa: NOD001
 ) -> ShellCommandEvaluator:
     """Create an evaluator for pycon code blocks."""
     return ShellCommandEvaluator(

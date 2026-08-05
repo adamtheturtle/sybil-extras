@@ -90,9 +90,9 @@ class _PyconTranscript:
         Returns:
             A parsed transcript.
         """
-        chunks: list[_PyconChunk] = []
-        current_output: list[str] = []
-        current_input: list[str] = []
+        chunks: list[_PyconChunk] = []  # noqa: NOD001
+        current_output: list[str] = []  # noqa: NOD001
+        current_input: list[str] = []  # noqa: NOD001
         seen_prompt = False
 
         for line in pycon_text.splitlines(keepends=True):

@@ -21,7 +21,7 @@ class _ConcurrencyTrackingNamespace(dict[str, object]):
         self.max_concurrent = 0
         self._lock = threading.Lock()
 
-    def get(self, key: object, default: object = None) -> object:
+    def get(self, key: object, default: object = None) -> object:  # noqa: NOD001
         """Get a value while recording how many reads overlap."""
         with self._lock:
             self._active += 1
