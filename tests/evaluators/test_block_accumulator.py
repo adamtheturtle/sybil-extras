@@ -21,11 +21,10 @@ class _ConcurrencyTrackingNamespace(dict[str, object]):
         self.max_concurrent = 0
         self._lock = threading.Lock()
 
-    # This class subclasses ``dict``, whose ``get`` takes an optional
-    # second argument. Removing the default narrows the override and mypy
-    # rejects it as incompatible with both ``dict`` and ``Mapping``, so the
-    # default is part of the inherited interface rather than a style choice.
-    def get(self, key: object, default: object = None) -> object:  # noqa: NOD001
+    # ``dict.get`` accepts an optional second argument. Taking it as
+    # ``*default`` keeps the override compatible without giving this
+    # signature a default.
+    def get(self, key: object, /, *default: object) -> object:
         """Get a value while recording how many reads overlap."""
         with self._lock:
             self._active += 1
@@ -35,7 +34,7 @@ class _ConcurrencyTrackingNamespace(dict[str, object]):
             # ``key`` is typed ``object`` to match ``dict.get`` across type
             # checkers; the namespace is only ever queried with string keys.
             assert isinstance(key, str)
-            return super().get(key, default)
+            return super().get(key, *default)
         finally:
             with self._lock:
                 self._active -= 1
