@@ -277,11 +277,11 @@ def _rst_jinja_block(body: str) -> str:
 class _CodeBlockParser(Protocol):
     """A parser for code blocks."""
 
-    def __init__(
+    def __init__(  # noqa: NOD001
         self,
         *,
-        language: str | None = None,  # noqa: NOD001
-        evaluator: Evaluator | None = None,  # noqa: NOD001
+        language: str | None = None,
+        evaluator: Evaluator | None = None,
     ) -> None:
         """Construct a code block parser."""
         # We disable a pylint warning here because the ellipsis is required
