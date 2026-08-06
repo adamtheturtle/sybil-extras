@@ -21,8 +21,10 @@ class _ConcurrencyTrackingNamespace(dict[str, object]):
         self.max_concurrent = 0
         self._lock = threading.Lock()
 
-    # Mimics ``dict.get``, whose second argument is optional, so this
-    # default is part of the interface rather than a style choice.
+    # This class subclasses ``dict``, whose ``get`` takes an optional
+    # second argument. Removing the default narrows the override and mypy
+    # rejects it as incompatible with both ``dict`` and ``Mapping``, so the
+    # default is part of the inherited interface rather than a style choice.
     def get(self, key: object, default: object = None) -> object:  # noqa: NOD001
         """Get a value while recording how many reads overlap."""
         with self._lock:
