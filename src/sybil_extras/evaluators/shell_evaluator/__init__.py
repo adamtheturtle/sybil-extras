@@ -80,21 +80,21 @@ class _ShellCommandRunner:
     implementation).
     """
 
-    def __init__(  # noqa: NOD001
+    def __init__(
         self,
         *,
         args: Sequence[str | Path],
         temp_file_path_maker: TempFilePathMaker,
-        env: Mapping[str, str] | None = None,
-        newline: str | None = None,
+        env: Mapping[str, str] | None,
+        newline: str | None,
         pad_file: bool,
         write_to_file: bool,
         use_pty: bool,
-        encoding: str | None = None,
-        on_modify: _ExampleModified | None = None,
-        namespace_key: str = "",
-        source_preparer: SourcePreparer = NOOP_SOURCE_PREPARER,
-        result_transformer: ResultTransformer = NOOP_RESULT_TRANSFORMER,
+        encoding: str | None,
+        on_modify: _ExampleModified | None,
+        namespace_key: str,
+        source_preparer: SourcePreparer,
+        result_transformer: ResultTransformer,
     ) -> None:
         """Initialize the shell command runner.
 

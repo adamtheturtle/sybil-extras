@@ -147,7 +147,7 @@ class CodeBlockBuilder(Protocol):
 class DirectiveBuilder(Protocol):
     """A callable that renders directives for a markup language."""
 
-    def __call__(self, directive: str, argument: str | None = None) -> str:
+    def __call__(self, directive: str, argument: str | None) -> str:
         """Render ``directive`` with the optional ``argument``."""
         ...  # pylint: disable=unnecessary-ellipsis
 
@@ -190,7 +190,7 @@ def _rst_code_block(code: str, language: str) -> str:
 @beartype
 def _html_comment_directive(
     directive: str,
-    argument: str | None = None,  # noqa: NOD001
+    argument: str | None,
 ) -> str:
     """Render a directive embedded in an HTML comment."""
     suffix = f": {argument}" if argument is not None else ""
@@ -200,7 +200,7 @@ def _html_comment_directive(
 @beartype
 def _percent_comment_directive(
     directive: str,
-    argument: str | None = None,  # noqa: NOD001
+    argument: str | None,
 ) -> str:
     """Render a directive embedded in a percent-style comment."""
     suffix = f": {argument}" if argument is not None else ""
@@ -210,7 +210,7 @@ def _percent_comment_directive(
 @beartype
 def _rst_directive(
     directive: str,
-    argument: str | None = None,  # noqa: NOD001
+    argument: str | None,
 ) -> str:
     """Render a directive for reStructuredText documents."""
     if argument is None:
@@ -221,7 +221,7 @@ def _rst_directive(
 @beartype
 def _jsx_comment_directive(
     directive: str,
-    argument: str | None = None,  # noqa: NOD001
+    argument: str | None,
 ) -> str:
     """Render a directive embedded in a JSX comment."""
     suffix = f": {argument}" if argument is not None else ""
@@ -231,7 +231,7 @@ def _jsx_comment_directive(
 @beartype
 def _djot_directive(
     directive: str,
-    argument: str | None = None,  # noqa: NOD001
+    argument: str | None,
 ) -> str:
     """Render a directive embedded in a djot comment."""
     suffix = f": {argument}" if argument is not None else ""
@@ -249,7 +249,7 @@ def _norg_code_block(code: str, language: str) -> str:
 @beartype
 def _norg_directive(
     directive: str,
-    argument: str | None = None,  # noqa: NOD001
+    argument: str | None,
 ) -> str:
     """Render a directive embedded in a norg infirm tag."""
     suffix = f": {argument}" if argument is not None else ""
@@ -277,11 +277,11 @@ def _rst_jinja_block(body: str) -> str:
 class _CodeBlockParser(Protocol):
     """A parser for code blocks."""
 
-    def __init__(  # noqa: NOD001
+    def __init__(
         self,
         *,
-        language: str | None = None,
-        evaluator: Evaluator | None = None,
+        language: str | None,
+        evaluator: Evaluator | None,
     ) -> None:
         """Construct a code block parser."""
         # We disable a pylint warning here because the ellipsis is required
