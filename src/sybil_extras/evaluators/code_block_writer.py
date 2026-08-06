@@ -28,7 +28,7 @@ CONTENT_SEPARATOR_LEXEME = "content_separator"
 class _CapturedValue:
     """A namespace value isolated to one evaluator call."""
 
-    value: object | None = None
+    value: object | None = None  # noqa: NOD001
 
 
 class _WriterLocal(threading.local):
@@ -345,7 +345,7 @@ def _overwrite_example_content(
     *,
     example: Example,
     new_content: str,
-    encoding: str | None = None,
+    encoding: str | None = None,  # noqa: NOD001
 ) -> None:
     """Update the source document and file with modified example content.
 
