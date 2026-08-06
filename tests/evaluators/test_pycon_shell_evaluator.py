@@ -35,9 +35,9 @@ def make_temp_file_path(*, example: Example) -> Path:
 def _make_pycon_evaluator(
     *,
     args: list[str | Path],
-    pad_file: bool = False,  # noqa: NOD001
-    write_to_file: bool = False,  # noqa: NOD001
-    use_pty: bool = False,  # noqa: NOD001
+    pad_file: bool,
+    write_to_file: bool,
+    use_pty: bool,
 ) -> ShellCommandEvaluator:
     """Create an evaluator for pycon code blocks."""
     return ShellCommandEvaluator(
@@ -78,6 +78,9 @@ def test_writes_extracted_python_to_temp_file(
 
     evaluator = _make_pycon_evaluator(
         args=["sh", script.as_posix()],
+        pad_file=False,
+        write_to_file=False,
+        use_pty=False,
     )
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
@@ -134,6 +137,8 @@ def test_write_to_file_reformats_pycon(
     evaluator = _make_pycon_evaluator(
         args=["python3", str(object=script)],
         write_to_file=True,
+        pad_file=False,
+        use_pty=False,
     )
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
@@ -183,6 +188,8 @@ def test_preserves_output_after_formatter_removes_final_newline(
     evaluator = _make_pycon_evaluator(
         args=["python3", script],
         write_to_file=True,
+        pad_file=False,
+        use_pty=False,
     )
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
@@ -220,6 +227,8 @@ def test_no_change_leaves_file_unmodified(
     evaluator = _make_pycon_evaluator(
         args=["true"],
         write_to_file=True,
+        pad_file=False,
+        use_pty=False,
     )
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
@@ -324,6 +333,8 @@ def test_write_to_file_round_trip(
     evaluator = _make_pycon_evaluator(
         args=["true"],
         write_to_file=True,
+        pad_file=False,
+        use_pty=False,
     )
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
@@ -384,6 +395,8 @@ def test_invalid_pycon_raises(
     evaluator = _make_pycon_evaluator(
         args=["true"],
         write_to_file=True,
+        pad_file=False,
+        use_pty=False,
     )
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
@@ -431,6 +444,8 @@ def test_write_to_file_syntax_error_fallback(
     evaluator = _make_pycon_evaluator(
         args=["python3", str(object=script)],
         write_to_file=True,
+        pad_file=False,
+        use_pty=False,
     )
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
@@ -485,6 +500,8 @@ def test_write_to_file_statement_count_mismatch(
     evaluator = _make_pycon_evaluator(
         args=["python3", str(object=script)],
         write_to_file=True,
+        pad_file=False,
+        use_pty=False,
     )
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
@@ -540,6 +557,8 @@ def test_write_to_file_preserves_output_on_equivalent_reformat(
     evaluator = _make_pycon_evaluator(
         args=["python3", str(object=script)],
         write_to_file=True,
+        pad_file=False,
+        use_pty=False,
     )
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
@@ -597,6 +616,8 @@ def test_write_to_file_meaning_change_raises(
     evaluator = _make_pycon_evaluator(
         args=["python3", str(object=script)],
         write_to_file=True,
+        pad_file=False,
+        use_pty=False,
     )
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
@@ -645,6 +666,8 @@ def test_write_to_file_unparseable_original_change_raises(
     evaluator = _make_pycon_evaluator(
         args=["python3", str(object=script)],
         write_to_file=True,
+        pad_file=False,
+        use_pty=False,
     )
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
@@ -709,6 +732,8 @@ def test_write_to_file_preserves_output_when_formatter_adds_blank_line(
     evaluator = _make_pycon_evaluator(
         args=["python3", str(object=script)],
         write_to_file=True,
+        pad_file=False,
+        use_pty=False,
     )
     parser = SybilMarkdownCodeBlockParser(
         language="pycon",
