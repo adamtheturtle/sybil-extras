@@ -330,7 +330,7 @@ def test_no_argument(
     language, directive_builder = language_directive_builder
     content = language.markup_separator.join(
         [
-            directive_builder(directive="group"),
+            directive_builder(directive="group", argument=None),
             directive_builder(directive="group", argument="end"),
         ]
     )
@@ -609,7 +609,9 @@ def test_with_shell_command_evaluator(
         evaluator=shell_evaluator,
         pad_groups=True,
     )
-    code_block_parser = language.code_block_parser_cls(language="python")
+    code_block_parser = language.code_block_parser_cls(
+        language="python", evaluator=None
+    )
 
     sybil = Sybil(parsers=[code_block_parser, group_parser])
     document = sybil.parse(path=test_document)
@@ -680,7 +682,9 @@ def test_state_cleanup_on_evaluator_failure(
         evaluator=shell_evaluator,
         pad_groups=False,
     )
-    code_block_parser = language.code_block_parser_cls(language="bash")
+    code_block_parser = language.code_block_parser_cls(
+        language="bash", evaluator=None
+    )
 
     sybil = Sybil(parsers=[code_block_parser, group_parser])
     document = sybil.parse(path=test_document)
@@ -976,7 +980,9 @@ def test_no_pad_groups(
         evaluator=shell_evaluator,
         pad_groups=False,
     )
-    code_block_parser = language.code_block_parser_cls(language="python")
+    code_block_parser = language.code_block_parser_cls(
+        language="python", evaluator=None
+    )
 
     sybil = Sybil(parsers=[code_block_parser, group_parser])
     document = sybil.parse(path=test_document)

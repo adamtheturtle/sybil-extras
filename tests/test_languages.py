@@ -250,7 +250,7 @@ def test_mdx_info_line_at_eof_without_newline() -> None:
     An MDX code block info line at EOF without trailing newline is
     recognized.
     """
-    parser = MDX.code_block_parser_cls(language="python")
+    parser = MDX.code_block_parser_cls(language="python", evaluator=None)
     document = Document(text="```python", path="doc.mdx")
     regions = list(parser(document=document))
 
@@ -263,7 +263,7 @@ def test_mdx_info_line_with_attributes_at_eof_without_newline() -> None:
     An MDX code block with attributes at EOF without trailing newline is
     recognized.
     """
-    parser = MDX.code_block_parser_cls(language="python")
+    parser = MDX.code_block_parser_cls(language="python", evaluator=None)
     document = Document(text='```python title="example.py"', path="doc.mdx")
     regions = list(parser(document=document))
 

@@ -495,7 +495,9 @@ def test_state_cleanup_on_evaluator_failure(
         evaluator=shell_evaluator,
         pad_groups=False,
     )
-    code_block_parser = language.code_block_parser_cls(language="bash")
+    code_block_parser = language.code_block_parser_cls(
+        language="bash", evaluator=None
+    )
 
     sybil = Sybil(parsers=[code_block_parser, group_all_parser])
     document = sybil.parse(path=test_document)

@@ -11,7 +11,7 @@ from sybil_extras.parsers.djot.codeblock import DjotRawFencedCodeBlockLexer
 
 def _parse(text: str) -> list[Region]:
     """Parse the supplied Djot text for Python code blocks."""
-    parser = DJOT.code_block_parser_cls(language="python")
+    parser = DJOT.code_block_parser_cls(language="python", evaluator=None)
     document = Document(text=text, path="doc.djot")
     return list(parser(document=document))
 

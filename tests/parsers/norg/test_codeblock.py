@@ -9,7 +9,7 @@ from sybil_extras.languages import NORG
 
 def _parse(text: str) -> list[Region]:
     """Parse the supplied Norg text for Python code blocks."""
-    parser = NORG.code_block_parser_cls(language="python")
+    parser = NORG.code_block_parser_cls(language="python", evaluator=None)
     document = Document(text=text, path="doc.norg")
     return list(parser(document=document))
 

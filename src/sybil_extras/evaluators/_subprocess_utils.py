@@ -34,7 +34,7 @@ def _process_stream(
 def run_command(
     *,
     command: list[str | Path],
-    env: Mapping[str, str] | None = None,  # noqa: NOD001
+    env: Mapping[str, str] | None,
     use_pty: bool,
 ) -> subprocess.CompletedProcess[bytes]:
     """Run a command, optionally inside a pseudo-terminal to preserve
