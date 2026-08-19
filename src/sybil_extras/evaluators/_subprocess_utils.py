@@ -67,7 +67,7 @@ def run_command(
 
         stdout: int = slave_fd
         stderr: int = slave_fd
-        with subprocess.Popen(
+        with subprocess.Popen(  # noqa: S603
             args=command,
             stdout=stdout,
             stderr=stderr,
@@ -106,7 +106,7 @@ def run_command(
         # test-framework capture object — either way the write is safe.
         # This preserves live streaming: output is forwarded chunk-by-chunk
         # rather than being buffered until the process exits.
-        with subprocess.Popen(
+        with subprocess.Popen(  # noqa: S603
             args=command,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

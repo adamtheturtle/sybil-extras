@@ -845,9 +845,11 @@ def test_no_file_left_behind_on_interruption(
 
     # Sanity check the script by checking that it can run fine.
     run_script_args = [sys.executable, str(object=evaluator_script)]
-    subprocess.run(args=run_script_args, check=True)
+    subprocess.run(args=run_script_args, check=True)  # noqa: S603
 
-    with subprocess.Popen(args=run_script_args) as evaluator_process:
+    with subprocess.Popen(  # noqa: S603
+        args=run_script_args,
+    ) as evaluator_process:
         time.sleep(0.1)
         os.kill(evaluator_process.pid, signal.SIGINT)
         evaluator_process.wait()
