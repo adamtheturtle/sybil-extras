@@ -431,7 +431,10 @@ type = [
 # code that fails on 3.11/3.12, and conflicts with ``ty`` which
 # pins the signature to the minimum-supported version. Opt the
 # call out so we can pass arguments positionally everywhere.
-ignore_names = [ "builtins.eval" ]
+ignore_names = [
+    "builtins.eval",
+    "beartype._decor.decorcache.beartype",
+]
 
 [tool.strict_kwargs]
 ignore_names = [
