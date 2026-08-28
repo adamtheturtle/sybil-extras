@@ -37,7 +37,7 @@ class SphinxJinja2Parser:
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """Parse the document for sphinx-jinja2 blocks."""
-        for region in self._lexers(document):
+        for region in self._lexers(document=document):
             region.parsed = region.lexemes["source"]
             region.evaluator = self._evaluator
             attach_content_placement(region=region)

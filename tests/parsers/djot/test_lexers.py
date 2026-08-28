@@ -75,7 +75,7 @@ def test_directive_region_excludes_preceding_blank_lines() -> None:
     source_text = "Introduction\n\n\n  {% skip: next %}\n"
     document = Document(text=source_text, path="sample.djot")
 
-    (region,) = list(lexer(document))
+    (region,) = list(lexer(document=document))
 
     assert region.start == source_text.index("  {% skip")
     assert source_text[region.start : region.end] == "  {% skip: next %}"
@@ -112,7 +112,7 @@ def test_arguments_pattern_filters_matches() -> None:
     source_text = "{% group: %}\n"
 
     document = Document(text=source_text, path="sample.txt")
-    regions = list(lexer(document))
+    regions = list(lexer(document=document))
     assert len(regions) == 0
 
 
@@ -148,22 +148,22 @@ def test_arguments_pattern_with_alternation() -> None:
 
     # "start" should match
     document = Document(text="{% group: start %}\n", path="sample.txt")
-    regions = list(lexer(document))
+    regions = list(lexer(document=document))
     assert len(regions) == 1
     assert regions[0].lexemes["arguments"] == "start"
 
     # "end" should match
     document = Document(text="{% group: end %}\n", path="sample.txt")
-    regions = list(lexer(document))
+    regions = list(lexer(document=document))
     assert len(regions) == 1
     assert regions[0].lexemes["arguments"] == "end"
 
     # "starting" should NOT match
     document = Document(text="{% group: starting %}\n", path="sample.txt")
-    regions = list(lexer(document))
+    regions = list(lexer(document=document))
     assert len(regions) == 0
 
     # "the end" should NOT match
     document = Document(text="{% group: the end %}\n", path="sample.txt")
-    regions = list(lexer(document))
+    regions = list(lexer(document=document))
     assert len(regions) == 0

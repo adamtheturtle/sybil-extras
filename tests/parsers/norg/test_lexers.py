@@ -92,7 +92,7 @@ def test_directive_region_excludes_preceding_blank_lines() -> None:
     source_text = "Introduction\n\n\n  .skip: next\n"
     document = Document(text=source_text, path="sample.norg")
 
-    (region,) = list(lexer(document))
+    (region,) = list(lexer(document=document))
 
     assert region.start == source_text.index("  .skip")
     assert source_text[region.start : region.end] == "  .skip: next"
@@ -114,7 +114,7 @@ def test_verbatim_ranged_tag_lexer_no_mapping() -> None:
     # Get the regions manually since check_lexer doesn't handle Lexeme
     # objects properly
     document = Document(text=source_text, path="sample.txt")
-    regions = list(lexer(document))
+    regions = list(lexer(document=document))
     assert len(regions) == 1
     region = regions[0]
     assert expected_text == document.text[region.start : region.end]
@@ -139,7 +139,7 @@ def test_verbatim_ranged_tag_lexer_with_mapping() -> None:
     expected_text = "@code python\nx = 1\n@end"
 
     document = Document(text=source_text, path="sample.txt")
-    regions = list(lexer(document))
+    regions = list(lexer(document=document))
     assert len(regions) == 1
     region = regions[0]
     assert expected_text == document.text[region.start : region.end]
@@ -165,7 +165,7 @@ def test_verbatim_ranged_tag_lexer_no_language() -> None:
     expected_text = "@code\nx = 1\n@end"
 
     document = Document(text=source_text, path="sample.txt")
-    regions = list(lexer(document))
+    regions = list(lexer(document=document))
     assert len(regions) == 1
     region = regions[0]
     assert expected_text == document.text[region.start : region.end]
@@ -184,7 +184,7 @@ def test_verbatim_ranged_tag_lexer_no_newline_after_opening() -> None:
     source_text = "@code python\n@end"
 
     document = Document(text=source_text, path="sample.txt")
-    regions = list(lexer(document))
+    regions = list(lexer(document=document))
     assert len(regions) == 1
     region = regions[0]
     assert region.lexemes["language"] == "python"
