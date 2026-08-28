@@ -112,5 +112,5 @@ def test_multi_evaluator_propagates_failure_string(
 
     document = sybil.parse(path=rst_file)
     (example,) = document.examples()
-    result = multi_evaluator(example)
+    result = multi_evaluator(example=example)
     assert result == failure_string

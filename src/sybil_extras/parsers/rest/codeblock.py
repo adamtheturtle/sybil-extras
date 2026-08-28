@@ -41,6 +41,6 @@ class CodeBlockParser:
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """Yield regions for code blocks, recording content placement."""
-        for region in self._parser(document):
+        for region in self._parser(document=document):
             attach_content_placement(region=region)
             yield region

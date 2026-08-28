@@ -374,7 +374,7 @@ def test_returns_wrapped_evaluator_failure(tmp_path: Path) -> None:
     document = Sybil(parsers=[parser]).parse(path=source_file)
     (example,) = document.examples()
 
-    assert writer_evaluator(example) == "formatter reported a failure"
+    assert writer_evaluator(example=example) == "formatter reported a failure"
     with pytest.raises(
         expected_exception=SybilFailure,
         match="formatter reported a failure",

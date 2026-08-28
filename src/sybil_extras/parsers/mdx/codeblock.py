@@ -73,7 +73,7 @@ class CodeBlockParser:
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """Yield regions for code blocks, parsing any MDX attributes."""
-        for region in self._parser(document):
+        for region in self._parser(document=document):
             raw_attributes = region.lexemes.get("attributes_raw")
             parsed_attributes = self._parse_attributes(
                 attr_string=raw_attributes

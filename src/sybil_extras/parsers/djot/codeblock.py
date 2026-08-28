@@ -219,4 +219,4 @@ class CodeBlockParser:
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """Yield regions for Djot code blocks."""
-        return self._parser(document)
+        return self._parser(document=document)

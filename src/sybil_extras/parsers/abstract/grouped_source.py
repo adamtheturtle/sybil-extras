@@ -338,7 +338,7 @@ class AbstractGroupedSourceParser:
         """
         # First pass: collect all start/end markers
         markers: list[tuple[int, int, str]] = []  # (start, end, action)
-        for lexed in self._lexers(document):
+        for lexed in self._lexers(document=document):
             arguments = lexed.lexemes["arguments"]
             if not arguments:
                 directive = lexed.lexemes["directive"]

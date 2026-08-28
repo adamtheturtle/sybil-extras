@@ -292,4 +292,4 @@ class ShellCommandEvaluator:
 
     def __call__(self, example: Example) -> None:
         """Run the shell command on the example file."""
-        self._evaluator(example)
+        self._evaluator(example=example)
