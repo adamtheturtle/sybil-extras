@@ -39,6 +39,19 @@ class CollectedExample:
 
 
 @beartype
+def region_start(example: Example | CollectedExample) -> int:
+    """Get the start position of an example's region.
+
+    Args:
+        example: The example to get the start position of.
+
+    Returns:
+        The start position of the example's region in the document.
+    """
+    return example.region.start
+
+
+@beartype
 def count_expected_code_blocks(examples: Iterable[Example]) -> int:
     """Count the expected number of code blocks, accounting for skip
     markers.
@@ -57,7 +70,7 @@ def count_expected_code_blocks(examples: Iterable[Example]) -> int:
     Returns:
         The number of code blocks expected to be collected.
     """
-    examples_sorted = sorted(examples, key=lambda ex: ex.region.start)
+    examples_sorted = sorted(examples, key=region_start)
 
     skipped_count = 0
     skip_next = False

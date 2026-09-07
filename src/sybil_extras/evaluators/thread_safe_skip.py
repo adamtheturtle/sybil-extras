@@ -24,6 +24,7 @@ from sybil import Document, Example
 from sybil.evaluators.skip import If, Skipper
 from sybil.example import NotEvaluated
 from sybil.region import Region
+from typing_extensions import override
 
 
 @dataclass(frozen=True)
@@ -213,6 +214,7 @@ class ThreadSafeSkipper(Skipper):
             return _Decision(kind="raise", skip_reason=result)
         return _Decision(kind="fall_through", skip_reason=None)
 
+    @override
     def evaluate_skip_example(self, example: Example) -> None:
         """Validate the skip directive at ``example``'s region.
 
@@ -224,6 +226,7 @@ class ThreadSafeSkipper(Skipper):
         if entry.sequence_error is not None:
             raise entry.sequence_error
 
+    @override
     def evaluate_other_example(self, example: Example) -> None:
         """Apply the resolved skip decision for a non-skip ``example``."""
         plan = self._plan_for(document=example.document)
