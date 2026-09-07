@@ -18,6 +18,7 @@ from pathlib import Path
 from beartype import beartype
 from sybil import Document, Example, Lexeme
 from sybil.typing import Evaluator
+from typing_extensions import override
 
 CONTENT_INDENT_LEXEME = "content_indent"
 
@@ -66,6 +67,7 @@ class _WriterNamespace(dict[str, object]):
         finally:
             captures.pop()
 
+    @override
     def __setitem__(self, key: str, value: object) -> None:
         """Store captured writer content separately for each thread."""
         capture = self._active_capture(key=key)

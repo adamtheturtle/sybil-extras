@@ -7,6 +7,7 @@ from pathlib import Path
 
 from sybil import Example, Sybil
 from sybil.parsers.rest.codeblock import CodeBlockParser
+from typing_extensions import override
 
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 
@@ -24,6 +25,7 @@ class _ConcurrencyTrackingNamespace(dict[str, object]):
     # ``dict.get`` accepts an optional second argument. Taking it as
     # ``*default`` keeps the override compatible without giving this
     # signature a default.
+    @override
     def get(self, key: object, /, *default: object) -> object:
         """Get a value while recording how many reads overlap."""
         with self._lock:

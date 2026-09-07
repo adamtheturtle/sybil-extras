@@ -22,6 +22,7 @@ from ._grouping_utils import (
     create_combined_example,
     create_combined_region,
     has_source,
+    region_start,
 )
 
 
@@ -113,7 +114,7 @@ class _GroupAllEvaluator:
             # correct order regardless of evaluation order (thread-safety)
             sorted_collected_examples = sorted(
                 state.examples,
-                key=lambda collected: collected.region.start,
+                key=region_start,
             )
             sorted_examples = [
                 collected.restore(document=example.document)
