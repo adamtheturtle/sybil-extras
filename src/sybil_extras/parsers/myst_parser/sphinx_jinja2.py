@@ -32,7 +32,7 @@ def parse_options_and_body(
     for line in content.split(sep="\n"):
         if in_options:
             option_match = _OPTION_PATTERN.match(string=line)
-            if option_match:
+            if option_match is not None:
                 options[option_match.group("key")] = option_match.group(
                     "value"
                 )
@@ -44,7 +44,7 @@ def parse_options_and_body(
         body_lines.append(line)
 
     body = "\n".join(body_lines)
-    if not body.strip():
+    if not bool(body.strip()):
         body = ""
 
     return options, body
@@ -70,7 +70,7 @@ class SphinxJinja2Parser:
         """Parse the document for sphinx-jinja2 blocks."""
         config = MdParserConfig()
         md = create_md_parser(config=config, renderer=RendererHTML)
-        md.disable(names="code")
+        _ = md.disable(names="code")
         tokens = md.parse(src=document.text)
         offsets = line_offsets(text=document.text)
 
@@ -84,7 +84,9 @@ class SphinxJinja2Parser:
             )
             if info_match is None:
                 continue
-            arguments = info_match.group("arguments") or ""
+            arguments = info_match.group("arguments")
+            if arguments is None:
+                arguments = ""
 
             if token.map is None:  # pragma: no cover
                 # This should never happen; map is always set for fence tokens.

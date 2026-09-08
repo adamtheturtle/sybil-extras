@@ -32,7 +32,7 @@ def test_attribute_group_single_group(tmp_path: Path) -> None:
         """,
     )
     test_document = tmp_path / "test.mdx"
-    test_document.write_text(data=content, encoding="utf-8")
+    _ = test_document.write_text(data=content, encoding="utf-8")
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
     code_block_parser = CodeBlockParser(language="python")
@@ -83,7 +83,7 @@ def test_attribute_group_multiple_groups(tmp_path: Path) -> None:
         """,
     )
     test_document = tmp_path / "test.mdx"
-    test_document.write_text(data=content, encoding="utf-8")
+    _ = test_document.write_text(data=content, encoding="utf-8")
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
     code_block_parser = CodeBlockParser(language="python")
@@ -124,7 +124,7 @@ def test_attribute_group_no_group_attribute(tmp_path: Path) -> None:
         """,
     )
     test_document = tmp_path / "test.mdx"
-    test_document.write_text(data=content, encoding="utf-8")
+    _ = test_document.write_text(data=content, encoding="utf-8")
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
     code_block_parser = CodeBlockParser(language="python")
@@ -159,7 +159,7 @@ def test_attribute_group_custom_attribute_name(tmp_path: Path) -> None:
         """,
     )
     test_document = tmp_path / "test.mdx"
-    test_document.write_text(data=content, encoding="utf-8")
+    _ = test_document.write_text(data=content, encoding="utf-8")
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
     code_block_parser = CodeBlockParser(language="python")
@@ -195,7 +195,7 @@ def test_attribute_group_with_other_attributes(tmp_path: Path) -> None:
         """,
     )
     test_document = tmp_path / "test.mdx"
-    test_document.write_text(data=content, encoding="utf-8")
+    _ = test_document.write_text(data=content, encoding="utf-8")
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
     code_block_parser = CodeBlockParser(language="python")
@@ -238,7 +238,7 @@ def test_attribute_group_pad_groups_false(tmp_path: Path) -> None:
         """,
     )
     test_document = tmp_path / "test.mdx"
-    test_document.write_text(data=content, encoding="utf-8")
+    _ = test_document.write_text(data=content, encoding="utf-8")
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
     code_block_parser = CodeBlockParser(language="python")
@@ -286,7 +286,7 @@ def test_attribute_group_interleaved_groups(tmp_path: Path) -> None:
         """,
     )
     test_document = tmp_path / "test.mdx"
-    test_document.write_text(data=content, encoding="utf-8")
+    _ = test_document.write_text(data=content, encoding="utf-8")
 
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
     code_block_parser = CodeBlockParser(language="python")
@@ -332,7 +332,7 @@ def test_attribute_group_ungrouped_evaluator(tmp_path: Path) -> None:
         """,
     )
     test_document = tmp_path / "test.mdx"
-    test_document.write_text(data=content, encoding="utf-8")
+    _ = test_document.write_text(data=content, encoding="utf-8")
 
     grouped_evaluator = BlockAccumulatorEvaluator(namespace_key="grouped")
     ungrouped_evaluator = BlockAccumulatorEvaluator(namespace_key="ungrouped")

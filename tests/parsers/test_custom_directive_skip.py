@@ -27,7 +27,7 @@ def test_skip(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -92,7 +92,7 @@ def test_directive_name_in_evaluate_error(
         argument="end",
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -121,7 +121,7 @@ def test_directive_name_in_parse_error(
         argument="!!!",
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -133,7 +133,7 @@ def test_directive_name_in_parse_error(
         expected_exception=ValueError,
         match="malformed arguments to custom-skip: '!!!'",
     ):
-        sybil.parse(path=test_document)
+        _ = sybil.parse(path=test_document)
 
 
 def test_directive_name_not_regex_escaped(
@@ -154,7 +154,7 @@ def test_directive_name_not_regex_escaped(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -169,4 +169,4 @@ def test_directive_name_not_regex_escaped(
     for example in document.examples():
         example.evaluate()
 
-    assert not document.namespace
+    assert not bool(document.namespace)

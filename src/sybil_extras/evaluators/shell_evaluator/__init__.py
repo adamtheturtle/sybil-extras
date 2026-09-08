@@ -149,7 +149,7 @@ class _ShellCommandRunner:
         # newline.  This is especially true for formatters.  We add a
         # newline to the end of the file if it is missing.
         new_source = source + "\n" if not source.endswith("\n") else source
-        temp_file.write_text(
+        _ = temp_file.write_text(
             data=new_source,
             encoding=self._encoding,
             newline=self._newline,
@@ -292,4 +292,4 @@ class ShellCommandEvaluator:
 
     def __call__(self, example: Example) -> None:
         """Run the shell command on the example file."""
-        self._evaluator(example=example)
+        _ = self._evaluator(example=example)

@@ -201,7 +201,7 @@ class _Grouper:
                 for boundary in self._group_boundaries[document]
                 if boundary.group_id != group_id
             ]
-            if not self._group_boundaries[document]:
+            if not bool(self._group_boundaries[document]):
                 del self._group_boundaries[document]
                 del self._group_state[document]
                 document.pop_evaluator(evaluator=self)
@@ -220,10 +220,10 @@ class _Grouper:
 
             # Wait until all expected code blocks have been collected
             while state.collected_count < state.expected_code_blocks:
-                state.ready.wait()
+                _ = state.ready.wait()
 
             try:
-                if state.examples:
+                if bool(state.examples):
                     # Sort examples by their position in the document to ensure
                     # correct order regardless of evaluation order
                     # (for thread-safety).
@@ -244,7 +244,7 @@ class _Grouper:
                         examples=sorted_examples,
                         region=region,
                     )
-                    self._evaluator(new_example)
+                    _ = self._evaluator(new_example)
             finally:
                 self._cleanup_group_state(
                     document=example.document,
@@ -353,7 +353,7 @@ class AbstractGroupedSourceParser:
 
             markers.append((lexed.start, lexed.end, arguments))
 
-        if not markers:
+        if not bool(markers):
             return
 
         # Validate and pair up start/end markers, register groups

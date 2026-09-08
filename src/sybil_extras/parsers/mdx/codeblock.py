@@ -86,7 +86,7 @@ class CodeBlockParser:
     @staticmethod
     def _parse_attributes(attr_string: str) -> dict[str, str]:
         """Parse key/value pairs from the info line attribute string."""
-        if not attr_string:
+        if not bool(attr_string):
             return {}
 
         attributes: dict[str, str] = {}

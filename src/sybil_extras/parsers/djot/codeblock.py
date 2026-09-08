@@ -30,7 +30,7 @@ def _match_closes_existing(current: Match[str], existing: Match[str]) -> bool:
     if line_end == -1:
         line_end = len(current.string)
     trailing_text = current.string[current.end() : line_end]
-    fence_only = not trailing_text.strip(" \t\r")
+    fence_only = not bool(trailing_text.strip(" \t\r"))
     return same_type and sufficient_length and same_prefix and fence_only
 
 
@@ -123,7 +123,7 @@ class DjotRawFencedCodeBlockLexer:
             offset=len(opening.group(0)) + info.end(),
             line_offset=0,
         )
-        if self.mapping:
+        if self.mapping is not None and len(self.mapping) > 0:
             lexemes = {
                 dest: lexemes[source] for source, dest in self.mapping.items()
             }

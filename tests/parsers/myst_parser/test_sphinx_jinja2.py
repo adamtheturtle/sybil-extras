@@ -34,7 +34,7 @@ def test_non_jinja_fences_ignored(*, tmp_path: Path) -> None:
     )
 
     test_document = tmp_path / "test.md"
-    test_document.write_text(data=content, encoding="utf-8")
+    _ = test_document.write_text(data=content, encoding="utf-8")
 
     parser = SphinxJinja2Parser(evaluator=NoOpEvaluator())
     sybil = Sybil(parsers=[parser])
@@ -49,7 +49,7 @@ def test_jinja_block_at_eof(*, tmp_path: Path) -> None:
     content = "```{jinja}\nBody\n```"
 
     test_document = tmp_path / "test.md"
-    test_document.write_text(data=content, encoding="utf-8")
+    _ = test_document.write_text(data=content, encoding="utf-8")
 
     parser = SphinxJinja2Parser(evaluator=NoOpEvaluator())
     sybil = Sybil(parsers=[parser])
@@ -72,7 +72,7 @@ def test_options_with_blank_body(*, tmp_path: Path) -> None:
     )
 
     test_document = tmp_path / "test.md"
-    test_document.write_text(data=content, encoding="utf-8")
+    _ = test_document.write_text(data=content, encoding="utf-8")
 
     parser = SphinxJinja2Parser(evaluator=NoOpEvaluator())
     sybil = Sybil(parsers=[parser])
@@ -99,7 +99,7 @@ def test_options_with_many_blank_lines_body(*, tmp_path: Path) -> None:
     )
 
     test_document = tmp_path / "test.md"
-    test_document.write_text(data=content, encoding="utf-8")
+    _ = test_document.write_text(data=content, encoding="utf-8")
 
     parser = SphinxJinja2Parser(evaluator=NoOpEvaluator())
     sybil = Sybil(parsers=[parser])

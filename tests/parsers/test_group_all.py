@@ -47,7 +47,7 @@ def test_skip_next_non_code_example_is_consumed(tmp_path: Path) -> None:
         """,
     )
     test_document = tmp_path / "test.rst"
-    test_document.write_text(data=content, encoding="utf-8")
+    _ = test_document.write_text(data=content, encoding="utf-8")
     evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
     group_parser = GroupAllParser(evaluator=evaluator, pad_groups=False)
     document = Sybil(
@@ -100,13 +100,13 @@ def test_abandoned_documents_are_released(
 
     for index in range(3):
         test_document = tmp_path / f"test-{index}"
-        test_document.write_text(
+        _ = test_document.write_text(
             data=language.code_block_builder(code="pass", language="python"),
             encoding="utf-8",
         )
         references.append(parse_reference(path=test_document))
 
-    gc.collect()
+    _ = gc.collect()
 
     assert all(reference() is None for reference in references)
 
@@ -126,7 +126,7 @@ def test_skip_end_cancels_pending_next(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -172,7 +172,7 @@ def test_group_all(*, language: MarkupLanguage, tmp_path: Path) -> None:
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -210,7 +210,7 @@ def test_group_all_single_block(
     """Grouping a single block preserves it."""
     content = language.code_block_builder(code="x = []", language="python")
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -243,7 +243,7 @@ def test_group_all_empty_document(
     """Empty documents do not raise errors."""
     content = "Empty document without code blocks."
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -276,7 +276,7 @@ def test_group_all_no_pad(*, language: MarkupLanguage, tmp_path: Path) -> None:
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -317,7 +317,7 @@ def test_thread_safety(*, language: MarkupLanguage, tmp_path: Path) -> None:
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -342,7 +342,7 @@ def test_thread_safety(*, language: MarkupLanguage, tmp_path: Path) -> None:
         ex.evaluate()
 
     with ThreadPoolExecutor(max_workers=4) as executor:
-        list(executor.map(evaluate, examples))
+        _ = list(executor.map(evaluate, examples))
 
     blocks = ["x = [*x, 1]", "x = [*x, 2]", "x = [*x, 3]"]
     separator_newlines = len(language.markup_separator)
@@ -373,7 +373,7 @@ def test_group_all_with_skip(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -427,7 +427,7 @@ def test_evaluation_order_independence(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -479,7 +479,7 @@ def test_state_cleanup_on_evaluator_failure(
     """
     content = language.code_block_builder(code="exit 1", language="bash")
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -534,7 +534,7 @@ def test_finalize_waits_for_code_blocks(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -565,7 +565,7 @@ def test_finalize_waits_for_code_blocks(
 
     # Run all three concurrently - finalize should wait for code blocks
     with ThreadPoolExecutor(max_workers=3) as executor:
-        list(executor.map(evaluate, [finalize, code1, code2]))
+        _ = list(executor.map(evaluate, [finalize, code1, code2]))
 
     separator_newlines = len(language.markup_separator)
     padding_newlines = separator_newlines + 2
@@ -595,7 +595,7 @@ def test_custom_parser_with_string_parsed_value(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -651,7 +651,8 @@ def test_custom_parser_with_string_parsed_value(
 
     # Verify the custom blocks were collected and combined correctly
     assert len(document.namespace["blocks"]) == 1
-    combined = document.namespace["blocks"][0]
+    combined: object = document.namespace["blocks"][0]
+    assert isinstance(combined, str)
     assert "custom_block_1" in combined
     assert "custom_block_2" in combined
 
@@ -674,7 +675,7 @@ def test_examples_without_source_lexeme(
     """
     content = language.code_block_builder(code="x = [1]", language="python")
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )

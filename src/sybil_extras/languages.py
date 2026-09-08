@@ -165,7 +165,7 @@ class JinjaBlockBuilder(Protocol):
 def _normalize_code(content: str) -> str:
     """Normalize code provided in tests into a block-friendly form."""
     normalized = textwrap.dedent(text=content).strip("\n")
-    if not normalized:
+    if not bool(normalized):
         return ""
     return f"{normalized}\n"
 
@@ -182,7 +182,9 @@ def _rst_code_block(code: str, language: str) -> str:
     """Build a reStructuredText code block."""
     normalized = _normalize_code(content=code)
     indented = (
-        textwrap.indent(text=normalized, prefix="   ") if normalized else ""
+        textwrap.indent(text=normalized, prefix="   ")
+        if bool(normalized)
+        else ""
     )
     return f".. code-block:: {language}\n\n{indented}".rstrip()
 
@@ -242,7 +244,7 @@ def _djot_directive(
 def _norg_code_block(code: str, language: str) -> str:
     """Build a Norg verbatim ranged tag code block."""
     normalized = _normalize_code(content=code)
-    lang_param = f" {language}" if language else ""
+    lang_param = f" {language}" if bool(language) else ""
     return f"@code{lang_param}\n{normalized}@end"
 
 
@@ -268,7 +270,9 @@ def _rst_jinja_block(body: str) -> str:
     """Render a sphinx-jinja block for reStructuredText."""
     normalized = _normalize_code(content=body)
     indented = (
-        textwrap.indent(text=normalized, prefix="   ") if normalized else ""
+        textwrap.indent(text=normalized, prefix="   ")
+        if bool(normalized)
+        else ""
     )
     return f".. jinja::\n\n{indented}".rstrip()
 

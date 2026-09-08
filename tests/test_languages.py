@@ -47,7 +47,7 @@ def test_code_block_parser(
     code = f"x = {value}"
     content = language.code_block_builder(code=code, language="python")
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -79,7 +79,7 @@ def test_skip_parser(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -96,7 +96,7 @@ def test_skip_parser(
         example.evaluate()
 
     # The code block should be skipped
-    assert not document.namespace
+    assert not bool(document.namespace)
 
 
 @pytest.mark.parametrize(
@@ -114,7 +114,7 @@ def test_skip_parser(
 def test_code_block_empty(language: MarkupLanguage) -> None:
     """Code block builders handle empty content."""
     block = language.code_block_builder(code="", language="python")
-    assert block
+    assert bool(block)
 
 
 def test_group_parser(
@@ -133,7 +133,7 @@ def test_group_parser(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -183,7 +183,7 @@ def test_sphinx_jinja_parser(
 
     jinja_content = jinja_builder(body="{{ 1 + 1 }}")
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{jinja_content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -223,7 +223,7 @@ def test_mdx_code_block_attributes(tmp_path: Path) -> None:
         '```python title="example.py" group="setup"\nvalue = 7\n```\n'
     )
     test_document = tmp_path / "test.mdx"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{mdx_content}{MDX.markup_separator}",
         encoding="utf-8",
     )

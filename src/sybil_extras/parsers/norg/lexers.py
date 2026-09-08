@@ -59,7 +59,7 @@ class DirectiveInNorgCommentLexer:
             else:
                 lexemes["arguments"] = ""
 
-            if self.mapping:
+            if self.mapping is not None and len(self.mapping) > 0:
                 lexemes = {
                     dest: lexemes[source]
                     for source, dest in self.mapping.items()

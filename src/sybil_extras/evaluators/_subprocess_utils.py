@@ -25,8 +25,8 @@ def _process_stream(
 ) -> None:
     """Write from an input stream to an output stream."""
     chunk_size = 1024
-    while chunk := os.read(stream_fileno, chunk_size):
-        output.write(chunk)
+    while bool(chunk := os.read(stream_fileno, chunk_size)):
+        _ = output.write(chunk)
         output.flush()
 
 

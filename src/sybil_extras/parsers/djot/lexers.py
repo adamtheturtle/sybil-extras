@@ -64,10 +64,12 @@ class DirectiveInDjotCommentLexer:
             else:
                 lexemes["arguments"] = ""
 
-            if not self._arguments_pattern.match(string=lexemes["arguments"]):
+            if not bool(
+                self._arguments_pattern.match(string=lexemes["arguments"])
+            ):
                 continue
 
-            if self.mapping:
+            if self.mapping is not None and len(self.mapping) > 0:
                 lexemes = {
                     dest: lexemes[source]
                     for source, dest in self.mapping.items()

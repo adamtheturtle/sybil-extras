@@ -110,7 +110,7 @@ This is useful for testing parsers that group multiple code blocks together.
         example.evaluate()
 
     blocks = document.namespace[namespace_key]
-    assert len(blocks)
+    assert len(blocks) > 0
 
 NoOpEvaluator
 ^^^^^^^^^^^^^
@@ -155,7 +155,9 @@ The wrapped evaluator should store the modified content in
 
     def formatting_evaluator(example: Example) -> None:
         """Format the code and store the result for writing back."""
-        formatted_code = example.parsed.upper()
+        parsed: object = example.parsed
+        assert isinstance(parsed, str)
+        formatted_code = parsed.upper()
         example.document.namespace["modified_content"] = formatted_code
 
 
@@ -273,7 +275,7 @@ GroupedSourceParser
 
     def evaluator(example: Example) -> None:
         """Evaluate the code block by printing it."""
-        sys.stdout.write(example.parsed)
+        _ = sys.stdout.write(str(object=example.parsed))
 
 
     group_parser = GroupedSourceParser(
@@ -336,7 +338,7 @@ A reStructuredText example:
 
        def hello() -> None:
            """Print a greeting."""
-           sys.stdout.write("Hello, world!")
+           _ = sys.stdout.write("Hello, world!")
 
 
        hello()
@@ -374,7 +376,7 @@ GroupAllParser
 
     def evaluator(example: Example) -> None:
         """Evaluate the code block by printing it."""
-        sys.stdout.write(example.parsed)
+        _ = sys.stdout.write(str(object=example.parsed))
 
 
     group_all_parser = GroupAllParser(
@@ -441,7 +443,7 @@ attribute should be combined and evaluated together.
 
     def evaluator(example: Example) -> None:
         """Evaluate the code block by printing it."""
-        sys.stdout.write(example.parsed)
+        _ = sys.stdout.write(str(object=example.parsed))
 
 
     code_block_parser = CodeBlockParser(language="python")

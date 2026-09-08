@@ -97,7 +97,7 @@ class NorgVerbatimRangedTagLexer:
                 line_offset=0,
             )
 
-            if self._mapping:
+            if self._mapping is not None and len(self._mapping) > 0:
                 lexemes = {
                     dest: lexemes[source]
                     for source, dest in self._mapping.items()

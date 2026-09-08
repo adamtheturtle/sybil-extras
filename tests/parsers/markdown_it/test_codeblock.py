@@ -18,7 +18,7 @@ def test_language_with_extra_info(tmp_path: Path) -> None:
     """
     content = '```python title="example"\nprint("hello")\n```\n'
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
     sybil = Sybil(parsers=[parser])
@@ -41,7 +41,7 @@ def test_unclosed_fence_no_trailing_newline(tmp_path: Path) -> None:
     # Accessing line_offsets[1] would be out of bounds.
     content = "```python"
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
     sybil = Sybil(parsers=[parser])
@@ -62,7 +62,7 @@ def test_code_block_with_empty_info_string(tmp_path: Path) -> None:
     """
     content = "```\nsome code\n```\n"
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     # Parser with no language filter should match all code blocks
     parser = CodeBlockParser(evaluator=NoOpEvaluator())
@@ -83,7 +83,7 @@ def test_language_filter_skips_non_matching(tmp_path: Path) -> None:
     """
     content = "```javascript\nconsole.log('hello');\n```\n"
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     # Parser looking for Python, but the block is JavaScript
     parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
@@ -111,7 +111,7 @@ def test_code_block_inside_blockquote(tmp_path: Path) -> None:
 > ```
 """
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
     sybil = Sybil(parsers=[parser])
@@ -137,7 +137,7 @@ def test_invisible_code_block_html_comment(tmp_path: Path) -> None:
     """
     content = "```text\n1\n```\n\n<!-- invisible-code-block text\n2\n-->\n"
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     parser = CodeBlockParser(language="text", evaluator=NoOpEvaluator())
     sybil = Sybil(parsers=[parser])
@@ -160,7 +160,7 @@ def test_invisible_code_block_language_filter(tmp_path: Path) -> None:
         "-->\n"
     )
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
     sybil = Sybil(parsers=[parser])
@@ -176,14 +176,14 @@ def test_invisible_code_block_unclosed_comment(tmp_path: Path) -> None:
     """
     content = "<!-- invisible-code-block text\n2\n"
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     parser = CodeBlockParser(language="text", evaluator=NoOpEvaluator())
     sybil = Sybil(parsers=[parser])
     document = sybil.parse(path=test_file)
     examples = list(document.examples())
 
-    assert not examples
+    assert not bool(examples)
 
 
 def test_invisible_code_block_no_trailing_newline(tmp_path: Path) -> None:
@@ -192,7 +192,7 @@ def test_invisible_code_block_no_trailing_newline(tmp_path: Path) -> None:
     """
     content = "<!-- invisible-code-block text\n2\n-->"
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     parser = CodeBlockParser(language="text", evaluator=NoOpEvaluator())
     sybil = Sybil(parsers=[parser])
@@ -213,7 +213,7 @@ def test_evaluator_not_none_when_omitted(tmp_path: Path) -> None:
     """
     content = "```python\nprint('hello')\n```\n"
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     # Create parser without an evaluator
     parser = CodeBlockParser(language="python")
