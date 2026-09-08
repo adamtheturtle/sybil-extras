@@ -102,9 +102,9 @@ class _GroupAllEvaluator:
         with state.ready:
             # Wait until all expected code blocks have been collected
             while state.collected_count < state.expected_code_blocks:
-                state.ready.wait()
+                _ = state.ready.wait()
 
-            if not state.examples:
+            if not bool(state.examples):
                 # No examples to group, do nothing
                 example.document.pop_evaluator(evaluator=self)
                 del self._document_state[example.document]
@@ -130,7 +130,7 @@ class _GroupAllEvaluator:
                     examples=sorted_examples,
                     region=region,
                 )
-                self._evaluator(new_example)
+                _ = self._evaluator(new_example)
             finally:
                 example.document.pop_evaluator(evaluator=self)
                 # Clean up document state to prevent memory leaks when reusing

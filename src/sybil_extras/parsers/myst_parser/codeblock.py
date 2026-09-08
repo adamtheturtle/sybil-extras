@@ -75,7 +75,7 @@ class CodeBlockParser:
         # inside indented sections are still recognized as fences.
         # This matches Sybil's regex-based behavior which allows fenced
         # code blocks with a whitespace prefix.
-        md.disable(names="code")
+        _ = md.disable(names="code")
         tokens = md.parse(src=document.text)
         offsets = line_offsets(text=document.text)
 
@@ -115,7 +115,7 @@ class CodeBlockParser:
         # second word.
         words = token.info.strip().split()
         is_directive = bool(words) and words[0] in _CODE_DIRECTIVES
-        if not words:
+        if not bool(words):
             block_language = ""
         elif is_directive:
             block_language = words[1] if len(words) > 1 else ""
@@ -159,7 +159,11 @@ class CodeBlockParser:
             start=region_start,
             end=region_end,
             parsed=source,
-            evaluator=self._evaluator or self.evaluate,
+            evaluator=(
+                self._evaluator
+                if self._evaluator is not None
+                else self.evaluate
+            ),
             lexemes=lexemes,
         )
 
@@ -208,6 +212,10 @@ class CodeBlockParser:
             start=region_start,
             end=region_end,
             parsed=source,
-            evaluator=self._evaluator or self.evaluate,
+            evaluator=(
+                self._evaluator
+                if self._evaluator is not None
+                else self.evaluate
+            ),
             lexemes=lexemes,
         )

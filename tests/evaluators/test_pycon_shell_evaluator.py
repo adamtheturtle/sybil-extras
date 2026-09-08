@@ -58,7 +58,7 @@ def test_writes_extracted_python_to_temp_file(
     """Only Python input lines (without >>> prompts) reach the command."""
     script = tmp_path / "capture.sh"
     captured = tmp_path / "captured.txt"
-    script.write_text(
+    _ = script.write_text(
         data=f'cat "$1" > {captured.as_posix()}',
         encoding="utf-8",
     )
@@ -74,7 +74,7 @@ def test_writes_extracted_python_to_temp_file(
         """,
     )
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     evaluator = _make_pycon_evaluator(
         args=["sh", script.as_posix()],
@@ -117,11 +117,11 @@ def test_write_to_file_reformats_pycon(
         """
     )
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     # Use a script that adds spaces around the = sign
     script = tmp_path / "fmt.py"
-    script.write_text(
+    _ = script.write_text(
         data=textwrap.dedent(
             text="""\
             import sys, re, pathlib
@@ -170,9 +170,9 @@ def test_preserves_output_after_formatter_removes_final_newline(
     """
     content = "```pycon\n>>> 1 + 1\n2\n```\n"
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
     script = tmp_path / "fmt.py"
-    script.write_text(
+    _ = script.write_text(
         data=textwrap.dedent(
             text="""\
             import pathlib
@@ -221,7 +221,7 @@ def test_no_change_leaves_file_unmodified(
         """,
     )
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
     mtime_before = test_file.stat().st_mtime
 
     evaluator = _make_pycon_evaluator(
@@ -328,7 +328,7 @@ def test_write_to_file_round_trip(
     """Pycon content round-trips unchanged through write-to-file."""
     content = f"```pycon\n{pycon_block}```\n"
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     evaluator = _make_pycon_evaluator(
         args=["true"],
@@ -390,7 +390,7 @@ def test_invalid_pycon_raises(
     """Invalid pycon content raises InvalidPyconError."""
     content = f"```pycon\n{pycon_block}```\n"
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     evaluator = _make_pycon_evaluator(
         args=["true"],
@@ -427,10 +427,10 @@ def test_write_to_file_syntax_error_fallback(
         """,
     )
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     script = tmp_path / "corrupt.py"
-    script.write_text(
+    _ = script.write_text(
         data=textwrap.dedent(
             text="""\
             import sys, pathlib
@@ -483,10 +483,10 @@ def test_write_to_file_statement_count_mismatch(
         """,
     )
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     script = tmp_path / "merge.py"
-    script.write_text(
+    _ = script.write_text(
         data=textwrap.dedent(
             text="""\
             import sys, pathlib
@@ -540,10 +540,10 @@ def test_write_to_file_preserves_output_on_equivalent_reformat(
         """,
     )
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     script = tmp_path / "fmt.py"
-    script.write_text(
+    _ = script.write_text(
         data=textwrap.dedent(
             text="""\
             import sys, pathlib
@@ -599,10 +599,10 @@ def test_write_to_file_meaning_change_raises(
         """,
     )
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     script = tmp_path / "fmt.py"
-    script.write_text(
+    _ = script.write_text(
         data=textwrap.dedent(
             text="""\
             import sys, pathlib
@@ -649,10 +649,10 @@ def test_write_to_file_unparseable_original_change_raises(
     """
     content = "```pycon\n>>>     x = 1\n1\n```\n"
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     script = tmp_path / "fmt.py"
-    script.write_text(
+    _ = script.write_text(
         data=textwrap.dedent(
             text="""\
             import sys, pathlib
@@ -704,12 +704,12 @@ def test_write_to_file_preserves_output_when_formatter_adds_blank_line(
         """,
     )
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     # Simulate a formatter that adds a blank line after import and
     # re-formats the arguments.
     script = tmp_path / "fmt.py"
-    script.write_text(
+    _ = script.write_text(
         data=textwrap.dedent(
             text="""\
             import sys, pathlib

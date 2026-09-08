@@ -112,12 +112,12 @@ class ThreadSafeSkipper(Skipper):
             return ValueError(
                 f"'{directive}: {action}' must follow '{directive}: start'",
             )
-        if last_action and action != "end":
+        if last_action is not None and action != "end":
             return ValueError(
                 f"'{directive}: {action}' cannot follow "
                 f"'{directive}: {last_action}'",
             )
-        if action == "end" and reason:
+        if action == "end" and reason not in {None, ""}:
             return ValueError("Cannot have condition on 'skip: end'")
         return None
 
@@ -199,7 +199,7 @@ class ThreadSafeSkipper(Skipper):
     ) -> _Decision:
         """Compute the decision for a directive without caching."""
         reason = directive.reason
-        if not reason:
+        if reason is None or reason == "":
             return _Decision(kind="silent", skip_reason=None)
 
         namespace = document.namespace.copy()

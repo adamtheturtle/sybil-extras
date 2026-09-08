@@ -88,7 +88,7 @@ def fixture_rst_file(*, tmp_path: Path) -> Path:
         """
     )
     test_document = tmp_path / "test_document.example.rst"
-    test_document.write_text(data=content, encoding="utf-8")
+    _ = test_document.write_text(data=content, encoding="utf-8")
     return test_document
 
 
@@ -321,7 +321,7 @@ def test_file_path(
     example.evaluate()
     output = capsys.readouterr().out
     stripped_output = output.strip()
-    assert stripped_output
+    assert bool(stripped_output)
     given_file_path = Path(stripped_output)
     assert given_file_path.parent == rst_file.parent
     assert given_file_path.is_absolute()
@@ -361,7 +361,7 @@ def test_temp_file_path_maker(
     example.evaluate()
     output = capsys.readouterr().out
     stripped_output = output.strip()
-    assert stripped_output
+    assert bool(stripped_output)
     given_file_path = Path(stripped_output)
     assert given_file_path.name == custom_filename
 
@@ -469,12 +469,12 @@ def test_write_to_file_new_content_trailing_newlines(
         MYST_PARSER: markdown_content,
     }[markup_language]
     source_file = tmp_path / "source_file.txt"
-    source_file.write_text(data=original_content, encoding="utf-8")
+    _ = source_file.write_text(data=original_content, encoding="utf-8")
     file_with_new_content = tmp_path / "new_file.txt"
     # Add multiple newlines to show that they are not included in the file.
     # No code block in reSructuredText ends with multiple newlines.
     new_content = "foobar\n\n"
-    file_with_new_content.write_text(data=new_content, encoding="utf-8")
+    _ = file_with_new_content.write_text(data=new_content, encoding="utf-8")
     evaluator = ShellCommandEvaluator(
         args=["cp", file_with_new_content],
         temp_file_path_maker=make_temp_file_path,
@@ -615,10 +615,10 @@ def test_write_to_file_new_content_no_trailing_newlines(
         MYST_PARSER: markdown_content,
     }[markup_language]
     source_file = tmp_path / "source_file.txt"
-    source_file.write_text(data=original_content, encoding="utf-8")
+    _ = source_file.write_text(data=original_content, encoding="utf-8")
     file_with_new_content = tmp_path / "new_file.txt"
     new_content = "foobar"
-    file_with_new_content.write_text(data=new_content, encoding="utf-8")
+    _ = file_with_new_content.write_text(data=new_content, encoding="utf-8")
     evaluator = ShellCommandEvaluator(
         args=["cp", file_with_new_content],
         temp_file_path_maker=make_temp_file_path,
@@ -697,7 +697,7 @@ def test_pad_and_write(*, rst_file: Path, use_pty_option: bool) -> None:
     padding.
     """
     original_content = rst_file.read_text(encoding="utf-8")
-    rst_file.write_text(data=original_content, encoding="utf-8")
+    _ = rst_file.write_text(data=original_content, encoding="utf-8")
     evaluator = ShellCommandEvaluator(
         args=["true"],
         temp_file_path_maker=make_temp_file_path,
@@ -727,7 +727,7 @@ def test_non_utf8_output(
     echo "\xc0\x80"
     """
     script = tmp_path / "my_script.sh"
-    script.write_bytes(data=sh_function)
+    _ = script.write_bytes(data=sh_function)
     script.chmod(mode=stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
     evaluator = ShellCommandEvaluator(
         args=["sh", str(object=script)],
@@ -755,7 +755,7 @@ def test_deleted_temp_file_does_not_erase_code(tmp_path: Path) -> None:
     """
     original_content = "```python\nimportant = True\n```\n"
     source_file = tmp_path / "example.md"
-    source_file.write_text(data=original_content, encoding="utf-8")
+    _ = source_file.write_text(data=original_content, encoding="utf-8")
     evaluator = ShellCommandEvaluator(
         args=[
             sys.executable,
@@ -795,7 +795,7 @@ def test_no_file_left_behind_on_interruption(
     )
 
     sleep_python_script = tmp_path / "sleep_comand.py"
-    sleep_python_script.write_text(
+    _ = sleep_python_script.write_text(
         data=sleep_python_script_content,
         encoding="utf-8",
     )
@@ -838,21 +838,24 @@ def test_no_file_left_behind_on_interruption(
     )
 
     evaluator_script = tmp_path / "evaluator_script.py"
-    evaluator_script.write_text(
+    _ = evaluator_script.write_text(
         data=run_shell_command_evaluator_script_content,
         encoding="utf-8",
     )
 
     # Sanity check the script by checking that it can run fine.
     run_script_args = [sys.executable, str(object=evaluator_script)]
-    subprocess.run(args=run_script_args, check=True)  # noqa: S603
+    _completed_process = subprocess.run(  # noqa: S603
+        args=run_script_args,
+        check=True,
+    )
 
     with subprocess.Popen(  # noqa: S603
         args=run_script_args,
     ) as evaluator_process:
         time.sleep(0.1)
         os.kill(evaluator_process.pid, signal.SIGINT)
-        evaluator_process.wait()
+        _exit_code = evaluator_process.wait()
 
     assert set(rst_file.parent.glob(pattern="**/*")) == {
         rst_file,
@@ -871,7 +874,7 @@ def test_newline_system(
 ) -> None:
     """The system line endings are used by default."""
     rst_file_contents = rst_file.read_text(encoding="utf-8")
-    rst_file.write_text(data=rst_file_contents, newline=source_newline)
+    _ = rst_file.write_text(data=rst_file_contents, newline=source_newline)
     sh_function = """
     cp "$2" "$1"
     """
@@ -915,7 +918,7 @@ def test_newline_given(
 ) -> None:
     """The given line ending option is used."""
     rst_file_contents = rst_file.read_text(encoding="utf-8")
-    rst_file.write_text(data=rst_file_contents, newline=source_newline)
+    _ = rst_file.write_text(data=rst_file_contents, newline=source_newline)
     sh_function = """
     cp "$2" "$1"
     """
@@ -1035,7 +1038,7 @@ def test_encoding(
            😀
         """
     )
-    rst_file.write_text(data=content, encoding=encoding)
+    _ = rst_file.write_text(data=content, encoding=encoding)
     evaluator = ShellCommandEvaluator(
         args=["sh", "-c", sh_function, "_", file_path],
         temp_file_path_maker=make_temp_file_path,
@@ -1121,7 +1124,7 @@ def test_custom_on_modify_with_modification(
 
     file_with_new_content = tmp_path / "new_file.txt"
     new_content = "foobar"
-    file_with_new_content.write_text(data=new_content, encoding="utf-8")
+    _ = file_with_new_content.write_text(data=new_content, encoding="utf-8")
     evaluator = ShellCommandEvaluator(
         args=["cp", file_with_new_content],
         temp_file_path_maker=make_temp_file_path,
@@ -1141,12 +1144,12 @@ def test_custom_on_modify_with_modification(
 def test_custom_on_modify_receives_unpadded_content(tmp_path: Path) -> None:
     """The modification callback does not receive line-number padding."""
     source_file = tmp_path / "example.md"
-    source_file.write_text(
+    _ = source_file.write_text(
         data="heading\n\n```python\nx=1\n```\n",
         encoding="utf-8",
     )
     formatter = tmp_path / "formatter.py"
-    formatter.write_text(
+    _ = formatter.write_text(
         data=textwrap.dedent(
             text="""\
             import pathlib
@@ -1197,7 +1200,8 @@ def test_markdown_code_block_line_number(
     *,
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
-    parser_cls: type,
+    parser_cls: type[MarkdownItCodeBlockParser]
+    | type[SybilMarkdownCodeBlockParser],
 ) -> None:
     """Line numbers in error output match the source file for Markdown.
 
@@ -1232,7 +1236,7 @@ def test_markdown_code_block_line_number(
         """
     )
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     evaluator = ShellCommandEvaluator(
         args=[sys.executable, "-m", "py_compile"],
@@ -1318,7 +1322,7 @@ def test_custom_result_transformer(
         """
     )
     source_file = tmp_path / "source.rst"
-    source_file.write_text(data=content, encoding="utf-8")
+    _ = source_file.write_text(data=content, encoding="utf-8")
 
     @beartype
     class SuffixResultTransformer:

@@ -100,7 +100,7 @@ def test_skip_next_sequential(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -133,7 +133,7 @@ def test_skip_start_end_sequential(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -166,7 +166,7 @@ def test_skip_next_with_reason(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -198,7 +198,7 @@ def test_skip_next_conditional_truthy(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -230,7 +230,7 @@ def test_skip_next_conditional_falsy(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -271,7 +271,7 @@ def test_concurrent_evaluation_deterministic(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -294,7 +294,7 @@ def test_concurrent_evaluation_deterministic(
             ex.evaluate()
 
         with ThreadPoolExecutor(max_workers=8) as executor:
-            list(executor.map(evaluate, examples))
+            _ = list(executor.map(evaluate, examples))
 
         assert sorted(recorder.evaluated) == sorted(
             [first_code.region.start, fourth_code.region.start],
@@ -319,7 +319,7 @@ def test_concurrent_skip_next(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -340,7 +340,7 @@ def test_concurrent_skip_next(
             ex.evaluate()
 
         with ThreadPoolExecutor(max_workers=8) as executor:
-            list(executor.map(evaluate, examples))
+            _ = list(executor.map(evaluate, examples))
 
         assert sorted(recorder.evaluated) == sorted(
             [first_code.region.start, third_code.region.start],
@@ -357,7 +357,7 @@ def test_sequence_error_directive_name(
     language, directive_builder = language_directive_builder
     content = directive_builder(directive="custom-skip", argument="end")
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -384,7 +384,7 @@ def test_sequence_error_bad_action(
     language, directive_builder = language_directive_builder
     content = directive_builder(directive="custom-skip", argument="bogus")
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -418,7 +418,7 @@ def test_sequence_error_double_start(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -453,7 +453,7 @@ def test_sequence_error_end_with_reason(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -493,7 +493,7 @@ def test_multiple_intervals_in_one_document(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -532,7 +532,7 @@ def test_end_cancels_pending_next(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -556,7 +556,7 @@ def test_no_skip_directives(
     language, _ = language_directive_builder
     content = language.code_block_builder(code="a = 1", language="python")
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -596,7 +596,7 @@ def test_completed_document_is_not_retained(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -613,6 +613,6 @@ def test_completed_document_is_not_retained(
     document_reference = weakref.ref(document)
     example = None
     del document
-    gc.collect()
+    _ = gc.collect()
 
     assert document_reference() is None

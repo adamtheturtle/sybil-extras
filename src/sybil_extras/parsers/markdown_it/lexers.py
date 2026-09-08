@@ -64,7 +64,7 @@ class DirectiveInHTMLCommentLexer:
         # instead of being recognized as html_block. With the rule
         # disabled, MarkdownIt treats indented HTML comments as html_block
         # tokens, allowing us to find directives in indented sections.
-        md.disable(names="code")
+        _ = md.disable(names="code")
         tokens = md.parse(src=document.text)
         offsets = line_offsets(text=document.text)
 

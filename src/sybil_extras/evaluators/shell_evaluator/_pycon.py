@@ -144,15 +144,12 @@ def _continuation_line_indices(*, tree: ast.Module) -> set[int]:
     continuation_lines: set[int] = set()
     for stmt in tree.body:
         start = stmt.lineno - 1
-        if (
-            isinstance(
-                stmt,
-                (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef),
-            )
-            and stmt.decorator_list
-        ):
+        if isinstance(
+            stmt,
+            (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef),
+        ) and bool(stmt.decorator_list):
             start = stmt.decorator_list[0].lineno - 1
-        end = stmt.end_lineno or stmt.lineno
+        end = stmt.end_lineno if stmt.end_lineno is not None else stmt.lineno
         for line_idx in range(start + 1, end):
             continuation_lines.add(line_idx)
     return continuation_lines
@@ -170,7 +167,7 @@ def _python_lines_to_pycon_groups(
         if i in continuation_lines:
             groups[-1].append(_with_pycon_prompt(prompt="...", line=line))
         elif (
-            groups
+            len(groups) > 0
             and line.strip("\r\n") == ""
             and groups[-1][-1].startswith("... ")
         ):
@@ -224,7 +221,7 @@ def _require_preservable_output(
             meaning of an original chunk that has recorded output.
     """
     for group, chunk in zip(groups, chunks, strict=True):
-        if not chunk.output_lines:
+        if not bool(chunk.output_lines):
             continue
         reformatted = pycon_to_python(pycon_text="".join(group))
         if not _ast_equivalent(first=reformatted, second=chunk.python_text):
@@ -294,7 +291,7 @@ def _render_pycon_from_python(
         matched_chunk = chunk_for_group[i]
         if matched_chunk is not None:
             output_lines = original_chunks[matched_chunk].output_lines
-            if output_lines and not result[-1].endswith(("\n", "\r")):
+            if output_lines != [] and not result[-1].endswith(("\n", "\r")):
                 result.append("\n")
             result.extend(output_lines)
 

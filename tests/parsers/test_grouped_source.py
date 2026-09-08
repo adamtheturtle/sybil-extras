@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 from beartype import beartype
 from sybil import Document, Example, Sybil
+from sybil.region import Lexeme
 
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
@@ -53,13 +54,13 @@ def test_abandoned_documents_are_released(
 
     for index in range(3):
         test_document = tmp_path / f"test-{index}"
-        test_document.write_text(
+        _ = test_document.write_text(
             data=f"{content}{language.markup_separator}",
             encoding="utf-8",
         )
         references.append(parse_reference(path=test_document))
 
-    gc.collect()
+    _ = gc.collect()
 
     assert all(reference() is None for reference in references)
 
@@ -92,7 +93,7 @@ def test_group(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -143,7 +144,7 @@ def test_nothing_after_group(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -191,7 +192,7 @@ def test_empty_group(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -238,7 +239,7 @@ def test_group_with_skip(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -290,7 +291,7 @@ def test_group_with_skip_range(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -335,7 +336,7 @@ def test_no_argument(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -351,7 +352,7 @@ def test_no_argument(
         expected_exception=ValueError,
         match="missing arguments to group",
     ):
-        sybil.parse(path=test_document)
+        _ = sybil.parse(path=test_document)
 
 
 def test_malformed_argument(
@@ -371,7 +372,7 @@ def test_malformed_argument(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -387,7 +388,7 @@ def test_malformed_argument(
         expected_exception=ValueError,
         match="malformed arguments to group",
     ):
-        sybil.parse(path=test_document)
+        _ = sybil.parse(path=test_document)
 
 
 def test_end_only(
@@ -399,7 +400,7 @@ def test_end_only(
     language, directive_builder = language_directive_builder
     content = directive_builder(directive="group", argument="end")
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -416,7 +417,7 @@ def test_end_only(
         expected_exception=ValueError,
         match="'group: end' must follow 'group: start'",
     ):
-        sybil.parse(path=test_document)
+        _ = sybil.parse(path=test_document)
 
 
 def test_start_after_start(
@@ -433,7 +434,7 @@ def test_start_after_start(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -449,7 +450,7 @@ def test_start_after_start(
         expected_exception=ValueError,
         match="'group: start' must be followed by 'group: end'",
     ):
-        sybil.parse(path=test_document)
+        _ = sybil.parse(path=test_document)
 
 
 def test_start_only(
@@ -461,7 +462,7 @@ def test_start_only(
     language, directive_builder = language_directive_builder
     content = directive_builder(directive="group", argument="start")
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -477,7 +478,7 @@ def test_start_only(
         expected_exception=ValueError,
         match="'group: start' must be followed by 'group: end'",
     ):
-        sybil.parse(path=test_document)
+        _ = sybil.parse(path=test_document)
 
 
 def test_start_start_end(
@@ -495,7 +496,7 @@ def test_start_start_end(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -512,7 +513,7 @@ def test_start_start_end(
         expected_exception=ValueError,
         match="'group: start' must be followed by 'group: end'",
     ):
-        sybil.parse(path=test_document)
+        _ = sybil.parse(path=test_document)
 
 
 def test_directive_name_not_regex_escaped(
@@ -541,7 +542,7 @@ def test_directive_name_not_regex_escaped(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -591,7 +592,7 @@ def test_with_shell_command_evaluator(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -620,8 +621,12 @@ def test_with_shell_command_evaluator(
     examples = list(document.examples())
     first_code_block = examples[1]
     second_code_block = examples[2]
-    first_line = first_code_block.line + first_code_block.parsed.line_offset
-    second_line = second_code_block.line + second_code_block.parsed.line_offset
+    first_parsed = first_code_block.parsed
+    second_parsed = second_code_block.parsed
+    assert isinstance(first_parsed, Lexeme)
+    assert isinstance(second_parsed, Lexeme)
+    first_line = first_code_block.line + first_parsed.line_offset
+    second_line = second_code_block.line + second_parsed.line_offset
 
     for example in examples:
         example.evaluate()
@@ -665,7 +670,7 @@ def test_state_cleanup_on_evaluator_failure(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -728,7 +733,7 @@ def test_thread_safety(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -754,7 +759,7 @@ def test_thread_safety(
         ex.evaluate()
 
     with ThreadPoolExecutor(max_workers=4) as executor:
-        list(executor.map(evaluate, examples))
+        _ = list(executor.map(evaluate, examples))
 
     separator_newlines = len(language.markup_separator)
     padding_newlines = separator_newlines + 1
@@ -792,7 +797,7 @@ def test_multiple_groups_concurrent_evaluation(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -824,7 +829,7 @@ def test_multiple_groups_concurrent_evaluation(
 
     code_blocks = [code1a, code1b, code2a, code2b]
     with ThreadPoolExecutor(max_workers=4) as executor:
-        list(executor.map(evaluate, code_blocks))
+        _ = list(executor.map(evaluate, code_blocks))
 
     # Evaluate end markers (required ordering after start)
     end1.evaluate()
@@ -860,7 +865,7 @@ def test_evaluation_order_independence(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -917,7 +922,7 @@ def test_no_group_directives(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -962,7 +967,7 @@ def test_no_pad_groups(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -990,7 +995,9 @@ def test_no_pad_groups(
     # Get line number from the first code block to compute expected padding.
     examples = list(document.examples())
     first_code_block = examples[1]
-    first_line = first_code_block.line + first_code_block.parsed.line_offset
+    first_parsed = first_code_block.parsed
+    assert isinstance(first_parsed, Lexeme)
+    first_line = first_code_block.line + first_parsed.line_offset
 
     for example in examples:
         example.evaluate()
@@ -1028,7 +1035,7 @@ def test_end_marker_waits_for_code_blocks(
         ]
     )
     test_document = tmp_path / "test"
-    test_document.write_text(
+    _ = test_document.write_text(
         data=f"{content}{language.markup_separator}",
         encoding="utf-8",
     )
@@ -1063,7 +1070,7 @@ def test_end_marker_waits_for_code_blocks(
 
     # Run all three concurrently - end marker should wait for code blocks
     with ThreadPoolExecutor(max_workers=3) as executor:
-        list(executor.map(evaluate, [end, code1, code2]))
+        _ = list(executor.map(evaluate, [end, code1, code2]))
 
     separator_newlines = len(language.markup_separator)
     padding_newlines = separator_newlines + 1

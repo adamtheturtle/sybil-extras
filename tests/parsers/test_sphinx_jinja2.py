@@ -27,7 +27,8 @@ from sybil_extras.parsers.rest.sphinx_jinja2 import (
 )
 def test_sphinx_jinja2_named_context(
     *,
-    parser_cls: type,
+    parser_cls: type[MystSphinxJinja2Parser]
+    | type[MystParserSphinxJinja2Parser],
     tmp_path: Path,
 ) -> None:
     """MyST jinja directives expose their named context argument."""
@@ -39,7 +40,7 @@ def test_sphinx_jinja2_named_context(
         """,
     )
     test_document = tmp_path / "test.md"
-    test_document.write_text(data=content, encoding="utf-8")
+    _ = test_document.write_text(data=content, encoding="utf-8")
     parser = parser_cls(evaluator=NoOpEvaluator())
 
     (example,) = Sybil(parsers=[parser]).parse(path=test_document).examples()
@@ -57,7 +58,8 @@ def test_sphinx_jinja2_named_context(
 )
 def test_sphinx_jinja2(
     *,
-    parser_cls: type,
+    parser_cls: type[MystSphinxJinja2Parser]
+    | type[MystParserSphinxJinja2Parser],
     tmp_path: Path,
 ) -> None:
     """The ``SphinxJinja2Parser`` extracts information from
@@ -79,7 +81,7 @@ def test_sphinx_jinja2(
     )
 
     test_document = tmp_path / "test.md"
-    test_document.write_text(data=content, encoding="utf-8")
+    _ = test_document.write_text(data=content, encoding="utf-8")
 
     parser = parser_cls(evaluator=NoOpEvaluator())
     sybil = Sybil(parsers=[parser])
@@ -113,7 +115,7 @@ def test_sphinx_jinja2(
 )
 def test_sphinx_jinja2_rst(
     *,
-    parser_cls: type,
+    parser_cls: type[RestSphinxJinja2Parser],
     tmp_path: Path,
 ) -> None:
     """The ``SphinxJinja2Parser`` extracts information from
@@ -134,7 +136,7 @@ def test_sphinx_jinja2_rst(
     )
 
     test_document = tmp_path / "test.rst"
-    test_document.write_text(data=content, encoding="utf-8")
+    _ = test_document.write_text(data=content, encoding="utf-8")
 
     parser = parser_cls(evaluator=NoOpEvaluator())
     sybil = Sybil(parsers=[parser])

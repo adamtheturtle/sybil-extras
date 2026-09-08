@@ -20,7 +20,7 @@ def test_html_directive_at_eof_without_trailing_newline(
     """
     content = "<!--- custom-skip: next -->"
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     skip_parser = CustomDirectiveSkipParser(directive="custom-skip")
     sybil = Sybil(parsers=[skip_parser])
@@ -49,7 +49,7 @@ def test_html_directive_in_indented_section(tmp_path: Path) -> None:
         """
     )
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     skip_parser = CustomDirectiveSkipParser(directive="custom-skip")
     code_parser = CodeBlockParser(
@@ -81,7 +81,7 @@ def test_percent_comment_directive(tmp_path: Path) -> None:
         """
     )
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     skip_parser = CustomDirectiveSkipParser(directive="custom-skip")
     code_parser = CodeBlockParser(
@@ -101,7 +101,7 @@ def test_percent_comment_directive_at_eof(tmp_path: Path) -> None:
     """Percent-style comment directive at end of file is recognized."""
     content = "% custom-skip: next"
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     skip_parser = CustomDirectiveSkipParser(directive="custom-skip")
     sybil = Sybil(parsers=[skip_parser])

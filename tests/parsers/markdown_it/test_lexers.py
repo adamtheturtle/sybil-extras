@@ -16,7 +16,7 @@ def test_directive_at_eof_without_trailing_newline(tmp_path: Path) -> None:
     # No trailing newline after the directive
     content = "<!--- custom-skip: next -->"
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     skip_parser = CustomDirectiveSkipParser(directive="custom-skip")
     sybil = Sybil(parsers=[skip_parser])
@@ -43,7 +43,7 @@ x = 1
 ```
 """
     test_file = tmp_path / "test.md"
-    test_file.write_text(data=content, encoding="utf-8")
+    _ = test_file.write_text(data=content, encoding="utf-8")
 
     skip_parser = CustomDirectiveSkipParser(directive="custom-skip")
     code_parser = CodeBlockParser(

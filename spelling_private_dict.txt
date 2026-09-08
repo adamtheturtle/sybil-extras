@@ -38,8 +38,11 @@ natively
 norg
 ons
 parametrize
+parametrized
 parsers
 pragma
+preparer
+preparers
 py
 pycon
 pyright

@@ -33,7 +33,7 @@ class ThreadSafeSkipParser:
     def __call__(self, document: Document) -> Iterable[Region]:
         """Yield skip regions and register the thread-safe skipper."""
         regions = list(self._abstract_skip_parser(document=document))
-        if regions:
+        if bool(regions):
             document.push_evaluator(evaluator=self._skipper)
         return regions
 

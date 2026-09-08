@@ -41,7 +41,7 @@ def fixture_rst_file(*, tmp_path: Path) -> Path:
         assert x == 4
     """
     test_document = tmp_path / "test_document.rst"
-    test_document.write_text(data=content, encoding="utf-8")
+    _ = test_document.write_text(data=content, encoding="utf-8")
     return test_document
 
 
