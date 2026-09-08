@@ -65,6 +65,13 @@ class _DocumentPlan:
     skip_directive_for_region: dict[int, _SkipDirective]
 
 
+def _parsed_skip_directive(
+    *, value: tuple[str, str | None]
+) -> tuple[str, str | None]:
+    """Type the pair produced by Sybil's skip parser."""
+    return value
+
+
 @beartype
 class ThreadSafeSkipper(Skipper):
     """A thread-safe drop-in replacement for ``sybil``'s ``Skipper``.
@@ -143,7 +150,7 @@ class ThreadSafeSkipper(Skipper):
                     plan.directive_for_region[id(region)] = active_start
                 continue
 
-            action, reason = region.parsed
+            action, reason = _parsed_skip_directive(value=region.parsed)
             entry = _SkipDirective(
                 region=region,
                 action=action,
@@ -161,7 +168,7 @@ class ThreadSafeSkipper(Skipper):
             if entry.sequence_error is not None:
                 continue
 
-            last_action = action  # ty: ignore[unsound-assignment]
+            last_action = action
             if action == "next":
                 pending_next = entry
             elif action == "start":

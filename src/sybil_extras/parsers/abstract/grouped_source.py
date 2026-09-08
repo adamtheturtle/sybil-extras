@@ -53,6 +53,11 @@ class _GroupMarker:
     expected_code_blocks: int
 
 
+def _group_marker(*, value: _GroupMarker) -> _GroupMarker:
+    """Type a marker supplied by Sybil's parsed-value API."""
+    return value
+
+
 @beartype
 class _GroupState:
     """State for a single group."""
@@ -208,7 +213,7 @@ class _Grouper:
 
     def _evaluate_grouper_example(self, example: Example) -> None:
         """Evaluate a grouper marker."""
-        marker: _GroupMarker = example.parsed  # ty: ignore[unsound-assignment]
+        marker = _group_marker(value=example.parsed)
         state = self._get_group_state(
             document=example.document,
             group_id=marker.group_id,

@@ -71,7 +71,10 @@ class AbstractAttributeGroupedSourceParser:
 
         for region in self._code_block_parser(document):
             attributes = region.lexemes.get("attributes", {})
-            group_name: str | None = attributes.get(self._attribute_name)  # ty: ignore[unsound-assignment]
+            raw_group_name: object = attributes.get(self._attribute_name)
+            group_name = (
+                None if raw_group_name is None else str(object=raw_group_name)
+            )
             if group_name is None or group_name == "":
                 ungrouped_regions.append(
                     Region(

@@ -23,6 +23,20 @@ LANGUAGE_DIRECTIVE_BUILDER_IDS = [
 ]
 
 
+def _markup_language(*, value: MarkupLanguage) -> MarkupLanguage:
+    """Type a markup language supplied by the pytest parameter API."""
+    return value
+
+
+def _language_builder_pair(
+    *, value: tuple[MarkupLanguage, DirectiveBuilder]
+) -> tuple[MarkupLanguage, DirectiveBuilder]:
+    """Type a language and builder supplied by the pytest parameter
+    API.
+    """
+    return value
+
+
 @pytest.fixture(name="language", params=ALL_LANGUAGES, ids=LANGUAGE_IDS)
 def fixture_language(*, request: pytest.FixtureRequest) -> MarkupLanguage:
     """Provide each supported markup language."""
@@ -42,8 +56,7 @@ def fixture_markup_language(
     *, request: pytest.FixtureRequest
 ) -> MarkupLanguage:
     """Provide each supported markup language."""
-    language: MarkupLanguage = request.param  # ty: ignore[unsound-assignment]
-    return language
+    return _markup_language(value=request.param)
 
 
 @pytest.fixture(
@@ -61,5 +74,4 @@ def fixture_language_directive_builder(
     multiple comment syntaxes (e.g., MyST with HTML and percent
     comments).
     """
-    param: tuple[MarkupLanguage, DirectiveBuilder] = request.param  # ty: ignore[unsound-assignment]
-    return param
+    return _language_builder_pair(value=request.param)

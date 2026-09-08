@@ -101,7 +101,11 @@ def _get_container_prefix(*, region_text: str) -> str:
         flags=re.MULTILINE,
     )
     fence_match = fence_pattern.match(string=region_text)
-    return fence_match.group("prefix") if fence_match is not None else ""  # ty: ignore[unsound-return-statement]
+    return (
+        str(object=fence_match.group("prefix"))
+        if fence_match is not None
+        else ""
+    )
 
 
 @beartype
