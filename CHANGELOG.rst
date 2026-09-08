@@ -27,7 +27,9 @@ No significant changes.
 
 
 
-* Added ``ThreadSafeSkipParser`` for each markup language, a thread-safe drop-in replacement for the upstream Sybil skip parser. Skip decisions are resolved at parse time, so concurrent example evaluation produces deterministic results. Each ``MarkupLanguage`` also exposes the parser class as ``thread_safe_skip_parser_cls``.
+* Added ``ThreadSafeSkipParser`` for each markup language, a thread-safe drop-in replacement for the upstream Sybil skip parser.
+  Skip decisions are resolved at parse time, so concurrent example evaluation produces deterministic results.
+  Each ``MarkupLanguage`` also exposes the parser class as ``thread_safe_skip_parser_cls``.
 
 2026.05.06
 ----------
