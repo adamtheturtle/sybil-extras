@@ -54,6 +54,7 @@ str
 subclasses
 syntaxes
 truthy
+ty
 typeshed
 unclosed
 ungrouped

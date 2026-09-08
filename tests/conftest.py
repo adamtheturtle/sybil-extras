@@ -42,7 +42,7 @@ def fixture_markup_language(
     *, request: pytest.FixtureRequest
 ) -> MarkupLanguage:
     """Provide each supported markup language."""
-    language: MarkupLanguage = request.param
+    language: MarkupLanguage = request.param  # ty: ignore[unsound-assignment]
     return language
 
 
@@ -61,5 +61,5 @@ def fixture_language_directive_builder(
     multiple comment syntaxes (e.g., MyST with HTML and percent
     comments).
     """
-    param: tuple[MarkupLanguage, DirectiveBuilder] = request.param
+    param: tuple[MarkupLanguage, DirectiveBuilder] = request.param  # ty: ignore[unsound-assignment]
     return param

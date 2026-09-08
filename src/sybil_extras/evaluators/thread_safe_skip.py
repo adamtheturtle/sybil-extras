@@ -161,7 +161,7 @@ class ThreadSafeSkipper(Skipper):
             if entry.sequence_error is not None:
                 continue
 
-            last_action = action
+            last_action = action  # ty: ignore[unsound-assignment]
             if action == "next":
                 pending_next = entry
             elif action == "start":
