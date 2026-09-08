@@ -31,7 +31,7 @@ def _match_closes_existing(current: Match[str], existing: Match[str]) -> bool:
         line_end = len(current.string)
     trailing_text = current.string[current.end() : line_end]
     fence_only = not bool(trailing_text.strip(" \t\r"))
-    return same_type and sufficient_length and same_prefix and fence_only
+    return same_type and sufficient_length and same_prefix and fence_only  # ty: ignore[unsound-return-statement]
 
 
 @beartype

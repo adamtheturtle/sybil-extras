@@ -208,7 +208,7 @@ class _Grouper:
 
     def _evaluate_grouper_example(self, example: Example) -> None:
         """Evaluate a grouper marker."""
-        marker: _GroupMarker = example.parsed
+        marker: _GroupMarker = example.parsed  # ty: ignore[unsound-assignment]
         state = self._get_group_state(
             document=example.document,
             group_id=marker.group_id,
