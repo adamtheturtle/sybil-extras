@@ -11,6 +11,7 @@ from beartype import beartype
 from sybil import Document, Region
 from sybil.evaluators.skip import Skipper
 from sybil.typing import Evaluator
+from typing_extensions import override
 
 import sybil_extras.parsers.djot.codeblock
 import sybil_extras.parsers.djot.custom_directive_skip
@@ -53,6 +54,7 @@ import sybil_extras.parsers.rest.group_all
 import sybil_extras.parsers.rest.grouped_source
 import sybil_extras.parsers.rest.sphinx_jinja2
 import sybil_extras.parsers.rest.thread_safe_skip
+from sybil_extras.evaluators.thread_safe_skip import ThreadSafeSkipper
 
 
 @runtime_checkable
@@ -91,6 +93,16 @@ class _SkipParser(Protocol):
     def get_skipper(self) -> Skipper:
         """Return the skipper managing skip state."""
         ...  # pylint: disable=unnecessary-ellipsis
+
+
+@runtime_checkable
+class _ThreadSafeSkipParser(_SkipParser, Protocol):
+    """A skip parser backed by thread-local state."""
+
+    @override
+    def get_skipper(self) -> ThreadSafeSkipper:
+        """Return the thread-safe skipper managing skip state."""
+        raise NotImplementedError
 
 
 @runtime_checkable
@@ -307,7 +319,7 @@ class MarkupLanguage:
     name: str
     markup_separator: str
     skip_parser_cls: type[_SkipParser]
-    thread_safe_skip_parser_cls: type[_SkipParser]
+    thread_safe_skip_parser_cls: type[_ThreadSafeSkipParser]
     code_block_parser_cls: type[_CodeBlockParser]
     group_parser_cls: type[_GroupedSourceParser]
     group_all_parser_cls: type[_GroupAllParser]

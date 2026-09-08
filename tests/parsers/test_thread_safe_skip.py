@@ -9,7 +9,7 @@ from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Protocol, cast  # noqa: TID251
+from typing import Protocol
 from unittest import SkipTest
 
 import pytest
@@ -72,9 +72,8 @@ def _build_sybil(
     """Build a Sybil instance with the thread-safe skip parser
     configured.
     """
-    skip_parser = cast(
-        "_ThreadSafeSkipParserProtocol",
-        language.thread_safe_skip_parser_cls(directive=directive_name),
+    skip_parser = language.thread_safe_skip_parser_cls(
+        directive=directive_name,
     )
     code_block_parser = language.code_block_parser_cls(
         language="python",
