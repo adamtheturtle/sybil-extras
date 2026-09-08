@@ -210,12 +210,7 @@ CustomDirectiveSkipParser
 
     pytest_collect_file = sybil.pytest()
 
-This allows you to skip code blocks in the same way as described in
-the Sybil documentation for skipping examples in
-`reStructuredText <https://sybil.readthedocs.io/en/latest/rest.html#skipping-examples>`_,
-`Markdown <https://sybil.readthedocs.io/en/latest/rest.html#skipping-examples>`_ ,
-MDX, and `MyST <https://sybil.readthedocs.io/en/latest/myst.html#skipping-examples>`_ files,
-but with custom text, e.g. ``custom-marker-skip`` replacing the word ``skip``.
+This allows you to skip code blocks in the same way as described in the Sybil documentation for skipping examples in `reStructuredText <https://sybil.readthedocs.io/en/latest/rest.html#skipping-examples>`_, `Markdown <https://sybil.readthedocs.io/en/latest/rest.html#skipping-examples>`_ , MDX, and `MyST <https://sybil.readthedocs.io/en/latest/myst.html#skipping-examples>`_ files, but with custom text, e.g. ``custom-marker-skip`` replacing the word ``skip``.
 
 ThreadSafeSkipParser
 ^^^^^^^^^^^^^^^^^^^^
@@ -223,11 +218,8 @@ ThreadSafeSkipParser
 The ``ThreadSafeSkipParser`` is a thread-safe drop-in replacement for the standard skip parser.
 Use it when examples from a single document may be evaluated concurrently (e.g. dispatched across a thread pool).
 
-The upstream ``sybil.evaluators.skip.Skipper`` mutates per-document state as examples are evaluated,
-so concurrent evaluation can race and produce non-deterministic skip decisions
-(see `simplistix/sybil#166 <https://github.com/simplistix/sybil/issues/166>`_).
-``ThreadSafeSkipParser`` resolves each non-skip example to its governing skip directive at parse time,
-and caches conditional ``if`` decisions per directive so concurrent evaluators all see the same result.
+The upstream ``sybil.evaluators.skip.Skipper`` mutates per-document state as examples are evaluated, so concurrent evaluation can race and produce non-deterministic skip decisions (see `simplistix/sybil#166 <https://github.com/simplistix/sybil/issues/166>`_).
+``ThreadSafeSkipParser`` resolves each non-skip example to its governing skip directive at parse time, and caches conditional ``if`` decisions per directive so concurrent evaluators all see the same result.
 
 .. code-block:: python
 
@@ -255,9 +247,7 @@ and caches conditional ``if`` decisions per directive so concurrent evaluators a
 
     pytest_collect_file = sybil.pytest()
 
-The directive syntax (``skip: start`` / ``skip: next`` / ``skip: end``,
-including conditional ``skip: next if(...)`` reasons) matches upstream Sybil exactly,
-so existing documents do not need to change.
+The directive syntax (``skip: start`` / ``skip: next`` / ``skip: end``, including conditional ``skip: next if(...)`` reasons) matches upstream Sybil exactly, so existing documents do not need to change.
 The directive name is configurable, so the parser can also be used as a thread-safe replacement for custom skip markers.
 
 GroupedSourceParser
@@ -310,15 +300,12 @@ GroupedSourceParser
         # code blocks in the group.
         item.evaluate()
 
-This makes Sybil act as though all of the code blocks within a group are a single code block,
-to be evaluated with the ``evaluator`` given to ``GroupedSourceParser``.
+This makes Sybil act as though all of the code blocks within a group are a single code block, to be evaluated with the ``evaluator`` given to ``GroupedSourceParser``.
 
 Only code blocks parsed by another parser in the same Sybil instance will be grouped.
 
-The ``GroupedSourceParser`` must be registered **after** any code block
-parsers in the ``Sybil(parsers=[...])`` list. At parse time, it counts
-code blocks by examining ``document.examples()``, which only contains
-examples from parsers that have already run.
+The ``GroupedSourceParser`` must be registered **after** any code block parsers in the ``Sybil(parsers=[...])`` list.
+At parse time, it counts code blocks by examining ``document.examples()``, which only contains examples from parsers that have already run.
 
 A group is defined by a pair of comments, ``group: start`` and ``group: end``.
 The ``group: end`` example is expanded to include the contents of the code blocks in the group.
@@ -407,18 +394,15 @@ GroupAllParser
         # code blocks in the document.
         item.evaluate()
 
-This makes Sybil act as though all of the code blocks in a document are a single code block,
-to be evaluated with the ``evaluator`` given to ``GroupAllParser``.
+This makes Sybil act as though all of the code blocks in a document are a single code block, to be evaluated with the ``evaluator`` given to ``GroupAllParser``.
 
 Unlike ``GroupedSourceParser``, this parser does not require any special markup directives like ``group: start`` and ``group: end``.
 All code blocks in the document are automatically grouped together.
 
 Only code blocks parsed by another parser in the same Sybil instance will be grouped.
 
-The ``GroupAllParser`` must be registered **after** any code block
-parsers in the ``Sybil(parsers=[...])`` list. At parse time, it counts
-code blocks by examining ``document.examples()``, which only contains
-examples from parsers that have already run.
+The ``GroupAllParser`` must be registered **after** any code block parsers in the ``Sybil(parsers=[...])`` list.
+At parse time, it counts code blocks by examining ``document.examples()``, which only contains examples from parsers that have already run.
 
 AttributeGroupedSourceParser
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -475,8 +459,7 @@ This is useful for MDX documentation where code blocks with the same group attri
         # code blocks in the same group.
         item.evaluate()
 
-This makes Sybil act as though all code blocks with the same ``group`` attribute value are a single code block,
-to be evaluated with the ``evaluator`` given to ``AttributeGroupedSourceParser``.
+This makes Sybil act as though all code blocks with the same ``group`` attribute value are a single code block, to be evaluated with the ``evaluator`` given to ``AttributeGroupedSourceParser``.
 
 An MDX example:
 
@@ -496,8 +479,7 @@ An MDX example:
    x = 1
    ```
 
-In this example, the first two code blocks will be combined and evaluated as one block,
-while the third block (with ``group="example2"``) will be evaluated separately.
+In this example, the first two code blocks will be combined and evaluated as one block, while the third block (with ``group="example2"``) will be evaluated separately.
 
 Code blocks with the ``group`` attribute (or custom attribute name) will be grouped.
 Code blocks without the attribute are evaluated with the ``ungrouped_evaluator``.
@@ -541,9 +523,7 @@ This extracts the source, arguments and options from ``.. jinja::`` directive bl
 Djot code block parser
 ^^^^^^^^^^^^^^^^^^^^^^
 
-The djot ``CodeBlockParser`` correctly handles code blocks that are implicitly
-closed when their parent container ends, following the
-`djot specification <https://htmlpreview.github.io/?https://github.com/jgm/djot/blob/master/doc/syntax.html#code-block>`_.
+The djot ``CodeBlockParser`` correctly handles code blocks that are implicitly closed when their parent container ends, following the `djot specification <https://htmlpreview.github.io/?https://github.com/jgm/djot/blob/master/doc/syntax.html#code-block>`_.
 
 For example, a code block inside a blockquote without a closing fence:
 
@@ -572,9 +552,8 @@ For example, a code block inside a blockquote without a closing fence:
 Djot directive lexer
 ^^^^^^^^^^^^^^^^^^^^
 
-Use ``DirectiveInDjotCommentLexer`` to extract directive information from djot
-comments such as ``{% group: start %}``. This pairs well with
-``sybil.testing.check_lexer`` for concise lexer tests.
+Use ``DirectiveInDjotCommentLexer`` to extract directive information from djot comments such as ``{% group: start %}``.
+This pairs well with ``sybil.testing.check_lexer`` for concise lexer tests.
 
 .. code-block:: python
 
@@ -596,10 +575,8 @@ comments such as ``{% group: start %}``. This pairs well with
 MarkdownIt code block parser
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``markdown_it`` module provides Markdown parsers that use the
-`markdown-it-py <https://markdown-it-py.readthedocs.io/>`_ library instead of regex.
-This provides more accurate parsing of Markdown documents, particularly for edge cases
-like fenced code blocks inside indented sections.
+The ``markdown_it`` module provides Markdown parsers that use the `markdown-it-py <https://markdown-it-py.readthedocs.io/>`_ library instead of regex.
+This provides more accurate parsing of Markdown documents, particularly for edge cases like fenced code blocks inside indented sections.
 
 .. code-block:: python
 
@@ -615,18 +592,13 @@ like fenced code blocks inside indented sections.
 
     pytest_collect_file = sybil.pytest()
 
-The module also provides ``CustomDirectiveSkipParser``, ``GroupedSourceParser``,
-``GroupAllParser``, and ``DirectiveInHTMLCommentLexer`` that use the MarkdownIt library
-for parsing HTML comments containing directives.
+The module also provides ``CustomDirectiveSkipParser``, ``GroupedSourceParser``, ``GroupAllParser``, and ``DirectiveInHTMLCommentLexer`` that use the MarkdownIt library for parsing HTML comments containing directives.
 
 MystParser code block parser
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``myst_parser`` module provides MyST parsers that use the
-`myst-parser <https://myst-parser.readthedocs.io/>`_ library instead of regex.
-This provides more accurate parsing of MyST documents, including support for
-percent-style comment directives (``% skip: next``) in addition to HTML comment
-directives.
+The ``myst_parser`` module provides MyST parsers that use the `myst-parser <https://myst-parser.readthedocs.io/>`_ library instead of regex.
+This provides more accurate parsing of MyST documents, including support for percent-style comment directives (``% skip: next``) in addition to HTML comment directives.
 
 .. code-block:: python
 
@@ -642,9 +614,7 @@ directives.
 
     pytest_collect_file = sybil.pytest()
 
-The module also provides ``CustomDirectiveSkipParser``, ``GroupedSourceParser``,
-``GroupAllParser``, ``SphinxJinja2Parser``, ``DirectiveInHTMLCommentLexer``, and
-``DirectiveInPercentCommentLexer`` that use the myst-parser library.
+The module also provides ``CustomDirectiveSkipParser``, ``GroupedSourceParser``, ``GroupAllParser``, ``SphinxJinja2Parser``, ``DirectiveInHTMLCommentLexer``, and ``DirectiveInPercentCommentLexer`` that use the myst-parser library.
 
 Markup Languages
 ----------------

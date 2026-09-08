@@ -85,8 +85,7 @@ ShellCommandEvaluator
 BlockAccumulatorEvaluator
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``BlockAccumulatorEvaluator`` accumulates parsed code block content in a
-list within the document's namespace.
+The ``BlockAccumulatorEvaluator`` accumulates parsed code block content in a list within the document's namespace.
 This is useful for testing parsers that group multiple code blocks together.
 
 .. code-block:: python
@@ -135,13 +134,10 @@ It is useful for testing and debugging parsers.
 CodeBlockWriterEvaluator
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``CodeBlockWriterEvaluator`` wraps another evaluator and writes any
-modifications back to the source document.
-This is useful for building evaluators that transform code blocks, such as
-formatters or auto-fixers.
+The ``CodeBlockWriterEvaluator`` wraps another evaluator and writes any modifications back to the source document.
+This is useful for building evaluators that transform code blocks, such as formatters or auto-fixers.
 
-The wrapped evaluator should store the modified content in
-``example.document.namespace[namespace_key]`` for it to be written back.
+The wrapped evaluator should store the modified content in ``example.document.namespace[namespace_key]`` for it to be written back.
 
 .. code-block:: python
 
@@ -204,12 +200,7 @@ CustomDirectiveSkipParser
 
     pytest_collect_file = sybil.pytest()
 
-This allows you to skip code blocks in the same way as described in
-the Sybil documentation for skipping examples in
-`reStructuredText <https://sybil.readthedocs.io/en/latest/rest.html#skipping-examples>`_,
-`Markdown <https://sybil.readthedocs.io/en/latest/rest.html#skipping-examples>`_,
-MDX, and `MyST <https://sybil.readthedocs.io/en/latest/myst.html#skipping-examples>`_ files,
-but with custom text, e.g. ``custom-marker-skip`` replacing the word ``skip``.
+This allows you to skip code blocks in the same way as described in the Sybil documentation for skipping examples in `reStructuredText <https://sybil.readthedocs.io/en/latest/rest.html#skipping-examples>`_, `Markdown <https://sybil.readthedocs.io/en/latest/rest.html#skipping-examples>`_, MDX, and `MyST <https://sybil.readthedocs.io/en/latest/myst.html#skipping-examples>`_ files, but with custom text, e.g. ``custom-marker-skip`` replacing the word ``skip``.
 
 ThreadSafeSkipParser
 ^^^^^^^^^^^^^^^^^^^^
@@ -300,21 +291,15 @@ GroupedSourceParser
         # code blocks in the group.
         item.evaluate()
 
-This makes Sybil act as though all of the code blocks within a group are a
-single code block, to be evaluated with the ``evaluator`` given to
-``GroupedSourceParser``.
+This makes Sybil act as though all of the code blocks within a group are a single code block, to be evaluated with the ``evaluator`` given to ``GroupedSourceParser``.
 
-Only code blocks parsed by another parser in the same Sybil instance will be
-grouped.
+Only code blocks parsed by another parser in the same Sybil instance will be grouped.
 
-The ``GroupedSourceParser`` must be registered **after** any code block
-parsers in the ``Sybil(parsers=[...])`` list. At parse time, it counts
-code blocks by examining ``document.examples()``, which only contains
-examples from parsers that have already run.
+The ``GroupedSourceParser`` must be registered **after** any code block parsers in the ``Sybil(parsers=[...])`` list.
+At parse time, it counts code blocks by examining ``document.examples()``, which only contains examples from parsers that have already run.
 
-A group is defined by a pair of comments, ``group: start`` and
-``group: end``. The ``group: end`` example is expanded to include the
-contents of the code blocks in the group.
+A group is defined by a pair of comments, ``group: start`` and ``group: end``.
+The ``group: end`` example is expanded to include the contents of the code blocks in the group.
 
 A reStructuredText example:
 
@@ -400,29 +385,21 @@ GroupAllParser
         # code blocks in the document.
         item.evaluate()
 
-This makes Sybil act as though all of the code blocks in a document are a
-single code block, to be evaluated with the ``evaluator`` given to
-``GroupAllParser``.
+This makes Sybil act as though all of the code blocks in a document are a single code block, to be evaluated with the ``evaluator`` given to ``GroupAllParser``.
 
-Unlike ``GroupedSourceParser``, this parser does not require any special markup
-directives like ``group: start`` and ``group: end``.
+Unlike ``GroupedSourceParser``, this parser does not require any special markup directives like ``group: start`` and ``group: end``.
 All code blocks in the document are automatically grouped together.
 
-Only code blocks parsed by another parser in the same Sybil instance will be
-grouped.
+Only code blocks parsed by another parser in the same Sybil instance will be grouped.
 
-The ``GroupAllParser`` must be registered **after** any code block parsers in
-the ``Sybil(parsers=[...])`` list. At parse time, it counts code blocks by
-examining ``document.examples()``, which only contains examples from parsers
-that have already run.
+The ``GroupAllParser`` must be registered **after** any code block parsers in the ``Sybil(parsers=[...])`` list.
+At parse time, it counts code blocks by examining ``document.examples()``, which only contains examples from parsers that have already run.
 
 AttributeGroupedSourceParser
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``AttributeGroupedSourceParser`` groups MDX code blocks by their ``group``
-attribute value, following Docusaurus conventions.
-This is useful for MDX documentation where code blocks with the same group
-attribute should be combined and evaluated together.
+The ``AttributeGroupedSourceParser`` groups MDX code blocks by their ``group`` attribute value, following Docusaurus conventions.
+This is useful for MDX documentation where code blocks with the same group attribute should be combined and evaluated together.
 
 .. code-block:: python
 
@@ -473,9 +450,7 @@ attribute should be combined and evaluated together.
         # code blocks in the same group.
         item.evaluate()
 
-This makes Sybil act as though all code blocks with the same ``group``
-attribute value are a single code block, to be evaluated with the
-``evaluator`` given to ``AttributeGroupedSourceParser``.
+This makes Sybil act as though all code blocks with the same ``group`` attribute value are a single code block, to be evaluated with the ``evaluator`` given to ``AttributeGroupedSourceParser``.
 
 An MDX example:
 
@@ -495,24 +470,17 @@ An MDX example:
    x = 1
    ```
 
-In this example, the first two code blocks will be combined and evaluated as
-one block, while the third block (with ``group="example2"``) will be evaluated
-separately.
+In this example, the first two code blocks will be combined and evaluated as one block, while the third block (with ``group="example2"``) will be evaluated separately.
 
-Code blocks with the ``group`` attribute (or custom attribute name) will be
-grouped. Code blocks without the attribute are evaluated with the
-``ungrouped_evaluator``.
+Code blocks with the ``group`` attribute (or custom attribute name) will be grouped.
+Code blocks without the attribute are evaluated with the ``ungrouped_evaluator``.
 
 SphinxJinja2Parser
 ^^^^^^^^^^^^^^^^^^
 
-Use the ``SphinxJinja2Parser`` to parse
-`sphinx-jinja2 <https://sphinx-jinja2.readthedocs.io/en/latest/>`_ templates
-in Sphinx documentation.
+Use the ``SphinxJinja2Parser`` to parse `sphinx-jinja2 <https://sphinx-jinja2.readthedocs.io/en/latest/>`_ templates in Sphinx documentation.
 
-This extracts the source, arguments and options from ``.. jinja::`` directive
-blocks in reStructuredText documents or ``\`\`\`{jinja}`` blocks in MyST
-documents.
+This extracts the source, arguments and options from ``.. jinja::`` directive blocks in reStructuredText documents or ``\`\`\`{jinja}`` blocks in MyST documents.
 
 .. code-block:: python
 
@@ -546,9 +514,7 @@ documents.
 Djot code block parser
 ^^^^^^^^^^^^^^^^^^^^^^
 
-The djot ``CodeBlockParser`` correctly handles code blocks that are implicitly
-closed when their parent container ends, following the
-`djot specification <https://htmlpreview.github.io/?https://github.com/jgm/djot/blob/master/doc/syntax.html#code-block>`_.
+The djot ``CodeBlockParser`` correctly handles code blocks that are implicitly closed when their parent container ends, following the `djot specification <https://htmlpreview.github.io/?https://github.com/jgm/djot/blob/master/doc/syntax.html#code-block>`_.
 
 For example, a code block inside a blockquote without a closing fence:
 
@@ -577,9 +543,8 @@ For example, a code block inside a blockquote without a closing fence:
 Djot directive lexer
 ^^^^^^^^^^^^^^^^^^^^
 
-Use ``DirectiveInDjotCommentLexer`` to extract directive information from djot
-comments such as ``{% group: start %}``. This pairs well with
-``sybil.testing.check_lexer`` for concise lexer tests.
+Use ``DirectiveInDjotCommentLexer`` to extract directive information from djot comments such as ``{% group: start %}``.
+This pairs well with ``sybil.testing.check_lexer`` for concise lexer tests.
 
 .. code-block:: python
 
@@ -601,10 +566,8 @@ comments such as ``{% group: start %}``. This pairs well with
 MarkdownIt code block parser
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``markdown_it`` module provides Markdown parsers that use the
-`markdown-it-py <https://markdown-it-py.readthedocs.io/>`_ library instead of
-regex. This provides more accurate parsing of Markdown documents, particularly
-for edge cases like fenced code blocks inside indented sections.
+The ``markdown_it`` module provides Markdown parsers that use the `markdown-it-py <https://markdown-it-py.readthedocs.io/>`_ library instead of regex.
+This provides more accurate parsing of Markdown documents, particularly for edge cases like fenced code blocks inside indented sections.
 
 .. code-block:: python
 
@@ -620,18 +583,13 @@ for edge cases like fenced code blocks inside indented sections.
 
     pytest_collect_file = sybil.pytest()
 
-The module also provides ``CustomDirectiveSkipParser``, ``GroupedSourceParser``,
-``GroupAllParser``, and ``DirectiveInHTMLCommentLexer`` that use the MarkdownIt
-library for parsing HTML comments containing directives.
+The module also provides ``CustomDirectiveSkipParser``, ``GroupedSourceParser``, ``GroupAllParser``, and ``DirectiveInHTMLCommentLexer`` that use the MarkdownIt library for parsing HTML comments containing directives.
 
 MystParser code block parser
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``myst_parser`` module provides MyST parsers that use the
-`myst-parser <https://myst-parser.readthedocs.io/>`_ library instead of regex.
-This provides more accurate parsing of MyST documents, including support for
-percent-style comment directives (``% skip: next``) in addition to HTML comment
-directives.
+The ``myst_parser`` module provides MyST parsers that use the `myst-parser <https://myst-parser.readthedocs.io/>`_ library instead of regex.
+This provides more accurate parsing of MyST documents, including support for percent-style comment directives (``% skip: next``) in addition to HTML comment directives.
 
 .. code-block:: python
 
@@ -647,16 +605,13 @@ directives.
 
     pytest_collect_file = sybil.pytest()
 
-The module also provides ``CustomDirectiveSkipParser``, ``GroupedSourceParser``,
-``GroupAllParser``, ``SphinxJinja2Parser``, ``DirectiveInHTMLCommentLexer``, and
-``DirectiveInPercentCommentLexer`` that use the myst-parser library.
+The module also provides ``CustomDirectiveSkipParser``, ``GroupedSourceParser``, ``GroupAllParser``, ``SphinxJinja2Parser``, ``DirectiveInHTMLCommentLexer``, and ``DirectiveInPercentCommentLexer`` that use the myst-parser library.
 
 Markup Languages
 ----------------
 
-The ``languages`` module provides a ``MarkupLanguage`` dataclass and predefined
-instances for working with different markup formats. This is useful for building
-tools that need to work consistently across multiple markup languages.
+The ``languages`` module provides a ``MarkupLanguage`` dataclass and predefined instances for working with different markup formats.
+This is useful for building tools that need to work consistently across multiple markup languages.
 
 .. code-block:: python
 
