@@ -208,7 +208,10 @@ class _Grouper:
 
     def _evaluate_grouper_example(self, example: Example) -> None:
         """Evaluate a grouper marker."""
-        marker: _GroupMarker = example.parsed  # ty: ignore[unsound-assignment]
+        marker: object = example.parsed
+        if not isinstance(marker, _GroupMarker):
+            msg = "A grouper example must contain a group marker"
+            raise TypeError(msg)
         state = self._get_group_state(
             document=example.document,
             group_id=marker.group_id,

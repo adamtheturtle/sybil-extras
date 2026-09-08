@@ -71,7 +71,12 @@ class AbstractAttributeGroupedSourceParser:
 
         for region in self._code_block_parser(document):
             attributes = region.lexemes.get("attributes", {})
-            group_name: str | None = attributes.get(self._attribute_name)  # ty: ignore[unsound-assignment]
+            group_name: object = attributes.get(self._attribute_name)
+            if group_name is not None and not isinstance(group_name, str):
+                msg = (
+                    f"The {self._attribute_name!r} attribute must be a string"
+                )
+                raise TypeError(msg)
             if group_name is None or group_name == "":
                 ungrouped_regions.append(
                     Region(

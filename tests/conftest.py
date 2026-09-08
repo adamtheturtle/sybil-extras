@@ -42,7 +42,10 @@ def fixture_markup_language(
     *, request: pytest.FixtureRequest
 ) -> MarkupLanguage:
     """Provide each supported markup language."""
-    language: MarkupLanguage = request.param  # ty: ignore[unsound-assignment]
+    language: object = request.param
+    if not isinstance(language, MarkupLanguage):
+        msg = "pytest supplied an unsupported markup language"
+        raise TypeError(msg)
     return language
 
 
@@ -61,5 +64,17 @@ def fixture_language_directive_builder(
     multiple comment syntaxes (e.g., MyST with HTML and percent
     comments).
     """
-    param: tuple[MarkupLanguage, DirectiveBuilder] = request.param  # ty: ignore[unsound-assignment]
-    return param
+    raw_param: object = request.param
+    if not isinstance(raw_param, tuple):
+        msg = "pytest supplied a non-tuple fixture parameter"
+        raise TypeError(msg)
+    if raw_param.__len__() != 2:  # noqa: PLR2004
+        msg = "pytest supplied an invalid markup-language fixture parameter"
+        raise TypeError(msg)
+    if not isinstance(raw_param[0], MarkupLanguage) or not isinstance(
+        raw_param[1],
+        DirectiveBuilder,
+    ):
+        msg = "pytest supplied an invalid markup-language fixture parameter"
+        raise TypeError(msg)
+    return raw_param[0], raw_param[1]
