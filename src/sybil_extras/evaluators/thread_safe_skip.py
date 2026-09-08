@@ -65,20 +65,11 @@ class _DocumentPlan:
     skip_directive_for_region: dict[int, _SkipDirective]
 
 
-def _parsed_skip_directive(*, value: object) -> tuple[str, str | None]:
-    """Return the two values produced by Sybil's skip parser."""
-    if not isinstance(value, tuple):
-        msg = "A skip directive must parse to a tuple"
-        raise TypeError(msg)
-    if value.__len__() != 2:  # noqa: PLR2004
-        msg = "A skip directive must parse to an action and reason"
-        raise TypeError(msg)
-    if not isinstance(value[0], str) or not (
-        value[1] is None or isinstance(value[1], str)
-    ):
-        msg = "A skip directive action and reason must be strings"
-        raise TypeError(msg)
-    return value[0], value[1]
+def _parsed_skip_directive(
+    *, value: tuple[str, str | None]
+) -> tuple[str, str | None]:
+    """Type the pair produced by Sybil's skip parser."""
+    return value
 
 
 @beartype

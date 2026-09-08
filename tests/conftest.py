@@ -23,6 +23,20 @@ LANGUAGE_DIRECTIVE_BUILDER_IDS = [
 ]
 
 
+def _markup_language(*, value: MarkupLanguage) -> MarkupLanguage:
+    """Type a markup language supplied by the pytest parameter API."""
+    return value
+
+
+def _language_builder_pair(
+    *, value: tuple[MarkupLanguage, DirectiveBuilder]
+) -> tuple[MarkupLanguage, DirectiveBuilder]:
+    """Type a language and builder supplied by the pytest parameter
+    API.
+    """
+    return value
+
+
 @pytest.fixture(name="language", params=ALL_LANGUAGES, ids=LANGUAGE_IDS)
 def fixture_language(*, request: pytest.FixtureRequest) -> MarkupLanguage:
     """Provide each supported markup language."""
@@ -42,11 +56,7 @@ def fixture_markup_language(
     *, request: pytest.FixtureRequest
 ) -> MarkupLanguage:
     """Provide each supported markup language."""
-    language: object = request.param
-    if not isinstance(language, MarkupLanguage):
-        msg = "pytest supplied an unsupported markup language"
-        raise TypeError(msg)
-    return language
+    return _markup_language(value=request.param)
 
 
 @pytest.fixture(
@@ -64,17 +74,4 @@ def fixture_language_directive_builder(
     multiple comment syntaxes (e.g., MyST with HTML and percent
     comments).
     """
-    raw_param: object = request.param
-    if not isinstance(raw_param, tuple):
-        msg = "pytest supplied a non-tuple fixture parameter"
-        raise TypeError(msg)
-    if raw_param.__len__() != 2:  # noqa: PLR2004
-        msg = "pytest supplied an invalid markup-language fixture parameter"
-        raise TypeError(msg)
-    if not isinstance(raw_param[0], MarkupLanguage) or not isinstance(
-        raw_param[1],
-        DirectiveBuilder,
-    ):
-        msg = "pytest supplied an invalid markup-language fixture parameter"
-        raise TypeError(msg)
-    return raw_param[0], raw_param[1]
+    return _language_builder_pair(value=request.param)
