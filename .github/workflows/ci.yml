@@ -26,7 +26,7 @@ jobs:
       # We run tests against "." and not the tests directory as we test the README
       # and documentation.
       # We use "-s" to allow for the pty tests to run.
-      TEST_COMMAND: uv run --extra=dev pytest -s -vvv .
+      TEST_COMMAND: uv run --group=dev pytest -s -vvv .
 
     steps:
       - uses: actions/checkout@v7
