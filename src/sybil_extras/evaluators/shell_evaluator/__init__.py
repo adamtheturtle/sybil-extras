@@ -1,7 +1,6 @@
 """An evaluator for running shell commands on example files."""
 
 import contextlib
-import platform
 import subprocess
 from collections.abc import Mapping, Sequence
 from pathlib import Path
@@ -130,12 +129,6 @@ class _ShellCommandRunner:
 
     def __call__(self, example: Example) -> None:
         """Run the shell command on the example file."""
-        if (
-            self._use_pty and platform.system() == "Windows"
-        ):  # pragma: no cover
-            msg = "Pseudo-terminal not supported on Windows."
-            raise ValueError(msg)
-
         padding_line = (
             example.line + example.parsed.line_offset if self._pad_file else 0
         )

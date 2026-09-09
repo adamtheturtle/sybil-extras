@@ -63,7 +63,7 @@ def fixture_use_pty_option(
 ) -> bool:
     """Test with and without the pseudo-terminal."""
     use_pty = bool(request.param)
-    if use_pty and platform.system() == "Windows":  # pragma: no cover
+    if use_pty and platform.system() == "Windows":
         pytest.skip(reason="PTY is not supported on Windows.")
     return use_pty
 
@@ -119,6 +119,30 @@ def test_error(*, rst_file: Path, use_pty_option: bool) -> None:
     assert exc.value.returncode == 1
     # The last element is the path to the temporary file.
     assert exc.value.cmd[:-1] == args
+
+
+@pytest.mark.skipif(
+    condition=platform.system() != "Windows",
+    reason="PTY rejection is Windows-specific.",
+)
+def test_pty_rejected_on_windows(*, rst_file: Path) -> None:
+    """Requesting a pseudo-terminal on Windows fails clearly."""
+    evaluator = ShellCommandEvaluator(
+        args=["cmd", "/c", "exit", "0"],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=False,
+        use_pty=True,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    document = Sybil(parsers=[parser]).parse(path=rst_file)
+    (example,) = document.examples()
+
+    with pytest.raises(
+        expected_exception=ValueError,
+        match="Pseudo-terminal execution is not supported on Windows",
+    ):
+        example.evaluate()
 
 
 def test_output_shown(
