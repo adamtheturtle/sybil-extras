@@ -1,0 +1,1 @@
+Replace inline security suppressions with documented, file-scoped exceptions for APIs whose purpose is to execute commands or trusted expressions.

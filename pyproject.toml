@@ -140,9 +140,22 @@ lint.per-file-ignores."doccmd_*.py" = [
     # Allow 'assert' in docs.
     "S101",
 ]
+lint.per-file-ignores."src/sybil_extras/evaluators/_subprocess_utils.py" = [
+    # ShellCommandEvaluator's public purpose is to run its caller's command.
+    "S603",
+]
+lint.per-file-ignores."src/sybil_extras/evaluators/thread_safe_skip.py" = [
+    # Match Sybil's skip-condition contract by evaluating expressions in the
+    # document namespace, which is already trusted to execute code examples.
+    "S307",
+]
 lint.per-file-ignores."tests/**/test_*.py" = [
     # Allow 'assert' as we use it for tests.
     "S101",
+]
+lint.per-file-ignores."tests/evaluators/test_shell_evaluator.py" = [
+    # Exercise process signalling with the current Python interpreter.
+    "S603",
 ]
 # Do not automatically remove commented out code.
 # We comment out code during development, and with VSCode auto-save, this code
@@ -266,6 +279,7 @@ MESSAGES-CONTROL.per-file-ignores = [
     "docs/source/doccmd_*/*.py:invalid-name",
     "doccmd_README_rst_*.py:invalid-name",
     "doccmd_*/*.py:invalid-name",
+    "src/sybil_extras/evaluators/thread_safe_skip.py:eval-used",
 ]
 # Spelling dictionary name. Available dictionaries: none. To make it working
 # install python-enchant package.
