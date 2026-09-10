@@ -42,7 +42,7 @@ class _Decision:
     """
 
     kind: str
-    skip_reason: object | None
+    skip_reason: str
 
 
 @dataclass
@@ -207,7 +207,7 @@ class ThreadSafeSkipper(Skipper):
         """Compute the decision for a directive without caching."""
         reason = directive.reason
         if reason is None or reason == "":
-            return _Decision(kind="silent", skip_reason=None)
+            return _Decision(kind="silent", skip_reason="")
 
         namespace = document.namespace.copy()
         text = reason.lstrip()
@@ -218,8 +218,8 @@ class ThreadSafeSkipper(Skipper):
             namespace["if_"] = If(default_reason=condition)
         result = eval(text, namespace)  # noqa: S307  # pylint: disable=eval-used
         if result:
-            return _Decision(kind="raise", skip_reason=result)
-        return _Decision(kind="fall_through", skip_reason=None)
+            return _Decision(kind="raise", skip_reason=str(object=result))
+        return _Decision(kind="fall_through", skip_reason="")
 
     @override
     def evaluate_skip_example(self, example: Example) -> None:
@@ -249,7 +249,7 @@ class ThreadSafeSkipper(Skipper):
             # Build a fresh ``SkipTest`` per raise so concurrent threads
             # do not race on a shared ``__traceback__`` attribute. The
             # skip reason is normalized through ``str``.
-            raise SkipTest(str(object=decision.skip_reason))
+            raise SkipTest(decision.skip_reason)
 
     def __call__(self, example: Example) -> None:
         """Evaluate ``example`` against this skipper."""
