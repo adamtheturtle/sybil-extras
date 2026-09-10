@@ -16,6 +16,10 @@ from typing import IO
 
 from beartype import beartype
 
+# ``openpty`` is unavailable on Windows, where ``use_pty`` is unsupported.
+if sys.platform != "win32":  # pragma: no branch
+    from os import openpty
+
 
 @beartype
 def _process_stream(
@@ -56,14 +60,10 @@ def run_command(
     if use_pty:
         stdout_master_fd: int = -1
         slave_fd: int = -1
-        # We use ``hasattr`` rather than
-        # ``contextlib.suppress(AttributeError)`` so that ``mypy`` can narrow
-        # the type on Windows, where ``os.openpty`` does not exist.
-        # We also check ``sys.platform`` so that pyright can narrow the type.
-        if sys.platform != "win32" and hasattr(  # pylint: disable=bad-builtin
-            os, "openpty"
-        ):  # pragma: no branch
-            stdout_master_fd, slave_fd = os.openpty()
+        # The platform guard above guarantees this import whenever PTYs are
+        # supported, but Pylint does not correlate the two conditions.
+        # pylint: disable-next=possibly-used-before-assignment
+        stdout_master_fd, slave_fd = openpty()
 
         stdout: int = slave_fd
         stderr: int = slave_fd
