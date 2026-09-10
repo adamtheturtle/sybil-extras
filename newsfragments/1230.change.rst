@@ -1,0 +1,1 @@
+Store cached thread-safe skip reasons as strings instead of arbitrary objects.
