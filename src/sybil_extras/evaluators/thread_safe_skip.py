@@ -27,6 +27,7 @@ from sybil.region import Region
 from typing_extensions import override
 
 
+@beartype
 @dataclass(frozen=True)
 class _Decision:
     """Cached skip decision for a directive's governed examples.
@@ -57,6 +58,7 @@ class _SkipDirective:
     decision_lock: "threading.Lock"
 
 
+@beartype
 @dataclass
 class _DocumentPlan:
     """Per-document skip plan built from regions in source order."""
@@ -65,6 +67,7 @@ class _DocumentPlan:
     skip_directive_for_region: dict[int, _SkipDirective]
 
 
+@beartype
 def _parsed_skip_directive(
     *, value: tuple[str, str | None]
 ) -> tuple[str, str | None]:
