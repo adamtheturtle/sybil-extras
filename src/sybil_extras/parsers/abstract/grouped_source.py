@@ -53,6 +53,7 @@ class _GroupMarker:
     expected_code_blocks: int
 
 
+@beartype
 def _group_marker(*, value: _GroupMarker) -> _GroupMarker:
     """Type a marker supplied by Sybil's parsed-value API."""
     return value

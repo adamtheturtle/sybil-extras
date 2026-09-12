@@ -25,6 +25,7 @@ CONTENT_INDENT_LEXEME = "content_indent"
 CONTENT_SEPARATOR_LEXEME = "content_separator"
 
 
+@beartype
 @dataclass
 class _CapturedValue:
     """A namespace value isolated to one evaluator call."""
@@ -32,6 +33,7 @@ class _CapturedValue:
     value: object | None
 
 
+@beartype
 class _WriterLocal(threading.local):
     """Per-thread stack of namespace captures."""
 
@@ -40,6 +42,7 @@ class _WriterLocal(threading.local):
         self.captures: dict[str, list[_CapturedValue]] = {}
 
 
+@beartype
 class _WriterNamespace(dict[str, object]):
     """A document namespace with isolated writer result slots."""
 
