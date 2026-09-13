@@ -53,20 +53,14 @@ def run_command(
         ``None`` because output is streamed directly to the parent
         process's file descriptors.
     """
-    if use_pty:
-        stdout_master_fd: int = -1
-        slave_fd: int = -1
-        # ``os.openpty`` is unavailable on Windows. The platform check also
-        # lets static type checkers narrow to platforms where it exists.
-        if sys.platform != "win32":  # pragma: no branch
-            stdout_master_fd, slave_fd = os.openpty()
-
-        stdout: int = slave_fd
-        stderr: int = slave_fd
+    # ``os.openpty`` is unavailable on Windows. The evaluator rejects
+    # pseudo-terminal requests there before calling this helper.
+    if use_pty and sys.platform != "win32":
+        stdout_master_fd, slave_fd = os.openpty()
         with subprocess.Popen(  # noqa: S603
             args=command,
-            stdout=stdout,
-            stderr=stderr,
+            stdout=slave_fd,
+            stderr=slave_fd,
             stdin=subprocess.DEVNULL,
             env=env,
             close_fds=True,
