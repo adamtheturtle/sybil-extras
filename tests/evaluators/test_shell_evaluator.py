@@ -10,6 +10,7 @@ import textwrap
 import time
 import uuid
 from pathlib import Path
+from unittest.mock import patch
 
 import charset_normalizer
 import click
@@ -1382,3 +1383,26 @@ def test_no_write_leaves_file_unchanged(
     original = rst_file.read_text(encoding="utf-8")
     example.evaluate()
     assert rst_file.read_text(encoding="utf-8") == original
+
+
+def test_windows_rejects_pseudo_terminal(*, rst_file: Path) -> None:
+    """Requesting a pseudo-terminal on Windows fails before execution."""
+    evaluator = ShellCommandEvaluator(
+        args=[sys.executable],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=False,
+        use_pty=True,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    document = Sybil(parsers=[parser]).parse(path=rst_file)
+    (example,) = document.examples()
+
+    with (
+        patch(target="platform.system", return_value="Windows"),
+        pytest.raises(
+            expected_exception=ValueError,
+            match=r"^Pseudo-terminal not supported on Windows\.$",
+        ),
+    ):
+        example.evaluate()
