@@ -1,11 +1,13 @@
 """Tests for the code_block_writer module."""
 
+import re
 import textwrap
 import threading
+from collections.abc import Iterable
 from pathlib import Path
 
 import pytest
-from sybil import Example, Sybil
+from sybil import Document, Example, Region, Sybil
 from sybil.example import SybilFailure
 
 from sybil_extras.evaluators.code_block_writer import CodeBlockWriterEvaluator
@@ -22,6 +24,48 @@ from sybil_extras.languages import (
     MarkupLanguage,
 )
 from sybil_extras.parsers.markdown.group_all import GroupAllParser
+
+
+def test_empty_non_lexeme_code_block_reports_parser_contract(
+    tmp_path: Path,
+) -> None:
+    """An empty custom block reports its missing source-position
+    lexeme.
+    """
+    source_file = tmp_path / "source.txt"
+    _ = source_file.write_text(data="original", encoding="utf-8")
+
+    def modifying_evaluator(example: Example) -> None:
+        """Request a write through the public writer contract."""
+        example.document.namespace["modified_content"] = "modified"
+
+    writer = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)
+
+    def parser(document: Document) -> Iterable[Region]:
+        """Yield a valid Sybil region with a non-Lexeme parsed value."""
+        del document
+        yield Region(
+            start=0,
+            end=len("original"),
+            parsed="",
+            evaluator=writer,
+        )
+
+    document = Sybil(parsers=[parser]).parse(path=source_file)
+    (example,) = document.examples()
+
+    with pytest.raises(
+        expected_exception=TypeError,
+        match=re.escape(
+            pattern=(
+                "Writing an empty code block requires its parser to store a "
+                "Lexeme in example.parsed"
+            )
+        ),
+    ):
+        example.evaluate()
+
+    assert source_file.read_text(encoding="utf-8") == "original"
 
 
 def test_write_back_of_group_spanning_multiple_blocks_is_rejected(

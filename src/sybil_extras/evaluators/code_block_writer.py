@@ -201,7 +201,12 @@ def _source_offset(*, example: Example) -> int:
     language produced the region.
     """
     parsed = example.parsed
-    assert isinstance(parsed, Lexeme)  # noqa: S101
+    if not isinstance(parsed, Lexeme):
+        msg = (
+            "Writing an empty code block requires its parser to store a "
+            "Lexeme in example.parsed."
+        )
+        raise TypeError(msg)
     return parsed.offset
 
 
