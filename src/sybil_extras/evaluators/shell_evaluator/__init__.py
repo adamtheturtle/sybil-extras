@@ -130,9 +130,7 @@ class _ShellCommandRunner:
 
     def __call__(self, example: Example) -> None:
         """Run the shell command on the example file."""
-        if (
-            self._use_pty and platform.system() == "Windows"
-        ):  # pragma: no cover
+        if self._use_pty and platform.system() == "Windows":
             msg = "Pseudo-terminal not supported on Windows."
             raise ValueError(msg)
 
