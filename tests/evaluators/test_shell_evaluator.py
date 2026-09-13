@@ -55,18 +55,23 @@ def make_temp_file_path(*, example: Example) -> Path:
 
 @pytest.fixture(
     name="use_pty_option",
-    # On CI we cannot use the pseudo-terminal.
-    params=[True, False],
+    params=[
+        pytest.param(
+            True,
+            marks=pytest.mark.skipif(
+                condition=platform.system() == "Windows",
+                reason="PTY is not supported on Windows.",
+            ),
+        ),
+        False,
+    ],
 )
 def fixture_use_pty_option(
     *,
     request: pytest.FixtureRequest,
 ) -> bool:
     """Test with and without the pseudo-terminal."""
-    use_pty = bool(request.param)
-    if use_pty and platform.system() == "Windows":  # pragma: no cover
-        pytest.skip(reason="PTY is not supported on Windows.")
-    return use_pty
+    return bool(request.param)
 
 
 @pytest.fixture(name="rst_file")
