@@ -219,6 +219,8 @@ class ThreadSafeSkipper(Skipper):
             condition = text[2:]
             text = "if_" + condition
             namespace["if_"] = If(default_reason=condition)
+        # Evaluating skip expressions is this feature's public contract; the
+        # expression receives only the document's explicit namespace.
         result = eval(text, namespace)  # noqa: S307  # pylint: disable=eval-used
         if result:
             return _Decision(kind="raise", skip_reason=str(object=result))

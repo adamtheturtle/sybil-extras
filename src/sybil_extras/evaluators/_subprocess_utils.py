@@ -63,6 +63,8 @@ def run_command(
 
         stdout: int = slave_fd
         stderr: int = slave_fd
+        # The configured evaluator command is passed as arguments without a
+        # shell; executing it is the purpose of this public helper.
         with subprocess.Popen(  # noqa: S603
             args=command,
             stdout=stdout,
@@ -102,6 +104,8 @@ def run_command(
         # test-framework capture object — either way the write is safe.
         # This preserves live streaming: output is forwarded chunk-by-chunk
         # rather than being buffered until the process exits.
+        # The configured evaluator command is passed as arguments without a
+        # shell; executing it is the purpose of this public helper.
         with subprocess.Popen(  # noqa: S603
             args=command,
             stdout=subprocess.PIPE,
@@ -109,6 +113,8 @@ def run_command(
             stdin=subprocess.DEVNULL,
             env=env,
         ) as process:
+            # PIPE guarantees both streams; this guards an unexpected
+            # child-process contract violation before starting the threads.
             if (
                 process.stdout is None or process.stderr is None
             ):  # pragma: no cover

@@ -41,6 +41,7 @@ def _language_builder_pair(
 def fixture_language(*, request: pytest.FixtureRequest) -> MarkupLanguage:
     """Provide each supported markup language."""
     language = request.param
+    # Fixture parameters supply only MarkupLanguage members; guard misuse.
     if not isinstance(language, MarkupLanguage):  # pragma: no cover
         message = "Unexpected markup language fixture parameter"
         raise TypeError(message)

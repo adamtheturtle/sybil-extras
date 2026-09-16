@@ -88,8 +88,8 @@ class SphinxJinja2Parser:
             if arguments is None:
                 arguments = ""
 
+            # MyST always provides map for fence tokens.
             if token.map is None:  # pragma: no cover
-                # This should never happen; map is always set for fence tokens.
                 raise ValueError(token)
 
             start_line, end_line = token.map

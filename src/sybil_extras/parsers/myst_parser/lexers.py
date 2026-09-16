@@ -68,8 +68,8 @@ class DirectiveInHTMLCommentLexer:
             if token.type != "html_block":
                 continue
 
+            # MyST always provides map for html_block tokens.
             if token.map is None:  # pragma: no cover
-                # map is always set for html_block tokens.
                 raise ValueError(token)
 
             start_line, end_line = token.map
@@ -159,8 +159,8 @@ class DirectiveInPercentCommentLexer:
             if token.type != "myst_line_comment":
                 continue
 
+            # MyST always provides map for myst_line_comment tokens.
             if token.map is None:  # pragma: no cover
-                # map is always set for myst_line_comment tokens.
                 raise ValueError(token)
 
             start_line, end_line = token.map

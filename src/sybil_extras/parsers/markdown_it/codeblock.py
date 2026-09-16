@@ -168,7 +168,8 @@ class CodeBlockParser:
         Returns ``None`` if the HTML comment is not an invisible code
         block, or if the language filter does not match.
         """
-        assert token.map is not None  # noqa: S101  # always set for html_block
+        # MarkdownIt always provides map for html_block tokens.
+        assert token.map is not None  # noqa: S101
         content = token.content
         match = _INVISIBLE_CODE_BLOCK_PATTERN.match(string=content)
         if match is None:

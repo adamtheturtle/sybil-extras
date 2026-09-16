@@ -1,5 +1,6 @@
 """Configuration for Sphinx."""
 
+# Sphinx requires lowercase configuration variables at module scope.
 # pylint: disable=invalid-name
 
 import importlib.metadata
