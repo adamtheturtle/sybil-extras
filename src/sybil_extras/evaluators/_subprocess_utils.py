@@ -115,8 +115,8 @@ def run_command(
             stdin=subprocess.DEVNULL,
             env=env,
         ) as process:
-            # PIPE guarantees both streams; this guards an unexpected
-            # child-process contract violation before starting the threads.
+            # PIPE provides both streams, but type stubs mark them optional.
+            # Check both to narrow their types before starting the threads.
             if (
                 process.stdout is None or process.stderr is None
             ):  # pragma: no cover
