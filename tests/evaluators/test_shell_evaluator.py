@@ -851,13 +851,13 @@ def test_no_file_left_behind_on_interruption(
 
     # Sanity check the script by checking that it can run fine.
     run_script_args = [sys.executable, str(object=evaluator_script)]
-    # The arguments contain this interpreter and a script created in tmp_path.
+    # Run this interpreter against the script created in tmp_path above.
     _completed_process = subprocess.run(  # noqa: S603
         args=run_script_args,
         check=True,
     )
 
-    # The arguments contain this interpreter and a script created in tmp_path.
+    # Run the same test-owned script so its process can receive SIGINT.
     with subprocess.Popen(  # noqa: S603
         args=run_script_args,
     ) as evaluator_process:
