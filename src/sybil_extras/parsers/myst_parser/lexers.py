@@ -68,7 +68,9 @@ class DirectiveInHTMLCommentLexer:
             if token.type != "html_block":
                 continue
 
-            # MyST always provides map for html_block tokens.
+            # The built-in HTML block rule sets map. Upstream proposes a
+            # token class with a required map:
+            # https://github.com/executablebooks/markdown-it-py/pull/431
             if token.map is None:  # pragma: no cover
                 raise ValueError(token)
 
@@ -159,7 +161,8 @@ class DirectiveInPercentCommentLexer:
             if token.type != "myst_line_comment":
                 continue
 
-            # MyST always provides map for myst_line_comment tokens.
+            # The plugin sets the map before returning a line-comment token:
+            # https://github.com/executablebooks/mdit-py-plugins/blob/da70e05b7630c38047d1921ef21d1aadc34c1ea9/mdit_py_plugins/myst_blocks/index.py#L56-L74
             if token.map is None:  # pragma: no cover
                 raise ValueError(token)
 

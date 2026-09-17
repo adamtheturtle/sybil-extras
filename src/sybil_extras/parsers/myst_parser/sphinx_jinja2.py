@@ -88,7 +88,9 @@ class SphinxJinja2Parser:
             if arguments is None:
                 arguments = ""
 
-            # MyST always provides map for fence tokens.
+            # The built-in fence rule sets map. Upstream proposes a token
+            # class with a required map:
+            # https://github.com/executablebooks/markdown-it-py/pull/431
             if token.map is None:  # pragma: no cover
                 raise ValueError(token)
 
