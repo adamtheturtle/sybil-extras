@@ -63,6 +63,9 @@ def run_command(
 
         stdout: int = slave_fd
         stderr: int = slave_fd
+        # The caller supplies the executable and arguments and must trust
+        # both, including any shell they explicitly choose. This function
+        # runs the command without adding a shell.
         with subprocess.Popen(  # noqa: S603
             args=command,
             stdout=stdout,
@@ -102,6 +105,9 @@ def run_command(
         # test-framework capture object — either way the write is safe.
         # This preserves live streaming: output is forwarded chunk-by-chunk
         # rather than being buffered until the process exits.
+        # The caller supplies the executable and arguments and must trust
+        # both, including any shell they explicitly choose. This function
+        # runs the command without adding a shell.
         with subprocess.Popen(  # noqa: S603
             args=command,
             stdout=subprocess.PIPE,
