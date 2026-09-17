@@ -68,8 +68,10 @@ class DirectiveInHTMLCommentLexer:
             if token.type != "html_block":
                 continue
 
+            # The built-in HTML block rule sets map. Upstream proposes a
+            # token class with a required map:
+            # https://github.com/executablebooks/markdown-it-py/pull/431
             if token.map is None:  # pragma: no cover
-                # map is always set for html_block tokens.
                 raise ValueError(token)
 
             start_line, end_line = token.map
@@ -159,8 +161,9 @@ class DirectiveInPercentCommentLexer:
             if token.type != "myst_line_comment":
                 continue
 
+            # The plugin sets the map before returning a line-comment token:
+            # https://github.com/executablebooks/mdit-py-plugins/blob/da70e05b7630c38047d1921ef21d1aadc34c1ea9/mdit_py_plugins/myst_blocks/index.py#L56-L74
             if token.map is None:  # pragma: no cover
-                # map is always set for myst_line_comment tokens.
                 raise ValueError(token)
 
             start_line, end_line = token.map

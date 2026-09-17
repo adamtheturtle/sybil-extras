@@ -105,6 +105,9 @@ class CodeBlockParser:
         offsets: list[int],
     ) -> Region | None:
         """Build a region for a fenced code block token."""
+        # The built-in fence rule sets map. Upstream proposes a token class
+        # with a required map:
+        # https://github.com/executablebooks/markdown-it-py/pull/431
         if token.map is None:  # pragma: no cover
             raise ValueError(token)
 
@@ -179,6 +182,9 @@ class CodeBlockParser:
         Returns ``None`` if the HTML comment is not an invisible code
         block, or if the language filter does not match.
         """
+        # The built-in HTML block rule sets map. Upstream proposes a token
+        # class with a required map:
+        # https://github.com/executablebooks/markdown-it-py/pull/431
         if token.map is None:  # pragma: no cover
             raise ValueError(token)
         content = token.content
