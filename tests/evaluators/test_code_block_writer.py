@@ -911,16 +911,17 @@ def test_empty_code_block_write_empty(
     assert source_file.read_text(encoding="utf-8") == content
 
 
-def test_djot_quoted_code_block(tmp_path: Path) -> None:
-    """Changes are written to a Djot code block inside a block quote.
-
-    Djot supports two types of code blocks in block quotes:
-    1. With explicit closing fence (```): Standard fenced code block
-    2. Without closing fence: Code block implicitly closed by container end
-
-    Once https://github.com/simplistix/sybil/issues/160 is done, we can expand
-    this test to cover Markdown / MDX / MyST.
-    """
+@pytest.mark.parametrize(
+    argnames="markup_language",
+    argvalues=(DJOT, MARKDOWN, MDX, MYST),
+    ids=lambda language: language.name,
+)
+def test_quoted_code_block(
+    *,
+    tmp_path: Path,
+    markup_language: MarkupLanguage,
+) -> None:
+    """Changes are written to a code block inside a block quote."""
     original_content = textwrap.dedent(
         text="""\
         Some text before
@@ -930,32 +931,25 @@ def test_djot_quoted_code_block(tmp_path: Path) -> None:
         > assert x == 4
         > ```
 
-        Text between blocks
-
-        > ```python
-        > a = 1 + 1
-        > assert a == 2
-
         Text after
         """
     )
-    djot_file = tmp_path / "test_document.example.djot"
-    _ = djot_file.write_text(data=original_content, encoding="utf-8")
+    source_file = tmp_path / "test_document.md"
+    _ = source_file.write_text(data=original_content, encoding="utf-8")
 
     def modifying_evaluator(example: Example) -> None:
         """Store modified content in namespace."""
         example.document.namespace["modified_content"] = "y = 5"
 
     writer_evaluator = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)
-    parser = DJOT.code_block_parser_cls(
+    parser = markup_language.code_block_parser_cls(
         language="python",
         evaluator=writer_evaluator,
     )
     sybil = Sybil(parsers=[parser])
-    document = sybil.parse(path=djot_file)
-    (first_example, second_example) = document.examples()
-    first_example.evaluate()
-    second_example.evaluate()
+    document = sybil.parse(path=source_file)
+    (example,) = document.examples()
+    example.evaluate()
 
     expected_content = textwrap.dedent(
         text="""\
@@ -965,16 +959,49 @@ def test_djot_quoted_code_block(tmp_path: Path) -> None:
         > y = 5
         > ```
 
-        Text between blocks
+        Text after
+        """
+    )
+    assert source_file.read_text(encoding="utf-8") == expected_content
+    # Namespace key is cleared after write
+    assert "modified_content" not in document.namespace
 
+
+def test_djot_unclosed_quoted_code_block(tmp_path: Path) -> None:
+    """Djot closes an unclosed code block at the block quote boundary."""
+    original_content = textwrap.dedent(
+        text="""\
+        > ```python
+        > a = 1 + 1
+        > assert a == 2
+
+        Text after
+        """
+    )
+    source_file = tmp_path / "test_document.example.djot"
+    _ = source_file.write_text(data=original_content, encoding="utf-8")
+
+    def modifying_evaluator(example: Example) -> None:
+        """Store modified content in namespace."""
+        example.document.namespace["modified_content"] = "y = 5"
+
+    parser = DJOT.code_block_parser_cls(
+        language="python",
+        evaluator=CodeBlockWriterEvaluator(evaluator=modifying_evaluator),
+    )
+    document = Sybil(parsers=[parser]).parse(path=source_file)
+    (example,) = document.examples()
+    example.evaluate()
+
+    expected_content = textwrap.dedent(
+        text="""\
         > ```python
         > y = 5
 
         Text after
         """
     )
-    assert djot_file.read_text(encoding="utf-8") == expected_content
-    # Namespace key is cleared after write
+    assert source_file.read_text(encoding="utf-8") == expected_content
     assert "modified_content" not in document.namespace
 
 
