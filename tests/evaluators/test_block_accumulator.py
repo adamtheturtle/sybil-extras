@@ -130,8 +130,7 @@ def test_custom_namespace_key(tmp_path: Path) -> None:
     for example in document.examples():
         example.evaluate()
 
-    assert document.namespace["custom_key"] == ["x = 1\n", "y = 2"]
-    assert "blocks" not in document.namespace
+    assert document.namespace == {"custom_key": ["x = 1\n", "y = 2"]}
 
 
 def test_single_block(tmp_path: Path) -> None:

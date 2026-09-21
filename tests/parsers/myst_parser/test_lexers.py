@@ -62,7 +62,7 @@ def test_html_directive_in_indented_section(tmp_path: Path) -> None:
     for example in document.examples():
         example.evaluate()
 
-    assert "x" not in document.namespace
+    assert document.namespace == {}
 
 
 def test_percent_comment_directive(tmp_path: Path) -> None:
@@ -94,7 +94,7 @@ def test_percent_comment_directive(tmp_path: Path) -> None:
     for example in document.examples():
         example.evaluate()
 
-    assert "x" not in document.namespace
+    assert document.namespace == {}
 
 
 def test_percent_comment_directive_at_eof(tmp_path: Path) -> None:
