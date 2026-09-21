@@ -59,4 +59,4 @@ x = 1
 
     # The skip directive should have been recognized and the code block
     # should have been skipped, so x should not be in the namespace
-    assert "x" not in document.namespace
+    assert document.namespace == {}

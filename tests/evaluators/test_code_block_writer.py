@@ -963,8 +963,7 @@ def test_quoted_code_block(
         """
     )
     assert source_file.read_text(encoding="utf-8") == expected_content
-    # Namespace key is cleared after write
-    assert "modified_content" not in document.namespace
+    assert document.namespace == {}
 
 
 def test_djot_unclosed_quoted_code_block(tmp_path: Path) -> None:
@@ -1002,7 +1001,7 @@ def test_djot_unclosed_quoted_code_block(tmp_path: Path) -> None:
         """
     )
     assert source_file.read_text(encoding="utf-8") == expected_content
-    assert "modified_content" not in document.namespace
+    assert document.namespace == {}
 
 
 def test_no_write_when_content_unchanged(tmp_path: Path) -> None:
