@@ -175,7 +175,14 @@ class JinjaBlockBuilder(Protocol):
 
 @beartype
 def _normalize_code(content: str) -> str:
-    """Normalize code provided in tests into a block-friendly form."""
+    r"""Normalize code provided in tests into a block-friendly form.
+
+    post[]:
+        _normalize_code(content=_) == _
+        _ == "" or _.endswith("\n")
+        _ == "" or not _.startswith("\n")
+        _ == "" or not _.endswith("\n\n")
+    """
     normalized = textwrap.dedent(text=content).strip("\n")
     if not bool(normalized):
         return ""

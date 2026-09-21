@@ -14,6 +14,21 @@ on:
 permissions: {}
 
 jobs:
+  crosshair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.1.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: '**/pyproject.toml'
+      - name: Check contracts
+        run: uv run --group=dev --group=crosshair crosshair check --analysis_kind=PEP316
+          sybil_extras.languages._normalize_code
+
   build:
     strategy:
       matrix:
@@ -54,13 +69,13 @@ jobs:
           UV_PYTHON: ${{ matrix.python-version }}
 
   completion-ci:
-    needs: build
+    needs: [build, crosshair]
     runs-on: ubuntu-latest
     if: always()  # Run even if one matrix job fails
     steps:
       - name: Check matrix job status
         run: |-
-          if ! ${{ needs.build.result == 'success' }}; then
-            echo "One or more matrix jobs failed"
+          if ! ${{ needs.build.result == 'success' && needs.crosshair.result == 'success' }}; then
+            echo "One or more jobs failed"
             exit 1
           fi
