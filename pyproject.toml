@@ -47,7 +47,7 @@ urls.Source = "https://github.com/adamtheturtle/sybil-extras"
 
 [dependency-groups]
 dev = [
-    "actionlint-py==1.7.12.24",
+    "actionlint-py==1.7.12.25",
     "charset-normalizer==3.5.1",
     "check-manifest==0.51",
     "click==8.5.0",
