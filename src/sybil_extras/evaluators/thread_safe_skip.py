@@ -256,6 +256,7 @@ class ThreadSafeSkipper(Skipper):
             # skip reason is normalized through ``str``.
             raise SkipTest(decision.skip_reason)
 
+    @override
     def __call__(self, example: Example) -> None:
         """Evaluate ``example`` against this skipper."""
         if example.region.evaluator is self:
