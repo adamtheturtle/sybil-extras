@@ -38,9 +38,7 @@ class _ExampleModified(Protocol):
         modified_example_content: str,
     ) -> None:
         """This function is called when an example is modified."""
-        # We disable a pylint warning here because the ellipsis is required
-        # for Pyright to recognize this as a protocol.
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
 
 @beartype
@@ -68,9 +66,7 @@ class TempFilePathMaker(Protocol):
             (``example.path.parent``) so that relative imports and
             tool configurations work correctly.
         """
-        # We disable a pylint warning here because the ellipsis is required
-        # for Pyright to recognize this as a protocol.
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
 
 @beartype

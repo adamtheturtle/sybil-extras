@@ -63,15 +63,11 @@ class _SphinxJinja2Parser(Protocol):
 
     def __init__(self, *, evaluator: Evaluator) -> None:
         """Construct a sphinx-jinja2 parser."""
-        # We disable a pylint warning here because the ellipsis is required
-        # for pyright to recognize this as a protocol.
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """Call the sphinx-jinja2 parser."""
-        # We disable a pylint warning here because the ellipsis is required
-        # for pyright to recognize this as a protocol.
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
 
 @runtime_checkable
@@ -80,19 +76,15 @@ class _SkipParser(Protocol):
 
     def __init__(self, directive: str) -> None:
         """Construct a skip parser."""
-        # We disable a pylint warning here because the ellipsis is required
-        # for pyright to recognize this as a protocol.
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """Call the skip parser."""
-        # We disable a pylint warning here because the ellipsis is required
-        # for pyright to recognize this as a protocol.
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
     def get_skipper(self) -> Skipper:
         """Return the skipper managing skip state."""
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
 
 @runtime_checkable
@@ -117,15 +109,11 @@ class _GroupedSourceParser(Protocol):
         pad_groups: bool,
     ) -> None:
         """Construct a grouped code block parser."""
-        # We disable a pylint warning here because the ellipsis is required
-        # for pyright to recognize this as a protocol.
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """Call the grouped code block parser."""
-        # We disable a pylint warning here because the ellipsis is required
-        # for pyright to recognize this as a protocol.
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
 
 @runtime_checkable
@@ -139,11 +127,11 @@ class _GroupAllParser(Protocol):
         pad_groups: bool,
     ) -> None:
         """Construct a parser that groups every code block."""
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """Call the group-all parser."""
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
 
 @runtime_checkable
@@ -152,7 +140,7 @@ class CodeBlockBuilder(Protocol):
 
     def __call__(self, code: str, language: str) -> str:
         """Render ``code`` for ``language``."""
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
 
 @runtime_checkable
@@ -161,7 +149,7 @@ class DirectiveBuilder(Protocol):
 
     def __call__(self, directive: str, argument: str | None) -> str:
         """Render ``directive`` with the optional ``argument``."""
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
 
 @runtime_checkable
@@ -170,7 +158,7 @@ class JinjaBlockBuilder(Protocol):
 
     def __call__(self, body: str) -> str:
         """Render a Jinja block containing ``body``."""
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
 
 @beartype
@@ -307,15 +295,11 @@ class _CodeBlockParser(Protocol):
         evaluator: Evaluator | None,
     ) -> None:
         """Construct a code block parser."""
-        # We disable a pylint warning here because the ellipsis is required
-        # for pyright to recognize this as a protocol.
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """Call the code block parser."""
-        # We disable a pylint warning here because the ellipsis is required
-        # for pyright to recognize this as a protocol.
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
 
 @beartype

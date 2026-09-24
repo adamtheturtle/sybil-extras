@@ -29,9 +29,7 @@ class ResultTransformer(Protocol):
         example: Example,
     ) -> str:
         """Return the transformed content."""
-        # We disable a pylint warning here because the ellipsis is required
-        # for Pyright to recognize this as a protocol.
-        ...  # pylint: disable=unnecessary-ellipsis
+        ...
 
 
 @beartype
