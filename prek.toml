@@ -166,7 +166,7 @@ hooks = [
     id = "mypy",
     name = "mypy",
     stages = ["pre-push"],
-    entry = "uv run --group=dev mypy --num-workers=4",
+    entry = "uv run --group=dev mypy",
     language = "python",
     types_or = [
       "python",
@@ -179,7 +179,7 @@ hooks = [
     id = "mypy-docs",
     name = "mypy-docs",
     stages = ["pre-push"],
-    entry = 'uvx --python=3.13 doccmd --no-write-to-file --language=python --command="uv run --group=dev mypy --num-workers=4"',
+    entry = 'uvx --python=3.13 doccmd --no-write-to-file --language=python --command="uv run --group=dev mypy"',
     language = "python",
     types_or = [
       "markdown",
