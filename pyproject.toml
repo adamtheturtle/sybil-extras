@@ -49,7 +49,7 @@ urls.Source = "https://github.com/adamtheturtle/sybil-extras"
 dev = [
     "actionlint-py==1.7.12.25",
     "beartype==0.23.0rc2",
-    "charset-normalizer==3.5.1",
+    "charset-normalizer==3.5.2",
     "check-manifest==0.51",
     "click==8.5.0",
     "deptry==0.25.1",
