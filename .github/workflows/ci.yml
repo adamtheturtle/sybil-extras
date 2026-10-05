@@ -56,7 +56,7 @@ jobs:
       - name: Run tests Linux
         if: matrix.platform == 'ubuntu-latest'
         run: |
-          ${{ env.TEST_COMMAND }} --cov=src/ --cov=tests --cov-report term-missing --cov-report=xml --cov-fail-under 100
+          ${{ env.TEST_COMMAND }} --cov-report=term --cov-report=xml --cov --cov-config=pyproject.toml
         env:
           UV_PYTHON: ${{ matrix.python-version }}
 
