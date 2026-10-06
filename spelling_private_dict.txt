@@ -2,6 +2,7 @@ Djot
 Docusaurus
 EOF
 JSX
+Karva
 Lex
 MDX
 MarkdownIt
