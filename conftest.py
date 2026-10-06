@@ -9,11 +9,13 @@ from sybil.parsers.rest import (
     PythonCodeBlockParser,
 )
 
-pytest_collect_file = Sybil(
+sybil = Sybil(
     parsers=[
         ClearNamespaceParser(),
         DocTestParser(optionflags=ELLIPSIS),
         PythonCodeBlockParser(),
     ],
     patterns=["*.rst", "*.py"],
-).pytest()
+)
+
+pytest_collect_file = sybil.pytest()

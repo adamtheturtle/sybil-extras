@@ -658,6 +658,7 @@ Reference
    :maxdepth: 3
 
    install
+   karva
    contributing
    release-process
    unreleased
