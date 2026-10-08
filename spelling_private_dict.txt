@@ -1,3 +1,4 @@
+Changelog
 Djot
 Docusaurus
 EOF
@@ -6,8 +7,10 @@ Karva
 Lex
 MDX
 MarkdownIt
+MyST
 MystParser
 Neorg
+Towncrier
 args
 ast
 atomicity
@@ -15,6 +18,7 @@ backtick
 beartype
 blockquote
 blockquotes
+dataclass
 dedents
 djot
 docutils
@@ -30,6 +34,7 @@ kwargs
 lexeme
 lexemes
 linter
+macOS
 mdx
 multiline
 mypy
@@ -48,16 +53,20 @@ py
 pycon
 pyright
 pytest
+reStructuredText
 rst
 stderr
 stdout
 str
 subclasses
+sybil
 syntaxes
+teardown
 truthy
 ty
 typeshed
 unclosed
+unescaped
 ungrouped
 unindented
 variadic
