@@ -284,7 +284,7 @@ GroupedSourceParser
 
     sybil = Sybil(parsers=[code_block_parser, group_parser])
 
-    document = sybil.parse(path=Path("CHANGELOG.rst"))
+    document = sybil.parse(path=Path("docs/source/install.rst"))
 
     for item in document.examples():
         # One evaluate call will evaluate a code block with the contents of all
@@ -378,7 +378,7 @@ GroupAllParser
 
     sybil = Sybil(parsers=[code_block_parser, group_all_parser])
 
-    document = sybil.parse(path=Path("CHANGELOG.rst"))
+    document = sybil.parse(path=Path("docs/source/install.rst"))
 
     for item in document.examples():
         # One evaluate call will evaluate a code block with the contents of all
@@ -507,7 +507,7 @@ This extracts the source, arguments and options from ``.. jinja::`` directive bl
 
     parser = SphinxJinja2Parser(evaluator=_evaluator)
     sybil = Sybil(parsers=[parser])
-    document = sybil.parse(path=Path("CHANGELOG.rst"))
+    document = sybil.parse(path=Path("docs/source/install.rst"))
     for item in document.examples():
         item.evaluate()
 
