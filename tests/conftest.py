@@ -8,12 +8,6 @@ from sybil_extras.languages import (
     MarkupLanguage,
 )
 
-LANGUAGE_DIRECTIVE_BUILDER_PARAMS = [
-    (lang, builder)
-    for lang in ALL_LANGUAGES
-    for builder in lang.directive_builders
-]
-
 
 def _markup_language(*, value: MarkupLanguage) -> MarkupLanguage:
     """Type a markup language supplied by the pytest parameter API."""
@@ -58,7 +52,11 @@ def fixture_markup_language(
 
 @pytest.fixture(
     name="language_directive_builder",
-    params=LANGUAGE_DIRECTIVE_BUILDER_PARAMS,
+    params=[
+        (lang, builder)
+        for lang in ALL_LANGUAGES
+        for builder in lang.directive_builders
+    ],
     ids=lambda pair: f"{pair[0].name}-{pair[1].__name__.removeprefix('_')}",
 )
 def fixture_language_directive_builder(
