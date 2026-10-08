@@ -8,8 +8,6 @@ from sybil_extras.languages import (
     MarkupLanguage,
 )
 
-LANGUAGE_IDS = tuple(language.name for language in ALL_LANGUAGES)
-
 LANGUAGE_DIRECTIVE_BUILDER_PARAMS = [
     (lang, builder)
     for lang in ALL_LANGUAGES
@@ -37,7 +35,9 @@ def _language_builder_pair(
     return value
 
 
-@pytest.fixture(name="language", params=ALL_LANGUAGES, ids=LANGUAGE_IDS)
+@pytest.fixture(
+    name="language", params=ALL_LANGUAGES, ids=lambda language: language.name
+)
 def fixture_language(*, request: pytest.FixtureRequest) -> MarkupLanguage:
     """Provide each supported markup language."""
     language = request.param
@@ -53,7 +53,7 @@ def fixture_language(*, request: pytest.FixtureRequest) -> MarkupLanguage:
 @pytest.fixture(
     name="markup_language",
     params=ALL_LANGUAGES,
-    ids=LANGUAGE_IDS,
+    ids=lambda language: language.name,
 )
 def fixture_markup_language(
     *, request: pytest.FixtureRequest
