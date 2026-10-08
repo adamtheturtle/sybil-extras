@@ -1202,7 +1202,7 @@ def test_custom_on_modify_receives_unpadded_content(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     argnames="parser_cls",
     argvalues=(MarkdownItCodeBlockParser, SybilMarkdownCodeBlockParser),
-    ids=["markdown_it", "sybil_markdown"],
+    ids=lambda parser_cls: f"{parser_cls.__module__}.{parser_cls.__name__}",
 )
 def test_markdown_code_block_line_number(
     *,
