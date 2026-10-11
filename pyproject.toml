@@ -43,7 +43,7 @@ dependencies = [
     "sybil>=9.3.0",
     "typing-extensions>=4.4.0",
 ]
-optional-dependencies.karva = [ "karva==0.0.1a12" ]
+optional-dependencies.karva = [ "karva==0.0.1a13" ]
 urls.Documentation = "https://adamtheturtle.github.io/sybil-extras/"
 urls.Source = "https://github.com/adamtheturtle/sybil-extras"
 
@@ -58,7 +58,7 @@ dev = [
     "doc8==2.0.0",
     "furo==2025.12.19",
     "interrogate==1.7.0",
-    "karva==0.0.1a12",
+    "karva==0.0.1a13",
     "mypy==2.4.0",
     "mypy-pytest-parametrize==2026.10.5.1",
     "mypy-strict-kwargs==2026.8.25.1",
@@ -321,6 +321,10 @@ ignore = [
     "tests/**",
     "zizmor.yml",
 ]
+
+[tool.deptry]
+# The generated test modules import Karva; there is no static source import.
+per_rule_ignores.DEP002 = [ "karva" ]
 
 [tool.vulture]
 # Duplicate some of .gitignore

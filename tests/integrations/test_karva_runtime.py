@@ -3,7 +3,6 @@
 from pathlib import Path
 from unittest import SkipTest
 
-import karva
 import pytest
 from sybil import Example, Sybil
 from sybil.parsers.rest import CodeBlockParser, DocTestParser
@@ -85,7 +84,7 @@ def _skip(example: Example) -> None:
 
 
 def test_native_skip(*, tmp_path: Path) -> None:
-    """Convert Sybil's skip to a native Karva outcome."""
+    """Preserve Sybil's standard-library skip for the runner."""
     path = tmp_path / "example.rst"
     _ = path.write_text(
         data=".. code-block:: python\n\n    pass\n", encoding="utf-8"
@@ -99,8 +98,6 @@ def test_native_skip(*, tmp_path: Path) -> None:
     (example,) = suite.examples
     with (
         suite.lifecycle(),
-        pytest.raises(
-            expected_exception=karva.SkipError, match="skipped example"
-        ),
+        pytest.raises(expected_exception=SkipTest, match="skipped example"),
     ):
         suite.evaluate(example=example, fixtures={})
