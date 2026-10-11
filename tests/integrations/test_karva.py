@@ -83,7 +83,7 @@ def fresh():
     assert result.returncode == 0, result.stdout + result.stderr
     assert "6 tests run: 6 passed, 0 skipped" in result.stdout
     # Windows does not guarantee atomic appends from multiple processes.
-    # Keep worker logs separate while retaining every lifecycle assertion.
+    # Keep worker logs separate and retain every setup and teardown assertion.
     events = [
         event
         for path in project.glob(pattern="events-*.txt")
