@@ -32,7 +32,7 @@ Install Karva in the environment used by that script.
 Each matching document becomes one native test module with dynamically parametrized examples.
 Karva runs those examples in source order in one worker, with a shared document namespace and one setup and teardown per document.
 Function fixtures are injected anew for each example, and module fixtures are scoped to the document.
-Sybil skip exceptions become native Karva skips.
+Karva alpha 13 handles Sybil's standard-library ``SkipTest`` exceptions as native skips.
 Failures are reported individually, subsequent examples continue, and document teardown runs after failures.
 
 ``reference`` accepts a ``Sybil`` or a ``SybilCollection``.
