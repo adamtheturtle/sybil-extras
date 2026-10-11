@@ -31,18 +31,19 @@ def test_document_lifecycle(
     project.mkdir()
     config = project / "sybil_config.py"
     _ = config.write_text(
-        data="""from pathlib import Path
+        data="""import os
+from pathlib import Path
 from sybil import Sybil
 from sybil.parsers.rest import DocTestParser
 
 def setup(namespace):
     namespace["counter"] = 0
-    with open("events.txt", "a") as events:
+    with open(f"events-{os.getpid()}.txt", "a") as events:
         events.write("setup\\n")
 
 def teardown(namespace):
     assert namespace["counter"] == 3
-    with open("events.txt", "a") as events:
+    with open(f"events-{os.getpid()}.txt", "a") as events:
         events.write("teardown\\n")
 
 sybil = Sybil(parsers=[DocTestParser()], path=str(Path(__file__).parent),
@@ -52,7 +53,8 @@ sybil = Sybil(parsers=[DocTestParser()], path=str(Path(__file__).parent),
         encoding="utf-8",
     )
     _ = (project / "conftest.py").write_text(
-        data="""import karva
+        data="""import os
+import karva
 
 @karva.fixture(scope="module")
 def shared():
@@ -60,10 +62,10 @@ def shared():
 
 @karva.fixture
 def fresh():
-    with open("events.txt", "a") as events:
+    with open(f"events-{os.getpid()}.txt", "a") as events:
         events.write("fixture setup\\n")
     yield []
-    with open("events.txt", "a") as events:
+    with open(f"events-{os.getpid()}.txt", "a") as events:
         events.write("fixture teardown\\n")
 """,
         encoding="utf-8",
@@ -80,7 +82,13 @@ def fresh():
     result = run_karva(project, arguments)
     assert result.returncode == 0, result.stdout + result.stderr
     assert "6 tests run: 6 passed, 0 skipped" in result.stdout
-    events = (project / "events.txt").read_text(encoding="utf-8").splitlines()
+    # Windows does not guarantee atomic appends from multiple processes.
+    # Keep worker logs separate while retaining every lifecycle assertion.
+    events = [
+        event
+        for path in project.glob(pattern="events-*.txt")
+        for event in path.read_text(encoding="utf-8").splitlines()
+    ]
     assert sorted(events) == sorted(
         ["setup", "teardown"] * len(("one.rst", "two.rst"))
         + ["fixture setup", "fixture teardown"] * len((1, 2, 3, 4, 5, 6))
