@@ -44,7 +44,7 @@ The output directory must be empty, and generation never overwrites its files.
 The example identifier includes its original path, line, and column.
 Karva's primary diagnostic still points to the generated test function.
 Native source locations are tracked in `Karva issue 1513 <https://github.com/MatthewMckee4/karva/issues/1513>`_.
-Temporary module paths also prevent useful reuse of Karva's test history across runs.
-Selecting only a later example does not recreate the namespace established by earlier examples, and retries can repeat namespace mutations.
+Temporary module paths prevent useful reuse of Karva's test history across runs, while selecting only a later example omits the namespace established by earlier examples.
+Retries can also repeat namespace mutations.
 Use full document runs without retries during this pilot.
 A native ``Sybil.karva()`` integration is tracked in `Sybil issue 173 <https://github.com/simplistix/sybil/issues/173>`_.
