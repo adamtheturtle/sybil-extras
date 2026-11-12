@@ -12,7 +12,7 @@ from sybil.parsers.markdown.lexers import DirectiveInHTMLCommentLexer
 from sybil.region import Lexeme
 from sybil.typing import Evaluator, Lexer
 
-FENCE = re.compile(
+FENCE: Pattern[str] = re.compile(
     pattern=r"^(?P<prefix>[ \t]*(?:>[ \t]*)*)(?P<fence>`{3,})",
     flags=re.MULTILINE,
 )
@@ -84,8 +84,8 @@ class DjotRawFencedCodeBlockLexer:
         mapping: dict[str, str] | None = None,
     ) -> None:
         """Initialize the lexer."""
-        self.info_pattern = info_pattern
-        self.mapping = mapping
+        self.info_pattern: Pattern[str] = info_pattern
+        self.mapping: dict[str, str] | None = mapping
 
     def make_region(
         self,

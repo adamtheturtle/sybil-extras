@@ -52,7 +52,7 @@ class DirectiveInDjotCommentLexer:
         self._arguments_pattern: re.Pattern[str] = re.compile(
             pattern=rf"^(?:{arguments})$"
         )
-        self.mapping = mapping
+        self.mapping: dict[str, str] | None = mapping
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """Yield regions for djot comment directives."""
