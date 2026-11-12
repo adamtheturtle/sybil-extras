@@ -786,6 +786,45 @@ def test_deleted_temp_file_does_not_erase_code(tmp_path: Path) -> None:
     assert source_file.read_text(encoding="utf-8") == original_content
 
 
+def test_interrupted_temp_file_write(*, rst_file: Path) -> None:
+    """An interrupted write removes the partially created temporary
+    file.
+    """
+    evaluator = ShellCommandEvaluator(
+        args=[sys.executable],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=False,
+        use_pty=False,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    document = Sybil(parsers=[parser]).parse(path=rst_file)
+    (example,) = document.examples()
+
+    def write_then_interrupt(
+        path: Path,
+        *,
+        data: str,
+        encoding: str | None,
+        newline: str | None,
+    ) -> int:
+        """Interrupt after the temporary file has been created."""
+        del newline
+        encoding_to_use = "utf-8" if encoding is None else encoding
+        _ = path.write_bytes(data=data.encode(encoding=encoding_to_use))
+        raise KeyboardInterrupt
+
+    with (
+        patch.object(
+            target=Path, attribute="write_text", new=write_then_interrupt
+        ),
+        pytest.raises(expected_exception=KeyboardInterrupt),
+    ):
+        example.evaluate()
+
+    assert list(rst_file.parent.iterdir()) == [rst_file]
+
+
 def test_no_file_left_behind_on_interruption(
     *,
     rst_file: Path,

@@ -143,14 +143,13 @@ class _ShellCommandRunner:
         # newline.  This is especially true for formatters.  We add a
         # newline to the end of the file if it is missing.
         new_source = source + "\n" if not source.endswith("\n") else source
-        _ = temp_file.write_text(
-            data=new_source,
-            encoding=self._encoding,
-            newline=self._newline,
-        )
-
         temp_file_content = new_source
         try:
+            _ = temp_file.write_text(
+                data=new_source,
+                encoding=self._encoding,
+                newline=self._newline,
+            )
             result = run_command(
                 command=[
                     str(object=item) for item in [*self._args, temp_file]
