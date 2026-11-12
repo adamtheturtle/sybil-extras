@@ -42,7 +42,7 @@ class NoOpResultTransformer:
         return content
 
 
-NOOP_RESULT_TRANSFORMER = NoOpResultTransformer()
+NOOP_RESULT_TRANSFORMER: NoOpResultTransformer = NoOpResultTransformer()
 
 
 @beartype

@@ -320,7 +320,7 @@ class MarkupLanguage:
     jinja_block_builder: JinjaBlockBuilder | None
 
 
-MYST = MarkupLanguage(
+MYST: MarkupLanguage = MarkupLanguage(
     name="MyST",
     markup_separator="\n\n",
     skip_parser_cls=(
@@ -338,7 +338,7 @@ MYST = MarkupLanguage(
     jinja_block_builder=_myst_jinja_block,
 )
 
-MYST_PARSER = MarkupLanguage(
+MYST_PARSER: MarkupLanguage = MarkupLanguage(
     name="MystParser",
     markup_separator="\n\n",
     skip_parser_cls=(
@@ -359,7 +359,7 @@ MYST_PARSER = MarkupLanguage(
     jinja_block_builder=_myst_jinja_block,
 )
 
-RESTRUCTUREDTEXT = MarkupLanguage(
+RESTRUCTUREDTEXT: MarkupLanguage = MarkupLanguage(
     name="reStructuredText",
     markup_separator="\n\n",
     skip_parser_cls=sybil_extras.parsers.rest.custom_directive_skip.CustomDirectiveSkipParser,
@@ -375,7 +375,7 @@ RESTRUCTUREDTEXT = MarkupLanguage(
     jinja_block_builder=_rst_jinja_block,
 )
 
-MARKDOWN = MarkupLanguage(
+MARKDOWN: MarkupLanguage = MarkupLanguage(
     name="Markdown",
     markup_separator="\n",
     skip_parser_cls=sybil_extras.parsers.markdown.custom_directive_skip.CustomDirectiveSkipParser,
@@ -391,7 +391,7 @@ MARKDOWN = MarkupLanguage(
     jinja_block_builder=None,
 )
 
-MARKDOWN_IT = MarkupLanguage(
+MARKDOWN_IT: MarkupLanguage = MarkupLanguage(
     name="MarkdownIt",
     markup_separator="\n",
     skip_parser_cls=sybil_extras.parsers.markdown_it.custom_directive_skip.CustomDirectiveSkipParser,
@@ -407,7 +407,7 @@ MARKDOWN_IT = MarkupLanguage(
     jinja_block_builder=None,
 )
 
-MDX = MarkupLanguage(
+MDX: MarkupLanguage = MarkupLanguage(
     name="MDX",
     markup_separator="\n",
     skip_parser_cls=sybil_extras.parsers.mdx.custom_directive_skip.CustomDirectiveSkipParser,
@@ -423,7 +423,7 @@ MDX = MarkupLanguage(
     jinja_block_builder=None,
 )
 
-DJOT = MarkupLanguage(
+DJOT: MarkupLanguage = MarkupLanguage(
     name="Djot",
     markup_separator="\n",
     skip_parser_cls=sybil_extras.parsers.djot.custom_directive_skip.CustomDirectiveSkipParser,
@@ -439,7 +439,7 @@ DJOT = MarkupLanguage(
     jinja_block_builder=None,
 )
 
-NORG = MarkupLanguage(
+NORG: MarkupLanguage = MarkupLanguage(
     name="Norg",
     markup_separator="\n",
     skip_parser_cls=sybil_extras.parsers.norg.custom_directive_skip.CustomDirectiveSkipParser,

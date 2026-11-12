@@ -41,7 +41,7 @@ class NoOpSourcePreparer:
         return str(object=example.parsed)
 
 
-NOOP_SOURCE_PREPARER = NoOpSourcePreparer()
+NOOP_SOURCE_PREPARER: NoOpSourcePreparer = NoOpSourcePreparer()
 
 
 @beartype

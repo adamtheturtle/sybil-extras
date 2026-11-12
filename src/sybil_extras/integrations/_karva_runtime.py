@@ -38,9 +38,9 @@ class DocumentTests:
 
     def __init__(self, *, sybil: Sybil, path: Path) -> None:
         """Parse one document without evaluating or setting it up."""
-        self.sybil = sybil
+        self.sybil: Sybil = sybil
         self.document: Document = sybil.parse(path=path)
-        self.examples = tuple(self.document.examples())
+        self.examples: tuple[Example, ...] = tuple(self.document.examples())
 
     @contextmanager
     # Python 3.11 needs all three generator type arguments.

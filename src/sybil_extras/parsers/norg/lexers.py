@@ -47,7 +47,7 @@ class DirectiveInNorgCommentLexer:
         self.pattern: re.Pattern[str] = re.compile(
             pattern=pattern, flags=re.MULTILINE
         )
-        self.mapping = mapping
+        self.mapping: dict[str, str] | None = mapping
 
     def __call__(self, document: Document) -> Iterable[Region]:
         """Yield regions for norg infirm tag directives."""
