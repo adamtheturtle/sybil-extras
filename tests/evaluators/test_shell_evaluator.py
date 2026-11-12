@@ -810,7 +810,8 @@ def test_interrupted_temp_file_write(*, rst_file: Path) -> None:
     ) -> int:
         """Interrupt after the temporary file has been created."""
         del newline
-        _ = path.write_bytes(data=data.encode(encoding=encoding or "utf-8"))
+        encoding_to_use = "utf-8" if encoding is None else encoding
+        _ = path.write_bytes(data=data.encode(encoding=encoding_to_use))
         raise KeyboardInterrupt
 
     with (
