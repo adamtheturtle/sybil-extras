@@ -4,10 +4,67 @@ import textwrap
 from pathlib import Path
 
 import pytest
-from sybil import Sybil
+from sybil import Example, Sybil
 
+from sybil_extras.evaluators.code_block_writer import CodeBlockWriterEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.parsers.myst_parser.codeblock import CodeBlockParser
+
+
+@pytest.mark.parametrize(
+    argnames="options",
+    argvalues=(
+        ":linenos:\n:custom-option: value\n",
+        "---\nlinenos: true\ncustom-option: value\n---\n",
+    ),
+)
+@pytest.mark.parametrize(argnames="trailing", argvalues=("\n", "\n\n\n"))
+def test_directive_source_and_write_back(
+    *, tmp_path: Path, options: str, trailing: str
+) -> None:
+    """Options stay outside executable source and writer replacements."""
+    prefix = f"# Example\n\n```{{code-block}} python\n{options}\n"
+    source = f"print(1)  {trailing}"
+    content = f"{prefix}{source}```\n"
+    path = tmp_path / "example.md"
+    _ = path.write_text(data=content, encoding="utf-8")
+
+    def modify(example: Example) -> None:
+        """Replace the executable body while keeping its whitespace."""
+        example.document.namespace["modified_content"] = source.replace(
+            "print(1)", "print(2)"
+        )
+
+    parser = CodeBlockParser(
+        language="python",
+        evaluator=CodeBlockWriterEvaluator(evaluator=modify),
+    )
+    (example,) = Sybil(parsers=[parser]).parse(path=path).examples()
+
+    assert example.parsed.text == source
+    assert example.region.start + example.parsed.offset == len(prefix)
+    example.evaluate()
+    assert path.read_text(encoding="utf-8") == content.replace(
+        "print(1)", "print(2)"
+    )
+
+
+@pytest.mark.parametrize(
+    argnames="options",
+    argvalues=(":linenos:\n", "---\nlinenos: true\n---\n"),
+)
+def test_directive_options_without_body(
+    *, tmp_path: Path, options: str
+) -> None:
+    """An options-only directive has empty executable source."""
+    path = tmp_path / "example.md"
+    _ = path.write_text(
+        data=f"```{{code-block}} python\n{options}\n\n```\n",
+        encoding="utf-8",
+    )
+    parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
+    (example,) = Sybil(parsers=[parser]).parse(path=path).examples()
+    assert example.parsed.text == ""
 
 
 def test_language_with_extra_info(tmp_path: Path) -> None:

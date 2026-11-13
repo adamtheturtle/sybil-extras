@@ -54,6 +54,7 @@ pycon
 pyright
 pytest
 reStructuredText
+reportUnknownArgumentType
 rst
 stderr
 stdout

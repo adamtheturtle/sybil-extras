@@ -38,8 +38,9 @@ dynamic = [
 ]
 dependencies = [
     "beartype>=0.23.0",
+    "docutils>=0.20",
     "markdown-it-py>=3.0.0",
-    "myst-parser>=5.0.0",
+    "myst-parser>=5.2.0",
     "sybil>=9.3.0",
     "typing-extensions>=4.4.0",
 ]
@@ -95,6 +96,7 @@ dev = [
     "sybil==10.1.0",
     "towncrier==26.9.0",
     "ty==0.0.100",
+    "types-docutils==0.23.0.20261107",
     "uv==0.13.7",
     "vale==3.26.0.1",
     "vulture==2.16",
@@ -340,8 +342,9 @@ ignore_names = [
     "extensions",
     # pytest fixtures - we name fixtures like this for this purpose
     "fixture_*",
-    # docutils settings
     "halt_level",
+    # docutils directive attributes and settings
+    "has_content",
     "html_show_copyright",
     "html_show_sourcelink",
     "html_show_sphinx",
@@ -355,6 +358,7 @@ ignore_names = [
     "linkcheck_retries",
     "master_doc",
     "nitpicky",
+    "option_spec",
     "project_copyright",
     "pygments_style",
     # pytest configuration

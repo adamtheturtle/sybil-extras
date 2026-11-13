@@ -16,9 +16,7 @@ from sybil import Document, Example, Lexeme, Region
 from sybil.typing import Evaluator
 
 from sybil_extras.parsers._line_offsets import line_offsets
-from sybil_extras.parsers.myst_parser.sphinx_jinja2 import (
-    parse_options_and_body,
-)
+from sybil_extras.parsers.myst_parser._directive import parse_directive
 
 # Pattern to match an ``invisible-code-block`` directive inside an HTML
 # comment. Mirrors ``sybil.parsers.markdown.codeblock.CodeBlockParser``
@@ -138,14 +136,13 @@ class CodeBlockParser:
             region_end = len(document.text)
 
         source_text = token.content
-        removed_prefix = ""
+        body_offset = 0
         if is_directive:
-            _, source_text = parse_options_and_body(content=token.content)
-            source_length = len(source_text)
-            removed_length = len(token.content) - source_length
-            removed_prefix = token.content[:removed_length]
+            _, source_text, body_offset = parse_directive(
+                content=token.content,
+            )
 
-        source_start_line = start_line + 1 + removed_prefix.count("\n")
+        source_start_line = start_line + 1 + body_offset
         if source_start_line < len(offsets):
             opening_fence_end = offsets[source_start_line]
         else:
