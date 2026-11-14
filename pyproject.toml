@@ -39,8 +39,7 @@ dynamic = [
 dependencies = [
     "beartype>=0.23.0",
     "markdown-it-py>=3.0.0",
-    # Draft validation pin; replace with a release containing MyST-Parser #1232.
-    "myst-parser @ git+https://github.com/adamtheturtle/MyST-Parser.git@79e76e3874dbde97d2d3e593ea4b709496787a18",
+    "myst-parser>=5.2.0",
     "sybil>=9.3.0",
     "typing-extensions>=4.4.0",
 ]
@@ -341,8 +340,8 @@ ignore_names = [
     "extensions",
     # pytest fixtures - we name fixtures like this for this purpose
     "fixture_*",
-    "halt_level",
     # docutils settings
+    "halt_level",
     "html_show_copyright",
     "html_show_sourcelink",
     "html_show_sphinx",

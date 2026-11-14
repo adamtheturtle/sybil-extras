@@ -19,11 +19,12 @@ from sybil_extras.parsers.myst_parser.codeblock import CodeBlockParser
     ),
 )
 @pytest.mark.parametrize(argnames="trailing", argvalues=("\n", "\n\n\n"))
+@pytest.mark.parametrize(argnames="separator", argvalues=("", "\n"))
 def test_directive_source_and_write_back(
-    *, tmp_path: Path, options: str, trailing: str
+    *, tmp_path: Path, options: str, trailing: str, separator: str
 ) -> None:
     """Options stay outside executable source and writer replacements."""
-    prefix = f"# Example\n\n```{{code-block}} python\n{options}\n"
+    prefix = f"# Example\n\n```{{code-block}} python\n{options}{separator}"
     source = f"print(1)  {trailing}"
     content = f"{prefix}{source}```\n"
     path = tmp_path / "example.md"
@@ -51,7 +52,12 @@ def test_directive_source_and_write_back(
 
 @pytest.mark.parametrize(
     argnames="options",
-    argvalues=(":linenos:\n", "---\nlinenos: true\n---\n"),
+    argvalues=(
+        "",
+        ":linenos:\n",
+        "---\nlinenos: true\n---\n",
+        "---\nlinenos: true\n",
+    ),
 )
 def test_directive_options_without_body(
     *, tmp_path: Path, options: str
