@@ -20,17 +20,17 @@ def parse_directive(content: str) -> tuple[dict[str, str], str, int]:
         while body_offset < len(lines) and not lines[body_offset].startswith(
             "---"
         ):
-            option_lines.append(lines[body_offset])
+            option_lines.append(lines[body_offset].rstrip("\r\n"))
             body_offset += 1
         body_offset = min(body_offset + 1, len(lines))
     else:
         while body_offset < len(lines) and is_option_line(
             line=lines[body_offset]
         ):
-            option_lines.append(lines[body_offset].lstrip()[1:])
+            option_lines.append(lines[body_offset].lstrip()[1:].rstrip("\r\n"))
             body_offset += 1
 
-    options, _ = options_to_items(text=dedent(text="".join(option_lines)))
+    options, _ = options_to_items(text=dedent(text="\n".join(option_lines)))
     if body_offset < len(lines) and not bool(lines[body_offset].strip()):
         body_offset += 1
     body = "".join(lines[body_offset:])
