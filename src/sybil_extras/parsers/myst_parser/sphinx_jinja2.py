@@ -13,41 +13,11 @@ from sybil import Document, Region
 from sybil.typing import Evaluator
 
 from sybil_extras.parsers._line_offsets import line_offsets
+from sybil_extras.parsers.myst_parser._directive import parse_directive
 
-_OPTION_PATTERN = re.compile(pattern=r"^:(?P<key>[\w-]+):\s*(?P<value>.*)$")
 _JINJA_INFO_PATTERN = re.compile(
     pattern=r"^\{jinja\}(?:\s+(?P<arguments>.*))?$"
 )
-
-
-@beartype
-def parse_options_and_body(
-    content: str,
-) -> tuple[dict[str, str], str]:
-    """Separate options from body in directive content."""
-    options: dict[str, str] = {}
-    body_lines: list[str] = []
-    in_options = True
-
-    for line in content.split(sep="\n"):
-        if in_options:
-            option_match = _OPTION_PATTERN.match(string=line)
-            if option_match is not None:
-                options[option_match.group("key")] = option_match.group(
-                    "value"
-                )
-                continue
-            if line.strip() == "":
-                in_options = False
-                continue
-            in_options = False
-        body_lines.append(line)
-
-    body = "\n".join(body_lines)
-    if not bool(body.strip()):
-        body = ""
-
-    return options, body
 
 
 @beartype
@@ -103,7 +73,7 @@ class SphinxJinja2Parser:
             else:
                 region_end = len(document.text)
 
-            options, body = parse_options_and_body(
+            options, body, _ = parse_directive(
                 content=token.content,
             )
 
