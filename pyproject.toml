@@ -39,7 +39,7 @@ dynamic = [
 dependencies = [
     "beartype>=0.23.0",
     "markdown-it-py>=3.0.0",
-    "myst-parser>=5.0.0",
+    "myst-parser>=5.2.0",
     "sybil>=9.3.0",
     "typing-extensions>=4.4.0",
 ]
