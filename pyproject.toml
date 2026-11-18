@@ -56,6 +56,7 @@ dev = [
     "click==8.5.1",
     "deptry==0.25.1",
     "doc8==2.0.0",
+    "doc8-inline-markup==2026.11.18.3; python_version>='3.12'",
     "furo==2025.12.19",
     "interrogate==1.7.0",
     "karva==0.0.1a13",
