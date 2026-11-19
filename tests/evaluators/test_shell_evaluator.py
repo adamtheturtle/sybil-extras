@@ -99,7 +99,10 @@ def fixture_rst_file(*, tmp_path: Path) -> Path:
     return test_document
 
 
-def test_error(*, rst_file: Path, use_pty_option: bool) -> None:
+@pytest.mark.parametrize(argnames="timeout", argvalues=(None, 5.0))
+def test_error(
+    *, rst_file: Path, use_pty_option: bool, timeout: float | None
+) -> None:
     """
     A ``subprocess.CalledProcessError`` is raised if the command
     fails.
@@ -111,6 +114,7 @@ def test_error(*, rst_file: Path, use_pty_option: bool) -> None:
         pad_file=False,
         write_to_file=False,
         use_pty=use_pty_option,
+        timeout=timeout,
     )
     parser = CodeBlockParser(language="python", evaluator=evaluator)
     sybil = Sybil(parsers=[parser])

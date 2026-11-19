@@ -2,10 +2,11 @@
 
 import sys
 
-if sys.platform == "win32":  # pragma: no cover
+# This guard surrounds the platform bindings and their consumers.
+if sys.platform == "win32":  # pragma: no cover  # pylint: disable=too-complex
     import ctypes
     import ctypes.wintypes
-    import msvcrt
+    import msvcrt  # pylint: disable=import-error,useless-suppression
     import os
     from subprocess import Popen
     from types import TracebackType
@@ -46,6 +47,10 @@ if sys.platform == "win32":  # pragma: no cover
 
         creationflags = 0x00000004  # CREATE_SUSPENDED
 
+        def __init__(self) -> None:
+            """Initialize the job handle before entering the context."""
+            self._job_handle = 0
+
         def __enter__(self) -> Self:
             """Create a job that does not permit child processes to
             leave.
@@ -80,7 +85,7 @@ if sys.platform == "win32":  # pragma: no cover
                     self._job_handle, handle
                 ):
                     raise ctypes.WinError(code=ctypes.get_last_error())
-                # Popen closes the initial thread handle, so resume the
+                # `Popen` closes the initial thread handle, so resume the
                 # process through its process handle.
                 status: int = _ntdll.NtResumeProcess(handle)
                 if status < 0:
@@ -101,10 +106,10 @@ if sys.platform == "win32":  # pragma: no cover
         """Read available pipe bytes, returning None while awaiting
         data.
         """
-        available = _dword()
+        available = _dword(value=0)
         # This is the only reader of the pipe. Once the peek reports bytes,
-        # reading at most that many cannot wait for more output. ctypes
-        # passes available by reference because argtypes declares a pointer.
+        # reading at most that many cannot wait for more output. The native
+        # signature declares a pointer, so available is passed by reference.
         if not _kernel32.PeekNamedPipe(
             msvcrt.get_osfhandle(fd),
             None,

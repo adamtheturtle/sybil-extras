@@ -258,15 +258,13 @@ class ShellCommandEvaluator:
                 evaluator.
             source_preparer: A callable that extracts source from an example
                 before it is written to the temporary file. By default the
-                example's parsed content is used as-is.
+                parsed example content is used as-is.
             result_transformer: A callable that transforms the result content
                 before it is written back to the document. By default the
                 content is used as-is.
 
         Raises:
             ValueError: If the timeout is negative or non-finite.
-            subprocess.TimeoutExpired: On evaluation, if the command or its
-                output exceeds the deadline.
         """
         if timeout is not None and (timeout < 0 or not math.isfinite(timeout)):
             msg = "Timeout must be finite and non-negative."
@@ -299,5 +297,9 @@ class ShellCommandEvaluator:
             self._evaluator = runner
 
     def __call__(self, example: Example) -> None:
-        """Run the shell command on the example file."""
+        """Run the shell command on the example file.
+
+        Raises:
+            TimeoutExpired: If the deadline expires.
+        """
         _ = self._evaluator(example=example)
