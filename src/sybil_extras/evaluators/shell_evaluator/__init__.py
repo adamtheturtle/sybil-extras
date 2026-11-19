@@ -8,7 +8,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 
-from beartype import beartype
+from beartype import BeartypeConf, beartype
 from sybil import Example
 from sybil.evaluators.python import pad
 
@@ -204,7 +204,7 @@ class _ShellCommandRunner:
             )
 
 
-@beartype
+@beartype(conf=BeartypeConf(is_pep484_tower=True))
 class ShellCommandEvaluator:
     """Run a shell command on the example file."""
 
@@ -222,7 +222,7 @@ class ShellCommandEvaluator:
         pad_file: bool,
         write_to_file: bool,
         use_pty: bool,
-        timeout: int | float | None = None,  # noqa: PYI041 - beartype distinguishes int and float.
+        timeout: float | None = None,
         encoding: str | None = None,
         on_modify: _ExampleModified | None = None,
         source_preparer: SourcePreparer = NOOP_SOURCE_PREPARER,
