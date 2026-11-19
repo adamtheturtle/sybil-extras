@@ -39,6 +39,10 @@ MultiEvaluator
 ShellCommandEvaluator
 ^^^^^^^^^^^^^^^^^^^^^
 
+Set ``timeout`` to a number of seconds to limit command execution and output streaming.
+If the deadline expires, the evaluator stops the command and its descendants, removes the temporary example file, and raises ``subprocess.TimeoutExpired``.
+Execution is unlimited by default.
+
 .. code-block:: python
 
     """Use ShellCommandEvaluator to run shell commands against the code block."""

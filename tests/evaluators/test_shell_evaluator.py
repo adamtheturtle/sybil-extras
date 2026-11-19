@@ -3,6 +3,7 @@
 import os
 import platform
 import signal
+import socket
 import stat
 import subprocess
 import sys
@@ -825,10 +826,12 @@ def test_interrupted_temp_file_write(*, rst_file: Path) -> None:
     assert list(rst_file.parent.iterdir()) == [rst_file]
 
 
+@pytest.mark.parametrize(argnames="timeout", argvalues=(None, 10.0))
 def test_no_file_left_behind_on_interruption(
     *,
     rst_file: Path,
     tmp_path: Path,
+    timeout: float | None,
 ) -> None:
     """No file is left behind if the process is interrupted."""
     sleep_python_script_content = textwrap.dedent(
@@ -871,6 +874,7 @@ def test_no_file_left_behind_on_interruption(
             pad_file=False,
             write_to_file=True,
             use_pty=False,
+            timeout={timeout!r},
         )
 
         parser = CodeBlockParser(language="python", evaluator=evaluator)
@@ -1452,3 +1456,146 @@ def test_windows_rejects_pseudo_terminal(*, rst_file: Path) -> None:
         ),
     ):
         example.evaluate()
+
+
+@pytest.mark.parametrize(
+    argnames="scenario",
+    argvalues=("sleeping", "child", "orphaned", "closed_streams"),
+)
+def test_timeout_cleans_up(
+    *,
+    rst_file: Path,
+    use_pty_option: bool,
+    scenario: str,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A deadline covers both the process and inherited output streams."""
+    timeout = 2
+    original = rst_file.read_bytes()
+    with socket.socket() as listener:
+        listener.bind(("127.0.0.1", 0))
+        listener.listen()
+        listener.settimeout(2.0)
+        child = textwrap.dedent(
+            text="""\
+            import socket
+            import sys
+            import time
+
+            with socket.create_connection(("127.0.0.1", int(sys.argv[1]))):
+                print("started", flush=True)
+                time.sleep(15)
+            """,
+        )
+        script = textwrap.dedent(
+            text=f"""\
+            import os
+            import socket
+            import subprocess
+            import sys
+            import time
+            from pathlib import Path
+
+            Path(sys.argv[-1]).write_text("changed", encoding="utf-8")
+            scenario = sys.argv[1]
+            child_code = {child!r}
+            if scenario == "sleeping":
+                with socket.create_connection(("127.0.0.1", int(sys.argv[2]))):
+                    print("started", flush=True)
+                    time.sleep(15)
+            elif scenario == "closed_streams":
+                print("started", flush=True)
+                os.close(1)
+                os.close(2)
+                time.sleep(15)
+            else:
+                subprocess.Popen(
+                    [sys.executable, "-c", child_code, sys.argv[2]]
+                )
+                if scenario == "child":
+                    time.sleep(15)
+            """,
+        )
+        args = [
+            sys.executable,
+            "-c",
+            script,
+            scenario,
+            str(object=listener.getsockname()[1]),
+        ]
+        evaluator = ShellCommandEvaluator(
+            args=args,
+            temp_file_path_maker=make_temp_file_path,
+            pad_file=False,
+            write_to_file=True,
+            use_pty=use_pty_option,
+            timeout=timeout,
+        )
+        parser = CodeBlockParser(language="python", evaluator=evaluator)
+        document = Sybil(parsers=[parser]).parse(path=rst_file)
+        (example,) = document.examples()
+
+        with pytest.raises(
+            expected_exception=subprocess.TimeoutExpired
+        ) as error:
+            example.evaluate()
+
+        if scenario != "closed_streams":
+            # A queued connection proves the sleeping process started. EOF
+            # proves it was terminated, even if its stdout is already closed.
+            connection, _ = listener.accept()
+            with connection:
+                connection.settimeout(2.0)
+                assert connection.recv(1) == b""
+
+    assert error.value.cmd[:-1] == args
+    assert error.value.timeout == timeout
+    assert capsys.readouterr().out.strip() == "started"
+    assert list(rst_file.parent.iterdir()) == [rst_file]
+    assert rst_file.read_bytes() == original
+
+
+def test_output_with_timeout(
+    *,
+    rst_file: Path,
+    use_pty_option: bool,
+    capsysbinary: pytest.CaptureFixture[bytes],
+) -> None:
+    """Timed commands preserve binary output and stream routing."""
+    evaluator = ShellCommandEvaluator(
+        args=[
+            sys.executable,
+            "-c",
+            r"import os; os.write(1, b'\xff'); os.write(2, b'\xfe')",
+        ],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=False,
+        write_to_file=False,
+        use_pty=use_pty_option,
+        timeout=5.0,
+    )
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    document = Sybil(parsers=[parser]).parse(path=rst_file)
+    (example,) = document.examples()
+    example.evaluate()
+
+    assert capsysbinary.readouterr() == (
+        (b"\xff\xfe", b"") if use_pty_option else (b"\xff", b"\xfe")
+    )
+
+
+@pytest.mark.parametrize(
+    argnames="timeout",
+    argvalues=(-1.0, float("inf"), float("nan")),
+)
+def test_invalid_timeout(*, timeout: float) -> None:
+    """Reject negative and non-finite deadlines."""
+    with pytest.raises(expected_exception=ValueError, match="Timeout must"):
+        _ = ShellCommandEvaluator(
+            args=[sys.executable],
+            temp_file_path_maker=make_temp_file_path,
+            pad_file=False,
+            write_to_file=False,
+            use_pty=False,
+            timeout=timeout,
+        )
