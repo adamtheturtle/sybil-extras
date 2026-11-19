@@ -6,13 +6,15 @@ part of the public API.
 
 import contextlib
 import errno
+import math
 import os
+import select
 import signal
 import subprocess
 import sys
 import threading
 import time
-from collections.abc import Generator, Mapping
+from collections.abc import Generator, Iterable, Mapping
 from functools import partial
 from io import BytesIO
 from pathlib import Path
@@ -61,6 +63,20 @@ def _read_available(*, fd: int, use_pty: bool) -> bytes | None:
 
 
 @beartype
+def _wait_for_output(*, descriptors: Iterable[int], deadline: float) -> None:
+    """Wait for a readable stream or the deadline."""
+    remaining = max(0.0, deadline - time.monotonic())
+    if sys.platform == "win32":  # pragma: no cover
+        # Windows select only accepts sockets, so poll the pipes instead.
+        time.sleep(min(remaining, 0.01))
+    else:
+        poll = select.poll()
+        for fd in descriptors:
+            poll.register(fd, select.POLLIN)
+        _ = poll.poll(math.ceil(min(remaining, 1.0) * 1000))
+
+
+@beartype
 def _drain_output(
     *,
     process: subprocess.Popen[bytes],
@@ -91,7 +107,7 @@ def _drain_output(
             else:
                 del streams[fd]
         if not made_progress:
-            time.sleep(min(remaining, 0.01))
+            _wait_for_output(descriptors=streams, deadline=deadline)
 
 
 @beartype
@@ -147,7 +163,7 @@ def _command_process(
     env: Mapping[str, str] | None,
     use_pty: bool,
     limited: bool,
-) -> Generator[tuple[subprocess.Popen[bytes], int | None], None, None]:
+) -> Generator[tuple[subprocess.Popen[bytes], int | None]]:
     """Open the command and its streams, then clean up on exit.
 
     Raises:
