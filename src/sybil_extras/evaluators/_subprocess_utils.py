@@ -12,10 +12,8 @@ import select
 import signal
 import subprocess
 import sys
-import threading
 import time
 from collections.abc import Generator, Iterable, Mapping
-from functools import partial
 from io import BytesIO
 from pathlib import Path
 from typing import IO
@@ -25,24 +23,6 @@ from beartype import beartype
 from sybil_extras.evaluators import _windows_subprocess
 
 _CHUNK_SIZE = 1024
-
-
-@beartype
-def _write_chunk(*, output: IO[bytes] | BytesIO, chunk: bytes) -> None:
-    """Forward a chunk immediately, including under test capture."""
-    _ = output.write(chunk)
-    output.flush()
-
-
-@beartype
-def _process_stream(
-    *,
-    stream_fileno: int,
-    output: IO[bytes] | BytesIO,
-) -> None:
-    """Write from an input stream to an output stream."""
-    while bool(chunk := os.read(stream_fileno, _CHUNK_SIZE)):
-        _write_chunk(output=output, chunk=chunk)
 
 
 @beartype
@@ -63,79 +43,61 @@ def _read_available(*, fd: int, use_pty: bool) -> bytes | None:
 
 
 @beartype
-def _wait_for_output(*, descriptors: Iterable[int], deadline: float) -> None:
+def _wait_for_output(
+    *, descriptors: Iterable[int], deadline: float | None
+) -> None:
     """Wait for a readable stream or the deadline."""
-    remaining = max(0.0, deadline - time.monotonic())
+    remaining = (
+        None if deadline is None else max(0.0, deadline - time.monotonic())
+    )
     if sys.platform == "win32":  # pragma: no cover
         # Windows select only accepts sockets, so poll the pipes instead.
-        time.sleep(min(remaining, 0.01))
+        time.sleep(0.01 if remaining is None else min(remaining, 0.01))
     else:
         poll = select.poll()
         for fd in descriptors:
             poll.register(fd, select.POLLIN)
-        _ = poll.poll(math.ceil(min(remaining, 1.0) * 1000))
+        milliseconds = (
+            None
+            if remaining is None
+            else math.ceil(min(remaining, 1.0) * 1000)
+        )
+        _ = poll.poll(milliseconds)
 
 
 @beartype
-def _drain_output(
+def _stream_output(
     *,
-    process: subprocess.Popen[bytes],
     streams: dict[int, IO[bytes] | BytesIO],
     use_pty: bool,
-    deadline: float,
-    timeout: float,
+    command: list[str | Path],
+    timeout: float | None,
+    deadline: float | None,
 ) -> None:
-    """Stream output until the streams close or the deadline expires."""
+    """Forward raw bytes until the streams close or the deadline
+    expires.
+    """
     if sys.platform != "win32":  # pragma: no branch
         for fd in streams:
             os.set_blocking(fd, False)
 
-    # A non-blocking read avoids leaving reader threads behind when a
-    # descendant inherits an output descriptor and keeps it open.
     while bool(streams):
-        remaining = deadline - time.monotonic()
-        if remaining <= 0:
-            raise subprocess.TimeoutExpired(cmd=process.args, timeout=timeout)
-        made_progress = False
+        if (
+            timeout is not None
+            and deadline is not None
+            and time.monotonic() >= deadline
+        ):
+            raise subprocess.TimeoutExpired(cmd=command, timeout=timeout)
+
         for fd, output in tuple(streams.items()):
             chunk = _read_available(fd=fd, use_pty=use_pty)
-            if chunk is None:
-                continue
-            made_progress = True
-            if bool(chunk):
-                _write_chunk(output=output, chunk=chunk)
-            else:
+            if chunk == b"":
                 del streams[fd]
-        if not made_progress:
+            elif chunk is not None:
+                _ = output.write(chunk)
+                output.flush()
+        if bool(streams):
             _wait_for_output(descriptors=streams, deadline=deadline)
-
-
-@beartype
-def _stream_without_deadline(
-    *,
-    streams: dict[int, IO[bytes] | BytesIO],
-    use_pty: bool,
-) -> None:
-    """Stream output using the original blocking reads."""
-    if use_pty:
-        ((fd, output),) = streams.items()
-        with contextlib.suppress(OSError):
-            _process_stream(stream_fileno=fd, output=output)
-        return
-
-    # `Popen` requires real file descriptors. Test frameworks may replace
-    # the standard streams with in-memory capture objects,
-    # so forward each pipe's output concurrently instead.
-    threads = [
-        threading.Thread(
-            target=partial(_process_stream, stream_fileno=fd, output=output),
-        )
-        for fd, output in streams.items()
-    ]
-    for thread in threads:
-        thread.start()
-    for thread in threads:
-        thread.join()
 
 
 @beartype
@@ -170,29 +132,30 @@ def _command_process(
         BaseException: Any exception from the command or caller, after cleanup.
     """
     with contextlib.ExitStack() as cleanup:
-        stdout: int = subprocess.PIPE
-        stderr: int = subprocess.PIPE
+        output_fd: int = subprocess.PIPE
         master_fd = None
         with contextlib.ExitStack() as close_slave:
             if use_pty and sys.platform != "win32":  # pragma: no branch
                 master_fd, slave_fd = os.openpty()
                 _ = cleanup.callback(os.close, fd=master_fd)
                 _ = close_slave.callback(os.close, fd=slave_fd)
-                stdout = stderr = slave_fd
+                output_fd = slave_fd
 
             job = None
             creationflags = 0
             if limited and sys.platform == "win32":  # pragma: no cover
-                job = cleanup.enter_context(cm=_windows_subprocess.Job())
-                creationflags = job.creationflags
+                job = cleanup.enter_context(
+                    cm=_windows_subprocess.job_object()
+                )
+                creationflags = _windows_subprocess.CREATE_SUSPENDED
 
             # The caller supplies and must trust the executable and arguments.
             # This function runs the command without adding a shell.
             process = cleanup.enter_context(
                 cm=subprocess.Popen(  # noqa: S603
                     args=command,
-                    stdout=stdout,
-                    stderr=stderr,
+                    stdout=output_fd,
+                    stderr=output_fd,
                     stdin=subprocess.DEVNULL,
                     env=env,
                     start_new_session=limited and sys.platform != "win32",
@@ -201,15 +164,15 @@ def _command_process(
             )
 
         try:
-            if job is not None:  # pragma: no cover
-                job.start(process=process)
+            if sys.platform == "win32" and job is not None:  # pragma: no cover
+                _windows_subprocess.start_in_job(job=job, pid=process.pid)
             yield process, master_fd
         except BaseException:
             if limited:
                 if sys.platform == "win32":  # pragma: no cover
                     try:
                         if job is not None:
-                            job.terminate()
+                            _windows_subprocess.terminate_job(job=job)
                     finally:
                         # Also handles failure to assign the job.
                         process.kill()
@@ -248,31 +211,29 @@ def run_command(
         TimeoutExpired: If the command or its output exceeds
             the deadline.
     """
-    deadline = time.monotonic() + timeout if timeout is not None else 0.0
+    deadline = None if timeout is None else time.monotonic() + timeout
     with _command_process(
         command=command, env=env, use_pty=use_pty, limited=timeout is not None
     ) as (process, master_fd):
-        streams = _output_streams(process=process, pty_master=master_fd)
-        if timeout is None:
-            _stream_without_deadline(streams=streams, use_pty=use_pty)
-            return_code = process.wait()
-        else:
-            try:
-                _drain_output(
-                    process=process,
-                    streams=streams,
-                    use_pty=use_pty,
-                    deadline=deadline,
-                    timeout=timeout,
-                )
-                return_code = process.wait(
-                    timeout=max(0.0, deadline - time.monotonic())
-                )
-            except subprocess.TimeoutExpired:
-                # Report the configured timeout, even after draining output.
-                raise subprocess.TimeoutExpired(
-                    cmd=process.args, timeout=timeout
-                ) from None
+        _stream_output(
+            streams=_output_streams(process=process, pty_master=master_fd),
+            use_pty=use_pty,
+            command=command,
+            timeout=timeout,
+            deadline=deadline,
+        )
+        try:
+            return_code = process.wait(
+                timeout=None
+                if deadline is None
+                else max(0.0, deadline - time.monotonic())
+            )
+        except subprocess.TimeoutExpired:
+            if timeout is None:  # pragma: no cover
+                raise
+            raise subprocess.TimeoutExpired(
+                cmd=command, timeout=timeout
+            ) from None
 
     return subprocess.CompletedProcess(
         args=command,
