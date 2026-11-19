@@ -102,9 +102,9 @@ def _stream_without_deadline(
 ) -> None:
     """Stream output using the original blocking reads."""
     if use_pty:
+        ((fd, output),) = streams.items()
         with contextlib.suppress(OSError):
-            for fd, output in streams.items():
-                _process_stream(stream_fileno=fd, output=output)
+            _process_stream(stream_fileno=fd, output=output)
         return
 
     # `Popen` requires real file descriptors. Test frameworks may replace
