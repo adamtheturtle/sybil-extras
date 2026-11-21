@@ -1,13 +1,14 @@
 """An evaluator for running shell commands on example files."""
 
 import contextlib
+import math
 import platform
 import subprocess
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 
-from beartype import beartype
+from beartype import BeartypeConf, beartype
 from sybil import Example
 from sybil.evaluators.python import pad
 
@@ -86,6 +87,7 @@ class _ShellCommandRunner:
         pad_file: bool,
         write_to_file: bool,
         use_pty: bool,
+        timeout: float | None,
         encoding: str | None,
         on_modify: _ExampleModified | None,
         namespace_key: str,
@@ -104,6 +106,7 @@ class _ShellCommandRunner:
             pad_file: Whether to pad the file with newlines at the start.
             write_to_file: Whether to write changes to the file.
             use_pty: Whether to use a pseudo-terminal for running commands.
+            timeout: Maximum time in seconds for the command and its output.
             encoding: The encoding to use for the temporary file.
             on_modify: A callback to run when the example is modified.
             namespace_key: The key to store modified content in the namespace.
@@ -118,6 +121,7 @@ class _ShellCommandRunner:
         self._write_to_file = write_to_file
         self._newline = newline
         self._use_pty = use_pty
+        self._timeout = timeout
         self._encoding = encoding
         self._on_modify = on_modify
         self._namespace_key = namespace_key
@@ -156,6 +160,7 @@ class _ShellCommandRunner:
                 ],
                 env=self._env,
                 use_pty=self._use_pty,
+                timeout=self._timeout,
             )
 
             if self._write_to_file or self._on_modify is not None:
@@ -199,7 +204,7 @@ class _ShellCommandRunner:
             )
 
 
-@beartype
+@beartype(conf=BeartypeConf(is_pep484_tower=True))
 class ShellCommandEvaluator:
     """Run a shell command on the example file."""
 
@@ -217,6 +222,7 @@ class ShellCommandEvaluator:
         pad_file: bool,
         write_to_file: bool,
         use_pty: bool,
+        timeout: float | None = None,
         encoding: str | None = None,
         on_modify: _ExampleModified | None = None,
         source_preparer: SourcePreparer = NOOP_SOURCE_PREPARER,
@@ -243,6 +249,8 @@ class ShellCommandEvaluator:
             use_pty: Whether to use a pseudo-terminal for running commands.
                 This can be useful e.g. to get color output, but can also break
                 in some environments. Not supported on Windows.
+            timeout: Maximum time in seconds to run the command and drain
+                its output. The default, None, allows unlimited execution.
             encoding: The encoding to use reading documents which include a
                 given example, and for the temporary file. If ``None``,
                 use the system default.
@@ -250,14 +258,18 @@ class ShellCommandEvaluator:
                 evaluator.
             source_preparer: A callable that extracts source from an example
                 before it is written to the temporary file. By default the
-                example's parsed content is used as-is.
+                parsed example content is used as-is.
             result_transformer: A callable that transforms the result content
                 before it is written back to the document. By default the
                 content is used as-is.
 
         Raises:
-            ValueError: If pseudo-terminal is requested on Windows.
+            ValueError: If the timeout is negative or non-finite.
         """
+        if timeout is not None and (timeout < 0 or not math.isfinite(timeout)):
+            msg = "Timeout must be finite and non-negative."
+            raise ValueError(msg)
+
         namespace_key = "_shell_evaluator_modified_content"
         runner = _ShellCommandRunner(
             args=args,
@@ -267,6 +279,7 @@ class ShellCommandEvaluator:
             pad_file=pad_file,
             write_to_file=write_to_file,
             use_pty=use_pty,
+            timeout=float(timeout) if timeout is not None else None,
             encoding=encoding,
             on_modify=on_modify,
             namespace_key=namespace_key,
@@ -284,5 +297,9 @@ class ShellCommandEvaluator:
             self._evaluator = runner
 
     def __call__(self, example: Example) -> None:
-        """Run the shell command on the example file."""
+        """Run the shell command on the example file.
+
+        Raises:
+            TimeoutExpired: If the deadline expires.
+        """
         _ = self._evaluator(example=example)

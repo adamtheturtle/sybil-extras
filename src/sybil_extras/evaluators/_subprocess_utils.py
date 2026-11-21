@@ -5,29 +5,183 @@ part of the public API.
 """
 
 import contextlib
+import errno
+import math
 import os
+import select
+import signal
 import subprocess
 import sys
-import threading
-from collections.abc import Mapping
+import time
+from collections.abc import Generator, Iterable, Mapping
 from io import BytesIO
 from pathlib import Path
 from typing import IO
 
 from beartype import beartype
 
+from sybil_extras.evaluators import _windows_subprocess
+
+_CHUNK_SIZE = 1024
+
 
 @beartype
-def _process_stream(
-    *,
-    stream_fileno: int,
-    output: IO[bytes] | BytesIO,
+def _read_available(*, fd: int, use_pty: bool) -> bytes | None:
+    """Read one chunk, returning None if there is no data yet."""
+    if sys.platform == "win32":  # pragma: no cover
+        return _windows_subprocess.read_pipe(fd=fd, size=_CHUNK_SIZE)
+
+    try:
+        return os.read(fd, _CHUNK_SIZE)
+    except BlockingIOError:
+        return None
+    except OSError as error:  # pragma: no cover
+        # Linux reports the end of a pseudo-terminal stream as `EIO`.
+        if use_pty and error.errno == errno.EIO:
+            return b""
+        raise
+
+
+@beartype
+def _wait_for_output(
+    *, descriptors: Iterable[int], deadline: float | None
 ) -> None:
-    """Write from an input stream to an output stream."""
-    chunk_size = 1024
-    while bool(chunk := os.read(stream_fileno, chunk_size)):
-        _ = output.write(chunk)
-        output.flush()
+    """Wait for a readable stream or the deadline."""
+    remaining = (
+        None if deadline is None else max(0.0, deadline - time.monotonic())
+    )
+    if sys.platform == "win32":  # pragma: no cover
+        # Windows select only accepts sockets, so poll the pipes instead.
+        time.sleep(0.01 if remaining is None else min(remaining, 0.01))
+    else:
+        poll = select.poll()
+        for fd in descriptors:
+            poll.register(fd, select.POLLIN)
+        milliseconds = (
+            None
+            if remaining is None
+            else math.ceil(min(remaining, 1.0) * 1000)
+        )
+        _ = poll.poll(milliseconds)
+
+
+@beartype
+def _stream_output(
+    *,
+    streams: dict[int, IO[bytes] | BytesIO],
+    use_pty: bool,
+    command: list[str | Path],
+    timeout: float | None,
+    deadline: float | None,
+) -> None:
+    """Forward raw bytes until the streams close or the deadline
+    expires.
+    """
+    if sys.platform != "win32":  # pragma: no branch
+        for fd in streams:
+            os.set_blocking(fd, False)
+
+    while bool(streams):
+        if (
+            timeout is not None
+            and deadline is not None
+            and time.monotonic() >= deadline
+        ):
+            raise subprocess.TimeoutExpired(cmd=command, timeout=timeout)
+
+        for fd, output in tuple(streams.items()):
+            chunk = _read_available(fd=fd, use_pty=use_pty)
+            if chunk == b"":
+                del streams[fd]
+            elif chunk is not None:
+                _ = output.write(chunk)
+                output.flush()
+        if bool(streams):
+            _wait_for_output(descriptors=streams, deadline=deadline)
+
+
+@beartype
+def _output_streams(
+    *,
+    process: subprocess.Popen[bytes],
+    pty_master: int | None,
+) -> dict[int, IO[bytes] | BytesIO]:
+    """Route the pseudo-terminal or pipes to the standard streams."""
+    if pty_master is not None:
+        return {pty_master: sys.stdout.buffer}
+    if process.stdout is None or process.stderr is None:  # pragma: no cover
+        msg = "Expected stdout and stderr pipes."
+        raise RuntimeError(msg)
+    return {
+        process.stdout.fileno(): sys.stdout.buffer,
+        process.stderr.fileno(): sys.stderr.buffer,
+    }
+
+
+@contextlib.contextmanager
+def _command_process(
+    *,
+    command: list[str | Path],
+    env: Mapping[str, str] | None,
+    use_pty: bool,
+    limited: bool,
+) -> Generator[tuple[subprocess.Popen[bytes], int | None]]:
+    """Open the command and its streams, then clean up on exit.
+
+    Raises:
+        BaseException: Any exception from the command or caller, after cleanup.
+    """
+    with contextlib.ExitStack() as cleanup:
+        output_fd: int = subprocess.PIPE
+        master_fd = None
+        with contextlib.ExitStack() as close_slave:
+            if use_pty and sys.platform != "win32":  # pragma: no branch
+                master_fd, slave_fd = os.openpty()
+                _ = cleanup.callback(os.close, fd=master_fd)
+                _ = close_slave.callback(os.close, fd=slave_fd)
+                output_fd = slave_fd
+
+            job = None
+            creationflags = 0
+            if limited and sys.platform == "win32":  # pragma: no cover
+                job = cleanup.enter_context(
+                    cm=_windows_subprocess.job_object()
+                )
+                creationflags = _windows_subprocess.CREATE_SUSPENDED
+
+            # The caller supplies and must trust the executable and arguments.
+            # This function runs the command without adding a shell.
+            process = cleanup.enter_context(
+                cm=subprocess.Popen(  # noqa: S603
+                    args=command,
+                    stdout=output_fd,
+                    stderr=output_fd,
+                    stdin=subprocess.DEVNULL,
+                    env=env,
+                    start_new_session=limited and sys.platform != "win32",
+                    creationflags=creationflags,
+                )
+            )
+
+        try:
+            if sys.platform == "win32" and job is not None:  # pragma: no cover
+                _windows_subprocess.start_in_job(job=job, pid=process.pid)
+            yield process, master_fd
+        except BaseException:
+            if limited:
+                if sys.platform == "win32":  # pragma: no cover
+                    try:
+                        if job is not None:
+                            _windows_subprocess.terminate_job(job=job)
+                    finally:
+                        # Also handles failure to assign the job.
+                        process.kill()
+                else:
+                    # The group can still exist after the direct child exits.
+                    with contextlib.suppress(ProcessLookupError):
+                        os.killpg(process.pid, signal.SIGKILL)
+                _ = process.wait()
+            raise
 
 
 @beartype
@@ -36,114 +190,50 @@ def run_command(
     command: list[str | Path],
     env: Mapping[str, str] | None,
     use_pty: bool,
+    timeout: float | None,
 ) -> subprocess.CompletedProcess[bytes]:
     """Run a command, optionally inside a pseudo-terminal to preserve
     color.
 
     Args:
         command: The command and arguments to execute.
-        env: Optional environment variable mapping.  If ``None``, the
-            current process environment is inherited.
-        use_pty: When ``True`` the command is run inside a pseudo-terminal
-            so that tools that emit ANSI color codes do so correctly.
-            Not supported on Windows.
+        env: Optional environment variable mapping. If None, the current
+            process environment is inherited.
+        use_pty: Run inside a pseudo-terminal. Not supported on Windows.
+        timeout: Maximum time in seconds to run the command and drain
+            its output, or None for unlimited execution.
 
     Returns:
-        A ``CompletedProcess`` object.  ``stdout`` and ``stderr`` are
-        ``None`` because output is streamed directly to the parent
-        process's file descriptors.
+        A CompletedProcess object. stdout and stderr are None because
+        output is streamed directly.
+
+    Raises:
+        TimeoutExpired: If the command or its output exceeds
+            the deadline.
     """
-    if use_pty:
-        stdout_master_fd: int = -1
-        slave_fd: int = -1
-        # ``os.openpty`` is unavailable on Windows. The platform check also
-        # lets static type checkers narrow to platforms where it exists.
-        if sys.platform != "win32":  # pragma: no branch
-            stdout_master_fd, slave_fd = os.openpty()
-
-        stdout: int = slave_fd
-        stderr: int = slave_fd
-        # The caller supplies the executable and arguments and must trust
-        # both, including any shell they explicitly choose. This function
-        # runs the command without adding a shell.
-        with subprocess.Popen(  # noqa: S603
-            args=command,
-            stdout=stdout,
-            stderr=stderr,
-            stdin=subprocess.DEVNULL,
-            env=env,
-            close_fds=True,
-        ) as process:
-            os.close(fd=slave_fd)
-
-            # On some platforms, an ``OSError`` is raised when reading from
-            # a master file descriptor that has no corresponding slave file.
-            # I think that this may be described in
-            # https://bugs.python.org/issue5380#msg82827
-            with contextlib.suppress(OSError):
-                _process_stream(
-                    stream_fileno=stdout_master_fd,
-                    output=sys.stdout.buffer,
-                )
-
-            os.close(fd=stdout_master_fd)
-
-    else:
-        # We use ``subprocess.PIPE`` + threads rather than passing
-        # ``stdout=sys.stdout.buffer`` directly to ``Popen``.
-        #
-        # ``Popen`` accepts a file-like object for ``stdout``/``stderr``
-        # only if it exposes a real OS file descriptor via ``fileno()``.
-        # When test frameworks such as pytest replace ``sys.stdout`` with
-        # a ``StringIO``-based capture object, ``sys.stdout.buffer.fileno()``
-        # raises ``io.UnsupportedOperation``.
-        #
-        # By routing data through ``subprocess.PIPE`` we always get genuine
-        # OS-level pipe file descriptors.  The background threads then read
-        # from those descriptors and write into ``sys.stdout.buffer`` /
-        # ``sys.stderr.buffer``, which may be the real terminal or a
-        # test-framework capture object — either way the write is safe.
-        # This preserves live streaming: output is forwarded chunk-by-chunk
-        # rather than being buffered until the process exits.
-        # The caller supplies the executable and arguments and must trust
-        # both, including any shell they explicitly choose. This function
-        # runs the command without adding a shell.
-        with subprocess.Popen(  # noqa: S603
-            args=command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            stdin=subprocess.DEVNULL,
-            env=env,
-        ) as process:
-            # PIPE provides both streams, but type stubs mark them optional.
-            # Check both to narrow their types before starting the threads.
-            if (
-                process.stdout is None or process.stderr is None
-            ):  # pragma: no cover
-                raise ValueError
-
-            stdout_thread = threading.Thread(
-                target=_process_stream,
-                kwargs={
-                    "stream_fileno": process.stdout.fileno(),
-                    "output": sys.stdout.buffer,
-                },
+    deadline = None if timeout is None else time.monotonic() + timeout
+    with _command_process(
+        command=command, env=env, use_pty=use_pty, limited=timeout is not None
+    ) as (process, master_fd):
+        _stream_output(
+            streams=_output_streams(process=process, pty_master=master_fd),
+            use_pty=use_pty,
+            command=command,
+            timeout=timeout,
+            deadline=deadline,
+        )
+        try:
+            return_code = process.wait(
+                timeout=None
+                if deadline is None
+                else max(0.0, deadline - time.monotonic())
             )
-            stderr_thread = threading.Thread(
-                target=_process_stream,
-                kwargs={
-                    "stream_fileno": process.stderr.fileno(),
-                    "output": sys.stderr.buffer,
-                },
-            )
-
-            stdout_thread.start()
-            stderr_thread.start()
-
-            stdout_thread.join()
-            stderr_thread.join()
-
-    return_code = process.wait()
+        except subprocess.TimeoutExpired:
+            if timeout is None:  # pragma: no cover
+                raise
+            raise subprocess.TimeoutExpired(
+                cmd=command, timeout=timeout
+            ) from None
 
     return subprocess.CompletedProcess(
         args=command,
