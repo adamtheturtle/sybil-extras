@@ -10,7 +10,7 @@ reStructuredText.
 import re
 import textwrap
 import threading
-from collections.abc import Generator
+from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -20,7 +20,10 @@ from sybil import Document, Example, Lexeme
 from sybil.typing import Evaluator
 from typing_extensions import override
 
-from sybil_extras.evaluators._example_source import example_source
+from sybil_extras.evaluators._example_source import (
+    example_source,
+    parsed_value,
+)
 
 CONTENT_INDENT_LEXEME = "content_indent"
 
@@ -202,7 +205,7 @@ def _source_offset(*, example: Example) -> int:
     so the writer can locate a block's delimiters without knowing which
     language produced the region.
     """
-    parsed = example.parsed
+    parsed = parsed_value(example=example)
     if not isinstance(parsed, Lexeme):
         msg = (
             "Writing an empty code block requires its parser to store a "
@@ -281,18 +284,22 @@ def _get_modified_region_text(
         : len(first_line) - len(first_line.lstrip())
     ]
 
-    if example.parsed:
+    parsed = parsed_value(example=example)
+    if bool(parsed):
+        if not isinstance(parsed, str):  # pragma: no cover
+            msg = "Writing a non-empty code block requires a string payload"
+            raise TypeError(msg)
         edit = _RegionEdit(
             within_code_block_indent_prefix=(
                 _get_within_code_block_indentation_prefix(example=example)
             ),
-            replace_old_not_indented=example.parsed,
+            replace_old_not_indented=parsed,
             replace_new_prefix="",
         )
         search_region_text = original_region_text
     else:
         source_offset = _source_offset(example=example)
-        lexemes = example.region.lexemes
+        lexemes: Mapping[str, object] = example.region.lexemes
         edit = _empty_block_region_edit(
             original_region_text=original_region_text,
             code_block_indent_prefix=code_block_indent_prefix,
@@ -308,7 +315,7 @@ def _get_modified_region_text(
         text=edit.replace_old_not_indented,
         prefix=edit.within_code_block_indent_prefix,
     )
-    if example.parsed and ">" in edit.within_code_block_indent_prefix:
+    if bool(parsed) and ">" in edit.within_code_block_indent_prefix:
         prefixed_blank_lines = textwrap.indent(
             text=edit.replace_old_not_indented,
             prefix=edit.within_code_block_indent_prefix,
@@ -471,7 +478,7 @@ class CodeBlockWriterEvaluator:
                     raise TypeError(msg)
                 if (
                     modified_content is not None
-                    and modified_content != example.parsed
+                    and modified_content != parsed_value(example=example)
                 ):
                     with namespace.write_lock:
                         _overwrite_example_content(

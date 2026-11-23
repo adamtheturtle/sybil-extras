@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 from sybil import Sybil
 
+from sybil_extras.evaluators._example_source import parsed_value
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.parsers.myst.sphinx_jinja2 import (
     SphinxJinja2Parser as MystSphinxJinja2Parser,
@@ -45,7 +46,7 @@ def test_sphinx_jinja2_named_context(
 
     (example,) = Sybil(parsers=[parser]).parse(path=test_document).examples()
 
-    assert example.parsed == "Hello {{ name }}!\n"
+    assert parsed_value(example=example) == "Hello {{ name }}!\n"
     assert example.region.lexemes["arguments"] == "ctx1"
 
 
@@ -88,7 +89,7 @@ def test_sphinx_jinja2(
     document = sybil.parse(path=test_document)
 
     first_example, second_example = document.examples()
-    assert first_example.parsed == "Hallo {{ name }}!\n"
+    assert parsed_value(example=first_example) == "Hallo {{ name }}!\n"
     assert first_example.region.lexemes == {
         "directive": "jinja",
         "arguments": "",
@@ -97,7 +98,7 @@ def test_sphinx_jinja2(
     }
     first_example.evaluate()
 
-    assert second_example.parsed == ""
+    assert parsed_value(example=second_example) == ""
     assert second_example.region.lexemes == {
         "directive": "jinja",
         "arguments": "",
@@ -143,7 +144,7 @@ def test_sphinx_jinja2_rst(
     document = sybil.parse(path=test_document)
 
     first_example, second_example = document.examples()
-    assert first_example.parsed == "Hallo {{ name }}!\n"
+    assert parsed_value(example=first_example) == "Hallo {{ name }}!\n"
     assert first_example.region.lexemes == {
         "directive": "jinja",
         "arguments": None,
@@ -154,7 +155,7 @@ def test_sphinx_jinja2_rst(
     }
     first_example.evaluate()
 
-    assert second_example.parsed == ""
+    assert parsed_value(example=second_example) == ""
     assert second_example.region.lexemes == {
         "directive": "jinja",
         "arguments": None,

@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 from sybil import Sybil
 
+from sybil_extras.evaluators._example_source import parsed_value
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.parsers.myst_parser.sphinx_jinja2 import (
     SphinxJinja2Parser,
@@ -56,7 +57,7 @@ def test_directive_options_and_exact_body(
     parser = SphinxJinja2Parser(evaluator=NoOpEvaluator())
     (example,) = Sybil(parsers=[parser]).parse(path=path).examples()
 
-    assert example.parsed == body
+    assert parsed_value(example=example) == body
     assert example.region.lexemes["options"] == expected
     assert example.region.lexemes["arguments"] == "named-context"
 
@@ -72,7 +73,7 @@ def test_nested_colon_fence_body(*, tmp_path: Path) -> None:
     parser = SphinxJinja2Parser(evaluator=NoOpEvaluator())
     (example,) = Sybil(parsers=[parser]).parse(path=path).examples()
 
-    assert example.parsed == body
+    assert parsed_value(example=example) == body
     assert example.region.lexemes["options"] == {"custom": "value"}
 
 
@@ -102,7 +103,7 @@ def test_non_jinja_fences_ignored(*, tmp_path: Path) -> None:
     document = sybil.parse(path=test_document)
 
     (example,) = document.examples()
-    assert example.parsed == "Body here\n"
+    assert parsed_value(example=example) == "Body here\n"
 
 
 def test_jinja_block_at_eof(*, tmp_path: Path) -> None:
@@ -117,7 +118,7 @@ def test_jinja_block_at_eof(*, tmp_path: Path) -> None:
     document = sybil.parse(path=test_document)
 
     (example,) = document.examples()
-    assert example.parsed == "Body\n"
+    assert parsed_value(example=example) == "Body\n"
 
 
 def test_options_with_blank_body(*, tmp_path: Path) -> None:
@@ -140,7 +141,7 @@ def test_options_with_blank_body(*, tmp_path: Path) -> None:
     document = sybil.parse(path=test_document)
 
     (example,) = document.examples()
-    assert example.parsed == ""
+    assert parsed_value(example=example) == ""
     assert example.region.lexemes["options"] == {
         "ctx": '{"name": "World"}',
     }
@@ -167,7 +168,7 @@ def test_options_with_many_blank_lines_body(*, tmp_path: Path) -> None:
     document = sybil.parse(path=test_document)
 
     (example,) = document.examples()
-    assert example.parsed == ""
+    assert parsed_value(example=example) == ""
     assert example.region.lexemes["options"] == {
         "ctx": '{"name": "World"}',
     }

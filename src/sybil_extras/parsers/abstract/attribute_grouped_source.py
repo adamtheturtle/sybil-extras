@@ -5,13 +5,25 @@ blocks.
 """
 
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
+from typing import Protocol, runtime_checkable
 
 from beartype import beartype
 from sybil import Document, Example, Region
 from sybil.typing import Evaluator, Parser
 
+from sybil_extras.evaluators._example_source import parsed_value
+
 from ._grouping_utils import create_combined_region
+
+
+@runtime_checkable
+class _Attributes(Protocol):
+    """Lookup of an attribute by name on a parsed code block."""
+
+    def get(self, name: str, /) -> object:
+        """Get an attribute value when present."""
+        ...
 
 
 @beartype
@@ -70,7 +82,11 @@ class AbstractAttributeGroupedSourceParser:
         ungrouped_regions: list[Region] = []
 
         for region in self._code_block_parser(document):
-            attributes = region.lexemes.get("attributes", {})
+            lexemes: Mapping[str, object] = region.lexemes
+            attributes = lexemes.get("attributes", {})
+            if not isinstance(attributes, _Attributes):  # pragma: no cover
+                msg = "Code block attributes must be a mapping"
+                raise TypeError(msg)
             raw_group_name: object = attributes.get(self._attribute_name)
             group_name = (
                 None if raw_group_name is None else str(object=raw_group_name)
@@ -80,7 +96,7 @@ class AbstractAttributeGroupedSourceParser:
                     Region(
                         start=region.start,
                         end=region.end,
-                        parsed=region.parsed,
+                        parsed=parsed_value(example=region),
                         evaluator=self._ungrouped_evaluator,
                         lexemes=region.lexemes,
                     )
@@ -94,7 +110,7 @@ class AbstractAttributeGroupedSourceParser:
             # Region only provides character offsets (start/end), but Example
             # requires line/column numbers. We calculate these the same way
             # Sybil does internally in Document.line_column().
-            source = region.lexemes["source"]
+            source = lexemes["source"]
             line = document.text.count("\n", 0, region.start) + 1
             column = region.start - document.text.rfind("\n", 0, region.start)
             example = Example(
@@ -132,7 +148,7 @@ class AbstractAttributeGroupedSourceParser:
             yield Region(
                 start=combined_region.start,
                 end=examples[0].region.end,
-                parsed=combined_region.parsed,
+                parsed=parsed_value(example=combined_region),
                 evaluator=combined_region.evaluator,
                 lexemes=combined_region.lexemes,
             )

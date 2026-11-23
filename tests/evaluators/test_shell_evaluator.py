@@ -24,6 +24,7 @@ from sybil.parsers.markdown import (
 )
 from sybil.parsers.rest.codeblock import CodeBlockParser
 
+from sybil_extras.evaluators._example_source import example_source
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
 from sybil_extras.evaluators.shell_evaluator.result_transformer import (
     ResultTransformer,
@@ -45,6 +46,7 @@ from sybil_extras.languages import (
 from sybil_extras.parsers.markdown_it.codeblock import (
     CodeBlockParser as MarkdownItCodeBlockParser,
 )
+from tests._typing import failed_command, fixture_parameter
 
 
 @beartype
@@ -71,7 +73,7 @@ def fixture_use_pty_option(
     request: pytest.FixtureRequest,
 ) -> bool:
     """Test with and without the pseudo-terminal."""
-    return bool(request.param)
+    return bool(fixture_parameter(request=request))
 
 
 @pytest.fixture(name="rst_file")
@@ -124,7 +126,8 @@ def test_error(*, rst_file: Path, use_pty_option: bool) -> None:
 
     assert exc.value.returncode == 1
     # The last element is the path to the temporary file.
-    assert exc.value.cmd[:-1] == args
+    command = failed_command(error=exc.value)
+    assert command[:-1] == args
 
 
 def test_output_shown(
@@ -1019,7 +1022,8 @@ def test_bad_command_error(*, rst_file: Path, use_pty_option: bool) -> None:
     expected_returncode = 2
     assert exc.value.returncode == expected_returncode
     # The last element is the path to the temporary file.
-    assert exc.value.cmd[:-1] == args
+    command = failed_command(error=exc.value)
+    assert command[:-1] == args
 
 
 def test_click_runner(*, rst_file: Path, use_pty_option: bool) -> None:
@@ -1235,13 +1239,16 @@ def test_custom_on_modify_receives_unpadded_content(tmp_path: Path) -> None:
     assert modified_contents == ["x = 1\n"]
     reparsed_document = Sybil(parsers=[parser]).parse(path=source_file)
     (reparsed_example,) = reparsed_document.examples()
-    assert str(object=reparsed_example.parsed) == modified_contents[0]
+    assert example_source(example=reparsed_example) == modified_contents[0]
 
 
 @pytest.mark.parametrize(
     argnames="parser_cls",
     argvalues=(MarkdownItCodeBlockParser, SybilMarkdownCodeBlockParser),
-    ids=lambda parser_cls: f"{parser_cls.__module__}.{parser_cls.__name__}",
+    ids=(
+        f"{MarkdownItCodeBlockParser.__module__}.{MarkdownItCodeBlockParser.__name__}",
+        f"{SybilMarkdownCodeBlockParser.__module__}.{SybilMarkdownCodeBlockParser.__name__}",
+    ),
 )
 def test_markdown_code_block_line_number(
     *,
@@ -1325,7 +1332,7 @@ def test_custom_source_preparer(
 
         def __call__(self, *, example: Example) -> str:
             """Return source in uppercase."""
-            return str(object=example.parsed).upper()
+            return example_source(example=example).upper()
 
     assert isinstance(UpperSourcePreparer(), SourcePreparer)
 

@@ -11,6 +11,7 @@ from beartype import beartype
 from sybil import Example
 from sybil.evaluators.python import pad
 
+from sybil_extras.evaluators._example_source import parsed_value
 from sybil_extras.evaluators._subprocess_utils import (
     lstrip_newlines,
     run_command,
@@ -24,6 +25,16 @@ from sybil_extras.evaluators.shell_evaluator.source_preparer import (
     NOOP_SOURCE_PREPARER,
     SourcePreparer,
 )
+
+
+@runtime_checkable
+class _LineOffset(Protocol):
+    """Line offset supplied by a parser for padding shell input."""
+
+    @property
+    def line_offset(self) -> int:
+        """Get the line offset relative to the example start."""
+        ...
 
 
 @beartype
@@ -130,9 +141,13 @@ class _ShellCommandRunner:
             msg = "Pseudo-terminal not supported on Windows."
             raise ValueError(msg)
 
-        padding_line = (
-            example.line + example.parsed.line_offset if self._pad_file else 0
-        )
+        padding_line = 0
+        if self._pad_file:
+            parsed = parsed_value(example=example)
+            if not isinstance(parsed, _LineOffset):  # pragma: no cover
+                msg = "Padding shell input requires a parsed line offset"
+                raise TypeError(msg)
+            padding_line = example.line + parsed.line_offset
 
         raw_source = self._source_preparer(example=example)
         source = pad(source=raw_source, line=padding_line)
@@ -150,10 +165,11 @@ class _ShellCommandRunner:
                 encoding=self._encoding,
                 newline=self._newline,
             )
+            command: list[str | Path] = [
+                str(object=item) for item in [*self._args, temp_file]
+            ]
             result = run_command(
-                command=[
-                    str(object=item) for item in [*self._args, temp_file]
-                ],
+                command=command,
                 env=self._env,
                 use_pty=self._use_pty,
             )
@@ -192,7 +208,7 @@ class _ShellCommandRunner:
 
         if result.returncode != 0:
             raise subprocess.CalledProcessError(
-                cmd=result.args,
+                cmd=command,
                 returncode=result.returncode,
                 output=result.stdout,
                 stderr=result.stderr,

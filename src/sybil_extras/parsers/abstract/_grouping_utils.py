@@ -8,6 +8,8 @@ from sybil import Document, Example, Region
 from sybil.region import Lexeme
 from sybil.typing import Evaluator
 
+from sybil_extras.evaluators._example_source import Parsed, parsed_value
+
 
 @beartype
 @dataclass(frozen=True, kw_only=True)
@@ -78,7 +80,7 @@ def count_expected_code_blocks(examples: Iterable[Example]) -> int:
     non_skip_count = 0
 
     for ex in examples_sorted:
-        parsed: object = ex.parsed
+        parsed = parsed_value(example=ex)
         # Skip markers have parsed values like ('next', None)
         match parsed:
             case ("next", object()):
@@ -100,20 +102,19 @@ def count_expected_code_blocks(examples: Iterable[Example]) -> int:
 
 
 @beartype
-def _get_text(parsed: Lexeme | str) -> str:
+def _get_text(example: Parsed[str]) -> str:
     """Get text from a parsed value, which may be a Lexeme or a string.
 
     Args:
-        parsed: The parsed value from an example.
+        example: An example parsed as a string or Lexeme.
 
     Returns:
         The text content.
     """
-    match parsed:
-        case Lexeme():
-            return parsed.text
-        case _:
-            return parsed
+    parsed = example.parsed
+    if isinstance(parsed, Lexeme):
+        return parsed.text
+    return parsed
 
 
 @beartype
@@ -137,7 +138,7 @@ def _combine_examples_text(
     Returns:
         The combined text.
     """
-    first_parsed = examples[0].parsed
+    first_parsed = parsed_value(example=examples[0])
     match first_parsed:
         case Lexeme():
             result_text = first_parsed.text
@@ -156,7 +157,7 @@ def _combine_examples_text(
             padding_lines = 1
 
         padding = "\n" * padding_lines
-        result_text = result_text + padding + _get_text(parsed=example.parsed)
+        result_text = result_text + padding + _get_text(example=example)
 
     return Lexeme(
         text=result_text,
