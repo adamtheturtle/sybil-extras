@@ -6,8 +6,8 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
-from sybil import Document, Example, Sybil
-from sybil.parsers.rest.codeblock import CodeBlockParser
+from sybil import Example, Sybil
+from sybil.parsers.rest.codeblock import CodeBlockParser, PythonCodeBlockParser
 from typing_extensions import override
 
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
@@ -80,17 +80,35 @@ def test_concurrent_evaluation_retains_all_blocks(tmp_path: Path) -> None:
     )
 
 
-def test_namespace_key_with_non_iterable_value() -> None:
-    """Accumulation requires an iterable namespace value."""
-    source = ".. code-block:: python\n\n   first\n"
-    document = Document(text=source, path="example.rst")
-    invalid_blocks = 42
-    document.namespace["blocks"] = invalid_blocks
-    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
-    parser = CodeBlockParser(language="python", evaluator=evaluator)
-    (region,) = parser(document=document)
-    document.add(region=region)
-    example = next(document.examples())
+def test_document_code_conflicts_with_accumulated_blocks(
+    tmp_path: Path,
+) -> None:
+    """An earlier code block can claim the same namespace key."""
+    source_file = tmp_path / "example.rst"
+    _ = source_file.write_text(
+        data="""\
+.. code-block:: python
+
+   blocks = 42
+
+.. code-block:: text
+
+   first
+""",
+        encoding="utf-8",
+    )
+    document = Sybil(
+        parsers=[
+            PythonCodeBlockParser(),
+            CodeBlockParser(
+                language="text",
+                evaluator=BlockAccumulatorEvaluator(namespace_key="blocks"),
+            ),
+        ],
+    ).parse(path=source_file)
+    setup, example = document.examples()
+    setup.evaluate()
+    value_from_setup: object = document.namespace["blocks"]
 
     with pytest.raises(
         expected_exception=TypeError,
@@ -98,7 +116,7 @@ def test_namespace_key_with_non_iterable_value() -> None:
     ):
         example.evaluate()
 
-    assert document.namespace["blocks"] == invalid_blocks
+    assert document.namespace["blocks"] == value_from_setup
 
 
 def test_accumulates_blocks(tmp_path: Path) -> None:

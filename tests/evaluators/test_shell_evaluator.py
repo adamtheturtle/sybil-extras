@@ -17,11 +17,12 @@ import click
 import pytest
 from beartype import beartype
 from click.testing import CliRunner
-from sybil import Document, Region, Sybil
+from sybil import Sybil
 from sybil.example import Example
 from sybil.parsers.markdown import (
     CodeBlockParser as SybilMarkdownCodeBlockParser,
 )
+from sybil.parsers.rest import DocTestParser
 from sybil.parsers.rest.codeblock import CodeBlockParser
 
 from sybil_extras.evaluators._example_source import example_source
@@ -46,7 +47,7 @@ from sybil_extras.languages import (
 from sybil_extras.parsers.markdown_it.codeblock import (
     CodeBlockParser as MarkdownItCodeBlockParser,
 )
-from tests._typing import failed_command, fixture_parameter
+from tests._typing import FixtureParameter, failed_command, is_object_list
 
 
 @beartype
@@ -70,10 +71,10 @@ def make_temp_file_path(*, example: Example) -> Path:
 )
 def fixture_use_pty_option(
     *,
-    request: pytest.FixtureRequest,
+    request: FixtureParameter[bool],
 ) -> bool:
     """Test with and without the pseudo-terminal."""
-    return bool(fixture_parameter(request=request))
+    return request.param
 
 
 @pytest.fixture(name="rst_file")
@@ -100,20 +101,21 @@ def fixture_rst_file(*, tmp_path: Path) -> Path:
     return test_document
 
 
-def test_padding_requires_parsed_line_offset(tmp_path: Path) -> None:
-    """Padding rejects a custom parser result with no line offset."""
-    document = Document(text="pass", path=str(object=tmp_path / "example.rst"))
-    evaluator = ShellCommandEvaluator(
-        args=[sys.executable],
-        temp_file_path_maker=make_temp_file_path,
-        pad_file=True,
-        write_to_file=False,
-        use_pty=False,
+def test_shell_evaluator_cannot_pad_doctest_payload(tmp_path: Path) -> None:
+    """Shell padding requires line offsets from the parser."""
+    source_file = tmp_path / "example.rst"
+    _ = source_file.write_text(data=">>> 2 + 2\n4\n", encoding="utf-8")
+    document = Sybil(parsers=[DocTestParser()]).parse(path=source_file)
+    document.push_evaluator(
+        evaluator=ShellCommandEvaluator(
+            args=[sys.executable],
+            temp_file_path_maker=make_temp_file_path,
+            pad_file=True,
+            write_to_file=False,
+            use_pty=False,
+        ),
     )
-    document.add(
-        region=Region(start=0, end=4, parsed="pass", evaluator=evaluator),
-    )
-    example = next(document.examples())
+    (example,) = document.examples()
 
     with pytest.raises(
         expected_exception=TypeError,
@@ -121,7 +123,7 @@ def test_padding_requires_parsed_line_offset(tmp_path: Path) -> None:
     ):
         example.evaluate()
 
-    assert next(tmp_path.iterdir(), None) is None
+    assert tuple(tmp_path.iterdir()) == (source_file,)
 
 
 def test_error(*, rst_file: Path, use_pty_option: bool) -> None:
@@ -151,6 +153,7 @@ def test_error(*, rst_file: Path, use_pty_option: bool) -> None:
     assert exc.value.returncode == 1
     # The last element is the path to the temporary file.
     command = failed_command(error=exc.value)
+    assert is_object_list(command)
     assert command[:-1] == args
 
 
@@ -1047,6 +1050,7 @@ def test_bad_command_error(*, rst_file: Path, use_pty_option: bool) -> None:
     assert exc.value.returncode == expected_returncode
     # The last element is the path to the temporary file.
     command = failed_command(error=exc.value)
+    assert is_object_list(command)
     assert command[:-1] == args
 
 

@@ -1,34 +1,37 @@
 """Typed access to values supplied by dependencies."""
 
-from typing import TYPE_CHECKING, Protocol, TypeGuard
+from typing import (
+    TYPE_CHECKING,
+    Protocol,
+    TypeGuard,
+    TypeVar,
+    runtime_checkable,
+)
 
 from sybil import Lexeme, Region
 
 from sybil_extras.evaluators._example_source import Parsed, parsed_value
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Mapping
 
 
-class _FixtureParameter(Protocol):
+_ParameterT_co = TypeVar("_ParameterT_co", covariant=True)
+
+
+@runtime_checkable
+class FixtureParameter(Protocol[_ParameterT_co]):
     """A parametrized fixture request."""
 
     @property
-    def param(self) -> object:
+    def param(self) -> _ParameterT_co:
         """The value supplied by the fixture declaration."""
         ...
 
 
-def fixture_parameter(*, request: _FixtureParameter) -> object:
-    """Read a pytest fixture parameter without assuming its type."""
-    return request.param
-
-
 def _require_lexeme(*, value: object) -> Lexeme:
     """Check the parser or lexer contract before reading a lexeme."""
-    if not isinstance(value, Lexeme):
-        msg = "Expected a Lexeme"
-        raise TypeError(msg)
+    assert isinstance(value, Lexeme)
     return value
 
 
@@ -57,10 +60,6 @@ class _CommandError(Protocol):
         ...
 
 
-def failed_command(*, error: _CommandError) -> "Sequence[object]":
-    """Check that the failed command was passed as an argument list."""
-    command = error.cmd
-    if not is_object_list(command):
-        msg = "Expected the failed command to be an argument list"
-        raise TypeError(msg)
-    return command
+def failed_command(*, error: _CommandError) -> object:
+    """Read the command from a process error."""
+    return error.cmd

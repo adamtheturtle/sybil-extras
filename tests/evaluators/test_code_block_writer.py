@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 from sybil import Document, Example, Region, Sybil
 from sybil.example import SybilFailure
+from sybil.parsers.rest import DocTestParser
 
 from sybil_extras.evaluators._example_source import example_source
 from sybil_extras.evaluators.code_block_writer import CodeBlockWriterEvaluator
@@ -27,23 +28,12 @@ from sybil_extras.languages import (
 from sybil_extras.parsers.markdown.group_all import GroupAllParser
 
 
-@pytest.mark.parametrize(
-    argnames=("parsed", "expected_message"),
-    argvalues=(
-        (
-            "",
-            (
-                "Writing an empty code block requires its parser to store a "
-                "Lexeme in example.parsed"
-            ),
-        ),
-        (42, "Writing a non-empty code block requires a string payload"),
-    ),
-)
-def test_invalid_parsed_code_block(
-    *, tmp_path: Path, parsed: object, expected_message: str
+def test_empty_non_lexeme_code_block_reports_parser_contract(
+    tmp_path: Path,
 ) -> None:
-    """The writer rejects invalid parsed values before writing."""
+    """An empty custom block reports its missing source-position
+    lexeme.
+    """
     source_file = tmp_path / "source.txt"
     _ = source_file.write_text(data="original", encoding="utf-8")
 
@@ -59,7 +49,7 @@ def test_invalid_parsed_code_block(
         yield Region(
             start=0,
             end=len("original"),
-            parsed=parsed,
+            parsed="",
             evaluator=writer,
         )
 
@@ -68,11 +58,41 @@ def test_invalid_parsed_code_block(
 
     with pytest.raises(
         expected_exception=TypeError,
-        match=re.escape(pattern=expected_message),
+        match=re.escape(
+            pattern=(
+                "Writing an empty code block requires its parser to store a "
+                "Lexeme in example.parsed"
+            )
+        ),
     ):
         example.evaluate()
 
     assert source_file.read_text(encoding="utf-8") == "original"
+
+
+def test_writer_rejects_doctest_payload(tmp_path: Path) -> None:
+    """The writer rejects a doctest payload before changing the file."""
+    source_file = tmp_path / "example.rst"
+    source = ">>> 2 + 2\n4\n"
+    _ = source_file.write_text(data=source, encoding="utf-8")
+    document = Sybil(parsers=[DocTestParser()]).parse(path=source_file)
+
+    def request_replacement(example: Example) -> None:
+        """Store a replacement in the writer's namespace key."""
+        example.document.namespace["modified_content"] = ">>> 3 + 3\n6\n"
+
+    document.push_evaluator(
+        evaluator=CodeBlockWriterEvaluator(evaluator=request_replacement),
+    )
+    (example,) = document.examples()
+
+    with pytest.raises(
+        expected_exception=TypeError,
+        match="Writing a non-empty code block requires a string payload",
+    ):
+        example.evaluate()
+
+    assert source_file.read_text(encoding="utf-8") == source
 
 
 def test_write_back_of_group_spanning_multiple_blocks_is_rejected(
