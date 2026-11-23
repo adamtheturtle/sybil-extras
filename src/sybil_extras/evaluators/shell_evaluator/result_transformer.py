@@ -9,6 +9,7 @@ from typing import Protocol, runtime_checkable
 from beartype import beartype
 from sybil import Example
 
+from sybil_extras.evaluators._example_source import example_source
 from sybil_extras.evaluators.shell_evaluator._pycon import python_to_pycon
 
 
@@ -57,5 +58,5 @@ class PyconResultTransformer:
         """Return the pycon-formatted version of the formatted Python."""
         return python_to_pycon(
             python_text=content,
-            original_pycon=str(object=example.parsed),
+            original_pycon=example_source(example=example),
         )
