@@ -108,31 +108,42 @@ def test_attribute_group_multiple_groups(tmp_path: Path) -> None:
     assert document.namespace["blocks"] == [expected_setup, expected_example]
 
 
-def test_attribute_group_rejects_invalid_attributes() -> None:
-    """Grouping reports invalid attributes from a custom code block parser."""
-
-    def code_block_parser(document: Document) -> Iterable[Region]:
-        """Return a code block whose attributes cannot be looked up."""
-        yield Region(
-            start=0,
-            end=len(document.text),
-            lexemes={"attributes": "group=example"},
-        )
-
-    parser = AttributeGroupedSourceParser(
-        code_block_parser=code_block_parser,
-        evaluator=NoOpEvaluator(),
-        attribute_name="group",
-        pad_groups=False,
-        ungrouped_evaluator=NoOpEvaluator(),
+def test_attribute_group_rejects_string_metadata(tmp_path: Path) -> None:
+    """Grouping reports a parser that passes through raw attributes."""
+    source_file = tmp_path / "example.mdx"
+    source = textwrap.dedent(
+        text="""\
+        ```python group="example"
+        pass
+        ```
+        """,
     )
-    document = Document(text="pass", path="example.mdx")
+    _ = source_file.write_text(data=source, encoding="utf-8")
+    mdx_parser = CodeBlockParser(language="python")
+
+    def parser_with_raw_attributes(document: Document) -> Iterable[Region]:
+        """Return the attributes as raw MDX text."""
+        region = next(iter(mdx_parser(document=document)))
+        region.lexemes["attributes"] = 'group="example"'
+        return (region,)
+
+    sybil = Sybil(
+        parsers=[
+            AttributeGroupedSourceParser(
+                code_block_parser=parser_with_raw_attributes,
+                evaluator=NoOpEvaluator(),
+                attribute_name="group",
+                pad_groups=False,
+                ungrouped_evaluator=NoOpEvaluator(),
+            ),
+        ],
+    )
 
     with pytest.raises(
         expected_exception=TypeError,
         match="Code block attributes must be a mapping",
     ):
-        _ = list(parser(document=document))
+        _ = sybil.parse(path=source_file)
 
 
 def test_attribute_group_no_group_attribute(tmp_path: Path) -> None:

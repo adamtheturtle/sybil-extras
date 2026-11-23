@@ -151,6 +151,10 @@ lint.per-file-ignores."tests/**/test_*.py" = [
     # Allow 'assert' as we use it for tests.
     "S101",
 ]
+lint.per-file-ignores."tests/{_typing,conftest}.py" = [
+    # Allow assertions in shared test helpers and fixture setup.
+    "S101",
+]
 # Do not automatically remove commented out code.
 # We comment out code during development, and with VSCode auto-save, this code
 # is sometimes annoyingly removed.
