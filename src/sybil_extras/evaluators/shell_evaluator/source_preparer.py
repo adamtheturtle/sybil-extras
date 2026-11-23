@@ -10,6 +10,7 @@ from typing import Protocol, runtime_checkable
 from beartype import beartype
 from sybil import Example
 
+from sybil_extras.evaluators._example_source import example_source
 from sybil_extras.evaluators.shell_evaluator._pycon import pycon_to_python
 
 
@@ -38,7 +39,7 @@ class NoOpSourcePreparer:
 
     def __call__(self, *, example: Example) -> str:
         """Return the parsed content of the example."""
-        return str(object=example.parsed)
+        return example_source(example=example)
 
 
 NOOP_SOURCE_PREPARER: NoOpSourcePreparer = NoOpSourcePreparer()
@@ -59,4 +60,4 @@ class PyconSourcePreparer:
             InvalidPyconError: If the pycon content has lines before
                 the first prompt.
         """
-        return pycon_to_python(pycon_text=str(object=example.parsed))
+        return pycon_to_python(pycon_text=example_source(example=example))

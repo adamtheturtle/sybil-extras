@@ -20,6 +20,8 @@ from sybil import Document, Example, Lexeme
 from sybil.typing import Evaluator
 from typing_extensions import override
 
+from sybil_extras.evaluators._example_source import example_source
+
 CONTENT_INDENT_LEXEME = "content_indent"
 
 CONTENT_SEPARATOR_LEXEME = "content_separator"
@@ -124,7 +126,7 @@ def _get_source_newline(*, path: Path, encoding: str | None) -> str | None:
 @beartype
 def _get_within_code_block_indentation_prefix(example: Example) -> str:
     """Get the indentation of the parsed code in the example."""
-    first_line = str(object=example.parsed).split(sep="\n", maxsplit=1)[0]
+    first_line = example_source(example=example).split(sep="\n", maxsplit=1)[0]
     region_text = example.document.text[
         example.region.start : example.region.end
     ]
