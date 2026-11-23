@@ -7,6 +7,7 @@ from sybil import Sybil
 
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.parsers.markdown_it.codeblock import CodeBlockParser
+from tests._typing import parsed_lexeme
 
 
 def test_language_with_extra_info(tmp_path: Path) -> None:
@@ -26,7 +27,7 @@ def test_language_with_extra_info(tmp_path: Path) -> None:
     examples = list(document.examples())
 
     assert len(examples) == 1
-    assert examples[0].parsed.text == 'print("hello")\n'
+    assert parsed_lexeme(example=examples[0]).text == 'print("hello")\n'
 
 
 def test_unclosed_fence_no_trailing_newline(tmp_path: Path) -> None:
@@ -121,7 +122,8 @@ def test_code_block_inside_blockquote(tmp_path: Path) -> None:
     assert len(examples) == 1
     # The content should have blockquote prefixes stripped
     assert (
-        examples[0].parsed.text == 'def hello() -> None:\n    print("Hello")\n'
+        parsed_lexeme(example=examples[0]).text
+        == 'def hello() -> None:\n    print("Hello")\n'
     )
     assert examples[0].region.lexemes["language"] == "python"
 
@@ -144,7 +146,7 @@ def test_invisible_code_block_html_comment(tmp_path: Path) -> None:
     document = sybil.parse(path=test_file)
     examples = list(document.examples())
 
-    assert [e.parsed.text for e in examples] == ["1\n", "2\n"]
+    assert [parsed_lexeme(example=e).text for e in examples] == ["1\n", "2\n"]
     assert [e.region.lexemes["language"] for e in examples] == ["text", "text"]
 
 
@@ -167,7 +169,7 @@ def test_invisible_code_block_language_filter(tmp_path: Path) -> None:
     document = sybil.parse(path=test_file)
     examples = list(document.examples())
 
-    assert [e.parsed.text for e in examples] == ["x = 1\n"]
+    assert [parsed_lexeme(example=e).text for e in examples] == ["x = 1\n"]
 
 
 def test_invisible_code_block_unclosed_comment(tmp_path: Path) -> None:
@@ -199,7 +201,7 @@ def test_invisible_code_block_no_trailing_newline(tmp_path: Path) -> None:
     document = sybil.parse(path=test_file)
     examples = list(document.examples())
 
-    assert [e.parsed.text for e in examples] == ["2\n"]
+    assert [parsed_lexeme(example=e).text for e in examples] == ["2\n"]
 
 
 def test_evaluator_not_none_when_omitted(tmp_path: Path) -> None:

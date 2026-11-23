@@ -6,6 +6,7 @@ import pytest
 from sybil import Document, Sybil
 from sybil.evaluators.python import PythonEvaluator
 
+from sybil_extras.evaluators._example_source import parsed_value
 from sybil_extras.evaluators.block_accumulator import (
     BlockAccumulatorEvaluator,
 )
@@ -255,7 +256,7 @@ def test_mdx_info_line_at_eof_without_newline() -> None:
     regions = list(parser(document=document))
 
     assert len(regions) == 1
-    assert regions[0].parsed == ""
+    assert parsed_value(example=regions[0]) == ""
 
 
 def test_mdx_info_line_with_attributes_at_eof_without_newline() -> None:
@@ -268,5 +269,5 @@ def test_mdx_info_line_with_attributes_at_eof_without_newline() -> None:
     regions = list(parser(document=document))
 
     assert len(regions) == 1
-    assert regions[0].parsed == ""
+    assert parsed_value(example=regions[0]) == ""
     assert regions[0].lexemes["attributes"] == {"title": "example.py"}

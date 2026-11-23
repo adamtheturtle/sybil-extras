@@ -12,6 +12,7 @@ from beartype import beartype
 from sybil import Document, Example, Sybil
 from sybil.region import Lexeme
 
+from sybil_extras.evaluators._example_source import parsed_value
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.evaluators.shell_evaluator import ShellCommandEvaluator
@@ -621,8 +622,8 @@ def test_with_shell_command_evaluator(
     examples = list(document.examples())
     first_code_block = examples[1]
     second_code_block = examples[2]
-    first_parsed = first_code_block.parsed
-    second_parsed = second_code_block.parsed
+    first_parsed = parsed_value(example=first_code_block)
+    second_parsed = parsed_value(example=second_code_block)
     assert isinstance(first_parsed, Lexeme)
     assert isinstance(second_parsed, Lexeme)
     first_line = first_code_block.line + first_parsed.line_offset
@@ -995,7 +996,7 @@ def test_no_pad_groups(
     # Get line number from the first code block to compute expected padding.
     examples = list(document.examples())
     first_code_block = examples[1]
-    first_parsed = first_code_block.parsed
+    first_parsed = parsed_value(example=first_code_block)
     assert isinstance(first_parsed, Lexeme)
     first_line = first_code_block.line + first_parsed.line_offset
 

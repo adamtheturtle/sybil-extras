@@ -1,5 +1,7 @@
 """Shared pytest fixtures for tests package."""
 
+from types import FunctionType
+
 import pytest
 
 from sybil_extras.languages import (
@@ -7,28 +9,26 @@ from sybil_extras.languages import (
     DirectiveBuilder,
     MarkupLanguage,
 )
+from tests._typing import fixture_parameter
 
 
-def _markup_language(*, value: MarkupLanguage) -> MarkupLanguage:
-    """Type a markup language supplied by the pytest parameter API."""
-    return value
+def _language_id(language: MarkupLanguage) -> str:
+    """Use the markup language name as its pytest parameter ID."""
+    return language.name
 
 
-def _language_builder_pair(
-    *, value: tuple[MarkupLanguage, DirectiveBuilder]
-) -> tuple[MarkupLanguage, DirectiveBuilder]:
-    """Type a language and builder supplied by the pytest parameter
-    API.
-    """
-    return value
+def _language_builder_id(pair: tuple[MarkupLanguage, DirectiveBuilder]) -> str:
+    """Use the markup language and builder names as the parameter ID."""
+    language, builder = pair
+    if not isinstance(builder, FunctionType):  # pragma: no cover
+        msg = "Expected a directive builder function"
+        raise TypeError(msg)
+    return f"{language.name}-{builder.__name__.removeprefix('_')}"
 
 
-@pytest.fixture(
-    name="language", params=ALL_LANGUAGES, ids=lambda language: language.name
-)
-def fixture_language(*, request: pytest.FixtureRequest) -> MarkupLanguage:
+def _requested_language(*, request: pytest.FixtureRequest) -> MarkupLanguage:
     """Provide each supported markup language."""
-    language = request.param
+    language = fixture_parameter(request=request)
     # Pytest types request.param as Any; this check narrows it and rejects
     # unexpected parameters. See the upstream typing issue:
     # https://github.com/pytest-dev/pytest/issues/8763
@@ -38,16 +38,22 @@ def fixture_language(*, request: pytest.FixtureRequest) -> MarkupLanguage:
     return language
 
 
+@pytest.fixture(name="language", params=ALL_LANGUAGES, ids=_language_id)
+def fixture_language(*, request: pytest.FixtureRequest) -> MarkupLanguage:
+    """Provide each supported markup language."""
+    return _requested_language(request=request)
+
+
 @pytest.fixture(
     name="markup_language",
     params=ALL_LANGUAGES,
-    ids=lambda language: language.name,
+    ids=_language_id,
 )
 def fixture_markup_language(
     *, request: pytest.FixtureRequest
 ) -> MarkupLanguage:
     """Provide each supported markup language."""
-    return _markup_language(value=request.param)
+    return _requested_language(request=request)
 
 
 @pytest.fixture(
@@ -57,7 +63,7 @@ def fixture_markup_language(
         for lang in ALL_LANGUAGES
         for builder in lang.directive_builders
     ],
-    ids=lambda pair: f"{pair[0].name}-{pair[1].__name__.removeprefix('_')}",
+    ids=_language_builder_id,
 )
 def fixture_language_directive_builder(
     *,
@@ -69,4 +75,9 @@ def fixture_language_directive_builder(
     multiple comment syntaxes (e.g., MyST with HTML and percent
     comments).
     """
-    return _language_builder_pair(value=request.param)
+    match fixture_parameter(request=request):
+        case (MarkupLanguage() as language, DirectiveBuilder() as builder):
+            return language, builder
+        case _:  # pragma: no cover
+            msg = "Unexpected language and directive builder fixture parameter"
+            raise TypeError(msg)

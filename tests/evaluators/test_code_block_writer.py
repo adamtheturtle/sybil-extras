@@ -10,6 +10,7 @@ import pytest
 from sybil import Document, Example, Region, Sybil
 from sybil.example import SybilFailure
 
+from sybil_extras.evaluators._example_source import example_source
 from sybil_extras.evaluators.code_block_writer import CodeBlockWriterEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.languages import (
@@ -97,8 +98,8 @@ def test_write_back_of_group_spanning_multiple_blocks_is_rejected(
 
     def modifying_evaluator(example: Example) -> None:
         """Uppercase the grouped source."""
-        example.document.namespace["modified_content"] = str(
-            object=example.parsed
+        example.document.namespace["modified_content"] = example_source(
+            example=example
         ).upper()
 
     writer_evaluator = CodeBlockWriterEvaluator(evaluator=modifying_evaluator)
@@ -145,7 +146,7 @@ def test_concurrent_writes_keep_each_edit(tmp_path: Path) -> None:
 
     def modifying_evaluator(example: Example) -> None:
         """Uppercase the block after arranging an overlapping call."""
-        source = str(object=example.parsed)
+        source = example_source(example=example)
         example.document.namespace["modified_content"] = source.upper()
         if source.strip() == "first":
             first_ready.set()
@@ -604,7 +605,7 @@ def test_empty_blockquote_code_block_write_content(
     )
     reparsed_document = Sybil(parsers=[parser]).parse(path=source_file)
     (reparsed_example,) = reparsed_document.examples()
-    assert str(object=reparsed_example.parsed) == "inserted\n"
+    assert example_source(example=reparsed_example) == "inserted\n"
 
 
 @pytest.mark.parametrize(
@@ -642,7 +643,7 @@ def test_empty_invisible_code_block_write_content(
     )
     reparsed_document = Sybil(parsers=[parser]).parse(path=source_file)
     (reparsed_example,) = reparsed_document.examples()
-    assert str(object=reparsed_example.parsed) == "inserted\n"
+    assert example_source(example=reparsed_example) == "inserted\n"
 
 
 @pytest.mark.parametrize(
@@ -682,7 +683,7 @@ def test_quoted_code_block_starting_with_blank_line(
     )
     reparsed_document = Sybil(parsers=[parser]).parse(path=source_file)
     (reparsed_example,) = reparsed_document.examples()
-    assert str(object=reparsed_example.parsed) == "value = 2\n"
+    assert example_source(example=reparsed_example) == "value = 2\n"
 
 
 def test_empty_tilde_fenced_block(tmp_path: Path) -> None:
@@ -746,7 +747,7 @@ def test_empty_fenced_block_closing_fence_trailing_spaces(
     )
     reparsed_document = Sybil(parsers=[parser]).parse(path=source_file)
     (reparsed_example,) = reparsed_document.examples()
-    assert str(object=reparsed_example.parsed) == "inserted\n"
+    assert example_source(example=reparsed_example) == "inserted\n"
 
 
 def test_empty_code_block_with_options(
@@ -914,7 +915,7 @@ def test_empty_code_block_write_empty(
 @pytest.mark.parametrize(
     argnames="markup_language",
     argvalues=(DJOT, MARKDOWN, MDX, MYST),
-    ids=lambda language: language.name,
+    ids=("Djot", "Markdown", "MDX", "MyST"),
 )
 def test_quoted_code_block(
     *,

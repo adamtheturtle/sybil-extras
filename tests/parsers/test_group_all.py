@@ -6,7 +6,7 @@ import textwrap
 import time
 import uuid
 import weakref
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -30,6 +30,7 @@ from sybil_extras.languages import (
 )
 from sybil_extras.parsers.rest.group_all import GroupAllParser
 from sybil_extras.parsers.rest.thread_safe_skip import ThreadSafeSkipParser
+from tests._typing import is_object_list
 
 
 def test_skip_next_non_code_example_is_consumed(tmp_path: Path) -> None:
@@ -650,8 +651,11 @@ def test_custom_parser_with_string_parsed_value(
         example.evaluate()
 
     # Verify the custom blocks were collected and combined correctly
-    assert len(document.namespace["blocks"]) == 1
-    combined: object = document.namespace["blocks"][0]
+    namespace: Mapping[str, object] = document.namespace
+    blocks = namespace["blocks"]
+    assert is_object_list(blocks)
+    assert len(blocks) == 1
+    combined = blocks[0]
     assert isinstance(combined, str)
     assert "custom_block_1" in combined
     assert "custom_block_2" in combined

@@ -26,6 +26,8 @@ from sybil.example import NotEvaluated
 from sybil.region import Region
 from typing_extensions import override
 
+from sybil_extras.evaluators._example_source import Parsed
+
 
 @beartype
 @dataclass(frozen=True)
@@ -69,10 +71,10 @@ class _DocumentPlan:
 
 @beartype
 def _parsed_skip_directive(
-    *, value: tuple[str, str | None]
+    *, region: Parsed[tuple[str, str | None]]
 ) -> tuple[str, str | None]:
     """Type the pair produced by Sybil's skip parser."""
-    return value
+    return region.parsed
 
 
 @beartype
@@ -153,7 +155,7 @@ class ThreadSafeSkipper(Skipper):
                     plan.directive_for_region[id(region)] = active_start
                 continue
 
-            action, reason = _parsed_skip_directive(value=region.parsed)
+            action, reason = _parsed_skip_directive(region=region)
             entry = _SkipDirective(
                 region=region,
                 action=action,
@@ -221,8 +223,8 @@ class ThreadSafeSkipper(Skipper):
             namespace["if_"] = If(default_reason=condition)
         # Evaluating skip expressions is this feature's public contract; the
         # expression receives only the document's explicit namespace.
-        result = eval(text, namespace)  # noqa: S307  # pylint: disable=eval-used
-        if result:
+        result: object = eval(text, namespace)  # noqa: S307  # pylint: disable=eval-used
+        if bool(result):
             return _Decision(kind="raise", skip_reason=str(object=result))
         return _Decision(kind="fall_through", skip_reason="")
 

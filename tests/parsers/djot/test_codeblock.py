@@ -5,8 +5,10 @@ from textwrap import dedent
 
 from sybil import Document, Region
 
+from sybil_extras.evaluators._example_source import parsed_value
 from sybil_extras.languages import DJOT
 from sybil_extras.parsers.djot.codeblock import DjotRawFencedCodeBlockLexer
+from tests._typing import source_lexeme
 
 
 def _parse(text: str) -> list[Region]:
@@ -28,7 +30,7 @@ def test_fenced_code_block_outside_blockquote() -> None:
         )
     )
 
-    assert region.parsed == "x = 1\n"
+    assert parsed_value(example=region) == "x = 1\n"
 
 
 def test_backticks_with_trailing_text_are_content() -> None:
@@ -44,7 +46,9 @@ def test_backticks_with_trailing_text_are_content() -> None:
         )
     )
 
-    assert region.parsed == "```not-a-closing-fence\nstill_code\n"
+    assert (
+        parsed_value(example=region) == "```not-a-closing-fence\nstill_code\n"
+    )
 
 
 def test_code_block_in_blockquote_without_closing_fence() -> None:
@@ -61,7 +65,7 @@ def test_code_block_in_blockquote_without_closing_fence() -> None:
         )
     )
 
-    assert region.parsed == "x = 1\ny = 2\n"
+    assert parsed_value(example=region) == "x = 1\ny = 2\n"
 
 
 def test_code_block_implicitly_closed_by_container_end() -> None:
@@ -83,7 +87,7 @@ def test_code_block_implicitly_closed_by_container_end() -> None:
         )
     )
 
-    assert region.parsed == "code in a\nblock quote\n"
+    assert parsed_value(example=region) == "code in a\nblock quote\n"
 
 
 def test_code_block_without_closing_fence_no_blockquote() -> None:
@@ -101,14 +105,14 @@ def test_code_block_without_closing_fence_no_blockquote() -> None:
         )
     )
 
-    assert region.parsed == "x = 1\ny = 2\n"
+    assert parsed_value(example=region) == "x = 1\ny = 2\n"
 
 
 def test_code_block_with_no_newline_at_end() -> None:
     """A code block that ends without a trailing newline."""
     (region,) = _parse(text="```python\nx = 1")
 
-    assert region.parsed == "x = 1"
+    assert parsed_value(example=region) == "x = 1"
 
 
 def test_code_block_in_nested_blockquote() -> None:
@@ -124,7 +128,7 @@ def test_code_block_in_nested_blockquote() -> None:
         )
     )
 
-    assert region.parsed == "x = 1\n"
+    assert parsed_value(example=region) == "x = 1\n"
 
 
 def test_code_block_with_wrong_language() -> None:
@@ -161,21 +165,21 @@ def test_code_block_in_blockquote_at_eof() -> None:
     """A code block in a blockquote that reaches EOF without container end."""
     (region,) = _parse(text="> ```python\n> x = 1\n> y = 2")
 
-    assert region.parsed == "x = 1\ny = 2"
+    assert parsed_value(example=region) == "x = 1\ny = 2"
 
 
 def test_code_block_empty_after_opening() -> None:
     """A code block in a blockquote with opening right at the end."""
     (region,) = _parse(text="> ```python\n")
 
-    assert region.parsed == ""
+    assert parsed_value(example=region) == ""
 
 
 def test_code_block_in_blockquote_no_newline_after_prefix_change() -> None:
     """A code block in blockquote where the prefix changes without newline."""
     (region,) = _parse(text="> ```python\n> code\nno prefix")
 
-    assert region.parsed == "code\n"
+    assert parsed_value(example=region) == "code\n"
 
 
 def test_raw_lexer_without_mapping() -> None:
@@ -188,7 +192,7 @@ def test_raw_lexer_without_mapping() -> None:
     regions = list(lexer(document=document))
 
     assert len(regions) == 1
-    assert regions[0].lexemes["source"].text == "x = 1\n"
+    assert source_lexeme(region=regions[0]).text == "x = 1\n"
 
 
 def test_multiple_code_blocks_with_invalid() -> None:
@@ -210,7 +214,7 @@ def test_multiple_code_blocks_with_invalid() -> None:
     regions = _parse(text=text)
 
     assert len(regions) == 1
-    assert regions[0].parsed == "y = 2\n"
+    assert parsed_value(example=regions[0]) == "y = 2\n"
 
 
 def test_raw_lexer_skips_non_matching_and_continues() -> None:
@@ -239,7 +243,7 @@ def test_raw_lexer_skips_non_matching_and_continues() -> None:
 
     # Only the python block should match
     assert len(regions) == 1
-    assert regions[0].lexemes["source"].text == "y = 2\n"
+    assert source_lexeme(region=regions[0]).text == "y = 2\n"
 
 
 def test_fence_with_non_matching_closer() -> None:
@@ -263,7 +267,7 @@ def test_fence_with_non_matching_closer() -> None:
 
     # The line without "> " prefix ends the container, so the code block
     # ends before the ``` line (which is outside the blockquote)
-    assert region.parsed == "code\n"
+    assert parsed_value(example=region) == "code\n"
 
 
 def test_region_end_respects_container_boundary_with_closing_fence() -> None:
@@ -290,7 +294,7 @@ def test_region_end_respects_container_boundary_with_closing_fence() -> None:
     (region,) = _parse(text=text)
 
     # The content is correctly parsed (container ends at empty line)
-    assert region.parsed == "x = 1\n"
+    assert parsed_value(example=region) == "x = 1\n"
 
     # The region should end where the container ends (after "> x = 1\n"),
     # not extend to include the closing fence in the separate blockquote.

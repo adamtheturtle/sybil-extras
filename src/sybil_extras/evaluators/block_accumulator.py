@@ -1,9 +1,18 @@
 """Block accumulator evaluator."""
 
 import threading
+from collections.abc import Iterable, Mapping
+from typing import TypeGuard
 
 from beartype import beartype
 from sybil.example import Example
+
+from sybil_extras.evaluators._example_source import parsed_value
+
+
+def _is_iterable(value: object, /) -> TypeGuard[Iterable[object]]:
+    """Check whether a namespace value can supply accumulated blocks."""
+    return isinstance(value, Iterable)
 
 
 @beartype
@@ -35,11 +44,13 @@ class BlockAccumulatorEvaluator:
             example: The example to evaluate.
         """
         with self._lock:
-            existing_blocks = example.document.namespace.get(
-                self._namespace_key,
-                [],
-            )
-            example.document.namespace[self._namespace_key] = [
-                *existing_blocks,
-                example.parsed,
-            ]
+            namespace: Mapping[str, object] = example.document.namespace
+            existing_blocks = namespace.get(self._namespace_key, ())
+            if _is_iterable(existing_blocks):
+                example.document.namespace[self._namespace_key] = [
+                    *existing_blocks,
+                    parsed_value(example=example),
+                ]
+            else:  # pragma: no cover
+                msg = "Accumulated blocks must be iterable"
+                raise TypeError(msg)

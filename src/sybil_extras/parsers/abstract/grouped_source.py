@@ -8,7 +8,7 @@ collected before combining them.
 """
 
 import threading
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Literal
 from weakref import WeakKeyDictionary
@@ -18,6 +18,8 @@ from sybil import Document, Example, Region
 from sybil.example import NotEvaluated
 from sybil.parsers.abstract.lexers import LexerCollection
 from sybil.typing import Evaluator, Lexer
+
+from sybil_extras.evaluators._example_source import Parsed
 
 from ._grouping_utils import (
     CollectedExample,
@@ -54,9 +56,9 @@ class _GroupMarker:
 
 
 @beartype
-def _group_marker(*, value: _GroupMarker) -> _GroupMarker:
+def _group_marker(*, example: Parsed[_GroupMarker]) -> _GroupMarker:
     """Type a marker supplied by Sybil's parsed-value API."""
-    return value
+    return example.parsed
 
 
 @beartype
@@ -214,7 +216,7 @@ class _Grouper:
 
     def _evaluate_grouper_example(self, example: Example) -> None:
         """Evaluate a grouper marker."""
-        marker = _group_marker(value=example.parsed)
+        marker = _group_marker(example=example)
         state = self._get_group_state(
             document=example.document,
             group_id=marker.group_id,
@@ -346,14 +348,18 @@ class AbstractGroupedSourceParser:
         # First pass: collect all start/end markers
         markers: list[tuple[int, int, str]] = []  # (start, end, action)
         for lexed in self._lexers(document=document):
-            arguments = lexed.lexemes["arguments"]
-            if not arguments:
-                directive = lexed.lexemes["directive"]
+            lexemes: Mapping[str, object] = lexed.lexemes
+            arguments = lexemes["arguments"]
+            if not bool(arguments):
+                directive = lexemes["directive"]
                 msg = f"missing arguments to {directive}"
                 raise ValueError(msg)
 
-            if arguments not in ("start", "end"):
-                directive = lexed.lexemes["directive"]
+            if not isinstance(arguments, str) or arguments not in (
+                "start",
+                "end",
+            ):
+                directive = lexemes["directive"]
                 msg = f"malformed arguments to {directive}: {arguments!r}"
                 raise ValueError(msg)
 

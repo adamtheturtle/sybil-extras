@@ -15,7 +15,9 @@ MultiEvaluator
 
     """Use MultiEvaluator to run multiple evaluators on the same parser."""
 
-    from sybil import Example, Sybil
+    from typing import Protocol
+
+    from sybil import Sybil
     from sybil.evaluators.python import PythonEvaluator
     from sybil.parsers.rest.codeblock import CodeBlockParser
     from sybil.typing import Evaluator
@@ -23,10 +25,21 @@ MultiEvaluator
     from sybil_extras.evaluators.multi import MultiEvaluator
 
 
-    def _evaluator_1(example: Example) -> None:
+    class ParsedExample(Protocol):
+        """Read the value produced by the parser."""
+
+        @property
+        def parsed(self) -> object:
+            """Get the parsed value."""
+            ...
+
+
+    def _evaluator_1(example: ParsedExample) -> None:
         """Check that the example is long enough."""
         minimum_length = 50
-        assert len(example.parsed) >= minimum_length
+        parsed = example.parsed
+        assert isinstance(parsed, str)
+        assert len(parsed) >= minimum_length
 
 
     evaluators: list[Evaluator] = [_evaluator_1, PythonEvaluator()]
@@ -92,6 +105,7 @@ This is useful for testing parsers that group multiple code blocks together.
 
     """Use BlockAccumulatorEvaluator to accumulate code blocks."""
 
+    from collections.abc import Mapping, Sized
     from pathlib import Path
 
     from sybil import Sybil
@@ -108,7 +122,9 @@ This is useful for testing parsers that group multiple code blocks together.
     for example in document.examples():
         example.evaluate()
 
-    blocks = document.namespace[namespace_key]
+    namespace: Mapping[str, object] = document.namespace
+    blocks = namespace[namespace_key]
+    assert isinstance(blocks, Sized)
     assert len(blocks) > 0
 
 NoOpEvaluator
@@ -143,15 +159,31 @@ The wrapped evaluator should store the modified content in ``example.document.na
 
     """Use CodeBlockWriterEvaluator to write modifications back to code blocks."""
 
-    from sybil import Example, Sybil
+    from typing import Protocol
+
+    from sybil import Document, Sybil
     from sybil.parsers.rest.codeblock import CodeBlockParser
 
     from sybil_extras.evaluators.code_block_writer import CodeBlockWriterEvaluator
 
 
-    def formatting_evaluator(example: Example) -> None:
+    class ParsedExample(Protocol):
+        """Read the value produced by the parser."""
+
+        @property
+        def parsed(self) -> object:
+            """Get the parsed value."""
+            ...
+
+        @property
+        def document(self) -> Document:
+            """Get the document containing the example."""
+            ...
+
+
+    def formatting_evaluator(example: ParsedExample) -> None:
         """Format the code and store the result for writing back."""
-        parsed: object = example.parsed
+        parsed = example.parsed
         assert isinstance(parsed, str)
         formatted_code = parsed.upper()
         example.document.namespace["modified_content"] = formatted_code
@@ -250,9 +282,9 @@ GroupedSourceParser
 
     import sys
     from pathlib import Path
+    from typing import Protocol
 
     from sybil import Sybil
-    from sybil.example import Example
     from sybil.parsers.rest.codeblock import PythonCodeBlockParser
 
     # Similar parsers are available at
@@ -264,7 +296,16 @@ GroupedSourceParser
     from sybil_extras.parsers.rest.grouped_source import GroupedSourceParser
 
 
-    def evaluator(example: Example) -> None:
+    class ParsedExample(Protocol):
+        """Read the value produced by the parser."""
+
+        @property
+        def parsed(self) -> object:
+            """Get the parsed value."""
+            ...
+
+
+    def evaluator(example: ParsedExample) -> None:
         """Evaluate the code block by printing it."""
         _ = sys.stdout.write(str(object=example.parsed))
 
@@ -346,9 +387,9 @@ GroupAllParser
 
     import sys
     from pathlib import Path
+    from typing import Protocol
 
     from sybil import Sybil
-    from sybil.example import Example
     from sybil.parsers.rest.codeblock import PythonCodeBlockParser
 
     # Similar parsers are available at
@@ -360,7 +401,16 @@ GroupAllParser
     from sybil_extras.parsers.rest.group_all import GroupAllParser
 
 
-    def evaluator(example: Example) -> None:
+    class ParsedExample(Protocol):
+        """Read the value produced by the parser."""
+
+        @property
+        def parsed(self) -> object:
+            """Get the parsed value."""
+            ...
+
+
+    def evaluator(example: ParsedExample) -> None:
         """Evaluate the code block by printing it."""
         _ = sys.stdout.write(str(object=example.parsed))
 
@@ -409,9 +459,9 @@ This is useful for MDX documentation where code blocks with the same group attri
 
     import sys
     from pathlib import Path
+    from typing import Protocol
 
     from sybil import Sybil
-    from sybil.example import Example
 
     from sybil_extras.evaluators.no_op import NoOpEvaluator
     from sybil_extras.parsers.mdx.attribute_grouped_source import (
@@ -420,7 +470,16 @@ This is useful for MDX documentation where code blocks with the same group attri
     from sybil_extras.parsers.mdx.codeblock import CodeBlockParser
 
 
-    def evaluator(example: Example) -> None:
+    class ParsedExample(Protocol):
+        """Read the value produced by the parser."""
+
+        @property
+        def parsed(self) -> object:
+            """Get the parsed value."""
+            ...
+
+
+    def evaluator(example: ParsedExample) -> None:
         """Evaluate the code block by printing it."""
         _ = sys.stdout.write(str(object=example.parsed))
 
@@ -489,9 +548,9 @@ This extracts the source, arguments and options from ``.. jinja::`` directive bl
     """Use SphinxJinja2Parser to extract Jinja templates."""
 
     from pathlib import Path
+    from typing import Protocol
 
     from sybil import Sybil
-    from sybil.example import Example
 
     # Similar parsers are available at
     # sybil_extras.parsers.myst.sphinx_jinja2 and
@@ -501,10 +560,21 @@ This extracts the source, arguments and options from ``.. jinja::`` directive bl
     from sybil_extras.parsers.rest.sphinx_jinja2 import SphinxJinja2Parser
 
 
-    def _evaluator(example: Example) -> None:
+    class ParsedExample(Protocol):
+        """Read the value produced by the parser."""
+
+        @property
+        def parsed(self) -> object:
+            """Get the parsed value."""
+            ...
+
+
+    def _evaluator(example: ParsedExample) -> None:
         """Check that the example is long enough."""
         minimum_length = 50
-        assert len(example.parsed) >= minimum_length
+        parsed = example.parsed
+        assert isinstance(parsed, str)
+        assert len(parsed) >= minimum_length
 
 
     parser = SphinxJinja2Parser(evaluator=_evaluator)

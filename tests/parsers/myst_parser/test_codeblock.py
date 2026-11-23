@@ -9,6 +9,7 @@ from sybil import Example, Sybil
 from sybil_extras.evaluators.code_block_writer import CodeBlockWriterEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
 from sybil_extras.parsers.myst_parser.codeblock import CodeBlockParser
+from tests._typing import parsed_lexeme
 
 
 @pytest.mark.parametrize(
@@ -42,8 +43,10 @@ def test_directive_source_and_write_back(
     )
     (example,) = Sybil(parsers=[parser]).parse(path=path).examples()
 
-    assert example.parsed.text == source
-    assert example.region.start + example.parsed.offset == len(prefix)
+    assert parsed_lexeme(example=example).text == source
+    assert example.region.start + parsed_lexeme(example=example).offset == len(
+        prefix
+    )
     example.evaluate()
     assert path.read_text(encoding="utf-8") == content.replace(
         "print(1)", "print(2)"
@@ -70,7 +73,7 @@ def test_directive_options_without_body(
     )
     parser = CodeBlockParser(language="python", evaluator=NoOpEvaluator())
     (example,) = Sybil(parsers=[parser]).parse(path=path).examples()
-    assert example.parsed.text == ""
+    assert parsed_lexeme(example=example).text == ""
 
 
 def test_language_with_extra_info(tmp_path: Path) -> None:
@@ -90,7 +93,7 @@ def test_language_with_extra_info(tmp_path: Path) -> None:
     examples = list(document.examples())
 
     assert len(examples) == 1
-    assert examples[0].parsed.text == 'print("hello")\n'
+    assert parsed_lexeme(example=examples[0]).text == 'print("hello")\n'
 
 
 def test_unclosed_fence_no_trailing_newline(tmp_path: Path) -> None:
@@ -176,7 +179,8 @@ def test_code_block_inside_blockquote(tmp_path: Path) -> None:
 
     assert len(examples) == 1
     assert (
-        examples[0].parsed.text == 'def hello() -> None:\n    print("Hello")\n'
+        parsed_lexeme(example=examples[0]).text
+        == 'def hello() -> None:\n    print("Hello")\n'
     )
     assert examples[0].region.lexemes["language"] == "python"
 
@@ -199,7 +203,7 @@ def test_invisible_code_block_html_comment(tmp_path: Path) -> None:
     document = sybil.parse(path=test_file)
     examples = list(document.examples())
 
-    assert [e.parsed.text for e in examples] == ["1\n", "2\n"]
+    assert [parsed_lexeme(example=e).text for e in examples] == ["1\n", "2\n"]
     assert [e.region.lexemes["language"] for e in examples] == ["text", "text"]
 
 
@@ -222,7 +226,7 @@ def test_invisible_code_block_language_filter(tmp_path: Path) -> None:
     document = sybil.parse(path=test_file)
     examples = list(document.examples())
 
-    assert [e.parsed.text for e in examples] == ["x = 1\n"]
+    assert [parsed_lexeme(example=e).text for e in examples] == ["x = 1\n"]
 
 
 def test_invisible_code_block_unclosed_comment(tmp_path: Path) -> None:
@@ -254,7 +258,7 @@ def test_invisible_code_block_no_trailing_newline(tmp_path: Path) -> None:
     document = sybil.parse(path=test_file)
     examples = list(document.examples())
 
-    assert [e.parsed.text for e in examples] == ["2\n"]
+    assert [parsed_lexeme(example=e).text for e in examples] == ["2\n"]
 
 
 def test_evaluator_not_none_when_omitted(tmp_path: Path) -> None:
@@ -313,8 +317,8 @@ def test_percent_comment_does_not_break_parsing(tmp_path: Path) -> None:
 
     expected_count = 2
     assert len(examples) == expected_count
-    assert examples[0].parsed.text == "x = 1\n"
-    assert examples[1].parsed.text == "y = 2\n"
+    assert parsed_lexeme(example=examples[0]).text == "x = 1\n"
+    assert parsed_lexeme(example=examples[1]).text == "y = 2\n"
 
 
 @pytest.mark.parametrize(
@@ -344,7 +348,7 @@ def test_myst_directive_code_block(*, tmp_path: Path, directive: str) -> None:
     examples = list(document.examples())
 
     assert len(examples) == 1
-    assert examples[0].parsed.text == "print('hello')\n"
+    assert parsed_lexeme(example=examples[0]).text == "print('hello')\n"
     assert examples[0].region.lexemes["language"] == "python"
 
 
@@ -405,9 +409,12 @@ def test_myst_directive_code_block_options(
     document = Sybil(parsers=[parser]).parse(path=test_file)
     (example,) = document.examples()
 
-    assert example.parsed.text == "print('hello')\n"
+    assert parsed_lexeme(example=example).text == "print('hello')\n"
     expected_offset = content.index("print('hello')")
-    assert example.region.start + example.parsed.offset == expected_offset
+    assert (
+        example.region.start + parsed_lexeme(example=example).offset
+        == expected_offset
+    )
 
 
 @pytest.mark.parametrize(

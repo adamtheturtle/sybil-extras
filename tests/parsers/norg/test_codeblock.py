@@ -4,6 +4,7 @@ from textwrap import dedent
 
 from sybil import Document, Region
 
+from sybil_extras.evaluators._example_source import parsed_value
 from sybil_extras.languages import NORG
 
 
@@ -26,7 +27,7 @@ def test_verbatim_ranged_tag_basic() -> None:
         )
     )
 
-    assert region.parsed == "x = 1\n"
+    assert parsed_value(example=region) == "x = 1\n"
 
 
 def test_verbatim_ranged_tag_without_language() -> None:
@@ -73,7 +74,7 @@ def test_verbatim_ranged_tag_multiline() -> None:
         )
     )
 
-    assert region.parsed == "x = 1\ny = 2\nz = 3\n"
+    assert parsed_value(example=region) == "x = 1\ny = 2\nz = 3\n"
 
 
 def test_verbatim_ranged_tag_without_closing() -> None:
@@ -102,7 +103,7 @@ def test_verbatim_ranged_tag_with_leading_whitespace() -> None:
         )
     )
 
-    assert region.parsed == "x = 1\n"
+    assert parsed_value(example=region) == "x = 1\n"
 
 
 def test_region_excludes_blank_lines_before_opening() -> None:
@@ -137,8 +138,8 @@ def test_multiple_code_blocks() -> None:
 
     expected_region_count = 2
     assert len(regions) == expected_region_count
-    assert regions[0].parsed == "x = 1\n"
-    assert regions[1].parsed == "y = 2\n"
+    assert parsed_value(example=regions[0]) == "x = 1\n"
+    assert parsed_value(example=regions[1]) == "y = 2\n"
 
 
 def test_empty_code_block() -> None:
@@ -152,7 +153,7 @@ def test_empty_code_block() -> None:
         )
     )
 
-    assert region.parsed == ""
+    assert parsed_value(example=region) == ""
 
 
 def test_code_block_with_blank_lines() -> None:
@@ -169,7 +170,7 @@ def test_code_block_with_blank_lines() -> None:
         )
     )
 
-    assert region.parsed == "x = 1\n\ny = 2\n"
+    assert parsed_value(example=region) == "x = 1\n\ny = 2\n"
 
 
 def test_code_block_preserves_blank_lines_before_end() -> None:
@@ -178,7 +179,7 @@ def test_code_block_preserves_blank_lines_before_end() -> None:
 
     (region,) = _parse(text=text)
 
-    assert region.parsed == "x = 1\n\n\n"
+    assert parsed_value(example=region) == "x = 1\n\n\n"
     assert text[region.start : region.end] == text.rstrip("\n")
 
 
@@ -195,7 +196,7 @@ def test_nested_code_markers_in_content() -> None:
         )
     )
 
-    assert region.parsed == '# This is @code\nx = "@end"\n'
+    assert parsed_value(example=region) == '# This is @code\nx = "@end"\n'
 
 
 def test_trailing_whitespace_after_end() -> None:
@@ -204,4 +205,4 @@ def test_trailing_whitespace_after_end() -> None:
     text = "@code python\nx = 1\n@end   \n"
     (region,) = _parse(text=text)
 
-    assert region.parsed == "x = 1\n"
+    assert parsed_value(example=region) == "x = 1\n"

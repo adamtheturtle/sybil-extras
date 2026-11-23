@@ -7,6 +7,7 @@ from sybil.testing import check_lexer
 
 from sybil_extras.parsers.norg.codeblock import NorgVerbatimRangedTagLexer
 from sybil_extras.parsers.norg.lexers import DirectiveInNorgCommentLexer
+from tests._typing import source_lexeme
 
 
 def test_directive_with_argument() -> None:
@@ -119,7 +120,7 @@ def test_verbatim_ranged_tag_lexer_no_mapping() -> None:
     region = regions[0]
     assert expected_text == document.text[region.start : region.end]
     assert region.lexemes["language"] == "python"
-    assert region.lexemes["source"].text == "x = 1\n"
+    assert source_lexeme(region=region).text == "x = 1\n"
 
 
 def test_verbatim_ranged_tag_lexer_with_mapping() -> None:
@@ -144,7 +145,7 @@ def test_verbatim_ranged_tag_lexer_with_mapping() -> None:
     region = regions[0]
     assert expected_text == document.text[region.start : region.end]
     assert region.lexemes["arguments"] == "python"
-    assert region.lexemes["source"].text == "x = 1\n"
+    assert source_lexeme(region=region).text == "x = 1\n"
 
 
 def test_verbatim_ranged_tag_lexer_no_language() -> None:
@@ -171,7 +172,7 @@ def test_verbatim_ranged_tag_lexer_no_language() -> None:
     assert expected_text == document.text[region.start : region.end]
     # Language is empty string when not specified
     assert region.lexemes["language"] == ""
-    assert region.lexemes["source"].text == "x = 1\n"
+    assert source_lexeme(region=region).text == "x = 1\n"
 
 
 def test_verbatim_ranged_tag_lexer_no_newline_after_opening() -> None:
@@ -189,4 +190,4 @@ def test_verbatim_ranged_tag_lexer_no_newline_after_opening() -> None:
     region = regions[0]
     assert region.lexemes["language"] == "python"
     # Empty source since @end is right after the newline
-    assert region.lexemes["source"].text == ""
+    assert source_lexeme(region=region).text == ""
