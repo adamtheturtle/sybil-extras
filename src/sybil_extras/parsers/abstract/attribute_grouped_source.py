@@ -84,7 +84,7 @@ class AbstractAttributeGroupedSourceParser:
         for region in self._code_block_parser(document):
             lexemes: Mapping[str, object] = region.lexemes
             attributes = lexemes.get("attributes", {})
-            if not isinstance(attributes, _Attributes):  # pragma: no cover
+            if not isinstance(attributes, _Attributes):
                 msg = "Code block attributes must be a mapping"
                 raise TypeError(msg)
             raw_group_name: object = attributes.get(self._attribute_name)

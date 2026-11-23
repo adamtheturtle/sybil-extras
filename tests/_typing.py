@@ -26,7 +26,7 @@ def fixture_parameter(*, request: _FixtureParameter) -> object:
 
 def _require_lexeme(*, value: object) -> Lexeme:
     """Check the parser or lexer contract before reading a lexeme."""
-    if not isinstance(value, Lexeme):  # pragma: no cover
+    if not isinstance(value, Lexeme):
         msg = "Expected a Lexeme"
         raise TypeError(msg)
     return value
@@ -60,7 +60,7 @@ class _CommandError(Protocol):
 def failed_command(*, error: _CommandError) -> "Sequence[object]":
     """Check that the failed command was passed as an argument list."""
     command = error.cmd
-    if not is_object_list(command):  # pragma: no cover
+    if not is_object_list(command):
         msg = "Expected the failed command to be an argument list"
         raise TypeError(msg)
     return command

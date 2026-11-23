@@ -51,6 +51,6 @@ class BlockAccumulatorEvaluator:
                     *existing_blocks,
                     parsed_value(example=example),
                 ]
-            else:  # pragma: no cover
+            else:
                 msg = "Accumulated blocks must be iterable"
                 raise TypeError(msg)

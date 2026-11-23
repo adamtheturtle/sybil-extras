@@ -5,7 +5,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from sybil import Example, Sybil
+import pytest
+from sybil import Document, Example, Sybil
 from sybil.parsers.rest.codeblock import CodeBlockParser
 from typing_extensions import override
 
@@ -77,6 +78,27 @@ def test_concurrent_evaluation_retains_all_blocks(tmp_path: Path) -> None:
         ["first\n", "second"],
         ["second", "first\n"],
     )
+
+
+def test_namespace_key_with_non_iterable_value() -> None:
+    """Accumulation requires an iterable namespace value."""
+    source = ".. code-block:: python\n\n   first\n"
+    document = Document(text=source, path="example.rst")
+    invalid_blocks = 42
+    document.namespace["blocks"] = invalid_blocks
+    evaluator = BlockAccumulatorEvaluator(namespace_key="blocks")
+    parser = CodeBlockParser(language="python", evaluator=evaluator)
+    (region,) = parser(document=document)
+    document.add(region=region)
+    example = next(document.examples())
+
+    with pytest.raises(
+        expected_exception=TypeError,
+        match="Accumulated blocks must be iterable",
+    ):
+        example.evaluate()
+
+    assert document.namespace["blocks"] == invalid_blocks
 
 
 def test_accumulates_blocks(tmp_path: Path) -> None:

@@ -27,12 +27,23 @@ from sybil_extras.languages import (
 from sybil_extras.parsers.markdown.group_all import GroupAllParser
 
 
-def test_empty_non_lexeme_code_block_reports_parser_contract(
-    tmp_path: Path,
+@pytest.mark.parametrize(
+    argnames=("parsed", "expected_message"),
+    argvalues=(
+        (
+            "",
+            (
+                "Writing an empty code block requires its parser to store a "
+                "Lexeme in example.parsed"
+            ),
+        ),
+        (42, "Writing a non-empty code block requires a string payload"),
+    ),
+)
+def test_invalid_parsed_code_block(
+    *, tmp_path: Path, parsed: object, expected_message: str
 ) -> None:
-    """An empty custom block reports its missing source-position
-    lexeme.
-    """
+    """The writer rejects invalid parsed values before writing."""
     source_file = tmp_path / "source.txt"
     _ = source_file.write_text(data="original", encoding="utf-8")
 
@@ -48,7 +59,7 @@ def test_empty_non_lexeme_code_block_reports_parser_contract(
         yield Region(
             start=0,
             end=len("original"),
-            parsed="",
+            parsed=parsed,
             evaluator=writer,
         )
 
@@ -57,12 +68,7 @@ def test_empty_non_lexeme_code_block_reports_parser_contract(
 
     with pytest.raises(
         expected_exception=TypeError,
-        match=re.escape(
-            pattern=(
-                "Writing an empty code block requires its parser to store a "
-                "Lexeme in example.parsed"
-            )
-        ),
+        match=re.escape(pattern=expected_message),
     ):
         example.evaluate()
 
