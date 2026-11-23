@@ -1,5 +1,6 @@
 """Tests for the BlockAccumulatorEvaluator."""
 
+import textwrap
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -85,18 +86,18 @@ def test_document_code_conflicts_with_accumulated_blocks(
 ) -> None:
     """An earlier code block can claim the same namespace key."""
     source_file = tmp_path / "example.rst"
-    _ = source_file.write_text(
-        data="""\
-.. code-block:: python
+    source = textwrap.dedent(
+        text="""\
+        .. code-block:: python
 
-   blocks = 42
+           blocks = 42
 
-.. code-block:: text
+        .. code-block:: text
 
-   first
-""",
-        encoding="utf-8",
+           first
+        """,
     )
+    _ = source_file.write_text(data=source, encoding="utf-8")
     document = Sybil(
         parsers=[
             PythonCodeBlockParser(),

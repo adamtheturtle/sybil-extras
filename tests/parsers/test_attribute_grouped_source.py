@@ -111,10 +111,14 @@ def test_attribute_group_multiple_groups(tmp_path: Path) -> None:
 def test_attribute_group_rejects_string_metadata(tmp_path: Path) -> None:
     """Grouping reports a parser that passes through raw attributes."""
     source_file = tmp_path / "example.mdx"
-    _ = source_file.write_text(
-        data='```python group="example"\npass\n```\n',
-        encoding="utf-8",
+    source = textwrap.dedent(
+        text="""\
+        ```python group="example"
+        pass
+        ```
+        """,
     )
+    _ = source_file.write_text(data=source, encoding="utf-8")
     mdx_parser = CodeBlockParser(language="python")
 
     def parser_with_raw_attributes(document: Document) -> Iterable[Region]:

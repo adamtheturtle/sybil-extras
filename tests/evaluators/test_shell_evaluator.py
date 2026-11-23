@@ -104,7 +104,13 @@ def fixture_rst_file(*, tmp_path: Path) -> Path:
 def test_shell_evaluator_cannot_pad_doctest_payload(tmp_path: Path) -> None:
     """Shell padding requires line offsets from the parser."""
     source_file = tmp_path / "example.rst"
-    _ = source_file.write_text(data=">>> 2 + 2\n4\n", encoding="utf-8")
+    source = textwrap.dedent(
+        text="""\
+        >>> 2 + 2
+        4
+        """,
+    )
+    _ = source_file.write_text(data=source, encoding="utf-8")
     document = Sybil(parsers=[DocTestParser()]).parse(path=source_file)
     document.push_evaluator(
         evaluator=ShellCommandEvaluator(

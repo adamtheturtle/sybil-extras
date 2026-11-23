@@ -73,13 +73,23 @@ def test_empty_non_lexeme_code_block_reports_parser_contract(
 def test_writer_rejects_doctest_payload(tmp_path: Path) -> None:
     """The writer rejects unsupported parsed values before writing."""
     source_file = tmp_path / "example.rst"
-    source = ">>> 2 + 2\n4\n"
+    source = textwrap.dedent(
+        text="""\
+        >>> 2 + 2
+        4
+        """,
+    )
     _ = source_file.write_text(data=source, encoding="utf-8")
     document = Sybil(parsers=[DocTestParser()]).parse(path=source_file)
 
     def request_replacement(example: Example) -> None:
         """Store a replacement in the writer's namespace key."""
-        example.document.namespace["modified_content"] = ">>> 3 + 3\n6\n"
+        example.document.namespace["modified_content"] = textwrap.dedent(
+            text="""\
+            >>> 3 + 3
+            6
+            """,
+        )
 
     document.push_evaluator(
         evaluator=CodeBlockWriterEvaluator(evaluator=request_replacement),
