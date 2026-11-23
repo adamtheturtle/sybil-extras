@@ -121,7 +121,7 @@ def test_padding_requires_parsed_line_offset(tmp_path: Path) -> None:
     ):
         example.evaluate()
 
-    assert list(tmp_path.iterdir()) == []
+    assert next(tmp_path.iterdir(), None) is None
 
 
 def test_error(*, rst_file: Path, use_pty_option: bool) -> None:
