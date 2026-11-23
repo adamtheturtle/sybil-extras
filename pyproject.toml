@@ -102,7 +102,7 @@ dev = [
     "yamlfix==1.19.1",
     "zizmor==1.32.0",
 ]
-crosshair = [ "crosshair-tool==0.0.113" ]
+crosshair = [ "crosshair-tool==0.0.114" ]
 release = [ "check-wheel-contents==0.6.3", "towncrier==26.9.0" ]
 
 [tool.setuptools]
