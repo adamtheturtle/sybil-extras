@@ -71,7 +71,7 @@ def test_empty_non_lexeme_code_block_reports_parser_contract(
 
 
 def test_writer_rejects_doctest_payload(tmp_path: Path) -> None:
-    """The writer rejects a doctest payload before changing the file."""
+    """The writer rejects unsupported parsed values before writing."""
     source_file = tmp_path / "example.rst"
     source = ">>> 2 + 2\n4\n"
     _ = source_file.write_text(data=source, encoding="utf-8")
