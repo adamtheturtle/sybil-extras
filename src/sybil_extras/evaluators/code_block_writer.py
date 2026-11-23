@@ -286,7 +286,7 @@ def _get_modified_region_text(
 
     parsed = parsed_value(example=example)
     if bool(parsed):
-        if not isinstance(parsed, str):  # pragma: no cover
+        if not isinstance(parsed, str):
             msg = "Writing a non-empty code block requires a string payload"
             raise TypeError(msg)
         edit = _RegionEdit(

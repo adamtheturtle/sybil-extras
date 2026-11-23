@@ -1,9 +1,11 @@
 """Attribute-based grouped source parser tests for MDX."""
 
 import textwrap
+from collections.abc import Iterable
 from pathlib import Path
 
-from sybil import Sybil
+import pytest
+from sybil import Document, Region, Sybil
 
 from sybil_extras.evaluators.block_accumulator import BlockAccumulatorEvaluator
 from sybil_extras.evaluators.no_op import NoOpEvaluator
@@ -104,6 +106,33 @@ def test_attribute_group_multiple_groups(tmp_path: Path) -> None:
     expected_setup = "x = []\n\n\n\nx = [*x, 1]\n\n\n\nx = [*x, 2]\n"
     expected_example = "y = []\n\n\n\ny = [*y, 10]\n"
     assert document.namespace["blocks"] == [expected_setup, expected_example]
+
+
+def test_attribute_group_rejects_invalid_attributes() -> None:
+    """Grouping reports invalid attributes from a custom code block parser."""
+
+    def code_block_parser(document: Document) -> Iterable[Region]:
+        """Return a code block whose attributes cannot be looked up."""
+        yield Region(
+            start=0,
+            end=len(document.text),
+            lexemes={"attributes": "group=example"},
+        )
+
+    parser = AttributeGroupedSourceParser(
+        code_block_parser=code_block_parser,
+        evaluator=NoOpEvaluator(),
+        attribute_name="group",
+        pad_groups=False,
+        ungrouped_evaluator=NoOpEvaluator(),
+    )
+    document = Document(text="pass", path="example.mdx")
+
+    with pytest.raises(
+        expected_exception=TypeError,
+        match="Code block attributes must be a mapping",
+    ):
+        _ = list(parser(document=document))
 
 
 def test_attribute_group_no_group_attribute(tmp_path: Path) -> None:

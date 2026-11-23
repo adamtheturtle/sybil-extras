@@ -144,7 +144,7 @@ class _ShellCommandRunner:
         padding_line = 0
         if self._pad_file:
             parsed = parsed_value(example=example)
-            if not isinstance(parsed, _LineOffset):  # pragma: no cover
+            if not isinstance(parsed, _LineOffset):
                 msg = "Padding shell input requires a parsed line offset"
                 raise TypeError(msg)
             padding_line = example.line + parsed.line_offset

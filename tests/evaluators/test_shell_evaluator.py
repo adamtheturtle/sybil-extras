@@ -17,7 +17,7 @@ import click
 import pytest
 from beartype import beartype
 from click.testing import CliRunner
-from sybil import Sybil
+from sybil import Document, Region, Sybil
 from sybil.example import Example
 from sybil.parsers.markdown import (
     CodeBlockParser as SybilMarkdownCodeBlockParser,
@@ -98,6 +98,30 @@ def fixture_rst_file(*, tmp_path: Path) -> Path:
     test_document = tmp_path / "test_document.example.rst"
     _ = test_document.write_text(data=content, encoding="utf-8")
     return test_document
+
+
+def test_padding_requires_parsed_line_offset(tmp_path: Path) -> None:
+    """Padding rejects a custom parser result with no line offset."""
+    document = Document(text="pass", path=str(object=tmp_path / "example.rst"))
+    evaluator = ShellCommandEvaluator(
+        args=[sys.executable],
+        temp_file_path_maker=make_temp_file_path,
+        pad_file=True,
+        write_to_file=False,
+        use_pty=False,
+    )
+    document.add(
+        region=Region(start=0, end=4, parsed="pass", evaluator=evaluator),
+    )
+    example = next(document.examples())
+
+    with pytest.raises(
+        expected_exception=TypeError,
+        match="Padding shell input requires a parsed line offset",
+    ):
+        example.evaluate()
+
+    assert list(tmp_path.iterdir()) == []
 
 
 def test_error(*, rst_file: Path, use_pty_option: bool) -> None:
